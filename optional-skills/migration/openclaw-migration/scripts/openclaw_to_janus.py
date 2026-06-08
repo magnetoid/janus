@@ -113,7 +113,7 @@ MIGRATION_OPTION_METADATA: Dict[str, Dict[str, str]] = {
     },
     "daily-memory": {
         "label": "Daily memory files",
-        "description": "Merge daily memory entries from workspace/memory/ into Janus MEMORY.md.",
+        "description": "Merge workspace/memory/ entries into MEMORY.md and preserve the dated files in Janus's daily journal.",
     },
     "archive": {
         "label": "Archive unmapped docs",
@@ -1923,6 +1923,28 @@ class Migrator:
         overflow_file = self.write_overflow_entries("daily-memory", overflowed)
         if overflow_file is not None:
             details["overflow_file"] = str(overflow_file)
+
+        # Best-of-both: OpenClaw keeps date-stamped workspace/memory/*.md files;
+        # Janus now has its own dated journal (memories/daily/YYYY-MM-DD.md).
+        # Preserve OpenClaw's daily files directly into that journal so the
+        # date-stamped history survives — the flattened MEMORY.md above is the
+        # compact active layer; this is the never-trimmed archive.
+        daily_dir = self.target_root / "memories" / "daily"
+        journal_written: List[str] = []
+        for md_file in md_files:
+            journal_dest = daily_dir / md_file.name
+            if self.execute:
+                content = rebrand_text(read_text(md_file)).rstrip()
+                if not content:
+                    continue
+                ensure_parent(journal_dest)
+                if journal_dest.exists():
+                    with open(journal_dest, "a", encoding="utf-8") as jf:
+                        jf.write("\n\n" + content + "\n")
+                else:
+                    journal_dest.write_text(content + "\n", encoding="utf-8")
+            journal_written.append(md_file.name)
+        details["journal_files"] = journal_written
 
         if self.execute:
             if stats["added"] == 0 and not overflowed:

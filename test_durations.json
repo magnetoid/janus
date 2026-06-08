@@ -307,6 +307,8 @@
   "tests/janus_cli/test_xai_provider_labels.py": 1.223,
   "tests/janus_cli/test_xai_retirement.py": 1.031,
   "tests/janus_cli/test_xiaomi_provider.py": 1.149,
+  "tests/skills/test_openclaw_migration.py": 2.602,
+  "tests/skills/test_openclaw_migration_hardening.py": 1.884,
   "tests/test_janus_bootstrap.py": 1.243,
   "tests/test_janus_constants.py": 0.842,
   "tests/test_janus_logging.py": 0.833,

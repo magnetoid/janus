@@ -722,6 +722,15 @@ def test_daily_memory_merged(tmp_path: Path):
     assert "dark mode" in content
     assert "migration project" in content
 
+    # Best-of-both: OpenClaw's dated files are also preserved verbatim into
+    # Janus's daily journal (memories/daily/YYYY-MM-DD.md), keeping the dates
+    # the flattened MEMORY.md loses.
+    daily_dir = target / "memories" / "daily"
+    assert (daily_dir / "2026-03-01.md").exists()
+    assert (daily_dir / "2026-03-02.md").exists()
+    assert "dark mode" in (daily_dir / "2026-03-01.md").read_text(encoding="utf-8")
+    assert "migration project" in (daily_dir / "2026-03-02.md").read_text(encoding="utf-8")
+
 
 def test_provider_keys_require_migrate_secrets_flag(tmp_path: Path):
     """Provider keys migration is double-gated: needs option + --migrate-secrets."""
