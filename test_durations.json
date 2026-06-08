@@ -310,5 +310,7 @@
   "tests/test_janus_bootstrap.py": 1.243,
   "tests/test_janus_constants.py": 0.842,
   "tests/test_janus_logging.py": 0.833,
-  "tests/test_janus_state.py": 1.173
+  "tests/test_janus_state.py": 1.173,
+  "tests/tools/test_memory_daily_snapshots.py": 6.18,
+  "tests/tools/test_memory_tool.py": 9.717
 }

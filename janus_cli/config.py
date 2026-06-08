@@ -1651,6 +1651,12 @@ DEFAULT_CONFIG = {
         "user_profile_enabled": True,
         "memory_char_limit": 2200,   # ~800 tokens at 2.75 chars/token
         "user_char_limit": 1375,     # ~500 tokens at 2.75 chars/token
+        # Daily memory snapshots: mirror every memory add/replace/remove into
+        # an append-only dated journal at memories/daily/YYYY-MM-DD.md. The
+        # compact MEMORY.md/USER.md the prompt injects stay char-limited and
+        # get trimmed over time; this journal is the never-trimmed, browsable
+        # history (OpenClaw-style). Set false to disable the journal.
+        "daily_snapshots": True,
         # External memory provider plugin (empty = built-in only).
         # Set to a provider name to activate: "openviking", "mem0",
         # "hindsight", "holographic", "retaindb", "byterover".

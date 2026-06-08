@@ -60,6 +60,120 @@ ENTRY_DELIMITER = "\n§\n"
 
 
 # ---------------------------------------------------------------------------
+# Daily memory snapshots — an append-only, dated journal of memory mutations.
+#
+# MEMORY.md / USER.md are compact and char-limited: the system prompt injects
+# them every turn, so old facts get trimmed and the long-tail history is lost.
+# The daily layer mirrors every add/replace/remove into
+# ``memories/daily/YYYY-MM-DD.md`` — a browsable, git-friendly archive that is
+# never trimmed. Inspired by OpenClaw's per-day ``workspace/memory/*.md``
+# files, which give natural versioning the flattened single-file model lacks.
+#
+# It is strictly additive: best-effort (a journal failure never blocks the
+# real memory write) and gated by ``memory.daily_snapshots`` in config.yaml
+# (default on). The compact MEMORY.md the prompt sees is unchanged, so the
+# prompt-cache invariant is preserved.
+# ---------------------------------------------------------------------------
+
+def get_daily_dir() -> Path:
+    """Profile-scoped directory holding the dated memory-journal files."""
+    return get_memory_dir() / "daily"
+
+
+_daily_enabled_cache: Optional[bool] = None
+
+
+def _daily_snapshots_enabled() -> bool:
+    """Whether to mirror memory mutations into the dated journal.
+
+    Resolution order (cached per process):
+      1. ``JANUS_MEMORY_DAILY_SNAPSHOTS`` env override (1/true/on vs 0/false/off)
+      2. ``memory.daily_snapshots`` in config.yaml
+      3. default: enabled
+    """
+    global _daily_enabled_cache
+    if _daily_enabled_cache is not None:
+        return _daily_enabled_cache
+    env = os.getenv("JANUS_MEMORY_DAILY_SNAPSHOTS", "").strip().lower()
+    if env in {"1", "true", "yes", "on"}:
+        _daily_enabled_cache = True
+        return True
+    if env in {"0", "false", "no", "off"}:
+        _daily_enabled_cache = False
+        return False
+    enabled = True
+    try:
+        import yaml
+        cfg_path = get_janus_home() / "config.yaml"
+        if cfg_path.exists():
+            with open(cfg_path, encoding="utf-8") as f:
+                cfg = yaml.safe_load(f) or {}
+            mem_cfg = cfg.get("memory", {})
+            if isinstance(mem_cfg, dict) and "daily_snapshots" in mem_cfg:
+                enabled = bool(mem_cfg["daily_snapshots"])
+    except Exception:
+        pass
+    _daily_enabled_cache = enabled
+    return enabled
+
+
+_DAILY_EVENT_LABEL = {"add": "added", "replace": "revised", "remove": "removed"}
+
+
+def append_daily_snapshot(target: str, content: str, event: str = "add", when=None) -> None:
+    """Append one memory mutation to the dated journal. Best-effort; never raises.
+
+    ``when`` accepts an injected datetime (used by tests); otherwise resolves
+    via ``janus_time.now()`` so the date respects the user's timezone.
+    """
+    if not _daily_snapshots_enabled():
+        return
+    try:
+        if when is None:
+            from janus_time import now as _now
+            when = _now()
+        day = when.strftime("%Y-%m-%d")
+        stamp = when.strftime("%H:%M")
+        scope = "USER" if target == "user" else "MEMORY"
+        label = _DAILY_EVENT_LABEL.get(event, event)
+        body = content.strip().replace("\n", "\n  ")  # indent continuation lines
+        daily_dir = get_daily_dir()
+        daily_dir.mkdir(parents=True, exist_ok=True)
+        path = daily_dir / f"{day}.md"
+        new_file = not path.exists()
+        with open(path, "a", encoding="utf-8") as f:
+            if new_file:
+                f.write(f"# Memory journal — {day}\n\n")
+            f.write(f"- `{stamp}` **{scope}** {label}: {body}\n")
+    except Exception as exc:  # journalling must never break a memory write
+        logger.debug("daily memory snapshot append failed: %s", exc)
+
+
+def read_daily_snapshots(date: Optional[str] = None, days: int = 7) -> Dict[str, Any]:
+    """Read the dated memory journal.
+
+    With ``date`` (YYYY-MM-DD) returns just that day; otherwise the most recent
+    ``days`` files. Returns ``{"success": True, "days": [{"date","text"}, ...]}``.
+    """
+    daily_dir = get_daily_dir()
+    if not daily_dir.exists():
+        return {"success": True, "days": [], "note": "No daily memory snapshots yet."}
+    files = sorted(daily_dir.glob("*.md"))
+    if date:
+        one = daily_dir / f"{date}.md"
+        files = [one] if one.exists() else []
+    else:
+        files = files[-days:] if days and days > 0 else files
+    out: List[Dict[str, str]] = []
+    for fp in files:
+        try:
+            out.append({"date": fp.stem, "text": fp.read_text(encoding="utf-8")})
+        except OSError:
+            continue
+    return {"success": True, "days": out}
+
+
+# ---------------------------------------------------------------------------
 # Memory content scanning — lightweight check for injection/exfiltration
 # in content that gets injected into the system prompt.
 #
@@ -341,6 +455,7 @@ class MemoryStore:
             entries.append(content)
             self._set_entries(target, entries)
             self.save_to_disk(target)
+            append_daily_snapshot(target, content, "add")
 
         return self._success_response(target, "Entry added.")
 
@@ -401,6 +516,7 @@ class MemoryStore:
             entries[idx] = new_content
             self._set_entries(target, entries)
             self.save_to_disk(target)
+            append_daily_snapshot(target, new_content, "replace")
 
         return self._success_response(target, "Entry replaced.")
 
@@ -434,9 +550,11 @@ class MemoryStore:
                 # All identical -- safe to remove just the first
 
             idx = matches[0][0]
+            removed = entries[idx]
             entries.pop(idx)
             self._set_entries(target, entries)
             self.save_to_disk(target)
+            append_daily_snapshot(target, removed, "remove")
 
         return self._success_response(target, "Entry removed.")
 
