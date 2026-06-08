@@ -349,6 +349,22 @@ def _apply_profile_override() -> None:
         if Path(janus_home_env).parent.name == "profiles":
             return
 
+    # 1.6 Directory-bound workspace profile (.janus/workspace.yaml in the cwd
+    # ancestry). Beats the global active_profile default so cd-ing into a
+    # project gives you that project's profile; an explicit -p flag or a
+    # profile-specific JANUS_HOME still wins (handled above). Fully defensive —
+    # a bad binding falls back rather than blocking startup.
+    if profile_name is None:
+        try:
+            from janus_cli.workspace import find_workspace_profile
+
+            ws_profile = find_workspace_profile()
+            if ws_profile:
+                profile_name = ws_profile
+                consume = 0
+        except Exception:
+            pass
+
     # 2. If no flag, check active_profile in the janus root
     if profile_name is None:
         try:
@@ -14802,6 +14818,74 @@ Examples:
             memory_command(args)
 
     memory_parser.set_defaults(func=cmd_memory)
+
+    # =========================================================================
+    # workspace command — bind a profile to the current directory
+    # =========================================================================
+    workspace_parser = subparsers.add_parser(
+        "workspace",
+        help="Bind a Janus profile to the current directory",
+        description=(
+            "Pin which profile Janus uses when run inside this directory tree,\n"
+            "via .janus/workspace.yaml. cd into the project and you get that\n"
+            "profile's persona, memory, and config — no -p flag needed.\n\n"
+            "Precedence: explicit -p  >  workspace binding  >  global default."
+        ),
+    )
+    workspace_sub = workspace_parser.add_subparsers(dest="workspace_command")
+    _ws_use = workspace_sub.add_parser("use", help="Bind a profile to this directory")
+    _ws_use.add_argument("profile", help="Profile name to bind")
+    workspace_sub.add_parser("show", help="Show the profile bound to this directory")
+    workspace_sub.add_parser("clear", help="Remove this directory's profile binding")
+
+    def cmd_workspace(args):
+        from pathlib import Path as _Path
+        from janus_cli.workspace import (
+            binding_path,
+            clear_binding,
+            find_workspace_profile,
+            read_binding,
+            set_binding,
+        )
+
+        sub = getattr(args, "workspace_command", None)
+        cwd = _Path.cwd()
+        if sub == "use":
+            from janus_cli.profiles import profile_exists, _PROFILE_ID_RE
+
+            name = args.profile.strip()
+            if not _PROFILE_ID_RE.match(name):
+                print(f"\n  ✗ Invalid profile name: {name!r}\n")
+                return
+            if not profile_exists(name):
+                print(
+                    f"\n  ✗ Profile '{name}' doesn't exist. Create it with "
+                    f"'janus profile create {name}'.\n"
+                )
+                return
+            path = set_binding(cwd, name)
+            print(f"\n  ✓ This directory now uses profile '{name}'.")
+            print(f"  Wrote {path}\n")
+        elif sub == "clear":
+            if clear_binding(cwd):
+                print("\n  ✓ Removed this directory's profile binding.\n")
+            else:
+                print("\n  No profile binding in this directory.\n")
+        else:  # show (default)
+            direct = read_binding(cwd)
+            effective = find_workspace_profile(cwd)
+            if direct:
+                status = "" if effective else "  (profile missing — falling back to default)"
+                print(f"\n  This directory binds profile: {direct}{status}\n")
+            elif effective:
+                print(f"\n  Inherited from a parent directory: {effective}\n")
+            else:
+                print(
+                    "\n  No workspace profile bound. Use 'janus workspace use "
+                    "<profile>' to bind one.\n"
+                )
+
+    workspace_parser.set_defaults(func=cmd_workspace)
 
     # =========================================================================
     # tools command
