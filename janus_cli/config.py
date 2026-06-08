@@ -1657,6 +1657,12 @@ DEFAULT_CONFIG = {
         # get trimmed over time; this journal is the never-trimmed, browsable
         # history (OpenClaw-style). Set false to disable the journal.
         "daily_snapshots": True,
+        # Session-end memory mining: when a session ends, distill durable
+        # facts from the transcript into MEMORY.md/USER.md via a cheap
+        # auxiliary model (OpenClaw-style). Opt-in (default off) because it
+        # spends tokens and writes memory automatically. Run on demand any
+        # time with `janus memory mine`. See agent/memory_miner.py.
+        "session_mining": False,
         # External memory provider plugin (empty = built-in only).
         # Set to a provider name to activate: "openviking", "mem0",
         # "hindsight", "holographic", "retaindb", "byterover".

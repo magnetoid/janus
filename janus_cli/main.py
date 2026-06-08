@@ -14682,6 +14682,14 @@ Examples:
         "--days", type=int, default=7,
         help="How many recent days to show (default 7; 0 = all)",
     )
+    _mine_parser = memory_sub.add_parser(
+        "mine",
+        help="Distill durable facts from a past session into memory",
+    )
+    _mine_parser.add_argument(
+        "--session", default=None,
+        help="Session id to mine (default: most recent CLI session)",
+    )
 
     def cmd_memory(args):
         sub = getattr(args, "memory_command", None)
@@ -14756,6 +14764,38 @@ Examples:
                 return
             for d in days:
                 print(d["text"].rstrip() + "\n")
+        elif sub == "mine":
+            from janus_state import SessionDB
+            from tools.memory_tool import MemoryStore
+            from agent.memory_miner import mine_session_memory
+
+            session_id = getattr(args, "session", None) or _resolve_last_session("cli")
+            if not session_id:
+                print("\n  No session found to mine. Have a conversation first.\n")
+                return
+            db = SessionDB()
+            try:
+                messages = db.get_messages_as_conversation(session_id)
+            finally:
+                try:
+                    db.close()
+                except Exception:
+                    pass
+            if not messages:
+                print(f"\n  Session {session_id} has no messages to mine.\n")
+                return
+            store = MemoryStore()
+            store.load_from_disk()
+            print(f"\n  Mining session {session_id} for durable memory…")
+            summary = mine_session_memory(messages, store)
+            if summary.get("error"):
+                print(f"  ⚠ Mining failed: {summary['error']}\n")
+                return
+            added = summary["added"]
+            print(
+                f"  ✓ Added {added['user']} user + {added['memory']} memory "
+                f"fact(s); skipped {summary['skipped_duplicates']} duplicate(s).\n"
+            )
         else:
             from janus_cli.memory_setup import memory_command
 
