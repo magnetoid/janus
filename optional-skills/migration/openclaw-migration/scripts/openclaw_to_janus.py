@@ -129,7 +129,7 @@ MIGRATION_OPTION_METADATA: Dict[str, Dict[str, str]] = {
     },
     "cron-jobs": {
         "label": "Cron / scheduled tasks",
-        "description": "Import cron job definitions. Archive for manual recreation via 'janus cron'.",
+        "description": "Recreate OpenClaw scheduled jobs as Janus cron jobs (raw config also archived).",
     },
     "hooks-config": {
         "label": "Hooks and webhooks",
@@ -2242,20 +2242,41 @@ class Migrator:
         cron_store = self.source_root / "cron"
         found_any = False
 
-        # Archive the full cron config when present
-        if cron:
-            found_any = True
-            if self.archive_dir and self.execute:
-                self.archive_dir.mkdir(parents=True, exist_ok=True)
-                dest = self.archive_dir / "cron-config.json"
-                dest.write_text(json.dumps(cron, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-                self.record("cron-jobs", "openclaw.json cron.*", str(dest), "archived",
-                            "Cron config archived. Use 'janus cron' to recreate jobs manually.")
-            else:
-                self.record("cron-jobs", "openclaw.json cron.*", "archive/cron-config.json",
-                            "archived", "Would archive cron config")
+        imported: List[str] = []
+        skipped: List[str] = []
+        jobs_file = self.target_root / "cron" / "jobs.json"
 
-        # Also check for cron store files even when config.cron is missing
+        # OpenClaw keeps scheduled jobs in TWO places: the openclaw.json `cron`
+        # key, AND a cron store at <root>/cron/jobs.json. Gather specs from both.
+        specs = self._extract_openclaw_cron_jobs(cron)
+        store_jobs_file = cron_store / "jobs.json"
+        if store_jobs_file.is_file():
+            try:
+                store_data = json.loads(store_jobs_file.read_text(encoding="utf-8"))
+                specs += self._extract_openclaw_cron_jobs(store_data)
+            except Exception:
+                pass
+
+        if specs:
+            if self.execute:
+                self._import_cron_jobs(specs, imported, skipped)
+            else:
+                for spec in specs:
+                    name, schedule, prompt, *_ = self._map_cron_spec(spec)
+                    bucket = imported if (schedule and prompt) else skipped
+                    bucket.append(name or schedule or "(unnamed)")
+
+        # Archive the raw config + store too — full-fidelity safety net. Keep the
+        # archival records: they drive the "recreate manually" migration note for
+        # jobs that couldn't be auto-imported (no schedule/prompt).
+        if cron and self.archive_dir:
+            found_any = True
+            dest_cfg = self.archive_dir / "cron-config.json"
+            if self.execute:
+                self.archive_dir.mkdir(parents=True, exist_ok=True)
+                dest_cfg.write_text(json.dumps(cron, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            self.record("cron-jobs", "openclaw.json cron.*", str(dest_cfg), "archived",
+                        "Cron config archived")
         if cron_store.is_dir() and self.archive_dir:
             found_any = True
             dest_cron = self.archive_dir / "cron-store"
@@ -2264,8 +2285,99 @@ class Migrator:
             self.record("cron-jobs", str(cron_store), str(dest_cron), "archived",
                         "Cron job store archived")
 
+        if imported:
+            found_any = True
+            detail = f"Imported {len(imported)} cron job(s) into Janus cron"
+            if skipped:
+                detail += f"; {len(skipped)} need manual review (see 'janus cron')"
+            self.record("cron-jobs", "openclaw cron", str(jobs_file), "migrated",
+                        detail, imported=imported, skipped=skipped)
+
         if not found_any:
             self.record("cron-jobs", None, None, "skipped", "No cron configuration found")
+
+    def _import_cron_jobs(self, specs: List[Dict[str, Any]],
+                          imported: List[str], skipped: List[str]) -> None:
+        """Create each OpenClaw cron spec as a real Janus cron job under target_root.
+
+        ``cron.jobs`` bakes its paths (JOBS_FILE etc.) at import time from the
+        active JANUS_HOME, so we temporarily redirect those module constants to
+        ``target_root`` — this keeps writes inside the migration target (tests
+        and `--target-home` use a path that is not the live home). Falls back to
+        archive-only if the package isn't importable.
+        """
+        try:
+            import cron.jobs as cj
+        except Exception:
+            for spec in specs:
+                name, schedule, prompt, *_ = self._map_cron_spec(spec)
+                skipped.append((name or schedule or "(unnamed)") + ": cron module unavailable")
+            return
+
+        _orig = (cj.JANUS_DIR, cj.CRON_DIR, cj.JOBS_FILE, cj.OUTPUT_DIR)
+        try:
+            cj.JANUS_DIR = self.target_root.resolve()
+            cj.CRON_DIR = cj.JANUS_DIR / "cron"
+            cj.JOBS_FILE = cj.CRON_DIR / "jobs.json"
+            cj.OUTPUT_DIR = cj.CRON_DIR / "output"
+            for spec in specs:
+                name, schedule, prompt, channel, repeat, enabled = self._map_cron_spec(spec)
+                if not schedule or not prompt:
+                    skipped.append(name or schedule or "(unnamed)")
+                    continue
+                try:
+                    job = cj.create_job(
+                        prompt=rebrand_text(prompt),
+                        schedule=schedule,
+                        name=rebrand_text(name) if name else None,
+                        repeat=repeat,
+                    )
+                    if not enabled and job:
+                        cj.pause_job(job["id"])
+                    label = name or schedule
+                    imported.append(f"{label} (delivery '{channel}' → review)" if channel else label)
+                except Exception as exc:
+                    skipped.append(f"{name or schedule}: {exc}")
+        finally:
+            cj.JANUS_DIR, cj.CRON_DIR, cj.JOBS_FILE, cj.OUTPUT_DIR = _orig
+
+    @staticmethod
+    def _extract_openclaw_cron_jobs(cron: Any) -> List[Dict[str, Any]]:
+        """Normalize OpenClaw cron config (list / {jobs:[...]} / {id: spec}) to a spec list."""
+        if isinstance(cron, list):
+            return [c for c in cron if isinstance(c, dict)]
+        if isinstance(cron, dict):
+            if isinstance(cron.get("jobs"), list):
+                return [c for c in cron["jobs"] if isinstance(c, dict)]
+            specs: List[Dict[str, Any]] = []
+            for key, val in cron.items():
+                if isinstance(val, dict):
+                    spec = dict(val)
+                    spec.setdefault("name", key)
+                    specs.append(spec)
+            return specs
+        return []
+
+    @staticmethod
+    def _map_cron_spec(spec: Dict[str, Any]) -> Tuple:
+        """Map one OpenClaw cron spec to (name, schedule, prompt, channel, repeat, enabled)."""
+        name = spec.get("name") or spec.get("id") or spec.get("title")
+        schedule = (spec.get("schedule") or spec.get("cron") or spec.get("when")
+                    or spec.get("interval") or spec.get("expression"))
+        prompt = (spec.get("prompt") or spec.get("message") or spec.get("task")
+                  or spec.get("text") or spec.get("instruction"))
+        channel = (spec.get("deliver") or spec.get("channel")
+                   or spec.get("delivery") or spec.get("target"))
+        repeat = spec.get("repeat")
+        enabled = spec.get("enabled", True)
+        return (
+            str(name) if name else None,
+            str(schedule) if schedule else None,
+            str(prompt) if prompt else None,
+            str(channel) if channel else None,
+            repeat if isinstance(repeat, int) else None,
+            bool(enabled),
+        )
 
     # ── Hooks ─────────────────────────────────────────────────
     def migrate_hooks_config(self, config: Optional[Dict[str, Any]] = None) -> None:
@@ -2934,7 +3046,12 @@ class Migrator:
             "- Run `janus mcp list` to verify MCP servers were imported correctly",
         ])
 
-        if has_cron_config_archive:
+        has_cron_imported = any(
+            i.kind == "cron-jobs" and i.status == "migrated" for i in self.items
+        )
+        if has_cron_imported:
+            notes.append("- Scheduled tasks were imported into Janus cron — review them with `janus cron list`")
+        elif has_cron_config_archive:
             notes.append("- Run `janus cron` to recreate scheduled tasks (see archive/cron-config.json)")
         elif has_cron_store_archive:
             notes.append("- Run `janus cron` to recreate scheduled tasks (see archived cron-store)")
