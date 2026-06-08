@@ -433,7 +433,7 @@ class TestPluginMemoryDiscovery:
 
 
 class TestUserInstalledProviderDiscovery:
-    """Memory providers installed to $HERMES_HOME/plugins/ should be found.
+    """Memory providers installed to $JANUS_HOME/plugins/ should be found.
 
     Regression test for issues #4956 and #9099: load_memory_provider() and
     discover_memory_providers() only scanned the bundled plugins/memory/
@@ -474,7 +474,7 @@ class TestUserInstalledProviderDiscovery:
         assert "holographic" in names  # bundled still found
 
     def test_load_user_plugin(self, tmp_path, monkeypatch):
-        """load_memory_provider() can load from $HERMES_HOME/plugins/."""
+        """load_memory_provider() can load from $JANUS_HOME/plugins/."""
         from plugins.memory import load_memory_provider
         self._make_user_memory_plugin(tmp_path, "myexternal")
         monkeypatch.setattr(
@@ -537,10 +537,10 @@ class TestUserInstalledProviderDiscovery:
         """User plugins may import sibling modules with relative imports.
 
         Regression: _load_provider_from_dir() imports user plugins under the
-        synthetic ``_hermes_user_memory.<name>`` package but never registered
+        synthetic ``_janus_user_memory.<name>`` package but never registered
         that parent namespace in sys.modules, so any relative import inside
         the plugin raised
-        ``ModuleNotFoundError: No module named '_hermes_user_memory'``.
+        ``ModuleNotFoundError: No module named '_janus_user_memory'``.
         """
         from plugins.memory import load_memory_provider
         plugin_dir = tmp_path / "plugins" / "relimport"
@@ -576,7 +576,7 @@ class TestUserInstalledProviderDiscovery:
         """
         from plugins.memory import load_memory_provider
         plugin_dir = tmp_path / "plugins" / "nestedimpl"
-        impl_dir = plugin_dir / "adapters" / "hermes"  # adapters/ has no __init__.py
+        impl_dir = plugin_dir / "adapters" / "janus"  # adapters/ has no __init__.py
         impl_dir.mkdir(parents=True)
         (impl_dir / "__init__.py").write_text(
             "from agent.memory_provider import MemoryProvider\n"
@@ -590,7 +590,7 @@ class TestUserInstalledProviderDiscovery:
             "    def handle_tool_call(self, *a, **kw): return '{}'\n"
         )
         (plugin_dir / "__init__.py").write_text(
-            "from .adapters.hermes import MyProvider\n"
+            "from .adapters.janus import MyProvider\n"
             "def register(ctx):\n"
             "    ctx.register_memory_provider(MyProvider())\n"
         )
@@ -608,7 +608,7 @@ class TestUserInstalledProviderCli:
 
     Mirror of the relative-import regression above:
     discover_plugin_cli_commands() imports the active provider's cli.py as
-    ``_hermes_user_memory.<name>.cli`` without registering the parent
+    ``_janus_user_memory.<name>.cli`` without registering the parent
     packages, so a cli.py with a relative import could never load.
     """
 
@@ -787,7 +787,7 @@ class TestSequentialDispatchRouting:
 
 class TestSetupFieldFiltering:
     """Test the 'when' clause and 'default_from' logic used by the
-    memory setup wizard in hermes_cli/memory_setup.py.
+    memory setup wizard in janus_cli/memory_setup.py.
 
     These features are generic — any memory plugin can use them in
     get_config_schema(). Currently used by the hindsight plugin.
@@ -846,7 +846,7 @@ class TestSetupFieldFiltering:
     def test_when_clause_no_condition_always_shown(self):
         """Fields without 'when' are always included."""
         schema = [
-            {"key": "bank_id", "default": "hermes"},
+            {"key": "bank_id", "default": "janus"},
             {"key": "budget", "default": "mid"},
         ]
         fields = self._filter_fields(schema, {"mode": "cloud"})

@@ -102,7 +102,7 @@ export function useKeybinds(deps: KeybindRuntimeDeps): void {
 
     'session.new': () => {
       deps.startFreshSession()
-      window.dispatchEvent(new CustomEvent('hermes:new-session-shortcut'))
+      window.dispatchEvent(new CustomEvent('janus:new-session-shortcut'))
     },
     'session.next': () => cycleSession(1),
     'session.prev': () => cycleSession(-1),

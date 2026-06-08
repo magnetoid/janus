@@ -7,26 +7,26 @@
 #
 # Strategy (first hit wins — respects the user's existing tooling):
 #   1. modern `node` already on PATH
-#   2. ~/.hermes/node/ from a prior Hermes-managed install
+#   2. ~/.janus/node/ from a prior Janus-managed install
 #   3. fnm, proto, nvm (in that order) if the user already uses a version manager
 #   4. Termux `pkg`, macOS Homebrew
-#   5. pinned nodejs.org tarball into ~/.hermes/node/ (always works, zero shell rc edits)
+#   5. pinned nodejs.org tarball into ~/.janus/node/ (always works, zero shell rc edits)
 #
 # Usage:
 #   source scripts/lib/node-bootstrap.sh
 #   ensure_node   # returns 0 on success, non-zero on failure
-#   if [ "$HERMES_NODE_AVAILABLE" = true ]; then ...; fi
+#   if [ "$JANUS_NODE_AVAILABLE" = true ]; then ...; fi
 #
 # Env inputs (set before sourcing to override defaults):
-#   HERMES_NODE_MIN_VERSION   (default: 20)   — accepted on PATH
-#   HERMES_NODE_TARGET_MAJOR  (default: 22)   — installed when we install
-#   HERMES_HOME               (default: $HOME/.hermes)
+#   JANUS_NODE_MIN_VERSION   (default: 20)   — accepted on PATH
+#   JANUS_NODE_TARGET_MAJOR  (default: 22)   — installed when we install
+#   JANUS_HOME               (default: $HOME/.janus)
 # ============================================================================
 
-HERMES_NODE_MIN_VERSION="${HERMES_NODE_MIN_VERSION:-20}"
-HERMES_NODE_TARGET_MAJOR="${HERMES_NODE_TARGET_MAJOR:-22}"
-HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
-HERMES_NODE_AVAILABLE=false
+JANUS_NODE_MIN_VERSION="${JANUS_NODE_MIN_VERSION:-20}"
+JANUS_NODE_TARGET_MAJOR="${JANUS_NODE_TARGET_MAJOR:-22}"
+JANUS_HOME="${JANUS_HOME:-$HOME/.janus}"
+JANUS_NODE_AVAILABLE=false
 
 # ---------------------------------------------------------------------------
 # Logging — prefer the host script's log_* helpers when present
@@ -65,7 +65,7 @@ _nb_node_major() {
 
 _nb_have_modern_node() {
     command -v node >/dev/null 2>&1 || return 1
-    [ "$(_nb_node_major)" -ge "$HERMES_NODE_MIN_VERSION" ]
+    [ "$(_nb_node_major)" -ge "$JANUS_NODE_MIN_VERSION" ]
 }
 
 # ---------------------------------------------------------------------------
@@ -74,10 +74,10 @@ _nb_have_modern_node() {
 
 _nb_try_fnm() {
     command -v fnm >/dev/null 2>&1 || return 1
-    _nb_log "fnm detected — installing Node $HERMES_NODE_TARGET_MAJOR..."
+    _nb_log "fnm detected — installing Node $JANUS_NODE_TARGET_MAJOR..."
     eval "$(fnm env 2>/dev/null)" || true
-    fnm install "$HERMES_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
-    fnm use     "$HERMES_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
+    fnm install "$JANUS_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
+    fnm use     "$JANUS_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
     _nb_have_modern_node || return 1
     _nb_ok "Node $(node --version) activated via fnm"
     return 0
@@ -85,8 +85,8 @@ _nb_try_fnm() {
 
 _nb_try_proto() {
     command -v proto >/dev/null 2>&1 || return 1
-    _nb_log "proto detected — installing Node $HERMES_NODE_TARGET_MAJOR..."
-    proto install node "$HERMES_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
+    _nb_log "proto detected — installing Node $JANUS_NODE_TARGET_MAJOR..."
+    proto install node "$JANUS_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
     _nb_have_modern_node || return 1
     _nb_ok "Node $(node --version) activated via proto"
     return 0
@@ -97,9 +97,9 @@ _nb_try_nvm() {
     [ -s "$nvm_sh" ] || return 1
     # shellcheck source=/dev/null
     \. "$nvm_sh" >/dev/null 2>&1 || return 1
-    _nb_log "nvm detected — installing Node $HERMES_NODE_TARGET_MAJOR..."
-    nvm install "$HERMES_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
-    nvm use     "$HERMES_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
+    _nb_log "nvm detected — installing Node $JANUS_NODE_TARGET_MAJOR..."
+    nvm install "$JANUS_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
+    nvm use     "$JANUS_NODE_TARGET_MAJOR" >/dev/null 2>&1 || return 1
     _nb_have_modern_node || return 1
     _nb_ok "Node $(node --version) activated via nvm"
     return 0
@@ -122,10 +122,10 @@ _nb_try_brew() {
     [ "$(uname -s)" = "Darwin" ] || return 1
     command -v brew >/dev/null 2>&1 || return 1
     _nb_log "Installing Node via Homebrew..."
-    brew install "node@${HERMES_NODE_TARGET_MAJOR}" >/dev/null 2>&1 \
+    brew install "node@${JANUS_NODE_TARGET_MAJOR}" >/dev/null 2>&1 \
         || brew install node >/dev/null 2>&1 \
         || return 1
-    brew link --overwrite --force "node@${HERMES_NODE_TARGET_MAJOR}" >/dev/null 2>&1 || true
+    brew link --overwrite --force "node@${JANUS_NODE_TARGET_MAJOR}" >/dev/null 2>&1 || true
     _nb_have_modern_node || return 1
     _nb_ok "Node $(node --version) installed via Homebrew"
     return 0
@@ -158,18 +158,18 @@ _nb_install_bundled_node() {
             ;;
     esac
 
-    local index_url="https://nodejs.org/dist/latest-v${HERMES_NODE_TARGET_MAJOR}.x/"
+    local index_url="https://nodejs.org/dist/latest-v${JANUS_NODE_TARGET_MAJOR}.x/"
     local tarball
     tarball=$(curl -fsSL "$index_url" \
-        | grep -oE "node-v${HERMES_NODE_TARGET_MAJOR}\.[0-9]+\.[0-9]+-${node_os}-${node_arch}\.tar\.xz" \
+        | grep -oE "node-v${JANUS_NODE_TARGET_MAJOR}\.[0-9]+\.[0-9]+-${node_os}-${node_arch}\.tar\.xz" \
         | head -1)
     if [ -z "$tarball" ]; then
         tarball=$(curl -fsSL "$index_url" \
-            | grep -oE "node-v${HERMES_NODE_TARGET_MAJOR}\.[0-9]+\.[0-9]+-${node_os}-${node_arch}\.tar\.gz" \
+            | grep -oE "node-v${JANUS_NODE_TARGET_MAJOR}\.[0-9]+\.[0-9]+-${node_os}-${node_arch}\.tar\.gz" \
             | head -1)
     fi
     if [ -z "$tarball" ]; then
-        _nb_warn "Could not resolve Node $HERMES_NODE_TARGET_MAJOR binary for $node_os-$node_arch"
+        _nb_warn "Could not resolve Node $JANUS_NODE_TARGET_MAJOR binary for $node_os-$node_arch"
         return 1
     fi
 
@@ -180,7 +180,7 @@ _nb_install_bundled_node() {
         _nb_warn "Download failed"; rm -rf "$tmp"; return 1
     }
 
-    _nb_log "Extracting to $HERMES_HOME/node/..."
+    _nb_log "Extracting to $JANUS_HOME/node/..."
     if [[ "$tarball" == *.tar.xz ]]; then
         tar xf  "$tmp/$tarball" -C "$tmp" || { rm -rf "$tmp"; return 1; }
     else
@@ -195,21 +195,21 @@ _nb_install_bundled_node() {
         return 1
     fi
 
-    mkdir -p "$HERMES_HOME"
-    rm -rf "$HERMES_HOME/node"
-    mv "$extracted" "$HERMES_HOME/node"
+    mkdir -p "$JANUS_HOME"
+    rm -rf "$JANUS_HOME/node"
+    mv "$extracted" "$JANUS_HOME/node"
     rm -rf "$tmp"
 
     local _link_dir
     _link_dir="$(_nb_get_link_dir)"
     mkdir -p "$_link_dir"
-    ln -sf "$HERMES_HOME/node/bin/node" "$_link_dir/node"
-    ln -sf "$HERMES_HOME/node/bin/npm"  "$_link_dir/npm"
-    ln -sf "$HERMES_HOME/node/bin/npx"  "$_link_dir/npx"
-    export PATH="$HERMES_HOME/node/bin:$PATH"
+    ln -sf "$JANUS_HOME/node/bin/node" "$_link_dir/node"
+    ln -sf "$JANUS_HOME/node/bin/npm"  "$_link_dir/npm"
+    ln -sf "$JANUS_HOME/node/bin/npx"  "$_link_dir/npx"
+    export PATH="$JANUS_HOME/node/bin:$PATH"
 
     _nb_have_modern_node || return 1
-    _nb_ok "Node $(node --version) installed to $HERMES_HOME/node/"
+    _nb_ok "Node $(node --version) installed to $JANUS_HOME/node/"
     return 0
 }
 
@@ -218,36 +218,36 @@ _nb_install_bundled_node() {
 # ---------------------------------------------------------------------------
 
 ensure_node() {
-    HERMES_NODE_AVAILABLE=false
+    JANUS_NODE_AVAILABLE=false
 
     if _nb_have_modern_node; then
         _nb_ok "Node $(node --version) found"
-        HERMES_NODE_AVAILABLE=true
+        JANUS_NODE_AVAILABLE=true
         return 0
     fi
 
-    if [ -x "$HERMES_HOME/node/bin/node" ]; then
-        export PATH="$HERMES_HOME/node/bin:$PATH"
+    if [ -x "$JANUS_HOME/node/bin/node" ]; then
+        export PATH="$JANUS_HOME/node/bin:$PATH"
         if _nb_have_modern_node; then
-            _nb_ok "Node $(node --version) found (Hermes-managed)"
-            HERMES_NODE_AVAILABLE=true
+            _nb_ok "Node $(node --version) found (Janus-managed)"
+            JANUS_NODE_AVAILABLE=true
             return 0
         fi
     fi
 
     # Version managers first — respect the user's existing setup.
-    _nb_try_fnm   && { HERMES_NODE_AVAILABLE=true; return 0; }
-    _nb_try_proto && { HERMES_NODE_AVAILABLE=true; return 0; }
-    _nb_try_nvm   && { HERMES_NODE_AVAILABLE=true; return 0; }
+    _nb_try_fnm   && { JANUS_NODE_AVAILABLE=true; return 0; }
+    _nb_try_proto && { JANUS_NODE_AVAILABLE=true; return 0; }
+    _nb_try_nvm   && { JANUS_NODE_AVAILABLE=true; return 0; }
 
     # Platform package managers.
-    _nb_try_termux_pkg && { HERMES_NODE_AVAILABLE=true; return 0; }
-    _nb_try_brew       && { HERMES_NODE_AVAILABLE=true; return 0; }
+    _nb_try_termux_pkg && { JANUS_NODE_AVAILABLE=true; return 0; }
+    _nb_try_brew       && { JANUS_NODE_AVAILABLE=true; return 0; }
 
     # Last resort: pinned nodejs.org tarball.
-    _nb_install_bundled_node && { HERMES_NODE_AVAILABLE=true; return 0; }
+    _nb_install_bundled_node && { JANUS_NODE_AVAILABLE=true; return 0; }
 
     _nb_warn "Node.js install failed — TUI and browser tools will be unavailable."
-    _nb_warn "Install manually: https://nodejs.org/en/download/  (or: \`brew install node\`, \`fnm install $HERMES_NODE_TARGET_MAJOR\`, etc.)"
+    _nb_warn "Install manually: https://nodejs.org/en/download/  (or: \`brew install node\`, \`fnm install $JANUS_NODE_TARGET_MAJOR\`, etc.)"
     return 1
 }

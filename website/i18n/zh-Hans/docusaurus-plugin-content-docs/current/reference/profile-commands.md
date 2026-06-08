@@ -4,15 +4,15 @@ sidebar_position: 7
 
 # Profile 命令参考
 
-本页涵盖所有与 [Hermes profiles](../user-guide/profiles.md) 相关的命令。通用 CLI 命令请参阅 [CLI 命令参考](./cli-commands.md)。
+本页涵盖所有与 [Janus profiles](../user-guide/profiles.md) 相关的命令。通用 CLI 命令请参阅 [CLI 命令参考](./cli-commands.md)。
 
-## `hermes profile`
+## `janus profile`
 
 ```bash
-hermes profile <subcommand>
+janus profile <subcommand>
 ```
 
-管理 profile 的顶级命令。不带子命令运行 `hermes profile` 将显示帮助信息。
+管理 profile 的顶级命令。不带子命令运行 `janus profile` 将显示帮助信息。
 
 | 子命令 | 描述 |
 |------------|-------------|
@@ -29,10 +29,10 @@ hermes profile <subcommand>
 | `update` | 重新拉取发行版管理的 profile 并重新应用其 bundle。 |
 | `info` | 显示 profile 的发行版元数据（来源 URL、commit、最后更新时间）。 |
 
-## `hermes profile list`
+## `janus profile list`
 
 ```bash
-hermes profile list
+janus profile list
 ```
 
 列出所有 profile。当前活跃的 profile 以 `*` 标记。
@@ -40,7 +40,7 @@ hermes profile list
 **示例：**
 
 ```bash
-$ hermes profile list
+$ janus profile list
   default
 * work
   dev
@@ -49,13 +49,13 @@ $ hermes profile list
 
 无选项。
 
-## `hermes profile use`
+## `janus profile use`
 
 ```bash
-hermes profile use <name>
+janus profile use <name>
 ```
 
-将 `<name>` 设为活跃 profile。此后所有 `hermes` 命令（不带 `-p`）都将使用该 profile。
+将 `<name>` 设为活跃 profile。此后所有 `janus` 命令（不带 `-p`）都将使用该 profile。
 
 | 参数 | 描述 |
 |----------|-------------|
@@ -64,14 +64,14 @@ hermes profile use <name>
 **示例：**
 
 ```bash
-hermes profile use work
-hermes profile use default
+janus profile use work
+janus profile use default
 ```
 
-## `hermes profile create`
+## `janus profile create`
 
 ```bash
-hermes profile create <name> [options]
+janus profile create <name> [options]
 ```
 
 创建新 profile。
@@ -83,8 +83,8 @@ hermes profile create <name> [options]
 | `--clone-all` | 从当前 profile 复制所有内容（config、memories、skills、sessions、state）。 |
 | `--clone-from <profile>` | 从指定 profile 克隆，而非当前 profile。与 `--clone` 或 `--clone-all` 配合使用。 |
 | `--no-alias` | 跳过 wrapper 脚本创建。 |
-| `--description "<text>"` | 一到两句话描述该 profile 的用途。供 kanban 编排器根据角色而非仅凭 profile 名称来路由任务。可跳过，稍后通过 `hermes profile describe` 添加。持久化保存在 `<profile_dir>/profile.yaml` 中。 |
-| `--no-skills` | 创建一个**空** profile，不启用任何内置 skill。会在 profile 目录中写入 `.no-skills` 标记，使后续 `hermes update` 不再重新植入内置 skill 集，且拒绝与 `--clone` / `--clone-all` 组合使用（因为后者会复制 skill）。适用于不应继承完整 skill 目录的窄化编排器 profile 或沙箱 profile。 |
+| `--description "<text>"` | 一到两句话描述该 profile 的用途。供 kanban 编排器根据角色而非仅凭 profile 名称来路由任务。可跳过，稍后通过 `janus profile describe` 添加。持久化保存在 `<profile_dir>/profile.yaml` 中。 |
+| `--no-skills` | 创建一个**空** profile，不启用任何内置 skill。会在 profile 目录中写入 `.no-skills` 标记，使后续 `janus update` 不再重新植入内置 skill 集，且拒绝与 `--clone` / `--clone-all` 组合使用（因为后者会复制 skill）。适用于不应继承完整 skill 目录的窄化编排器 profile 或沙箱 profile。 |
 
 创建 profile **不会**将该 profile 目录设为终端命令的默认项目/工作目录。如需让某个 profile 从特定项目目录启动，请在该 profile 的 `config.yaml` 中设置 `terminal.cwd`。
 
@@ -92,22 +92,22 @@ hermes profile create <name> [options]
 
 ```bash
 # 空白 profile — 需要完整配置
-hermes profile create mybot
+janus profile create mybot
 
 # 仅从当前 profile 克隆 config
-hermes profile create work --clone
+janus profile create work --clone
 
 # 从当前 profile 克隆所有内容
-hermes profile create backup --clone-all
+janus profile create backup --clone-all
 
 # 从指定 profile 克隆 config
-hermes profile create work2 --clone --clone-from work
+janus profile create work2 --clone --clone-from work
 ```
 
-## `hermes profile describe`
+## `janus profile describe`
 
 ```bash
-hermes profile describe [<name>] [options]
+janus profile describe [<name>] [options]
 ```
 
 读取或设置 profile 的描述。描述由 kanban 编排器使用，用于根据每个 profile 的能力路由任务，而非仅凭 profile 名称猜测。持久化保存在 `<profile_dir>/profile.yaml` 中，重启后仍有效，并与 gateway 共享。
@@ -126,22 +126,22 @@ hermes profile describe [<name>] [options]
 
 ```bash
 # 读取当前描述
-hermes profile describe researcher
+janus profile describe researcher
 
 # 显式设置描述
-hermes profile describe researcher --text "Reads source code and writes findings."
+janus profile describe researcher --text "Reads source code and writes findings."
 
 # 让 LLM 生成描述
-hermes profile describe researcher --auto
+janus profile describe researcher --auto
 
 # 为所有没有描述的 profile 填充描述
-hermes profile describe --all --auto
+janus profile describe --all --auto
 ```
 
-## `hermes profile delete`
+## `janus profile delete`
 
 ```bash
-hermes profile delete <name> [options]
+janus profile delete <name> [options]
 ```
 
 删除 profile 并移除其 shell alias。
@@ -154,23 +154,23 @@ hermes profile delete <name> [options]
 **示例：**
 
 ```bash
-hermes profile delete mybot
-hermes profile delete mybot --yes
+janus profile delete mybot
+janus profile delete mybot --yes
 ```
 
 :::warning
 此操作将永久删除 profile 的整个目录，包括所有 config、memories、sessions 和 skills。无法删除当前活跃的 profile。
 :::
 
-## `hermes profile show`
+## `janus profile show`
 
 ```bash
-hermes profile show <name>
+janus profile show <name>
 ```
 
 显示 profile 的详细信息，包括其主目录、配置的模型、gateway 状态、skill 数量和配置文件状态。
 
-此处显示的是 profile 的 Hermes 主目录，而非终端工作目录。终端命令从 `terminal.cwd` 启动（或在本地后端 `cwd: "."` 时从启动目录启动）。
+此处显示的是 profile 的 Janus 主目录，而非终端工作目录。终端命令从 `terminal.cwd` 启动（或在本地后端 `cwd: "."` 时从启动目录启动）。
 
 | 参数 | 描述 |
 |----------|-------------|
@@ -179,9 +179,9 @@ hermes profile show <name>
 **示例：**
 
 ```bash
-$ hermes profile show work
+$ janus profile show work
 Profile: work
-Path:    ~/.hermes/profiles/work
+Path:    ~/.janus/profiles/work
 Model:   anthropic/claude-sonnet-4 (anthropic)
 Gateway: stopped
 Skills:  12
@@ -190,13 +190,13 @@ SOUL.md: exists
 Alias:   ~/.local/bin/work
 ```
 
-## `hermes profile alias`
+## `janus profile alias`
 
 ```bash
-hermes profile alias <name> [options]
+janus profile alias <name> [options]
 ```
 
-重新生成位于 `~/.local/bin/<name>` 的 shell alias 脚本。适用于 alias 被意外删除，或移动 Hermes 安装目录后需要更新的情况。
+重新生成位于 `~/.local/bin/<name>` 的 shell alias 脚本。适用于 alias 被意外删除，或移动 Janus 安装目录后需要更新的情况。
 
 | 参数 / 选项 | 描述 |
 |-------------------|-------------|
@@ -207,20 +207,20 @@ hermes profile alias <name> [options]
 **示例：**
 
 ```bash
-hermes profile alias work
+janus profile alias work
 # 创建/更新 ~/.local/bin/work
 
-hermes profile alias work --name mywork
+janus profile alias work --name mywork
 # 创建 ~/.local/bin/mywork
 
-hermes profile alias work --remove
+janus profile alias work --remove
 # 移除 wrapper 脚本
 ```
 
-## `hermes profile rename`
+## `janus profile rename`
 
 ```bash
-hermes profile rename <old-name> <new-name>
+janus profile rename <old-name> <new-name>
 ```
 
 重命名 profile，同时更新目录和 shell alias。
@@ -233,15 +233,15 @@ hermes profile rename <old-name> <new-name>
 **示例：**
 
 ```bash
-hermes profile rename mybot assistant
-# ~/.hermes/profiles/mybot → ~/.hermes/profiles/assistant
+janus profile rename mybot assistant
+# ~/.janus/profiles/mybot → ~/.janus/profiles/assistant
 # ~/.local/bin/mybot → ~/.local/bin/assistant
 ```
 
-## `hermes profile export`
+## `janus profile export`
 
 ```bash
-hermes profile export <name> [options]
+janus profile export <name> [options]
 ```
 
 将 profile 导出为压缩的 tar.gz 归档文件。
@@ -254,16 +254,16 @@ hermes profile export <name> [options]
 **示例：**
 
 ```bash
-hermes profile export work
+janus profile export work
 # 在当前目录创建 work.tar.gz
 
-hermes profile export work -o ./work-2026-03-29.tar.gz
+janus profile export work -o ./work-2026-03-29.tar.gz
 ```
 
-## `hermes profile import`
+## `janus profile import`
 
 ```bash
-hermes profile import <archive> [options]
+janus profile import <archive> [options]
 ```
 
 从 tar.gz 归档文件导入 profile。
@@ -276,10 +276,10 @@ hermes profile import <archive> [options]
 **示例：**
 
 ```bash
-hermes profile import ./work-2026-03-29.tar.gz
+janus profile import ./work-2026-03-29.tar.gz
 # 从归档文件推断 profile 名称
 
-hermes profile import ./work-2026-03-29.tar.gz --name work-restored
+janus profile import ./work-2026-03-29.tar.gz --name work-restored
 ```
 
 ## 发行版命令
@@ -295,13 +295,13 @@ hermes profile import ./work-2026-03-29.tar.gz --name work-restored
 接收方的用户数据（memories、sessions、auth、对 `.env` 的自有编辑）在初次安装和后续更新中始终得到保留。
 
 :::info
-`hermes profile export` / `import` 仍是在**本机进行 profile 本地备份和恢复**的正确命令。发行版（`install` / `update` / `info`）是独立概念：通过 git 分发 profile，供他人安装。
+`janus profile export` / `import` 仍是在**本机进行 profile 本地备份和恢复**的正确命令。发行版（`install` / `update` / `info`）是独立概念：通过 git 分发 profile，供他人安装。
 :::
 
-### `hermes profile install`
+### `janus profile install`
 
 ```bash
-hermes profile install <source> [--name <name>] [--alias] [--force] [--yes]
+janus profile install <source> [--name <name>] [--alias] [--force] [--yes]
 ```
 
 从 git URL 或本地目录安装 profile 发行版。
@@ -310,7 +310,7 @@ hermes profile install <source> [--name <name>] [--alias] [--force] [--yes]
 |--------|-------------|
 | `<source>` | Git URL（`github.com/user/repo`、`https://...`、`git@...`、`ssh://`、`git://`）或包含 `distribution.yaml` 的本地目录根路径。 |
 | `--name NAME` | 覆盖 manifest 中的 profile 名称。 |
-| `--alias` | 同时创建 shell wrapper（例如 `telemetry` → `hermes -p telemetry`）。 |
+| `--alias` | 同时创建 shell wrapper（例如 `telemetry` → `janus -p telemetry`）。 |
 | `--force` | 覆盖同名的已有 profile。用户数据仍会保留。 |
 | `-y`, `--yes` | 跳过 manifest 预览确认提示。 |
 
@@ -320,37 +320,37 @@ hermes profile install <source> [--name <name>] [--alias] [--force] [--yes]
 
 ```bash
 # 从 GitHub 仓库安装（简写）
-hermes profile install github.com/kyle/telemetry-distribution --alias
+janus profile install github.com/kyle/telemetry-distribution --alias
 
 # 从完整 HTTPS git URL 安装
-hermes profile install https://github.com/kyle/telemetry-distribution.git
+janus profile install https://github.com/kyle/telemetry-distribution.git
 
 # 从 SSH 安装
-hermes profile install git@github.com:kyle/telemetry-distribution.git
+janus profile install git@github.com:kyle/telemetry-distribution.git
 
 # 开发时从本地目录安装
-hermes profile install ./telemetry/
+janus profile install ./telemetry/
 ```
 
-### `hermes profile update`
+### `janus profile update`
 
 ```bash
-hermes profile update <name> [--force-config] [--yes]
+janus profile update <name> [--force-config] [--yes]
 ```
 
 从记录的来源重新克隆发行版并应用更新。发行版所有的文件（SOUL.md、skills/、cron/、mcp.json）会被覆盖；用户数据（memories、sessions、auth、.env）不会被修改。
 
 默认保留 `config.yaml` 以保持本地覆盖设置。传入 `--force-config` 可将其重置为发行版附带的 config。
 
-### `hermes profile info`
+### `janus profile info`
 
 ```bash
-hermes profile info <name>
+janus profile info <name>
 ```
 
-打印 profile 的发行版 manifest — 名称、版本、所需 Hermes 版本、作者、环境变量要求、来源 URL/路径，以及发行版最后一次 `install` 或 `update` 时记录的 `Installed:` 时间戳。适用于安装前检查共享 profile 的需求，以及发现"该 profile 已安装 6 个月未更新"等情况。
+打印 profile 的发行版 manifest — 名称、版本、所需 Janus 版本、作者、环境变量要求、来源 URL/路径，以及发行版最后一次 `install` 或 `update` 时记录的 `Installed:` 时间戳。适用于安装前检查共享 profile 的需求，以及发现"该 profile 已安装 6 个月未更新"等情况。
 
-`hermes profile list` 也会在 `Distribution` 列中显示发行版名称和版本，`hermes profile show <name>` / `delete <name>` 会显示来源 URL，让你一眼看出哪些 profile 来自 git 仓库，哪些是本地创建的。
+`janus profile list` 也会在 `Distribution` 列中显示发行版名称和版本，`janus profile show <name>` / `delete <name>` 会显示来源 URL，让你一眼看出哪些 profile 来自 git 仓库，哪些是本地创建的。
 
 ### 私有发行版
 
@@ -358,10 +358,10 @@ hermes profile info <name>
 
 ```bash
 # 使用 SSH 密钥，与普通 `git clone` 相同
-hermes profile install git@github.com:your-org/internal-assistant.git
+janus profile install git@github.com:your-org/internal-assistant.git
 
 # 使用 git credential helper
-hermes profile install https://github.com/your-org/internal-assistant.git
+janus profile install https://github.com/your-org/internal-assistant.git
 ```
 
 如果克隆时在终端交互式提示输入凭据，该提示会正常显示。请先按照对同一仓库执行 `git clone` 的方式配置好认证，再执行安装。
@@ -374,7 +374,7 @@ hermes profile install https://github.com/your-org/internal-assistant.git
 name: telemetry
 version: 0.1.0
 description: "Compliance monitoring harness"
-hermes_requires: ">=0.12.0"
+janus_requires: ">=0.12.0"
 author: "Your Name"
 license: "MIT"
 env_requires:
@@ -392,7 +392,7 @@ distribution_owned:   # optional; defaults to SOUL.md, config.yaml,
   - cron/
 ```
 
-`hermes_requires` 支持 `>=`、`<=`、`==`、`!=`、`>`、`<`，或裸版本号（视为 `>=`）。若当前 Hermes 版本不满足规格，安装将失败并给出明确错误。
+`janus_requires` 支持 `>=`、`<=`、`==`、`!=`、`>`、`<`，或裸版本号（视为 `>=`）。若当前 Janus 版本不满足规格，安装将失败并给出明确错误。
 
 `distribution_owned` 为可选项。若设置，更新时仅替换这些路径；profile 中的其他内容保持用户所有。若省略，则应用上述默认值。
 
@@ -401,19 +401,19 @@ distribution_owned:   # optional; defaults to SOUL.md, config.yaml,
 编写发行版就是一次 git push：
 
 1. 在你的 profile 目录中创建 `distribution.yaml`，至少包含 `name` 和 `version`。
-2. 初始化 git 仓库（或使用已有仓库），推送到 GitHub / GitLab / 任何 Hermes 可克隆的托管平台。
-3. 告知接收方运行 `hermes profile install <your-repo-url>`。
+2. 初始化 git 仓库（或使用已有仓库），推送到 GitHub / GitLab / 任何 Janus 可克隆的托管平台。
+3. 告知接收方运行 `janus profile install <your-repo-url>`。
 
 使用 git tag 进行版本化发布 — 克隆 `HEAD` 的接收方将获得最新状态，你也可以随时在 manifest 中更新 `version:`。
 
-## `hermes -p` / `hermes --profile`
+## `janus -p` / `janus --profile`
 
 ```bash
-hermes -p <name> <command> [options]
-hermes --profile <name> <command> [options]
+janus -p <name> <command> [options]
+janus --profile <name> <command> [options]
 ```
 
-全局标志，用于在不更改默认 profile 的情况下，在指定 profile 下运行任意 Hermes 命令。仅在该命令执行期间覆盖活跃 profile。
+全局标志，用于在不更改默认 profile 的情况下，在指定 profile 下运行任意 Janus 命令。仅在该命令执行期间覆盖活跃 profile。
 
 | 选项 | 描述 |
 |--------|-------------|
@@ -422,16 +422,16 @@ hermes --profile <name> <command> [options]
 **示例：**
 
 ```bash
-hermes -p work chat -q "Check the server status"
-hermes --profile dev gateway start
-hermes -p personal skills list
-hermes -p work config edit
+janus -p work chat -q "Check the server status"
+janus --profile dev gateway start
+janus -p personal skills list
+janus -p work config edit
 ```
 
-## `hermes completion`
+## `janus completion`
 
 ```bash
-hermes completion <shell>
+janus completion <shell>
 ```
 
 生成 shell 补全脚本。包含对 profile 名称和 profile 子命令的补全。
@@ -444,18 +444,18 @@ hermes completion <shell>
 
 ```bash
 # 安装补全脚本
-hermes completion bash >> ~/.bashrc
-hermes completion zsh >> ~/.zshrc
-hermes completion fish > ~/.config/fish/completions/hermes.fish
+janus completion bash >> ~/.bashrc
+janus completion zsh >> ~/.zshrc
+janus completion fish > ~/.config/fish/completions/janus.fish
 
 # 重新加载 shell
 source ~/.bashrc
 ```
 
 安装后，Tab 补全适用于：
-- `hermes profile <TAB>` — 子命令（list、use、create 等）
-- `hermes profile use <TAB>` — profile 名称
-- `hermes -p <TAB>` — profile 名称
+- `janus profile <TAB>` — 子命令（list、use、create 等）
+- `janus profile use <TAB>` — profile 名称
+- `janus -p <TAB>` — profile 名称
 
 ## 另请参阅
 

@@ -1,4 +1,4 @@
-"""nemo_relay — optional Hermes plugin for NeMo Relay observability."""
+"""nemo_relay — optional Janus plugin for NeMo Relay observability."""
 
 from __future__ import annotations
 
@@ -47,13 +47,13 @@ class _Settings:
     adaptive_mode: str = "observe"
     atof_enabled: bool = False
     atof_output_directory: str = ""
-    atof_filename: str = "hermes-atof.jsonl"
+    atof_filename: str = "janus-atof.jsonl"
     atof_mode: str = "append"
     atif_enabled: bool = False
     atif_output_directory: str = ""
-    atif_filename_template: str = "hermes-atif-{session_id}.json"
+    atif_filename_template: str = "janus-atif-{session_id}.json"
     atif_subagent_export_mode: str = "embedded"
-    atif_agent_name: str = "Hermes Agent"
+    atif_agent_name: str = "Janus Agent"
     atif_agent_version: str = "unknown"
     atif_model_name: str = "unknown"
 
@@ -121,7 +121,7 @@ class _Runtime:
         else:
             config.mode = self.nemo_relay.AtofExporterMode.Append
         self.atof_exporter = self.nemo_relay.AtofExporter(config)
-        self.atof_exporter.register("hermes.nemo_relay.atof")
+        self.atof_exporter.register("janus.nemo_relay.atof")
 
     def ensure_session(self, kwargs: dict[str, Any]) -> _SessionState:
         session_id = _session_id(kwargs)
@@ -136,9 +136,9 @@ class _Runtime:
                 self.settings.atif_agent_name,
                 self.settings.atif_agent_version,
                 model_name=str(kwargs.get("model") or self.settings.atif_model_name),
-                extra={"source": "hermes-agent", "plugin": "observability/nemo_relay"},
+                extra={"source": "janus-agent", "plugin": "observability/nemo_relay"},
             )
-            state.atif_subscriber_name = f"hermes.nemo_relay.atif.{session_id}"
+            state.atif_subscriber_name = f"janus.nemo_relay.atif.{session_id}"
             state.atif_exporter.register(state.atif_subscriber_name)
 
         subagent_parent = self.subagent_parents.get(session_id)
@@ -151,7 +151,7 @@ class _Runtime:
             state.parent_session_id = subagent_parent.parent_session_id
 
         state.handle = self.nemo_relay.scope.push(
-            f"hermes-session-{session_id}",
+            f"janus-session-{session_id}",
             self.nemo_relay.ScopeType.Agent,
             handle=parent_handle,
             data={"session_id": session_id},
@@ -210,7 +210,7 @@ class _Runtime:
                 metadata=_subagent_child_metadata(kwargs, metadata),
             )
         self.nemo_relay.scope.event(
-            "hermes.subagent.start",
+            "janus.subagent.start",
             handle=parent_state.handle,
             data=_jsonable(kwargs),
             metadata=metadata,
@@ -220,7 +220,7 @@ class _Runtime:
         child_session_id = _child_session_id(kwargs)
         if child_session_id:
             self.subagent_parents.pop(child_session_id, None)
-        self.mark("hermes.subagent.stop", kwargs)
+        self.mark("janus.subagent.stop", kwargs)
 
     def managed_llm_enabled(self) -> bool:
         return (
@@ -346,7 +346,7 @@ def on_session_start(**kwargs: Any) -> None:
 def on_session_end(**kwargs: Any) -> None:
     runtime = _get_runtime()
     if runtime is not None:
-        _safe(lambda: (runtime.mark("hermes.session.end", kwargs), runtime.export_atif(runtime.ensure_session(kwargs))))
+        _safe(lambda: (runtime.mark("janus.session.end", kwargs), runtime.export_atif(runtime.ensure_session(kwargs))))
 
 
 def on_session_finalize(**kwargs: Any) -> None:
@@ -364,13 +364,13 @@ def on_session_reset(**kwargs: Any) -> None:
 def on_pre_llm_call(**kwargs: Any) -> None:
     runtime = _get_runtime()
     if runtime is not None:
-        _safe(lambda: runtime.mark("hermes.turn.start", kwargs))
+        _safe(lambda: runtime.mark("janus.turn.start", kwargs))
 
 
 def on_post_llm_call(**kwargs: Any) -> None:
     runtime = _get_runtime()
     if runtime is not None:
-        _safe(lambda: runtime.mark("hermes.turn.end", kwargs))
+        _safe(lambda: runtime.mark("janus.turn.end", kwargs))
 
 
 def on_pre_api_request(**kwargs: Any) -> None:
@@ -409,7 +409,7 @@ def on_post_api_request(**kwargs: Any) -> None:
         state = runtime.ensure_session(kwargs)
         span = state.llm_spans.pop(_api_key(kwargs), None)
         if span is None:
-            runtime.mark("hermes.api.response.unmatched", kwargs)
+            runtime.mark("janus.api.response.unmatched", kwargs)
             return
         runtime.nemo_relay.llm.call_end(
             span,
@@ -432,7 +432,7 @@ def on_api_request_error(**kwargs: Any) -> None:
         state = runtime.ensure_session(kwargs)
         span = state.llm_spans.pop(_api_key(kwargs), None)
         if span is None:
-            runtime.mark("hermes.api.error", kwargs)
+            runtime.mark("janus.api.error", kwargs)
             return
         runtime.nemo_relay.llm.call_end(
             span,
@@ -477,7 +477,7 @@ def on_post_tool_call(**kwargs: Any) -> None:
         state = runtime.ensure_session(kwargs)
         span = state.tool_spans.pop(_tool_key(kwargs), None)
         if span is None:
-            runtime.mark("hermes.tool.response.unmatched", kwargs)
+            runtime.mark("janus.tool.response.unmatched", kwargs)
             return
         runtime.nemo_relay.tools.call_end(
             span,
@@ -492,13 +492,13 @@ def on_post_tool_call(**kwargs: Any) -> None:
 def on_pre_approval_request(**kwargs: Any) -> None:
     runtime = _get_runtime()
     if runtime is not None:
-        _safe(lambda: runtime.mark("hermes.approval.request", kwargs))
+        _safe(lambda: runtime.mark("janus.approval.request", kwargs))
 
 
 def on_post_approval_response(**kwargs: Any) -> None:
     runtime = _get_runtime()
     if runtime is not None:
-        _safe(lambda: runtime.mark("hermes.approval.response", kwargs))
+        _safe(lambda: runtime.mark("janus.approval.response", kwargs))
 
 
 def on_subagent_start(**kwargs: Any) -> None:
@@ -558,7 +558,7 @@ def _get_runtime() -> Optional[_Runtime]:
 
 
 def _load_settings() -> _Settings:
-    plugins_toml_path = _env("HERMES_NEMO_RELAY_PLUGINS_TOML")
+    plugins_toml_path = _env("JANUS_NEMO_RELAY_PLUGINS_TOML")
     plugins_config = _load_plugins_config(plugins_toml_path)
     adaptive_config = _enabled_component_config(plugins_config, "adaptive")
     return _Settings(
@@ -566,17 +566,17 @@ def _load_settings() -> _Settings:
         plugins_config=plugins_config,
         adaptive_enabled=adaptive_config is not None,
         adaptive_mode=_adaptive_mode(adaptive_config),
-        atof_enabled=_env_bool("HERMES_NEMO_RELAY_ATOF_ENABLED"),
-        atof_output_directory=_env("HERMES_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY"),
-        atof_filename=_env("HERMES_NEMO_RELAY_ATOF_FILENAME") or "hermes-atof.jsonl",
-        atof_mode=_env("HERMES_NEMO_RELAY_ATOF_MODE") or "append",
-        atif_enabled=_env_bool("HERMES_NEMO_RELAY_ATIF_ENABLED"),
-        atif_output_directory=_env("HERMES_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY"),
-        atif_filename_template=_env("HERMES_NEMO_RELAY_ATIF_FILENAME_TEMPLATE") or "hermes-atif-{session_id}.json",
+        atof_enabled=_env_bool("JANUS_NEMO_RELAY_ATOF_ENABLED"),
+        atof_output_directory=_env("JANUS_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY"),
+        atof_filename=_env("JANUS_NEMO_RELAY_ATOF_FILENAME") or "janus-atof.jsonl",
+        atof_mode=_env("JANUS_NEMO_RELAY_ATOF_MODE") or "append",
+        atif_enabled=_env_bool("JANUS_NEMO_RELAY_ATIF_ENABLED"),
+        atif_output_directory=_env("JANUS_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY"),
+        atif_filename_template=_env("JANUS_NEMO_RELAY_ATIF_FILENAME_TEMPLATE") or "janus-atif-{session_id}.json",
         atif_subagent_export_mode=_atif_subagent_export_mode(),
-        atif_agent_name=_env("HERMES_NEMO_RELAY_ATIF_AGENT_NAME") or "Hermes Agent",
-        atif_agent_version=_env("HERMES_NEMO_RELAY_ATIF_AGENT_VERSION") or "unknown",
-        atif_model_name=_env("HERMES_NEMO_RELAY_ATIF_MODEL_NAME") or "unknown",
+        atif_agent_name=_env("JANUS_NEMO_RELAY_ATIF_AGENT_NAME") or "Janus Agent",
+        atif_agent_version=_env("JANUS_NEMO_RELAY_ATIF_AGENT_VERSION") or "unknown",
+        atif_model_name=_env("JANUS_NEMO_RELAY_ATIF_MODEL_NAME") or "unknown",
     )
 
 
@@ -623,7 +623,7 @@ def _env(name: str) -> str:
 
 
 def _atif_subagent_export_mode() -> str:
-    mode = _env("HERMES_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE").lower()
+    mode = _env("JANUS_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE").lower()
     return "all" if mode == "all" else "embedded"
 
 
@@ -820,7 +820,7 @@ def _resolve_awaitable(value: Any) -> Any:
 
     thread = threading.Thread(
         target=_runner,
-        name="hermes-nemo-relay-awaitable",
+        name="janus-nemo-relay-awaitable",
         daemon=True,
     )
     thread.start()

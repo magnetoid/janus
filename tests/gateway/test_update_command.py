@@ -49,22 +49,22 @@ class TestHandleUpdateCommand:
     async def test_managed_install_returns_package_manager_guidance(self, monkeypatch):
         runner = _make_runner()
         event = _make_event()
-        monkeypatch.setenv("HERMES_MANAGED", "homebrew")
+        monkeypatch.setenv("JANUS_MANAGED", "homebrew")
 
         result = await runner._handle_update_command(event)
 
         assert "managed by Homebrew" in result
-        assert "brew upgrade hermes-agent" in result
+        assert "brew upgrade janus-agent" in result
 
     @pytest.mark.asyncio
     async def test_no_git_directory(self, tmp_path):
         """Returns an error when .git does not exist."""
         runner = _make_runner()
         event = _make_event()
-        # Point _hermes_home to tmp_path and project_root to a dir without .git
+        # Point _janus_home to tmp_path and project_root to a dir without .git
         fake_root = tmp_path / "project"
         fake_root.mkdir()
-        with patch("gateway.run._hermes_home", tmp_path), \
+        with patch("gateway.run._janus_home", tmp_path), \
              patch("gateway.run.Path") as MockPath:
             # Path(__file__).parent.parent.resolve() -> fake_root
             MockPath.return_value = MagicMock()
@@ -75,11 +75,11 @@ class TestHandleUpdateCommand:
         # Simpler approach — mock at method level using a wrapper
         runner = _make_runner()
 
-        with patch("gateway.run._hermes_home", tmp_path):
+        with patch("gateway.run._janus_home", tmp_path):
             # The handler does Path(__file__).parent.parent.resolve()
             # We need to make project_root / '.git' not exist.
             # Since Path(__file__) resolves to the real gateway/run.py,
-            # project_root will be the real hermes-agent dir (which HAS .git).
+            # project_root will be the real janus-agent dir (which HAS .git).
             # Patch Path to control this.
             original_path = Path
 
@@ -97,8 +97,8 @@ class TestHandleUpdateCommand:
         assert "Not a git repository" in result
 
     @pytest.mark.asyncio
-    async def test_no_hermes_binary(self, tmp_path):
-        """Returns error when hermes is not on PATH and hermes_cli is not importable."""
+    async def test_no_janus_binary(self, tmp_path):
+        """Returns error when janus is not on PATH and janus_cli is not importable."""
         runner = _make_runner()
         event = _make_event()
 
@@ -110,18 +110,18 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
 
-        with patch("gateway.run._hermes_home", tmp_path), \
+        with patch("gateway.run._janus_home", tmp_path), \
              patch("gateway.run.__file__", fake_file), \
              patch("shutil.which", return_value=None), \
              patch("importlib.util.find_spec", return_value=None):
             result = await runner._handle_update_command(event)
 
         assert "Could not locate" in result
-        assert "hermes update" in result
+        assert "janus update" in result
 
     @pytest.mark.asyncio
     async def test_fallback_to_sys_executable(self, tmp_path):
-        """Falls back to sys.executable -m hermes_cli.main when hermes not on PATH."""
+        """Falls back to sys.executable -m janus_cli.main when janus not on PATH."""
         runner = _make_runner()
         event = _make_event()
 
@@ -131,56 +131,56 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         mock_popen = MagicMock()
         fake_spec = MagicMock()
 
-        with patch("gateway.run._hermes_home", hermes_home), \
+        with patch("gateway.run._janus_home", janus_home), \
              patch("gateway.run.__file__", fake_file), \
              patch("shutil.which", return_value=None), \
              patch("importlib.util.find_spec", return_value=fake_spec), \
              patch("subprocess.Popen", mock_popen):
             result = await runner._handle_update_command(event)
 
-        assert "Starting Hermes update" in result
+        assert "Starting Janus update" in result
         call_args = mock_popen.call_args[0][0]
-        # The update_cmd uses sys.executable -m hermes_cli.main
+        # The update_cmd uses sys.executable -m janus_cli.main
         joined = " ".join(call_args) if isinstance(call_args, list) else call_args
-        assert "hermes_cli.main" in joined or "bash" in call_args[0]
+        assert "janus_cli.main" in joined or "bash" in call_args[0]
 
     @pytest.mark.asyncio
-    async def test_resolve_hermes_bin_prefers_which(self, tmp_path):
-        """_resolve_hermes_bin returns argv parts from shutil.which when available."""
-        from gateway.run import _resolve_hermes_bin
+    async def test_resolve_janus_bin_prefers_which(self, tmp_path):
+        """_resolve_janus_bin returns argv parts from shutil.which when available."""
+        from gateway.run import _resolve_janus_bin
 
-        with patch("shutil.which", return_value="/custom/path/hermes"):
-            result = _resolve_hermes_bin()
+        with patch("shutil.which", return_value="/custom/path/janus"):
+            result = _resolve_janus_bin()
 
-        assert result == ["/custom/path/hermes"]
+        assert result == ["/custom/path/janus"]
 
     @pytest.mark.asyncio
-    async def test_resolve_hermes_bin_fallback(self):
-        """_resolve_hermes_bin falls back to sys.executable argv when which fails."""
+    async def test_resolve_janus_bin_fallback(self):
+        """_resolve_janus_bin falls back to sys.executable argv when which fails."""
         import sys
-        from gateway.run import _resolve_hermes_bin
+        from gateway.run import _resolve_janus_bin
 
         fake_spec = MagicMock()
         with patch("shutil.which", return_value=None), \
              patch("importlib.util.find_spec", return_value=fake_spec):
-            result = _resolve_hermes_bin()
+            result = _resolve_janus_bin()
 
-        assert result == [sys.executable, "-m", "hermes_cli.main"]
+        assert result == [sys.executable, "-m", "janus_cli.main"]
 
     @pytest.mark.asyncio
-    async def test_resolve_hermes_bin_returns_none_when_both_fail(self):
-        """_resolve_hermes_bin returns None when both strategies fail."""
-        from gateway.run import _resolve_hermes_bin
+    async def test_resolve_janus_bin_returns_none_when_both_fail(self):
+        """_resolve_janus_bin returns None when both strategies fail."""
+        from gateway.run import _resolve_janus_bin
 
         with patch("shutil.which", return_value=None), \
              patch("importlib.util.find_spec", return_value=None):
-            result = _resolve_hermes_bin()
+            result = _resolve_janus_bin()
 
         assert result is None
 
@@ -197,16 +197,16 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        with patch("gateway.run._hermes_home", hermes_home), \
+        with patch("gateway.run._janus_home", janus_home), \
              patch("gateway.run.__file__", fake_file), \
-             patch("shutil.which", side_effect=lambda x: "/usr/bin/hermes" if x == "hermes" else "/usr/bin/setsid"), \
+             patch("shutil.which", side_effect=lambda x: "/usr/bin/janus" if x == "janus" else "/usr/bin/setsid"), \
              patch("subprocess.Popen"):
             result = await runner._handle_update_command(event)
 
-        pending_path = hermes_home / ".update_pending.json"
+        pending_path = janus_home / ".update_pending.json"
         assert pending_path.exists()
         data = json.loads(pending_path.read_text())
         assert data["platform"] == "telegram"
@@ -214,7 +214,7 @@ class TestHandleUpdateCommand:
         assert data["chat_type"] == "dm"
         assert data["message_id"] == "m-update"
         assert "timestamp" in data
-        assert not (hermes_home / ".update_exit_code").exists()
+        assert not (janus_home / ".update_exit_code").exists()
 
     @pytest.mark.asyncio
     async def test_writes_pending_marker_with_thread_id(self, tmp_path):
@@ -233,16 +233,16 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        with patch("gateway.run._hermes_home", hermes_home), \
+        with patch("gateway.run._janus_home", janus_home), \
              patch("gateway.run.__file__", fake_file), \
-             patch("shutil.which", side_effect=lambda x: "/usr/bin/hermes" if x == "hermes" else "/usr/bin/setsid"), \
+             patch("shutil.which", side_effect=lambda x: "/usr/bin/janus" if x == "janus" else "/usr/bin/setsid"), \
              patch("subprocess.Popen"):
             await runner._handle_update_command(event)
 
-        data = json.loads((hermes_home / ".update_pending.json").read_text())
+        data = json.loads((janus_home / ".update_pending.json").read_text())
         assert data["thread_id"] == "777"
         assert data["message_id"] == "m-update-thread"
 
@@ -258,11 +258,11 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         mock_popen = MagicMock()
-        with patch("gateway.run._hermes_home", hermes_home), \
+        with patch("gateway.run._janus_home", janus_home), \
              patch("gateway.run.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("subprocess.Popen", mock_popen):
@@ -273,7 +273,7 @@ class TestHandleUpdateCommand:
         assert call_args[0] == "/usr/bin/setsid"
         assert call_args[1] == "bash"
         assert ".update_exit_code" in call_args[-1]
-        assert "Starting Hermes update" in result
+        assert "Starting Janus update" in result
 
     @pytest.mark.asyncio
     async def test_fallback_when_no_setsid(self, tmp_path):
@@ -287,19 +287,19 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         mock_popen = MagicMock()
 
         def which_no_setsid(x):
-            if x == "hermes":
-                return "/usr/bin/hermes"
+            if x == "janus":
+                return "/usr/bin/janus"
             if x == "setsid":
                 return None
             return None
 
-        with patch("gateway.run._hermes_home", hermes_home), \
+        with patch("gateway.run._janus_home", janus_home), \
              patch("gateway.run.__file__", fake_file), \
              patch("shutil.which", side_effect=which_no_setsid), \
              patch("subprocess.Popen", mock_popen):
@@ -313,7 +313,7 @@ class TestHandleUpdateCommand:
         # start_new_session=True should be in kwargs
         call_kwargs = mock_popen.call_args[1]
         assert call_kwargs.get("start_new_session") is True
-        assert "Starting Hermes update" in result
+        assert "Starting Janus update" in result
 
     @pytest.mark.asyncio
     async def test_popen_failure_cleans_up(self, tmp_path):
@@ -327,10 +327,10 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        with patch("gateway.run._hermes_home", hermes_home), \
+        with patch("gateway.run._janus_home", janus_home), \
              patch("gateway.run.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("subprocess.Popen", side_effect=OSError("spawn failed")):
@@ -338,8 +338,8 @@ class TestHandleUpdateCommand:
 
         assert "Failed to start update" in result
         # Pending file should be cleaned up
-        assert not (hermes_home / ".update_pending.json").exists()
-        assert not (hermes_home / ".update_exit_code").exists()
+        assert not (janus_home / ".update_pending.json").exists()
+        assert not (janus_home / ".update_exit_code").exists()
 
     @pytest.mark.asyncio
     async def test_returns_user_friendly_message(self, tmp_path):
@@ -353,10 +353,10 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway").mkdir()
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        with patch("gateway.run._hermes_home", hermes_home), \
+        with patch("gateway.run._janus_home", janus_home), \
              patch("gateway.run.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("subprocess.Popen"):
@@ -388,7 +388,7 @@ class TestUpdateCommandPlatformGate:
         # Stop _handle_update_command from progressing further if the gate
         # somehow lets the event through — the assertion on the returned
         # string is the real test.
-        monkeypatch.setenv("HERMES_MANAGED", "")
+        monkeypatch.setenv("JANUS_MANAGED", "")
 
         result = await runner._handle_update_command(event)
 
@@ -403,7 +403,7 @@ class TestUpdateCommandPlatformGate:
         """
         runner = _make_runner()
         event = _make_event(platform=Platform.API_SERVER)
-        monkeypatch.setenv("HERMES_MANAGED", "")
+        monkeypatch.setenv("JANUS_MANAGED", "")
 
         result = await runner._handle_update_command(event)
 
@@ -425,7 +425,7 @@ class TestUpdateCommandPlatformGate:
         assert Platform.DISCORD not in GatewayRunner._UPDATE_ALLOWED_PLATFORMS
 
         # Make sure the plugin registry is populated so the fallback fires.
-        from hermes_cli.plugins import PluginManager
+        from janus_cli.plugins import PluginManager
         PluginManager().discover_and_load(force=True)
         from gateway.platform_registry import platform_registry
         discord_entry = platform_registry.get("discord")
@@ -434,13 +434,13 @@ class TestUpdateCommandPlatformGate:
 
         runner = _make_runner()
         event = _make_event(platform=Platform.DISCORD)
-        monkeypatch.setenv("HERMES_MANAGED", "")
+        monkeypatch.setenv("JANUS_MANAGED", "")
 
         result = await runner._handle_update_command(event)
 
         # The gate must NOT have rejected us — anything other than the
         # ``platform_not_messaging`` rejection string is acceptable here.
-        # Later steps may legitimately return success ("Starting Hermes
+        # Later steps may legitimately return success ("Starting Janus
         # update…") or fail for environment reasons.
         assert "only available from messaging platforms" not in result
 
@@ -453,7 +453,7 @@ class TestUpdateCommandPlatformGate:
 
         assert Platform.MATTERMOST not in GatewayRunner._UPDATE_ALLOWED_PLATFORMS
 
-        from hermes_cli.plugins import PluginManager
+        from janus_cli.plugins import PluginManager
         PluginManager().discover_and_load(force=True)
         from gateway.platform_registry import platform_registry
         mm_entry = platform_registry.get("mattermost")
@@ -462,7 +462,7 @@ class TestUpdateCommandPlatformGate:
 
         runner = _make_runner()
         event = _make_event(platform=Platform.MATTERMOST)
-        monkeypatch.setenv("HERMES_MANAGED", "")
+        monkeypatch.setenv("JANUS_MANAGED", "")
 
         result = await runner._handle_update_command(event)
 
@@ -478,7 +478,7 @@ class TestUpdateCommandPlatformGate:
 
         assert Platform.HOMEASSISTANT not in GatewayRunner._UPDATE_ALLOWED_PLATFORMS
 
-        from hermes_cli.plugins import PluginManager
+        from janus_cli.plugins import PluginManager
         PluginManager().discover_and_load(force=True)
         from gateway.platform_registry import platform_registry
         ha_entry = platform_registry.get("homeassistant")
@@ -487,7 +487,7 @@ class TestUpdateCommandPlatformGate:
 
         runner = _make_runner()
         event = _make_event(platform=Platform.HOMEASSISTANT)
-        monkeypatch.setenv("HERMES_MANAGED", "")
+        monkeypatch.setenv("JANUS_MANAGED", "")
 
         result = await runner._handle_update_command(event)
 
@@ -504,7 +504,7 @@ class TestUpdateCommandPlatformGate:
 
         runner = _make_runner()
         event = _make_event(platform=Platform.TELEGRAM)
-        monkeypatch.setenv("HERMES_MANAGED", "")
+        monkeypatch.setenv("JANUS_MANAGED", "")
 
         result = await runner._handle_update_command(event)
 
@@ -523,10 +523,10 @@ class TestSendUpdateNotification:
     async def test_no_pending_file_is_noop(self, tmp_path):
         """Does nothing when no pending file exists."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             # Should not raise
             await runner._send_update_notification()
 
@@ -534,19 +534,19 @@ class TestSendUpdateNotification:
     async def test_defers_notification_while_update_still_running(self, tmp_path):
         """Returns False and keeps marker files when the update has not exited yet."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        pending_path = hermes_home / ".update_pending.json"
+        pending_path = janus_home / ".update_pending.json"
         pending_path.write_text(json.dumps({
             "platform": "telegram", "chat_id": "67890", "user_id": "12345",
         }))
-        (hermes_home / ".update_output.txt").write_text("still running")
+        (janus_home / ".update_output.txt").write_text("still running")
 
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         assert result is False
@@ -557,20 +557,20 @@ class TestSendUpdateNotification:
     async def test_recovers_from_claimed_pending_file(self, tmp_path):
         """A claimed pending file from a crashed notifier is still deliverable."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        claimed_path = hermes_home / ".update_pending.claimed.json"
+        claimed_path = janus_home / ".update_pending.claimed.json"
         claimed_path.write_text(json.dumps({
             "platform": "telegram", "chat_id": "67890", "user_id": "12345",
         }))
-        (hermes_home / ".update_output.txt").write_text("done")
-        (hermes_home / ".update_exit_code").write_text("0")
+        (janus_home / ".update_output.txt").write_text("done")
+        (janus_home / ".update_exit_code").write_text("0")
 
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         assert result is True
@@ -581,8 +581,8 @@ class TestSendUpdateNotification:
     async def test_sends_notification_with_output(self, tmp_path):
         """Sends update output to the correct platform and chat."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         # Write pending marker
         pending = {
@@ -591,18 +591,18 @@ class TestSendUpdateNotification:
             "user_id": "12345",
             "timestamp": "2026-03-04T21:00:00",
         }
-        (hermes_home / ".update_pending.json").write_text(json.dumps(pending))
-        (hermes_home / ".update_output.txt").write_text(
+        (janus_home / ".update_pending.json").write_text(json.dumps(pending))
+        (janus_home / ".update_output.txt").write_text(
             "→ Found 3 new commit(s)\n✓ Code updated!\n✓ Update complete!"
         )
-        (hermes_home / ".update_exit_code").write_text("0")
+        (janus_home / ".update_exit_code").write_text("0")
 
         # Mock the adapter
         mock_adapter = AsyncMock()
         mock_adapter.send = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             await runner._send_update_notification()
 
         mock_adapter.send.assert_called_once()
@@ -614,8 +614,8 @@ class TestSendUpdateNotification:
     async def test_sends_notification_with_thread_metadata(self, tmp_path):
         """Final update notification preserves thread metadata when present."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         pending = {
             "platform": "telegram",
@@ -625,14 +625,14 @@ class TestSendUpdateNotification:
             "message_id": "m-update-thread",
             "user_id": "12345",
         }
-        (hermes_home / ".update_pending.json").write_text(json.dumps(pending))
-        (hermes_home / ".update_output.txt").write_text("done")
-        (hermes_home / ".update_exit_code").write_text("0")
+        (janus_home / ".update_pending.json").write_text(json.dumps(pending))
+        (janus_home / ".update_output.txt").write_text("done")
+        (janus_home / ".update_exit_code").write_text("0")
 
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             await runner._send_update_notification()
 
         assert mock_adapter.send.call_args.kwargs["metadata"] == {
@@ -646,20 +646,20 @@ class TestSendUpdateNotification:
     async def test_strips_ansi_codes(self, tmp_path):
         """ANSI escape codes are removed from output."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         pending = {"platform": "telegram", "chat_id": "111", "user_id": "222"}
-        (hermes_home / ".update_pending.json").write_text(json.dumps(pending))
-        (hermes_home / ".update_output.txt").write_text(
+        (janus_home / ".update_pending.json").write_text(json.dumps(pending))
+        (janus_home / ".update_output.txt").write_text(
             "\x1b[32m✓ Code updated!\x1b[0m\n\x1b[1mDone\x1b[0m"
         )
-        (hermes_home / ".update_exit_code").write_text("0")
+        (janus_home / ".update_exit_code").write_text("0")
 
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             await runner._send_update_notification()
 
         sent_text = mock_adapter.send.call_args[0][1]
@@ -670,18 +670,18 @@ class TestSendUpdateNotification:
     async def test_truncates_long_output(self, tmp_path):
         """Output longer than 3500 chars is truncated."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         pending = {"platform": "telegram", "chat_id": "111", "user_id": "222"}
-        (hermes_home / ".update_pending.json").write_text(json.dumps(pending))
-        (hermes_home / ".update_output.txt").write_text("x" * 5000)
-        (hermes_home / ".update_exit_code").write_text("0")
+        (janus_home / ".update_pending.json").write_text(json.dumps(pending))
+        (janus_home / ".update_output.txt").write_text("x" * 5000)
+        (janus_home / ".update_exit_code").write_text("0")
 
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             await runner._send_update_notification()
 
         sent_text = mock_adapter.send.call_args[0][1]
@@ -694,18 +694,18 @@ class TestSendUpdateNotification:
     async def test_sends_failure_message_when_update_fails(self, tmp_path):
         """Non-zero exit codes produce a failure notification with captured output."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         pending = {"platform": "telegram", "chat_id": "111", "user_id": "222"}
-        (hermes_home / ".update_pending.json").write_text(json.dumps(pending))
-        (hermes_home / ".update_output.txt").write_text("Traceback: boom")
-        (hermes_home / ".update_exit_code").write_text("1")
+        (janus_home / ".update_pending.json").write_text(json.dumps(pending))
+        (janus_home / ".update_output.txt").write_text("Traceback: boom")
+        (janus_home / ".update_exit_code").write_text("1")
 
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         assert result is True
@@ -717,18 +717,18 @@ class TestSendUpdateNotification:
     async def test_sends_generic_message_when_no_output(self, tmp_path):
         """Sends a success message even if the output file is missing."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         pending = {"platform": "telegram", "chat_id": "111", "user_id": "222"}
-        (hermes_home / ".update_pending.json").write_text(json.dumps(pending))
+        (janus_home / ".update_pending.json").write_text(json.dumps(pending))
         # No .update_output.txt created
-        (hermes_home / ".update_exit_code").write_text("0")
+        (janus_home / ".update_exit_code").write_text("0")
 
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             await runner._send_update_notification()
 
         sent_text = mock_adapter.send.call_args[0][1]
@@ -738,12 +738,12 @@ class TestSendUpdateNotification:
     async def test_cleans_up_files_after_notification(self, tmp_path):
         """Both marker and output files are deleted after notification."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        pending_path = hermes_home / ".update_pending.json"
-        output_path = hermes_home / ".update_output.txt"
-        exit_code_path = hermes_home / ".update_exit_code"
+        pending_path = janus_home / ".update_pending.json"
+        output_path = janus_home / ".update_output.txt"
+        exit_code_path = janus_home / ".update_exit_code"
         pending_path.write_text(json.dumps({
             "platform": "telegram", "chat_id": "111", "user_id": "222",
         }))
@@ -753,7 +753,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             await runner._send_update_notification()
 
         assert not pending_path.exists()
@@ -764,12 +764,12 @@ class TestSendUpdateNotification:
     async def test_cleans_up_on_error(self, tmp_path):
         """Files are cleaned up even if notification fails."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        pending_path = hermes_home / ".update_pending.json"
-        output_path = hermes_home / ".update_output.txt"
-        exit_code_path = hermes_home / ".update_exit_code"
+        pending_path = janus_home / ".update_pending.json"
+        output_path = janus_home / ".update_output.txt"
+        exit_code_path = janus_home / ".update_exit_code"
         pending_path.write_text(json.dumps({
             "platform": "telegram", "chat_id": "111", "user_id": "222",
         }))
@@ -781,7 +781,7 @@ class TestSendUpdateNotification:
         mock_adapter.send.side_effect = RuntimeError("network error")
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             await runner._send_update_notification()
 
         # Files should still be cleaned up (finally block)
@@ -793,13 +793,13 @@ class TestSendUpdateNotification:
     async def test_handles_corrupt_pending_file(self, tmp_path):
         """Gracefully handles a malformed pending JSON file."""
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
-        pending_path = hermes_home / ".update_pending.json"
+        pending_path = janus_home / ".update_pending.json"
         pending_path.write_text("{corrupt json!!")
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             # Should not raise
             await runner._send_update_notification()
 
@@ -816,13 +816,13 @@ class TestSendUpdateNotification:
         retry can deliver once the platform is back.
         """
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         pending = {"platform": "discord", "chat_id": "111", "user_id": "222"}
-        pending_path = hermes_home / ".update_pending.json"
-        output_path = hermes_home / ".update_output.txt"
-        exit_code_path = hermes_home / ".update_exit_code"
+        pending_path = janus_home / ".update_pending.json"
+        output_path = janus_home / ".update_output.txt"
+        exit_code_path = janus_home / ".update_exit_code"
         pending_path.write_text(json.dumps(pending))
         output_path.write_text("Done")
         exit_code_path.write_text("0")
@@ -831,7 +831,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         # No send (wrong platform offline) and the result is deferred.
@@ -842,7 +842,7 @@ class TestSendUpdateNotification:
         assert output_path.exists()
         assert exit_code_path.exists()
         # The marker stays in its canonical pending location (claim restored).
-        assert not (hermes_home / ".update_pending.claimed.json").exists()
+        assert not (janus_home / ".update_pending.claimed.json").exists()
 
     @pytest.mark.asyncio
     async def test_deferred_notification_delivers_after_reconnect(self, tmp_path):
@@ -854,19 +854,19 @@ class TestSendUpdateNotification:
         cleans up — exactly once.
         """
         runner = _make_runner()
-        hermes_home = tmp_path / "hermes"
-        hermes_home.mkdir()
+        janus_home = tmp_path / "janus"
+        janus_home.mkdir()
 
         pending = {"platform": "discord", "chat_id": "111", "user_id": "222"}
-        pending_path = hermes_home / ".update_pending.json"
-        output_path = hermes_home / ".update_output.txt"
-        exit_code_path = hermes_home / ".update_exit_code"
+        pending_path = janus_home / ".update_pending.json"
+        output_path = janus_home / ".update_output.txt"
+        exit_code_path = janus_home / ".update_exit_code"
         pending_path.write_text(json.dumps(pending))
         output_path.write_text("✓ Update complete!")
         exit_code_path.write_text("0")
 
         # First pass: target platform (discord) is still offline → defer.
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             first = await runner._send_update_notification()
 
         assert first is False
@@ -876,7 +876,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.DISCORD: mock_adapter}
 
-        with patch("gateway.run._hermes_home", hermes_home):
+        with patch("gateway.run._janus_home", janus_home):
             second = await runner._send_update_notification()
 
         assert second is True
@@ -887,7 +887,7 @@ class TestSendUpdateNotification:
         assert not pending_path.exists()
         assert not output_path.exists()
         assert not exit_code_path.exists()
-        assert not (hermes_home / ".update_pending.claimed.json").exists()
+        assert not (janus_home / ".update_pending.claimed.json").exists()
 
 
 # ---------------------------------------------------------------------------

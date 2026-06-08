@@ -1,4 +1,4 @@
-"""Tests for file write safety and HERMES_WRITE_SAFE_ROOT sandboxing.
+"""Tests for file write safety and JANUS_WRITE_SAFE_ROOT sandboxing.
 
 Based on PR #1085 by ismoilh (salvaged).
 """
@@ -26,21 +26,21 @@ class TestStaticDenyList:
 
 
 class TestSafeWriteRoot:
-    """HERMES_WRITE_SAFE_ROOT should sandbox writes to a specific subtree."""
+    """JANUS_WRITE_SAFE_ROOT should sandbox writes to a specific subtree."""
 
     def test_writes_inside_safe_root_are_allowed(self, tmp_path: Path, monkeypatch):
         safe_root = tmp_path / "workspace"
         child = safe_root / "subdir" / "file.txt"
         os.makedirs(child.parent, exist_ok=True)
 
-        monkeypatch.setenv("HERMES_WRITE_SAFE_ROOT", str(safe_root))
+        monkeypatch.setenv("JANUS_WRITE_SAFE_ROOT", str(safe_root))
         assert _is_write_denied(str(child)) is False
 
     def test_writes_to_safe_root_itself_are_allowed(self, tmp_path: Path, monkeypatch):
         safe_root = tmp_path / "workspace"
         os.makedirs(safe_root, exist_ok=True)
 
-        monkeypatch.setenv("HERMES_WRITE_SAFE_ROOT", str(safe_root))
+        monkeypatch.setenv("JANUS_WRITE_SAFE_ROOT", str(safe_root))
         assert _is_write_denied(str(safe_root)) is False
 
     def test_writes_outside_safe_root_are_denied(self, tmp_path: Path, monkeypatch):
@@ -49,33 +49,33 @@ class TestSafeWriteRoot:
         os.makedirs(safe_root, exist_ok=True)
         os.makedirs(outside.parent, exist_ok=True)
 
-        monkeypatch.setenv("HERMES_WRITE_SAFE_ROOT", str(safe_root))
+        monkeypatch.setenv("JANUS_WRITE_SAFE_ROOT", str(safe_root))
         assert _is_write_denied(str(outside)) is True
 
     def test_safe_root_env_ignores_empty_value(self, tmp_path: Path, monkeypatch):
         target = tmp_path / "regular.txt"
-        monkeypatch.setenv("HERMES_WRITE_SAFE_ROOT", "")
+        monkeypatch.setenv("JANUS_WRITE_SAFE_ROOT", "")
         assert _is_write_denied(str(target)) is False
 
     def test_safe_root_unset_allows_all(self, tmp_path: Path, monkeypatch):
         target = tmp_path / "regular.txt"
-        monkeypatch.delenv("HERMES_WRITE_SAFE_ROOT", raising=False)
+        monkeypatch.delenv("JANUS_WRITE_SAFE_ROOT", raising=False)
         assert _is_write_denied(str(target)) is False
 
     def test_safe_root_with_tilde_expansion(self, tmp_path: Path, monkeypatch):
-        """~ in HERMES_WRITE_SAFE_ROOT should be expanded."""
+        """~ in JANUS_WRITE_SAFE_ROOT should be expanded."""
         # Use a real subdirectory of tmp_path so we can test tilde-style paths
         safe_root = tmp_path / "workspace"
         inside = safe_root / "file.txt"
         os.makedirs(safe_root, exist_ok=True)
 
-        monkeypatch.setenv("HERMES_WRITE_SAFE_ROOT", str(safe_root))
+        monkeypatch.setenv("JANUS_WRITE_SAFE_ROOT", str(safe_root))
         assert _is_write_denied(str(inside)) is False
 
     def test_safe_root_does_not_override_static_deny(self, tmp_path: Path, monkeypatch):
         """Even if a static-denied path is inside the safe root, it's still denied."""
         # Point safe root at home to include ~/.ssh
-        monkeypatch.setenv("HERMES_WRITE_SAFE_ROOT", os.path.expanduser("~"))
+        monkeypatch.setenv("JANUS_WRITE_SAFE_ROOT", os.path.expanduser("~"))
         assert _is_write_denied(os.path.expanduser("~/.ssh/id_rsa")) is True
 
 
@@ -159,12 +159,12 @@ class TestAtomicWrite:
             os.chmod(locked, 0o700)  # restore for cleanup
         assert res.error is not None
         assert target.read_text() == "ORIGINAL\n"
-        assert [p for p in os.listdir(locked) if ".hermes-tmp" in p] == []
+        assert [p for p in os.listdir(locked) if ".janus-tmp" in p] == []
 
     def test_no_temp_file_leaked_on_success(self, ops, tmp_path: Path):
         target = tmp_path / "f.txt"
         ops.write_file(str(target), "hello\n")
-        assert [p for p in os.listdir(tmp_path) if ".hermes-tmp" in p] == []
+        assert [p for p in os.listdir(tmp_path) if ".janus-tmp" in p] == []
 
     def test_special_chars_roundtrip(self, ops, tmp_path: Path):
         target = tmp_path / "special.txt"

@@ -1,7 +1,7 @@
 import type { AppendMessage, ThreadMessage } from '@assistant-ui/react'
 import { type MutableRefObject, useCallback } from 'react'
 
-import { getProfiles, transcribeAudio } from '@/hermes'
+import { getProfiles, transcribeAudio } from '@/janus'
 import { translateNow, type Translations, useI18n } from '@/i18n'
 import { branchGroupForUser, type ChatMessage, chatMessageText, textPart } from '@/lib/chat-messages'
 import {
@@ -97,7 +97,7 @@ function imageFilenameFromPath(filePath: string): string {
 async function readImageForRemoteAttach(
   filePath: string
 ): Promise<{ contentBase64: string; filename: string } | null> {
-  const dataUrl = await window.hermesDesktop?.readFileDataUrl(filePath)
+  const dataUrl = await window.janusDesktop?.readFileDataUrl(filePath)
   const contentBase64 = dataUrl ? base64FromDataUrl(dataUrl) : ''
 
   return contentBase64 ? { contentBase64, filename: imageFilenameFromPath(filePath) } : null
@@ -613,7 +613,7 @@ export function usePromptActions({
         // `session.title` RPC — the same path the TUI uses — NOT the REST
         // renameSession endpoint and NOT the slash worker.
         //
-        // Why not the slash worker: it's a separate HermesCLI subprocess whose
+        // Why not the slash worker: it's a separate JanusCLI subprocess whose
         // SQLite write to the shared state.db can silently fail (notably on
         // Windows), and it never refreshes the sidebar.
         //

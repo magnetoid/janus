@@ -25,7 +25,7 @@ function imageFilename(src?: string): string {
 function isMissingIpcHandler(error: unknown): boolean {
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : ''
 
-  return message.includes("No handler registered for 'hermes:saveImageFromUrl'")
+  return message.includes("No handler registered for 'janus:saveImageFromUrl'")
 }
 
 async function startBrowserDownload(src: string) {
@@ -71,8 +71,8 @@ export function ZoomableImage({ className, containerClassName, src, alt, slot, .
     setSaving(true)
 
     try {
-      if (window.hermesDesktop?.saveImageFromUrl) {
-        const saved = await window.hermesDesktop.saveImageFromUrl(src)
+      if (window.janusDesktop?.saveImageFromUrl) {
+        const saved = await window.janusDesktop.saveImageFromUrl(src)
 
         if (saved) {
           notify({ kind: 'success', title: copy.imageSaved, message: imageFilename(src) })

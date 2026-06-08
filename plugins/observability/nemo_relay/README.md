@@ -1,17 +1,17 @@
 # NeMo Relay Observability
 
-Optional Hermes observability plugin that maps Hermes observer hooks to
+Optional Janus observability plugin that maps Janus observer hooks to
 NeMo Relay scopes, LLM spans, tool spans, marks, ATOF, and ATIF.
 
 NeMo Relay is NVIDIA's runtime layer for agent execution boundaries. It does
-not replace Hermes Agent's planner, tools, memory, model provider routing, or
-CLI UX. Instead, this plugin lets Hermes emit NeMo Relay lifecycle events for
-the work Hermes already owns: sessions, turns, provider/API calls, tool calls,
+not replace Janus Agent's planner, tools, memory, model provider routing, or
+CLI UX. Instead, this plugin lets Janus emit NeMo Relay lifecycle events for
+the work Janus already owns: sessions, turns, provider/API calls, tool calls,
 approval prompts, and delegated subagents.
 
-With this plugin enabled, Hermes Agent can:
+With this plugin enabled, Janus Agent can:
 
-- Preserve Hermes execution as NeMo Relay scopes, LLM spans, tool spans, and
+- Preserve Janus execution as NeMo Relay scopes, LLM spans, tool spans, and
   mark events.
 - Export raw lifecycle events as Agent Trajectory Observability Format (ATOF)
   JSONL for debugging and offline inspection.
@@ -38,44 +38,44 @@ https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format
 Enable the plugin before setting export options:
 
 ```bash
-hermes plugins enable observability/nemo_relay
+janus plugins enable observability/nemo_relay
 ```
 
-The `HERMES_NEMO_RELAY_*` environment variables below only configure an
+The `JANUS_NEMO_RELAY_*` environment variables below only configure an
 already-enabled plugin. They do not enable plugin discovery by themselves.
 
-For isolated test homes, enable the plugin in the same `HERMES_HOME` that the
+For isolated test homes, enable the plugin in the same `JANUS_HOME` that the
 agent run will use:
 
 ```bash
-env HERMES_HOME=/tmp/hermes-nemo-relay-test \
-  hermes plugins enable observability/nemo_relay
+env JANUS_HOME=/tmp/janus-nemo-relay-test \
+  janus plugins enable observability/nemo_relay
 ```
 
 Runs started with `--ignore_user_config` skip the enabled-plugin state from
-`HERMES_HOME`, so local E2E tests should omit that flag unless the test harness
+`JANUS_HOME`, so local E2E tests should omit that flag unless the test harness
 loads `observability/nemo_relay` explicitly another way.
 
-`HERMES_HOME` is the Hermes profile/config home used by both
-`hermes plugins enable ...` and the later `hermes chat ...` run. If unset,
-Hermes uses the user's default home, usually `~/.hermes`. For isolated smoke
+`JANUS_HOME` is the Janus profile/config home used by both
+`janus plugins enable ...` and the later `janus chat ...` run. If unset,
+Janus uses the user's default home, usually `~/.janus`. For isolated smoke
 tests, choose any writable temporary directory and use the same value for every
 command in that test:
 
 ```bash
-export HERMES_HOME=/tmp/hermes-nemo-relay-test
-hermes plugins enable observability/nemo_relay
-hermes chat --query 'Reply exactly ok' --provider custom --model qwen3.6:35b
+export JANUS_HOME=/tmp/janus-nemo-relay-test
+janus plugins enable observability/nemo_relay
+janus chat --query 'Reply exactly ok' --provider custom --model qwen3.6:35b
 ```
 
-For source checkouts, make sure the `hermes` command you run is built from the
+For source checkouts, make sure the `janus` command you run is built from the
 checkout that contains this plugin. A globally installed older CLI will not see
 new bundled plugins from your working tree.
 
 ```bash
 uv sync --extra nemo-relay
-uv run hermes plugins enable observability/nemo_relay
-uv run hermes chat --query 'Reply exactly ok' --provider custom --model qwen3.6:35b
+uv run janus plugins enable observability/nemo_relay
+uv run janus chat --query 'Reply exactly ok' --provider custom --model qwen3.6:35b
 ```
 
 To ship the updated CLI into another environment, build and install a fresh
@@ -83,9 +83,9 @@ wheel from this checkout, then install the official NeMo Relay runtime extra:
 
 ```bash
 uv build --wheel
-python -m pip install --force-reinstall dist/hermes_agent-*.whl
+python -m pip install --force-reinstall dist/janus_agent-*.whl
 python -m pip install "nemo-relay==0.3"
-hermes plugins enable observability/nemo_relay
+janus plugins enable observability/nemo_relay
 ```
 
 The plugin fails open when `nemo-relay` is not installed. Install and test it against the official NeMo Relay 0.3 PyPI distribution:
@@ -96,7 +96,7 @@ pip install "nemo-relay==0.3"
 
 ## Export Configuration
 
-The plugin can configure exporters directly from `HERMES_NEMO_RELAY_*`
+The plugin can configure exporters directly from `JANUS_NEMO_RELAY_*`
 environment variables, or delegate exporter setup to a NeMo Relay
 `plugins.toml` component config.
 
@@ -110,29 +110,29 @@ OpenInference.
 Useful local export settings after the plugin is enabled:
 
 ```bash
-export HERMES_NEMO_RELAY_ATOF_ENABLED=1
-export HERMES_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY=.nemo-relay/atof
-export HERMES_NEMO_RELAY_ATIF_ENABLED=1
-export HERMES_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY=.nemo-relay/atif
+export JANUS_NEMO_RELAY_ATOF_ENABLED=1
+export JANUS_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY=.nemo-relay/atof
+export JANUS_NEMO_RELAY_ATIF_ENABLED=1
+export JANUS_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY=.nemo-relay/atif
 ```
 
 Optional overrides:
 
-- `HERMES_NEMO_RELAY_ATOF_FILENAME`
-- `HERMES_NEMO_RELAY_ATOF_MODE` (`append` or `overwrite`)
-- `HERMES_NEMO_RELAY_ATIF_FILENAME_TEMPLATE`
-- `HERMES_NEMO_RELAY_ATIF_AGENT_NAME`
-- `HERMES_NEMO_RELAY_ATIF_AGENT_VERSION`
-- `HERMES_NEMO_RELAY_ATIF_MODEL_NAME`
-- `HERMES_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE` (`embedded` by default; set `all` to also write standalone child files)
+- `JANUS_NEMO_RELAY_ATOF_FILENAME`
+- `JANUS_NEMO_RELAY_ATOF_MODE` (`append` or `overwrite`)
+- `JANUS_NEMO_RELAY_ATIF_FILENAME_TEMPLATE`
+- `JANUS_NEMO_RELAY_ATIF_AGENT_NAME`
+- `JANUS_NEMO_RELAY_ATIF_AGENT_VERSION`
+- `JANUS_NEMO_RELAY_ATIF_MODEL_NAME`
+- `JANUS_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE` (`embedded` by default; set `all` to also write standalone child files)
 
 ### NeMo Relay Component Config
 
 To initialize NeMo Relay from a component config, create a `plugins.toml` file
-and point Hermes at it:
+and point Janus at it:
 
 ```bash
-export HERMES_NEMO_RELAY_PLUGINS_TOML=.nemo-relay/plugins.toml
+export JANUS_NEMO_RELAY_PLUGINS_TOML=.nemo-relay/plugins.toml
 ```
 
 Minimal ATOF and ATIF config:
@@ -157,13 +157,13 @@ mode = "overwrite"
 enabled = true
 output_directory = ".nemo-relay/atif"
 filename_template = "trajectory-{session_id}.json"
-agent_name = "Hermes Agent"
+agent_name = "Janus Agent"
 agent_version = "local"
 ```
 
-When `HERMES_NEMO_RELAY_PLUGINS_TOML` is set and initializes successfully, NeMo
+When `JANUS_NEMO_RELAY_PLUGINS_TOML` is set and initializes successfully, NeMo
 Relay owns exporter lifecycle through that config. The direct
-`HERMES_NEMO_RELAY_ATOF_*` fallback setup is skipped.
+`JANUS_NEMO_RELAY_ATOF_*` fallback setup is skipped.
 
 To enable NeMo Relay managed execution intercepts for provider and tool calls,
 include an adaptive component in the same `plugins.toml`:
@@ -178,13 +178,13 @@ mode = "route"
 ```
 
 When the adaptive component is enabled and the installed NeMo Relay runtime
-exposes `llm.execute(...)` / `tools.execute(...)`, Hermes routes LLM and tool
+exposes `llm.execute(...)` / `tools.execute(...)`, Janus routes LLM and tool
 execution through those middleware boundaries. The observer hooks still emit
 session, turn, approval, and subagent marks; the plugin skips its manual
 `llm.call` and `tools.call` spans for executions that are already managed by
 NeMo Relay.
 
-For the full generic Hermes middleware contract, see
+For the full generic Janus middleware contract, see
 [`docs/middleware/README.md`](../../../docs/middleware/README.md).
 
 ## Canonical Local Examples
@@ -195,10 +195,10 @@ Ollama model served through the OpenAI-compatible API.
 ```bash
 pip install "nemo-relay==0.3"
 
-export HERMES_HOME=/tmp/hermes-nemo-relay-docs/hermes-home
-mkdir -p "$HERMES_HOME"
+export JANUS_HOME=/tmp/janus-nemo-relay-docs/janus-home
+mkdir -p "$JANUS_HOME"
 
-cat > "$HERMES_HOME/config.yaml" <<'YAML'
+cat > "$JANUS_HOME/config.yaml" <<'YAML'
 model:
   provider: custom
   default: qwen3.6:35b
@@ -220,22 +220,22 @@ YAML
 
 ### Delegated Subagent Tool Call
 
-This run starts a parent Hermes session, delegates to a child subagent, has the
+This run starts a parent Janus session, delegates to a child subagent, has the
 child call `terminal`, and writes both ATOF and ATIF.
 
 ```bash
-export HERMES_NEMO_RELAY_ATOF_ENABLED=1
-export HERMES_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY=/tmp/hermes-nemo-relay-docs/subagent/atof
-export HERMES_NEMO_RELAY_ATOF_FILENAME=nested-subagent-atof.jsonl
-export HERMES_NEMO_RELAY_ATOF_MODE=overwrite
-export HERMES_NEMO_RELAY_ATIF_ENABLED=1
-export HERMES_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY=/tmp/hermes-nemo-relay-docs/subagent/atif
-export HERMES_NEMO_RELAY_ATIF_FILENAME_TEMPLATE='nested-subagent-atif-{session_id}.json'
-export HERMES_NEMO_RELAY_ATIF_AGENT_NAME='Hermes Agent E2E'
-export HERMES_NEMO_RELAY_ATIF_AGENT_VERSION=docs-example
-export HERMES_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE=all
+export JANUS_NEMO_RELAY_ATOF_ENABLED=1
+export JANUS_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY=/tmp/janus-nemo-relay-docs/subagent/atof
+export JANUS_NEMO_RELAY_ATOF_FILENAME=nested-subagent-atof.jsonl
+export JANUS_NEMO_RELAY_ATOF_MODE=overwrite
+export JANUS_NEMO_RELAY_ATIF_ENABLED=1
+export JANUS_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY=/tmp/janus-nemo-relay-docs/subagent/atif
+export JANUS_NEMO_RELAY_ATIF_FILENAME_TEMPLATE='nested-subagent-atif-{session_id}.json'
+export JANUS_NEMO_RELAY_ATIF_AGENT_NAME='Janus Agent E2E'
+export JANUS_NEMO_RELAY_ATIF_AGENT_VERSION=docs-example
+export JANUS_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE=all
 
-hermes chat \
+janus chat \
   --query 'Use delegate_task exactly once. Ask the child subagent to use the terminal tool exactly once to run printf docs_nested_leaf_function. After the child returns, reply with exactly: parent received nested subagent result.' \
   --provider custom \
   --model qwen3.6:35b \
@@ -256,7 +256,7 @@ Sanitized ATOF excerpt:
 
 ```jsonl
 {"kind":"scope","category":"tool","name":"delegate_task","scope_category":"start","metadata":{"session_id":"docs-parent-session","tool_call_id":"call_delegate"},"data":{"goal":"Run the command `printf docs_nested_leaf_function` using the terminal tool.","toolsets":["terminal"]}}
-{"kind":"mark","name":"hermes.subagent.start","metadata":{"parent_session_id":"docs-parent-session","session_id":"docs-child-session","subagent_id":"sa-0-docs","child_role":"leaf"}}
+{"kind":"mark","name":"janus.subagent.start","metadata":{"parent_session_id":"docs-parent-session","session_id":"docs-child-session","subagent_id":"sa-0-docs","child_role":"leaf"}}
 {"kind":"scope","category":"tool","name":"terminal","scope_category":"end","metadata":{"session_id":"docs-child-session","tool_call_id":"call_terminal","status":"ok"},"data":"{\"output\":\"docs_nested_leaf_function\",\"exit_code\":0,\"error\":null}"}
 {"kind":"scope","category":"tool","name":"delegate_task","scope_category":"end","metadata":{"session_id":"docs-parent-session","tool_call_id":"call_delegate","status":"ok"}}
 ```
@@ -267,7 +267,7 @@ Sanitized ATIF excerpt:
 {
   "schema_version": "ATIF-v1.7",
   "session_id": "docs-parent-session",
-  "agent": {"name": "Hermes Agent E2E", "version": "docs-example", "model_name": "qwen3.6:35b"},
+  "agent": {"name": "Janus Agent E2E", "version": "docs-example", "model_name": "qwen3.6:35b"},
   "steps": [
     {
       "source": "agent",
@@ -301,26 +301,26 @@ Sanitized ATIF excerpt:
 ### Parallel Tool Calls
 
 This run asks the model to emit two `read_file` tool calls in the same assistant
-message. Hermes dispatches the read-only tools as one batch, and NeMo Relay
+message. Janus dispatches the read-only tools as one batch, and NeMo Relay
 records both tool invocations.
 
 ```bash
-mkdir -p /tmp/hermes-nemo-relay-docs/workdir
-printf 'docs_parallel_alpha_function\n' > /tmp/hermes-nemo-relay-docs/workdir/alpha.txt
-printf 'docs_parallel_beta_function\n' > /tmp/hermes-nemo-relay-docs/workdir/beta.txt
-cd /tmp/hermes-nemo-relay-docs/workdir
+mkdir -p /tmp/janus-nemo-relay-docs/workdir
+printf 'docs_parallel_alpha_function\n' > /tmp/janus-nemo-relay-docs/workdir/alpha.txt
+printf 'docs_parallel_beta_function\n' > /tmp/janus-nemo-relay-docs/workdir/beta.txt
+cd /tmp/janus-nemo-relay-docs/workdir
 
-export HERMES_NEMO_RELAY_ATOF_ENABLED=1
-export HERMES_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY=/tmp/hermes-nemo-relay-docs/parallel/atof
-export HERMES_NEMO_RELAY_ATOF_FILENAME=parallel-tools-atof.jsonl
-export HERMES_NEMO_RELAY_ATOF_MODE=overwrite
-export HERMES_NEMO_RELAY_ATIF_ENABLED=1
-export HERMES_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY=/tmp/hermes-nemo-relay-docs/parallel/atif
-export HERMES_NEMO_RELAY_ATIF_FILENAME_TEMPLATE='parallel-tools-atif-{session_id}.json'
-export HERMES_NEMO_RELAY_ATIF_AGENT_NAME='Hermes Agent E2E'
-export HERMES_NEMO_RELAY_ATIF_AGENT_VERSION=docs-example
+export JANUS_NEMO_RELAY_ATOF_ENABLED=1
+export JANUS_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY=/tmp/janus-nemo-relay-docs/parallel/atof
+export JANUS_NEMO_RELAY_ATOF_FILENAME=parallel-tools-atof.jsonl
+export JANUS_NEMO_RELAY_ATOF_MODE=overwrite
+export JANUS_NEMO_RELAY_ATIF_ENABLED=1
+export JANUS_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY=/tmp/janus-nemo-relay-docs/parallel/atif
+export JANUS_NEMO_RELAY_ATIF_FILENAME_TEMPLATE='parallel-tools-atif-{session_id}.json'
+export JANUS_NEMO_RELAY_ATIF_AGENT_NAME='Janus Agent E2E'
+export JANUS_NEMO_RELAY_ATIF_AGENT_VERSION=docs-example
 
-hermes chat \
+janus chat \
   --query 'Use exactly two read_file tool calls in the same assistant message. Read alpha.txt and beta.txt. Do not call terminal. After both tool results are available, reply with exactly: parallel tools complete.' \
   --provider custom \
   --model qwen3.6:35b \
@@ -353,7 +353,7 @@ Sanitized ATIF excerpt:
 {
   "schema_version": "ATIF-v1.7",
   "session_id": "docs-parallel-session",
-  "agent": {"name": "Hermes Agent E2E", "version": "docs-example", "model_name": "qwen3.6:35b"},
+  "agent": {"name": "Janus Agent E2E", "version": "docs-example", "model_name": "qwen3.6:35b"},
   "steps": [
     {
       "source": "agent",
@@ -377,9 +377,9 @@ Sanitized ATIF excerpt:
 
 The plugin keeps NeMo Relay's native event model:
 
-- Hermes sessions map to `agent` scopes.
-- Hermes API request hooks map to `llm` scope start/end events.
-- Hermes tool hooks map to `tool` scope start/end events.
+- Janus sessions map to `agent` scopes.
+- Janus API request hooks map to `llm` scope start/end events.
+- Janus tool hooks map to `tool` scope start/end events.
 - Turn, approval, subagent, and diagnostic fallback events map to `mark`
   events.
 
@@ -391,7 +391,7 @@ separate trajectories.
 
 ## Adaptive Middleware Example
 
-The `observability/nemo_relay` plugin uses Hermes execution middleware to hand
+The `observability/nemo_relay` plugin uses Janus execution middleware to hand
 LLM and tool calls to NeMo Relay managed execution when an adaptive component is
 enabled.
 
@@ -408,26 +408,26 @@ enabled = true
 mode = "route"
 ```
 
-Enable it for Hermes:
+Enable it for Janus:
 
 ```bash
-export HERMES_NEMO_RELAY_PLUGINS_TOML=/tmp/hermes-middleware-test/plugins.toml
+export JANUS_NEMO_RELAY_PLUGINS_TOML=/tmp/janus-middleware-test/plugins.toml
 ```
 
 When the adaptive component is enabled and the installed NeMo Relay runtime
-exposes `llm.execute(...)` and `tools.execute(...)`, Hermes routes execution
+exposes `llm.execute(...)` and `tools.execute(...)`, Janus routes execution
 through these boundaries:
 
 ```text
-Hermes provider call
+Janus provider call
   -> llm_execution middleware
     -> nemo_relay.llm.execute(...)
-      -> Hermes provider adapter next_call(...)
+      -> Janus provider adapter next_call(...)
 
-Hermes tool call
+Janus tool call
   -> tool_execution middleware
     -> nemo_relay.tools.execute(...)
-      -> Hermes tool dispatcher next_call(...)
+      -> Janus tool dispatcher next_call(...)
 ```
 
 The plugin still emits observer marks for sessions, turns, approvals, and
@@ -438,15 +438,15 @@ for the same execution.
 ### Local Adaptive E2E
 
 This example enables both NeMo Relay observability export and adaptive execution
-middleware for a local Hermes run.
+middleware for a local Janus run.
 
 ```bash
 pip install "nemo-relay==0.3"
 
-export HERMES_HOME=/tmp/hermes-middleware-test/hermes-home
-mkdir -p "$HERMES_HOME" /tmp/hermes-middleware-test/nemo-relay
+export JANUS_HOME=/tmp/janus-middleware-test/janus-home
+mkdir -p "$JANUS_HOME" /tmp/janus-middleware-test/nemo-relay
 
-cat > "$HERMES_HOME/config.yaml" <<'YAML'
+cat > "$JANUS_HOME/config.yaml" <<'YAML'
 model:
   provider: custom
   default: qwen3.6:35b
@@ -457,7 +457,7 @@ plugins:
     - observability/nemo_relay
 YAML
 
-cat > /tmp/hermes-middleware-test/nemo-relay/plugins.toml <<'TOML'
+cat > /tmp/janus-middleware-test/nemo-relay/plugins.toml <<'TOML'
 version = 1
 
 [[components]]
@@ -469,15 +469,15 @@ version = 1
 
 [components.config.atof]
 enabled = true
-output_directory = "/tmp/hermes-middleware-test/atof"
+output_directory = "/tmp/janus-middleware-test/atof"
 filename = "middleware-events.jsonl"
 mode = "overwrite"
 
 [components.config.atif]
 enabled = true
-output_directory = "/tmp/hermes-middleware-test/atif"
+output_directory = "/tmp/janus-middleware-test/atif"
 filename_template = "middleware-trajectory-{session_id}.json"
-agent_name = "Hermes Middleware E2E"
+agent_name = "Janus Middleware E2E"
 agent_version = "local"
 
 [[components]]
@@ -488,9 +488,9 @@ enabled = true
 mode = "route"
 TOML
 
-export HERMES_NEMO_RELAY_PLUGINS_TOML=/tmp/hermes-middleware-test/nemo-relay/plugins.toml
+export JANUS_NEMO_RELAY_PLUGINS_TOML=/tmp/janus-middleware-test/nemo-relay/plugins.toml
 
-hermes chat \
+janus chat \
   --query 'Use the terminal tool exactly once to run printf middleware_execution_ok. Then reply with exactly the command output.' \
   --provider custom \
   --model qwen3.6:35b \
@@ -522,7 +522,7 @@ Expected ATIF shape:
   "schema_version": "ATIF-v1.7",
   "session_id": "middleware-demo-session",
   "agent": {
-    "name": "Hermes Middleware E2E",
+    "name": "Janus Middleware E2E",
     "version": "local",
     "model_name": "qwen3.6:35b"
   },

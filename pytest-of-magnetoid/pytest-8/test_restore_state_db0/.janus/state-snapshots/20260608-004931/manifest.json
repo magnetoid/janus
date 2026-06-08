@@ -1,0 +1,14 @@
+{
+  "id": "20260608-004931",
+  "timestamp": "20260608-004931",
+  "label": null,
+  "file_count": 5,
+  "total_size": 12381,
+  "files": {
+    "state.db": 12288,
+    "config.yaml": 30,
+    ".env": 32,
+    "auth.json": 18,
+    "cron/jobs.json": 13
+  }
+}

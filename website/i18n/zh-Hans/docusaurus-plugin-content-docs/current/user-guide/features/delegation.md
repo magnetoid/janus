@@ -134,7 +134,7 @@ delegate_task(
 你可以通过 `config.yaml` 为子智能体配置不同的模型——适用于将简单任务委派给更便宜/更快的模型：
 
 ```yaml
-# In ~/.hermes/config.yaml
+# In ~/.janus/config.yaml
 delegation:
   model: "google/gemini-flash-2.0"    # Cheaper model for subagents
   provider: "openrouter"              # Optional: route subagents to a different provider
@@ -185,7 +185,7 @@ delegation:
 对于快速本地模型可降低此值；对于处理难题的慢速推理模型可提高此值。计时器在子智能体每次发起 API 调用或工具调用时重置——只有真正空闲的工作线程才会触发终止。
 
 :::tip 零调用超时时的诊断转储
-如果子智能体在**零次** API 调用的情况下超时（通常原因：provider 不可达、认证失败或工具 schema 被拒绝），`delegate_task` 会将结构化诊断信息写入 `~/.hermes/logs/subagent-timeout-<session>-<timestamp>.log`，其中包含子智能体的配置快照、凭据解析追踪以及早期错误消息。比之前的静默超时行为更易于定位根因。
+如果子智能体在**零次** API 调用的情况下超时（通常原因：provider 不可达、认证失败或工具 schema 被拒绝），`delegate_task` 会将结构化诊断信息写入 `~/.janus/logs/subagent-timeout-<session>-<timestamp>.log`，其中包含子智能体的配置快照、凭据解析追踪以及早期错误消息。比之前的静默超时行为更易于定位根因。
 :::
 
 ## 监控运行中的子智能体（`/agents`）
@@ -260,7 +260,7 @@ delegate_task(
 ## 配置
 
 ```yaml
-# In ~/.hermes/config.yaml
+# In ~/.janus/config.yaml
 delegation:
   max_iterations: 50                        # Max turns per child (default: 50)
   # max_concurrent_children: 3              # Parallel children per batch (default: 3)

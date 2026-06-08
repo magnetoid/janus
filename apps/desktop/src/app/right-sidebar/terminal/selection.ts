@@ -2,7 +2,7 @@ import type { ITheme, Terminal } from '@xterm/xterm'
 import type { CSSProperties } from 'react'
 
 // Solarized-derived palette, but with bright ANSI 8–15 promoted to real
-// accent variants instead of Schoonover's UI grays. Hermes' TUI skins (gold,
+// accent variants instead of Schoonover's UI grays. Janus' TUI skins (gold,
 // crimson, ...) emit bright SGR codes that would otherwise wash out to gray.
 // We always render the dark canvas — the app's light surfaces can't host the
 // default skin without dropping below readable contrast.

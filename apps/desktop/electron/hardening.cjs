@@ -38,8 +38,8 @@ function encryptDesktopSecret(value, safeStorageApi) {
 
   if (!encryptionAvailable) {
     throw new Error(
-      'Secure token storage is unavailable, so Hermes Desktop cannot save remote gateway tokens. ' +
-        'Set HERMES_DESKTOP_REMOTE_URL and HERMES_DESKTOP_REMOTE_TOKEN in your environment, or enable OS keychain access and try again.'
+      'Secure token storage is unavailable, so Janus Desktop cannot save remote gateway tokens. ' +
+        'Set JANUS_DESKTOP_REMOTE_URL and JANUS_DESKTOP_REMOTE_TOKEN in your environment, or enable OS keychain access and try again.'
     )
   }
 
@@ -52,7 +52,7 @@ function encryptDesktopSecret(value, safeStorageApi) {
     const detail = error instanceof Error && error.message ? ` (${error.message})` : ''
     throw new Error(
       `Failed to encrypt the remote gateway token for secure storage${detail}. ` +
-        'Set HERMES_DESKTOP_REMOTE_URL and HERMES_DESKTOP_REMOTE_TOKEN in your environment as a fallback.'
+        'Set JANUS_DESKTOP_REMOTE_URL and JANUS_DESKTOP_REMOTE_TOKEN in your environment as a fallback.'
     )
   }
 }

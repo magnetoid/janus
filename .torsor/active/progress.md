@@ -1,11 +1,13 @@
 ---
 type: progress
 status: active
-tags: [active]
+tags:
+- active
+links: []
+created: '2026-06-08T02:13:01'
+updated: '2026-06-08T02:13:01'
 ---
 
 # Progress
 
-## Done
-## In progress
-## Blocked
+Stage 1 done and committed (39d5c6f): banner, skins, self-identity, display fallbacks, tests.

@@ -1,5 +1,5 @@
 """Contract test: the s6-overlay stage2 hook seeds gateway_state.json from
-HERMES_GATEWAY_BOOTSTRAP_STATE on first boot, so a freshly-provisioned
+JANUS_GATEWAY_BOOTSTRAP_STATE on first boot, so a freshly-provisioned
 container can come up with the gateway already running.
 
 Background. On a blank volume there is no gateway_state.json, so the boot
@@ -10,12 +10,12 @@ slot but leaves it DOWN — it only auto-starts when the last recorded state was
 the gateway down until something starts it.
 
 An orchestrator that wants the gateway running from first boot sets
-HERMES_GATEWAY_BOOTSTRAP_STATE=running; stage2-hook.sh (installed as
-/etc/cont-init.d/01-hermes-setup, which runs lexicographically BEFORE
+JANUS_GATEWAY_BOOTSTRAP_STATE=running; stage2-hook.sh (installed as
+/etc/cont-init.d/01-janus-setup, which runs lexicographically BEFORE
 02-reconcile-profiles) seeds the state file so the reconciler sees
 prior_state=running and brings the slot up on the very first boot.
 
-This mirrors the existing HERMES_AUTH_JSON_BOOTSTRAP env-seed pattern: it seeds
+This mirrors the existing JANUS_AUTH_JSON_BOOTSTRAP env-seed pattern: it seeds
 the SAME gateway_state.json the reconciler already consults, guarded by
 ``[ ! -f ]`` so persisted runtime state always wins on subsequent boots (a
 deliberately-stopped gateway must stay stopped across restarts).
@@ -43,16 +43,16 @@ def stage2_text() -> str:
 
 
 def _seed_block(text: str) -> str:
-    """Extract the ``if [ ! -f "$HERMES_HOME/gateway_state.json" ] && … fi``
+    """Extract the ``if [ ! -f "$JANUS_HOME/gateway_state.json" ] && … fi``
     block that seeds the gateway state file from the bootstrap env var."""
     m = re.search(
-        r'(if \[ ! -f "\$HERMES_HOME/gateway_state\.json" \] && \\\n'
+        r'(if \[ ! -f "\$JANUS_HOME/gateway_state\.json" \] && \\\n'
         r"(?:.*\n)*?fi)",
         text,
     )
     assert m, (
         "stage2-hook.sh must contain the gateway_state.json bootstrap-seed block "
-        "guarded on HERMES_GATEWAY_BOOTSTRAP_STATE"
+        "guarded on JANUS_GATEWAY_BOOTSTRAP_STATE"
     )
     return m.group(1)
 
@@ -60,19 +60,19 @@ def _seed_block(text: str) -> str:
 def test_seed_block_present_and_guarded(stage2_text: str) -> None:
     block = _seed_block(stage2_text)
     # Must be a first-boot-only seed (the [ ! -f ] guard) keyed on the env var.
-    assert '[ ! -f "$HERMES_HOME/gateway_state.json" ]' in block, (
+    assert '[ ! -f "$JANUS_HOME/gateway_state.json" ]' in block, (
         "seed must be guarded by [ ! -f ] so persisted state wins on restart"
     )
-    assert "HERMES_GATEWAY_BOOTSTRAP_STATE" in block
+    assert "JANUS_GATEWAY_BOOTSTRAP_STATE" in block
     assert "gateway_state" in block
 
 
 def _run_seed(
     text: str, *, env_value: str | None, preexisting: str | None
 ) -> str | None:
-    """Run the extracted seed block in a sandbox $HERMES_HOME.
+    """Run the extracted seed block in a sandbox $JANUS_HOME.
 
-    ``env_value`` is the HERMES_GATEWAY_BOOTSTRAP_STATE value (None = unset).
+    ``env_value`` is the JANUS_GATEWAY_BOOTSTRAP_STATE value (None = unset).
     ``preexisting`` is the contents of a gateway_state.json placed before the
     block runs (None = no file). Returns the file's contents afterwards, or
     None if it doesn't exist. ``chown``/``chmod`` are stubbed so the block
@@ -92,13 +92,13 @@ def _run_seed(
             state_file.write_text(preexisting)
 
         env_line = (
-            f'export HERMES_GATEWAY_BOOTSTRAP_STATE="{env_value}"\n'
+            f'export JANUS_GATEWAY_BOOTSTRAP_STATE="{env_value}"\n'
             if env_value is not None
-            else "unset HERMES_GATEWAY_BOOTSTRAP_STATE\n"
+            else "unset JANUS_GATEWAY_BOOTSTRAP_STATE\n"
         )
         script = (
             "set -e\n"
-            f'HERMES_HOME="{home}"\n'
+            f'JANUS_HOME="{home}"\n'
             # Stub privilege ops — the sandbox isn't root.
             "chown() { :; }\n"
             "chmod() { :; }\n"
@@ -138,7 +138,7 @@ def test_no_seed_when_env_unset(stage2_text: str) -> None:
     """No env var -> no file written (preserves the default down-on-first-boot
     behaviour for orchestrators that don't opt in)."""
     out = _run_seed(stage2_text, env_value=None, preexisting=None)
-    assert out is None, "seed must not run when HERMES_GATEWAY_BOOTSTRAP_STATE is unset"
+    assert out is None, "seed must not run when JANUS_GATEWAY_BOOTSTRAP_STATE is unset"
 
 
 def test_non_running_value_ignored(stage2_text: str) -> None:

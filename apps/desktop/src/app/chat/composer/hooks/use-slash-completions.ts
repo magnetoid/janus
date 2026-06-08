@@ -1,7 +1,7 @@
 import type { Unstable_TriggerAdapter, Unstable_TriggerItem } from '@assistant-ui/core'
 import { useCallback } from 'react'
 
-import type { HermesGateway } from '@/hermes'
+import type { JanusGateway } from '@/janus'
 import {
   type CommandsCatalogLike,
   desktopSlashDescription,
@@ -39,7 +39,7 @@ function commandText(value: string): string {
 }
 
 /** Live `/` completions backed by the gateway's `complete.slash` RPC. */
-export function useSlashCompletions(options: { gateway: HermesGateway | null }): {
+export function useSlashCompletions(options: { gateway: JanusGateway | null }): {
   adapter: Unstable_TriggerAdapter
   loading: boolean
 } {
@@ -93,7 +93,7 @@ export function useSlashCompletions(options: { gateway: HermesGateway | null }):
       command,
       display,
       meta,
-      // Provide rawText so hermesDirectiveFormatter.serialize uses the
+      // Provide rawText so janusDirectiveFormatter.serialize uses the
       // direct-insertion path instead of the legacy @type:id fallback.
       // Without this, the item.id (which includes a "|index" suffix for
       // trigger-adapter uniqueness) leaks into the serialized chip text

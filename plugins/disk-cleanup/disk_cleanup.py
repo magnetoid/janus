@@ -1,4 +1,4 @@
-"""disk_cleanup — ephemeral file cleanup for Hermes Agent.
+"""disk_cleanup — ephemeral file cleanup for Janus Agent.
 
 Library module wrapping the deterministic cleanup rules written by
 @LVT382009 in PR #12212. The plugin ``__init__.py`` wires these
@@ -10,13 +10,13 @@ Rules:
   - test files    → delete immediately at task end (age >= 0)
   - temp files    → delete after 7 days
   - cron-output   → delete after 14 days
-  - empty dirs    → always delete (under HERMES_HOME)
+  - empty dirs    → always delete (under JANUS_HOME)
   - research      → keep 10 newest, prompt for older (deep only)
   - chrome-profile→ prompt after 14 days (deep only)
   - >500 MB files → prompt always (deep only)
 
-Scope: strictly HERMES_HOME and /tmp/hermes-*
-Never touches: ~/.hermes/logs/ or any system directory.
+Scope: strictly JANUS_HOME and /tmp/janus-*
+Never touches: ~/.janus/logs/ or any system directory.
 """
 
 from __future__ import annotations
@@ -29,13 +29,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from hermes_constants import get_hermes_home
+    from janus_constants import get_janus_home
 except Exception:  # pragma: no cover — plugin may load before constants resolves
     import os
 
-    def get_hermes_home() -> Path:  # type: ignore[no-redef]
-        val = (os.environ.get("HERMES_HOME") or "").strip()
-        return Path(val).resolve() if val else (Path.home() / ".hermes").resolve()
+    def get_janus_home() -> Path:  # type: ignore[no-redef]
+        val = (os.environ.get("JANUS_HOME") or "").strip()
+        return Path(val).resolve() if val else (Path.home() / ".janus").resolve()
 
 
 logger = logging.getLogger(__name__)
@@ -46,8 +46,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def get_state_dir() -> Path:
-    """State dir — separate from ``$HERMES_HOME/logs/``."""
-    return get_hermes_home() / "disk-cleanup"
+    """State dir — separate from ``$JANUS_HOME/logs/``."""
+    return get_janus_home() / "disk-cleanup"
 
 
 def get_tracked_file() -> Path:
@@ -55,7 +55,7 @@ def get_tracked_file() -> Path:
 
 
 def get_log_file() -> Path:
-    """Audit log — intentionally NOT under ``$HERMES_HOME/logs/``."""
+    """Audit log — intentionally NOT under ``$JANUS_HOME/logs/``."""
     return get_state_dir() / "cleanup.log"
 
 
@@ -64,19 +64,19 @@ def get_log_file() -> Path:
 # ---------------------------------------------------------------------------
 
 def is_safe_path(path: Path) -> bool:
-    """Accept only paths under HERMES_HOME or ``/tmp/hermes-*``.
+    """Accept only paths under JANUS_HOME or ``/tmp/janus-*``.
 
     Rejects Windows mounts (``/mnt/c`` etc.) and any system directory.
     """
-    hermes_home = get_hermes_home()
+    janus_home = get_janus_home()
     try:
-        path.resolve().relative_to(hermes_home)
+        path.resolve().relative_to(janus_home)
         return True
     except (ValueError, OSError):
         pass
-    # Allow /tmp/hermes-* explicitly
+    # Allow /tmp/janus-* explicitly
     parts = path.parts
-    if len(parts) >= 3 and parts[1] == "tmp" and parts[2].startswith("hermes-"):
+    if len(parts) >= 3 and parts[1] == "tmp" and parts[2].startswith("janus-"):
         return True
     return False
 
@@ -145,7 +145,7 @@ ALLOWED_CATEGORIES = {
 }
 
 
-# Paths under $HERMES_HOME that must NEVER be deleted by quick(),
+# Paths under $JANUS_HOME that must NEVER be deleted by quick(),
 # regardless of what the stored category says.  This is a defense-in-depth
 # guard against stale tracked.json entries from before #34840.
 _PROTECTED_CRON_PATHS: set[str] = set()
@@ -159,12 +159,12 @@ def _is_protected_cron_path(p: Path) -> bool:
     (``jobs.json``, ``.tick.lock``) — it does NOT blanket-protect
     everything under ``cron/`` because ``cron/output/`` is disposable.
     """
-    # Lazily build the set once per process so HERMES_HOME is resolved
+    # Lazily build the set once per process so JANUS_HOME is resolved
     # exactly once.
     if not _PROTECTED_CRON_PATHS:
-        hermes_home = get_hermes_home()
+        janus_home = get_janus_home()
         for parent in ("cron", "cronjobs"):
-            base = hermes_home / parent
+            base = janus_home / parent
             _PROTECTED_CRON_PATHS.add(str(base))
             _PROTECTED_CRON_PATHS.add(str(base / "jobs.json"))
             _PROTECTED_CRON_PATHS.add(str(base / ".tick.lock"))
@@ -197,7 +197,7 @@ def track(path_str: str, category: str, silent: bool = False) -> bool:
         return False
 
     if not is_safe_path(path):
-        _log(f"REJECT: {path} (outside HERMES_HOME)")
+        _log(f"REJECT: {path} (outside JANUS_HOME)")
         return False
 
     size = path.stat().st_size if path.is_file() else 0
@@ -348,22 +348,22 @@ def quick() -> Dict[str, Any]:
         else:
             new_tracked.append(item)
 
-    # Remove empty dirs under HERMES_HOME (but leave HERMES_HOME itself and
+    # Remove empty dirs under JANUS_HOME (but leave JANUS_HOME itself and
     # a short list of well-known top-level state dirs alone — a fresh install
     # has these empty, and deleting them would surprise the user).
-    hermes_home = get_hermes_home()
+    janus_home = get_janus_home()
     _PROTECTED_TOP_LEVEL = {
         "logs", "memories", "sessions", "cron", "cronjobs",
         "cache", "skills", "plugins", "disk-cleanup", "optional-skills",
-        "hermes-agent", "backups", "profiles", ".worktrees",
+        "janus-agent", "backups", "profiles", ".worktrees",
     }
     empty_removed = 0
     try:
-        for dirpath in sorted(hermes_home.rglob("*"), reverse=True):
-            if not dirpath.is_dir() or dirpath == hermes_home:
+        for dirpath in sorted(janus_home.rglob("*"), reverse=True):
+            if not dirpath.is_dir() or dirpath == janus_home:
                 continue
             try:
-                rel_parts = dirpath.relative_to(hermes_home).parts
+                rel_parts = dirpath.relative_to(janus_home).parts
             except ValueError:
                 continue
             # Skip the well-known top-level state dirs themselves.
@@ -527,14 +527,14 @@ def guess_category(path: Path) -> Optional[str]:
         return None
 
     # Skip the state dir itself, logs, memory files, sessions, config.
-    hermes_home = get_hermes_home()
+    janus_home = get_janus_home()
     try:
-        rel = path.resolve().relative_to(hermes_home)
+        rel = path.resolve().relative_to(janus_home)
         top = rel.parts[0] if rel.parts else ""
         if top in {
             "disk-cleanup", "logs", "memories", "sessions", "config.yaml",
             "skills", "plugins", ".env", "USER.md", "MEMORY.md", "SOUL.md",
-            "auth.json", "hermes-agent",
+            "auth.json", "janus-agent",
         }:
             return None
         if top == "cron" or top == "cronjobs":
@@ -549,7 +549,7 @@ def guess_category(path: Path) -> Optional[str]:
         if top == "cache":
             return "temp"
     except ValueError:
-        # Path isn't under HERMES_HOME (e.g. /tmp/hermes-*) — fall through.
+        # Path isn't under JANUS_HOME (e.g. /tmp/janus-*) — fall through.
         pass
 
     name = path.name

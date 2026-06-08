@@ -362,7 +362,7 @@ def parse_credits_headers(
             if version_val > 1 and not _version_warning_emitted:
                 _version_warning_emitted = True
                 logger.warning(
-                    "credits header version %d unsupported, ignoring — update Hermes",
+                    "credits header version %d unsupported, ignoring — update Janus",
                     version_val,
                 )
             return None
@@ -508,9 +508,9 @@ def parse_credits_headers(
         return None
 
 
-# ── Dev test fixtures (HERMES_DEV_CREDITS_FIXTURE) ───────────────────────────
+# ── Dev test fixtures (JANUS_DEV_CREDITS_FIXTURE) ───────────────────────────
 # Throwaway dev scaffolding: trigger any notice state on demand for testing,
-# without real spend or Redis seeding. Set HERMES_DEV_CREDITS_FIXTURE to either a
+# without real spend or Redis seeding. Set JANUS_DEV_CREDITS_FIXTURE to either a
 # state NAME (fixed for the session) or a FILE PATH whose contents are a state
 # name (re-read every turn → flip states live: `echo depleted > /tmp/cf`, take a
 # turn; `echo healthy > /tmp/cf`, take a turn → recovery).
@@ -520,7 +520,7 @@ def parse_credits_headers(
 # cold-start seed at session open (conversation_loop → depletion/warn90 hydrate
 # immediately), and (3) the /usage view (nous_credits_lines renders the fixture).
 # `clear` / `none` / unset → real behaviour. Delete with the rest of the
-# HERMES_DEV_CREDITS scaffolding.
+# JANUS_DEV_CREDITS scaffolding.
 _DEV_FIXTURES: dict[str, dict] = {
     "healthy": dict(  # used_fraction ~0.1, paid → no notice (recovery target)
         remaining_micros=30_340_000, remaining_usd="30.34",
@@ -572,20 +572,20 @@ _DEV_FIXTURES: dict[str, dict] = {
 
 
 def dev_fixture_credits_state() -> Optional[CreditsState]:
-    """Return a fixture CreditsState for HERMES_DEV_CREDITS_FIXTURE, or None.
+    """Return a fixture CreditsState for JANUS_DEV_CREDITS_FIXTURE, or None.
 
     The env value is a state name, OR a path to a file whose contents are a state
     name (re-read each call → flip states live without a restart). Unknown name /
     "clear" / "none" / unset → None (normal behaviour). Throwaway test scaffolding.
 
-    Hard prod-leak guard: a fixture applies ONLY when the dev flag HERMES_DEV_CREDITS
-    is also on, so a stray HERMES_DEV_CREDITS_FIXTURE (leaked into a shell profile, a
+    Hard prod-leak guard: a fixture applies ONLY when the dev flag JANUS_DEV_CREDITS
+    is also on, so a stray JANUS_DEV_CREDITS_FIXTURE (leaked into a shell profile, a
     container env, a launch plist, …) can never surface fabricated balances/notices
     on a real account.
     """
-    if not is_truthy_value(os.environ.get("HERMES_DEV_CREDITS")):
+    if not is_truthy_value(os.environ.get("JANUS_DEV_CREDITS")):
         return None
-    raw = os.environ.get("HERMES_DEV_CREDITS_FIXTURE", "").strip()
+    raw = os.environ.get("JANUS_DEV_CREDITS_FIXTURE", "").strip()
     if not raw:
         return None
     name = raw
@@ -703,7 +703,7 @@ def seed_credits_at_session_start(agent) -> bool:
 
         def _bg_seed() -> None:
             try:
-                from hermes_cli.nous_account import get_nous_portal_account_info
+                from janus_cli.nous_account import get_nous_portal_account_info
                 info = get_nous_portal_account_info(force_fresh=True)
                 if getattr(agent, "_credits_state", None) is not None:
                     return  # a live inference header beat us — don't clobber it

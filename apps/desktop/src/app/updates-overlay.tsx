@@ -76,7 +76,7 @@ export function UpdatesOverlay() {
         {phase === 'applying' && <ApplyingView apply={apply} />}
 
         {phase === 'manual' && (
-          <ManualView command={apply.command ?? 'hermes update'} onDone={() => handleClose(false)} />
+          <ManualView command={apply.command ?? 'janus update'} onDone={() => handleClose(false)} />
         )}
 
         {phase === 'error' && (

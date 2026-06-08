@@ -4,7 +4,7 @@ import { persistBoolean, storedBoolean } from '@/lib/storage'
 
 export type RightSidebarTabId = 'files' | 'git' | 'terminal' | 'web'
 
-const TAKEOVER_KEY = 'hermes.desktop.terminalTakeover'
+const TAKEOVER_KEY = 'janus.desktop.terminalTakeover'
 
 export const $rightSidebarTab = atom<RightSidebarTabId>('files')
 export const $terminalTakeover = atom(storedBoolean(TAKEOVER_KEY, false))

@@ -361,11 +361,11 @@ class TestBlockingApprovalE2E:
 
     def setup_method(self):
         _clear_approval_state()
-        os.environ.pop("HERMES_YOLO_MODE", None)
-        os.environ.pop("HERMES_INTERACTIVE", None)
-        os.environ.pop("HERMES_GATEWAY_SESSION", None)
-        os.environ.pop("HERMES_EXEC_ASK", None)
-        os.environ.pop("HERMES_SESSION_KEY", None)
+        os.environ.pop("JANUS_YOLO_MODE", None)
+        os.environ.pop("JANUS_INTERACTIVE", None)
+        os.environ.pop("JANUS_GATEWAY_SESSION", None)
+        os.environ.pop("JANUS_EXEC_ASK", None)
+        os.environ.pop("JANUS_SESSION_KEY", None)
 
     def test_blocking_approval_approve_once(self):
         """check_all_command_guards blocks until resolve_gateway_approval is called."""
@@ -385,17 +385,17 @@ class TestBlockingApprovalE2E:
             from tools.approval import reset_current_session_key, set_current_session_key
 
             token = set_current_session_key(session_key)
-            os.environ["HERMES_GATEWAY_SESSION"] = "1"
-            os.environ["HERMES_EXEC_ASK"] = "1"
-            os.environ["HERMES_SESSION_KEY"] = session_key
+            os.environ["JANUS_GATEWAY_SESSION"] = "1"
+            os.environ["JANUS_EXEC_ASK"] = "1"
+            os.environ["JANUS_SESSION_KEY"] = session_key
             try:
                 result_holder[0] = check_all_command_guards(
                     "rm -rf /important", "local"
                 )
             finally:
-                os.environ.pop("HERMES_GATEWAY_SESSION", None)
-                os.environ.pop("HERMES_EXEC_ASK", None)
-                os.environ.pop("HERMES_SESSION_KEY", None)
+                os.environ.pop("JANUS_GATEWAY_SESSION", None)
+                os.environ.pop("JANUS_EXEC_ASK", None)
+                os.environ.pop("JANUS_SESSION_KEY", None)
                 reset_current_session_key(token)
 
         t = threading.Thread(target=agent_thread)
@@ -433,17 +433,17 @@ class TestBlockingApprovalE2E:
             from tools.approval import reset_current_session_key, set_current_session_key
 
             token = set_current_session_key(session_key)
-            os.environ["HERMES_GATEWAY_SESSION"] = "1"
-            os.environ["HERMES_EXEC_ASK"] = "1"
-            os.environ["HERMES_SESSION_KEY"] = session_key
+            os.environ["JANUS_GATEWAY_SESSION"] = "1"
+            os.environ["JANUS_EXEC_ASK"] = "1"
+            os.environ["JANUS_SESSION_KEY"] = session_key
             try:
                 result_holder[0] = check_all_command_guards(
                     "rm -rf /important", "local"
                 )
             finally:
-                os.environ.pop("HERMES_GATEWAY_SESSION", None)
-                os.environ.pop("HERMES_EXEC_ASK", None)
-                os.environ.pop("HERMES_SESSION_KEY", None)
+                os.environ.pop("JANUS_GATEWAY_SESSION", None)
+                os.environ.pop("JANUS_EXEC_ASK", None)
+                os.environ.pop("JANUS_SESSION_KEY", None)
                 reset_current_session_key(token)
 
         t = threading.Thread(target=agent_thread)
@@ -476,9 +476,9 @@ class TestBlockingApprovalE2E:
             from tools.approval import reset_current_session_key, set_current_session_key
 
             token = set_current_session_key(session_key)
-            os.environ["HERMES_GATEWAY_SESSION"] = "1"
-            os.environ["HERMES_EXEC_ASK"] = "1"
-            os.environ["HERMES_SESSION_KEY"] = session_key
+            os.environ["JANUS_GATEWAY_SESSION"] = "1"
+            os.environ["JANUS_EXEC_ASK"] = "1"
+            os.environ["JANUS_SESSION_KEY"] = session_key
             try:
                 with patch("tools.approval._get_approval_config",
                            return_value={"gateway_timeout": 1}):
@@ -486,9 +486,9 @@ class TestBlockingApprovalE2E:
                         "rm -rf /important", "local"
                     )
             finally:
-                os.environ.pop("HERMES_GATEWAY_SESSION", None)
-                os.environ.pop("HERMES_EXEC_ASK", None)
-                os.environ.pop("HERMES_SESSION_KEY", None)
+                os.environ.pop("JANUS_GATEWAY_SESSION", None)
+                os.environ.pop("JANUS_EXEC_ASK", None)
+                os.environ.pop("JANUS_SESSION_KEY", None)
                 reset_current_session_key(token)
 
         t = threading.Thread(target=agent_thread)
@@ -518,15 +518,15 @@ class TestBlockingApprovalE2E:
                 from tools.approval import reset_current_session_key, set_current_session_key
 
                 token = set_current_session_key(session_key)
-                os.environ["HERMES_GATEWAY_SESSION"] = "1"
-                os.environ["HERMES_EXEC_ASK"] = "1"
-                os.environ["HERMES_SESSION_KEY"] = session_key
+                os.environ["JANUS_GATEWAY_SESSION"] = "1"
+                os.environ["JANUS_EXEC_ASK"] = "1"
+                os.environ["JANUS_SESSION_KEY"] = session_key
                 try:
                     results[idx] = check_all_command_guards(cmd, "local")
                 finally:
-                    os.environ.pop("HERMES_GATEWAY_SESSION", None)
-                    os.environ.pop("HERMES_EXEC_ASK", None)
-                    os.environ.pop("HERMES_SESSION_KEY", None)
+                    os.environ.pop("JANUS_GATEWAY_SESSION", None)
+                    os.environ.pop("JANUS_EXEC_ASK", None)
+                    os.environ.pop("JANUS_SESSION_KEY", None)
                     reset_current_session_key(token)
             return run
 
@@ -575,15 +575,15 @@ class TestBlockingApprovalE2E:
                 from tools.approval import reset_current_session_key, set_current_session_key
 
                 token = set_current_session_key(session_key)
-                os.environ["HERMES_GATEWAY_SESSION"] = "1"
-                os.environ["HERMES_EXEC_ASK"] = "1"
-                os.environ["HERMES_SESSION_KEY"] = session_key
+                os.environ["JANUS_GATEWAY_SESSION"] = "1"
+                os.environ["JANUS_EXEC_ASK"] = "1"
+                os.environ["JANUS_SESSION_KEY"] = session_key
                 try:
                     results[idx] = check_all_command_guards(cmd, "local")
                 finally:
-                    os.environ.pop("HERMES_GATEWAY_SESSION", None)
-                    os.environ.pop("HERMES_EXEC_ASK", None)
-                    os.environ.pop("HERMES_SESSION_KEY", None)
+                    os.environ.pop("JANUS_GATEWAY_SESSION", None)
+                    os.environ.pop("JANUS_EXEC_ASK", None)
+                    os.environ.pop("JANUS_SESSION_KEY", None)
                     reset_current_session_key(token)
             return run
 
@@ -636,13 +636,13 @@ class TestFallbackNoCallback:
         """
         from tools.approval import check_all_command_guards
 
-        os.environ["HERMES_EXEC_ASK"] = "1"
-        os.environ["HERMES_SESSION_KEY"] = "no-callback-test"
+        os.environ["JANUS_EXEC_ASK"] = "1"
+        os.environ["JANUS_SESSION_KEY"] = "no-callback-test"
         try:
             result = check_all_command_guards("rm -rf /important", "local")
         finally:
-            os.environ.pop("HERMES_EXEC_ASK", None)
-            os.environ.pop("HERMES_SESSION_KEY", None)
+            os.environ.pop("JANUS_EXEC_ASK", None)
+            os.environ.pop("JANUS_SESSION_KEY", None)
 
         assert result["approved"] is False
         assert result.get("status") == "pending_approval"

@@ -1,19 +1,19 @@
 """Contract test: the s6-overlay stage2 hook re-chowns the build trees under
-$INSTALL_DIR (/opt/hermes/.venv, ui-tui, node_modules) to the runtime hermes
-UID whenever they are not already hermes-owned — INDEPENDENTLY of whether
-$HERMES_HOME ownership already matches.
+$INSTALL_DIR (/opt/janus/.venv, ui-tui, node_modules) to the runtime janus
+UID whenever they are not already janus-owned — INDEPENDENTLY of whether
+$JANUS_HOME ownership already matches.
 
-Regression guard for the HERMES_UID/PUID remap path broken by #35027.
+Regression guard for the JANUS_UID/PUID remap path broken by #35027.
 
-`usermod -u <new> hermes` re-chowns the hermes home dir ($HERMES_HOME ==
+`usermod -u <new> janus` re-chowns the janus home dir ($JANUS_HOME ==
 /opt/data) to the new UID as a side effect. #35027 gated the build-tree chown
-behind `stat $HERMES_HOME != hermes_uid`, so after any remap that stat is
+behind `stat $JANUS_HOME != janus_uid`, so after any remap that stat is
 already satisfied and the build-tree chown was silently skipped — leaving
 .venv owned by the build-time UID (10000) and breaking:
   - lazy_deps.py `uv pip install` of platform extras (#15012, #21100)
   - the TUI esbuild rebuild into ui-tui/dist (#28851)
 
-The fix probes the build trees directly (stat .venv) rather than $HERMES_HOME.
+The fix probes the build trees directly (stat .venv) rather than $JANUS_HOME.
 
 The extraction + stubbed-shell-run approach mirrors
 tests/tools/test_stage2_hook_toplevel_chown.py.
@@ -50,11 +50,11 @@ def _build_tree_block(text: str) -> str:
     return m.group(1)
 
 
-def test_build_tree_chown_not_gated_on_hermes_home(stage2_text: str) -> None:
+def test_build_tree_chown_not_gated_on_janus_home(stage2_text: str) -> None:
     """The build-tree chown must NOT live inside the `if [ "$needs_chown" = true ]`
-    block keyed on $HERMES_HOME ownership — that is exactly the #35027 bug."""
+    block keyed on $JANUS_HOME ownership — that is exactly the #35027 bug."""
     block = _build_tree_block(stage2_text)
-    # The block probes the venv owner, not $HERMES_HOME.
+    # The block probes the venv owner, not $JANUS_HOME.
     assert "venv_owner" in block
     assert "$INSTALL_DIR/.venv" in block
     # All three build trees are covered.
@@ -63,7 +63,7 @@ def test_build_tree_chown_not_gated_on_hermes_home(stage2_text: str) -> None:
 
 
 def _run_build_tree_block(
-    text: str, *, venv_owner: int, hermes_uid: int
+    text: str, *, venv_owner: int, janus_uid: int
 ) -> bool:
     """Run the extracted build-tree block with `stat`, `id`, and `chown`
     stubbed. Returns True iff the block attempted the recursive chown."""
@@ -77,12 +77,12 @@ def _run_build_tree_block(
         log = dpath / "chown.log"
         # Stubs:
         #   stat -c %u <path>  -> echo the simulated venv owner
-        #   id -u hermes       -> handled via actual_hermes_uid var below
+        #   id -u janus       -> handled via actual_janus_uid var below
         #   chown ...          -> record that it fired
         script = (
             "set -eu\n"
-            f'INSTALL_DIR="/opt/hermes"\n'
-            f'actual_hermes_uid={hermes_uid}\n'
+            f'INSTALL_DIR="/opt/janus"\n'
+            f'actual_janus_uid={janus_uid}\n'
             f'stat() {{ echo {venv_owner}; }}\n'
             f'chown() {{ echo fired >> "{log}"; }}\n'
             + block
@@ -95,28 +95,28 @@ def _run_build_tree_block(
 
 
 def test_chown_fires_when_venv_owner_differs(stage2_text: str) -> None:
-    """The #35027 regression scenario: after a remap $HERMES_HOME already
+    """The #35027 regression scenario: after a remap $JANUS_HOME already
     matches the new UID, but the venv is still owned by the build-time UID
     (10000). The build-tree chown MUST still fire."""
-    fired = _run_build_tree_block(stage2_text, venv_owner=10000, hermes_uid=4242)
+    fired = _run_build_tree_block(stage2_text, venv_owner=10000, janus_uid=4242)
     assert fired, (
         "build-tree chown must fire when the venv is not owned by the runtime "
-        "hermes UID, regardless of $HERMES_HOME ownership (#35027 regression)"
+        "janus UID, regardless of $JANUS_HOME ownership (#35027 regression)"
     )
 
 
 def test_chown_skipped_when_venv_already_owned(stage2_text: str) -> None:
-    """Idempotency: once the venv is hermes-owned, the recursive chown is
+    """Idempotency: once the venv is janus-owned, the recursive chown is
     skipped on subsequent boots."""
-    fired = _run_build_tree_block(stage2_text, venv_owner=4242, hermes_uid=4242)
+    fired = _run_build_tree_block(stage2_text, venv_owner=4242, janus_uid=4242)
     assert not fired, (
         "build-tree chown must be skipped when the venv already matches the "
-        "runtime hermes UID (avoid expensive recursive chown on every restart)"
+        "runtime janus UID (avoid expensive recursive chown on every restart)"
     )
 
 
 def test_chown_skipped_for_default_uid(stage2_text: str) -> None:
-    """No remap: venv owned by the default build UID (10000) and hermes is
+    """No remap: venv owned by the default build UID (10000) and janus is
     still 10000 — nothing to do."""
-    fired = _run_build_tree_block(stage2_text, venv_owner=10000, hermes_uid=10000)
+    fired = _run_build_tree_block(stage2_text, venv_owner=10000, janus_uid=10000)
     assert not fired

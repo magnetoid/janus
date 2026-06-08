@@ -43,7 +43,7 @@ in
   # trailing newline so both sides always match.
   #
   # Usage:
-  #   npm = hermesNpmLib.mkNpmPassthru { folder = "ui-tui"; attr = "tui"; pname = "hermes-tui"; };
+  #   npm = janusNpmLib.mkNpmPassthru { folder = "ui-tui"; attr = "tui"; pname = "janus-tui"; };
   #   pkgs.buildNpmPackage (npm // {
   #     sourceRoot = "ui-tui";
   #     buildPhase = '' ... '';
@@ -53,7 +53,7 @@ in
     {
       folder, # repo-relative folder with package.json, e.g. "ui-tui"
       attr, # flake package attr, e.g. "tui"
-      pname, # e.g. "hermes-tui"
+      pname, # e.g. "janus-tui"
     }:
     let
       # No sourceRoot — the workspace root (with the single package-lock.json)

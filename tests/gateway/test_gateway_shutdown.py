@@ -135,7 +135,7 @@ async def test_gateway_stop_interrupts_after_drain_timeout():
 
 @pytest.mark.asyncio
 async def test_gateway_stop_systemd_service_restart_exits_cleanly(tmp_path, monkeypatch):
-    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
     runner, adapter = make_restart_runner()
     adapter.disconnect = AsyncMock()
     monkeypatch.setenv("INVOCATION_ID", "systemd-test")
@@ -151,7 +151,7 @@ async def test_gateway_stop_systemd_service_restart_exits_cleanly(tmp_path, monk
 
 @pytest.mark.asyncio
 async def test_gateway_stop_launchd_service_restart_keeps_nonzero_exit(tmp_path, monkeypatch):
-    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
     runner, adapter = make_restart_runner()
     adapter.disconnect = AsyncMock()
 
@@ -240,7 +240,7 @@ async def test_idle_in_chat_restart_does_not_send_interruption_warning():
 
 @pytest.mark.asyncio
 async def test_in_chat_restart_does_not_write_home_startup_marker(tmp_path, monkeypatch):
-    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
     runner, adapter = make_restart_runner()
     adapter.disconnect = AsyncMock()
     source = make_restart_source(thread_id="42")

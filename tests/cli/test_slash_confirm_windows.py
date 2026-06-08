@@ -23,10 +23,10 @@ from unittest.mock import MagicMock, patch
 
 
 def _make_cli():
-    """Minimal HermesCLI shell exposing prompt/modal helpers."""
+    """Minimal JanusCLI shell exposing prompt/modal helpers."""
     import cli as cli_mod
 
-    obj = object.__new__(cli_mod.HermesCLI)
+    obj = object.__new__(cli_mod.JanusCLI)
     obj._app = MagicMock()
     obj._app.loop = MagicMock()
     obj._status_bar_visible = True

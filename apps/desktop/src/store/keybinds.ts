@@ -8,7 +8,7 @@ import {
 } from '@/lib/keybinds/actions'
 import { arraysEqual, persistString, storedString } from '@/lib/storage'
 
-const STORAGE_KEY = 'hermes.desktop.keybinds'
+const STORAGE_KEY = 'janus.desktop.keybinds'
 
 // Defaults overlaid with the user's stored overrides. Unknown / stale action ids
 // are dropped; actions added in a later release pick up their shipped default.

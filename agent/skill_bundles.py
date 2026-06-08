@@ -7,8 +7,8 @@ referenced skill's full content into a single user message, the same way
 
 Storage
 -------
-Bundles live in ``~/.hermes/skill-bundles/*.yaml`` (and the equivalent
-profile-aware directory under ``HERMES_HOME``). Each file looks like::
+Bundles live in ``~/.janus/skill-bundles/*.yaml`` (and the equivalent
+profile-aware directory under ``JANUS_HOME``). Each file looks like::
 
     name: backend-dev
     description: Backend feature work — code review, testing, PR workflow.
@@ -36,7 +36,7 @@ Public API
 - :func:`resolve_bundle_command_key` — map a user-typed command to its slug
 - :func:`build_bundle_invocation_message` — produce the full user message
 - :func:`reload_bundles` — re-scan disk and return a diff
-- :func:`list_bundles` — return rich info for display (``hermes bundles``)
+- :func:`list_bundles` — return rich info for display (``janus bundles``)
 - :func:`save_bundle` / :func:`delete_bundle` — file-level operations
 """
 
@@ -50,7 +50,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
-from hermes_constants import get_hermes_home
+from janus_constants import get_janus_home
 
 logger = logging.getLogger(__name__)
 
@@ -64,15 +64,15 @@ _bundles_cache_mtime: Optional[float] = None
 
 
 def _bundles_dir() -> Path:
-    """Return the canonical bundles directory under HERMES_HOME.
+    """Return the canonical bundles directory under JANUS_HOME.
 
-    Honors ``HERMES_BUNDLES_DIR`` for tests; falls back to
-    ``<HERMES_HOME>/skill-bundles``.
+    Honors ``JANUS_BUNDLES_DIR`` for tests; falls back to
+    ``<JANUS_HOME>/skill-bundles``.
     """
-    override = os.environ.get("HERMES_BUNDLES_DIR")
+    override = os.environ.get("JANUS_BUNDLES_DIR")
     if override:
         return Path(override).expanduser()
-    return get_hermes_home() / "skill-bundles"
+    return get_janus_home() / "skill-bundles"
 
 
 def _slugify(name: str) -> str:
@@ -341,7 +341,7 @@ def build_bundle_invocation_message(
 
 
 # ---------------------------------------------------------------------------
-# File-level CRUD helpers — used by `hermes bundles` CLI subcommand.
+# File-level CRUD helpers — used by `janus bundles` CLI subcommand.
 # ---------------------------------------------------------------------------
 
 

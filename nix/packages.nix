@@ -1,10 +1,10 @@
-# nix/packages.nix — Hermes Agent package built with uv2nix
+# nix/packages.nix — Janus Agent package built with uv2nix
 { inputs, ... }:
 {
   perSystem =
     { pkgs, lib, inputs', ... }:
     let
-      hermesAgent = pkgs.callPackage ./hermes-agent.nix {
+      janusAgent = pkgs.callPackage ./janus-agent.nix {
         inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
         npm-lockfile-fix = inputs'.npm-lockfile-fix.packages.default;
         # Only embed clean revs — dirtyRev doesn't represent any upstream
@@ -14,18 +14,18 @@
     in
     {
       packages = {
-        default = hermesAgent;
+        default = janusAgent;
 
         # Ships discord.py + python-telegram-bot + slack-sdk so a plain
         # `nix profile install .#messaging` connects to Discord/Telegram/Slack
         # on first run — lazy-install can't write to the read-only /nix/store.
-        messaging = hermesAgent.override {
+        messaging = janusAgent.override {
           extraDependencyGroups = [ "messaging" ];
         };
 
         # All platform-portable optional integrations pre-built.
         # matrix is Linux-only (oqs/liboqs lacks aarch64-darwin wheels).
-        full = hermesAgent.override {
+        full = janusAgent.override {
           extraDependencyGroups = [
             "anthropic"
             "azure-identity"
@@ -47,11 +47,11 @@
           ] ++ lib.optionals pkgs.stdenv.isLinux [ "matrix" ];
         };
 
-        tui = hermesAgent.hermesTui;
-        web = hermesAgent.hermesWeb;
-        desktop = hermesAgent.hermesDesktop;
+        tui = janusAgent.janusTui;
+        web = janusAgent.janusWeb;
+        desktop = janusAgent.janusDesktop;
 
-        fix-lockfiles = hermesAgent.hermesNpmLib.mkFixLockfiles { attr = "tui"; };
+        fix-lockfiles = janusAgent.janusNpmLib.mkFixLockfiles { attr = "tui"; };
       };
     };
 }

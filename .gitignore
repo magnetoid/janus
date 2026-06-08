@@ -5,3 +5,4 @@ __pycache__/
 node_modules/
 .torsor/index/
 .DS_Store
+.venv/

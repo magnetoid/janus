@@ -1,0 +1,14 @@
+{
+  "id": "20260608-004929-s4",
+  "timestamp": "20260608-004929",
+  "label": "s4",
+  "file_count": 5,
+  "total_size": 12381,
+  "files": {
+    "state.db": 12288,
+    "config.yaml": 30,
+    ".env": 32,
+    "auth.json": 18,
+    "cron/jobs.json": 13
+  }
+}

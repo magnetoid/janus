@@ -1,12 +1,12 @@
-"""Harness: dashboard opt-in via HERMES_DASHBOARD.
+"""Harness: dashboard opt-in via JANUS_DASHBOARD.
 
-Today (tini): dashboard starts once when HERMES_DASHBOARD=1; if it crashes
+Today (tini): dashboard starts once when JANUS_DASHBOARD=1; if it crashes
 it stays dead. After Phase 2 (s6): dashboard starts once; if it crashes
 it is restarted under supervision. The restart-after-crash test lives in
 Phase 2 Task 2.5; this file only locks the opt-in surface (which must
 not change between tini and s6).
 
-Every ``docker exec`` here runs as the unprivileged ``hermes`` user
+Every ``docker exec`` here runs as the unprivileged ``janus`` user
 (via :func:`docker_exec`/:func:`docker_exec_sh` in conftest), matching
 the realistic runtime context. See the conftest module docstring.
 """
@@ -37,7 +37,7 @@ def _poll(container: str, probe: str, *, deadline_s: float = 30.0,
 def test_dashboard_not_running_by_default(
     built_image: str, container_name: str,
 ) -> None:
-    """Without HERMES_DASHBOARD, no dashboard process should be running."""
+    """Without JANUS_DASHBOARD, no dashboard process should be running."""
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name, built_image,
          "sleep", "60"],
@@ -46,23 +46,23 @@ def test_dashboard_not_running_by_default(
     # Give the entrypoint enough time to finish bootstrap; if a dashboard
     # were going to start it'd be visible by now.
     time.sleep(5)
-    r = docker_exec(container_name, "pgrep", "-f", "hermes dashboard")
+    r = docker_exec(container_name, "pgrep", "-f", "janus dashboard")
     # pgrep exits non-zero when no match found
     assert r.returncode != 0, (
-        "Dashboard should not be running without HERMES_DASHBOARD"
+        "Dashboard should not be running without JANUS_DASHBOARD"
     )
 
 
 def test_dashboard_slot_reports_down_when_disabled(
     built_image: str, container_name: str,
 ) -> None:
-    """Without HERMES_DASHBOARD, s6-svstat should report the dashboard
+    """Without JANUS_DASHBOARD, s6-svstat should report the dashboard
     slot as DOWN (not up-with-sleep-infinity, which would
-    false-positive `hermes doctor` and any other health check).
+    false-positive `janus doctor` and any other health check).
 
     Locks the PR #30136 review item I3 fix: cont-init.d/03-dashboard-toggle
     writes a `down` marker file in the live service-dir when
-    HERMES_DASHBOARD is unset, so the slot reflects reality.
+    JANUS_DASHBOARD is unset, so the slot reflects reality.
     """
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name, built_image,
@@ -77,7 +77,7 @@ def test_dashboard_slot_reports_down_when_disabled(
     )
     assert r.returncode == 0, f"s6-svstat failed: {r.stderr!r} / {r.stdout!r}"
     assert "down" in r.stdout, (
-        f"Dashboard slot should be 'down' without HERMES_DASHBOARD; "
+        f"Dashboard slot should be 'down' without JANUS_DASHBOARD; "
         f"svstat reports: {r.stdout!r}"
     )
 
@@ -85,17 +85,17 @@ def test_dashboard_slot_reports_down_when_disabled(
 def test_dashboard_slot_reports_up_when_enabled(
     built_image: str, container_name: str,
 ) -> None:
-    """Symmetry: with HERMES_DASHBOARD=1, s6-svstat reports the slot as up."""
+    """Symmetry: with JANUS_DASHBOARD=1, s6-svstat reports the slot as up."""
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name,
-         "-e", "HERMES_DASHBOARD=1",
+         "-e", "JANUS_DASHBOARD=1",
          # The default dashboard host is 0.0.0.0, which now engages the
          # OAuth auth gate. Without a provider registered (no
-         # HERMES_DASHBOARD_OAUTH_CLIENT_ID in this test env), start_server
+         # JANUS_DASHBOARD_OAUTH_CLIENT_ID in this test env), start_server
          # would fail closed and the slot would never come up. Pin the
          # explicit insecure opt-in to keep this test focused on the s6
          # supervision contract, not the auth gate.
-         "-e", "HERMES_DASHBOARD_INSECURE=1",
+         "-e", "JANUS_DASHBOARD_INSECURE=1",
          built_image, "sleep", "120"],
         check=True, capture_output=True, timeout=30,
     )
@@ -118,14 +118,14 @@ def test_dashboard_slot_reports_up_when_enabled(
 def test_dashboard_opt_in_starts(
     built_image: str, container_name: str,
 ) -> None:
-    """With HERMES_DASHBOARD=1, a dashboard process should be visible."""
+    """With JANUS_DASHBOARD=1, a dashboard process should be visible."""
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name,
-         "-e", "HERMES_DASHBOARD=1",
+         "-e", "JANUS_DASHBOARD=1",
          # Default bind is 0.0.0.0; pin insecure opt-in so the auth gate
          # doesn't fail-closed before the process can come up. See
          # test_dashboard_slot_reports_up_when_enabled for the full rationale.
-         "-e", "HERMES_DASHBOARD_INSECURE=1",
+         "-e", "JANUS_DASHBOARD_INSECURE=1",
          built_image, "sleep", "120"],
         check=True, capture_output=True, timeout=30,
     )
@@ -133,22 +133,22 @@ def test_dashboard_opt_in_starts(
     # backgrounds it and bootstrap (skills sync etc.) can take a few
     # seconds before the python process actually launches.
     ok, _ = _poll(
-        container_name, "pgrep -f 'hermes dashboard'", deadline_s=30.0,
+        container_name, "pgrep -f 'janus dashboard'", deadline_s=30.0,
     )
-    assert ok, "Dashboard should be running with HERMES_DASHBOARD=1"
+    assert ok, "Dashboard should be running with JANUS_DASHBOARD=1"
 
 
 def test_dashboard_port_override(
     built_image: str, container_name: str,
 ) -> None:
-    """HERMES_DASHBOARD_PORT changes the dashboard's listen port."""
+    """JANUS_DASHBOARD_PORT changes the dashboard's listen port."""
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name,
-         "-e", "HERMES_DASHBOARD=1", "-e", "HERMES_DASHBOARD_PORT=9120",
+         "-e", "JANUS_DASHBOARD=1", "-e", "JANUS_DASHBOARD_PORT=9120",
          # Default bind is 0.0.0.0; pin insecure opt-in so the auth gate
          # doesn't fail-closed before the port is bound. See
          # test_dashboard_slot_reports_up_when_enabled for the full rationale.
-         "-e", "HERMES_DASHBOARD_INSECURE=1",
+         "-e", "JANUS_DASHBOARD_INSECURE=1",
          built_image, "sleep", "120"],
         check=True, capture_output=True, timeout=30,
     )
@@ -178,18 +178,18 @@ def test_dashboard_restarts_after_crash(
     """
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name,
-         "-e", "HERMES_DASHBOARD=1",
+         "-e", "JANUS_DASHBOARD=1",
          # Default bind is 0.0.0.0; pin insecure opt-in so the auth gate
          # doesn't fail-closed before the supervised dashboard can come up.
          # See test_dashboard_slot_reports_up_when_enabled for the full
          # rationale.
-         "-e", "HERMES_DASHBOARD_INSECURE=1",
+         "-e", "JANUS_DASHBOARD_INSECURE=1",
          built_image, "sleep", "120"],
         check=True, capture_output=True, timeout=30,
     )
     # Wait for the first dashboard to come up.
     ok, _ = _poll(
-        container_name, "pgrep -f 'hermes dashboard'", deadline_s=30.0,
+        container_name, "pgrep -f 'janus dashboard'", deadline_s=30.0,
     )
     assert ok, "Dashboard never started initially"
 
@@ -199,7 +199,7 @@ def test_dashboard_restarts_after_crash(
     first_pid: str | None = None
     for _attempt in range(10):
         first_pid_result = docker_exec(
-            container_name, "pgrep", "-f", "hermes dashboard",
+            container_name, "pgrep", "-f", "janus dashboard",
         )
         first_pids = first_pid_result.stdout.strip().split()
         if first_pids:
@@ -208,15 +208,15 @@ def test_dashboard_restarts_after_crash(
         time.sleep(0.5)
     assert first_pid is not None, "Could not capture initial dashboard PID"
 
-    # Kill the dashboard. The dashboard process runs as hermes, so the
-    # hermes user can kill it (same UID).
+    # Kill the dashboard. The dashboard process runs as janus, so the
+    # janus user can kill it (same UID).
     docker_exec(container_name, "kill", "-9", first_pid)
 
     # s6 backs off ~1s before restart; allow up to 15s for the new
     # process to appear with a different PID.
     deadline = time.monotonic() + 15.0
     while time.monotonic() < deadline:
-        r = docker_exec(container_name, "pgrep", "-f", "hermes dashboard")
+        r = docker_exec(container_name, "pgrep", "-f", "janus dashboard")
         pids = r.stdout.strip().split() if r.returncode == 0 else []
         if pids and pids[0] != first_pid:
             return  # success
@@ -230,7 +230,7 @@ def test_dashboard_restarts_after_crash(
 # ---------------------------------------------------------------------------
 # OAuth auth-gate behaviour — regression guard for the dashboard-insecure
 # auto-injection bug. Pre-fix, the s6 run script appended `--insecure`
-# whenever `HERMES_DASHBOARD_HOST` was non-loopback, silently disabling
+# whenever `JANUS_DASHBOARD_HOST` was non-loopback, silently disabling
 # the OAuth gate on every container-deployed dashboard. The matching
 # static-text guard lives in tests/test_docker_home_override_scripts.py;
 # this is the behavioural end-to-end check.
@@ -277,7 +277,7 @@ except urllib.error.HTTPError as h:
     # single bash string stays clean. The 'PY' delimiter is quoted to
     # disable shell expansion inside the heredoc body.
     probe = (
-        "/opt/hermes/.venv/bin/python - <<'PY'\n"
+        "/opt/janus/.venv/bin/python - <<'PY'\n"
         f"{py_program}"
         "PY"
     )
@@ -308,7 +308,7 @@ def test_dashboard_oauth_gate_engages_on_non_loopback_bind(
     """The s6 dashboard run script must NOT auto-add ``--insecure`` when the
     dashboard binds to ``0.0.0.0``. The OAuth auth gate engages on its own
     when a ``DashboardAuthProvider`` is registered (the bundled nous
-    provider activates whenever ``HERMES_DASHBOARD_OAUTH_CLIENT_ID`` is
+    provider activates whenever ``JANUS_DASHBOARD_OAUTH_CLIENT_ID`` is
     set).
 
     Regression guard for the wildcard-subdomain rollout where every
@@ -335,9 +335,9 @@ def test_dashboard_oauth_gate_engages_on_non_loopback_bind(
     """
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name,
-         "-e", "HERMES_DASHBOARD=1",
-         "-e", "HERMES_DASHBOARD_HOST=0.0.0.0",
-         "-e", "HERMES_DASHBOARD_OAUTH_CLIENT_ID=agent:test-instance",
+         "-e", "JANUS_DASHBOARD=1",
+         "-e", "JANUS_DASHBOARD_HOST=0.0.0.0",
+         "-e", "JANUS_DASHBOARD_OAUTH_CLIENT_ID=agent:test-instance",
          built_image, "sleep", "120"],
         check=True, capture_output=True, timeout=30,
     )
@@ -352,7 +352,7 @@ def test_dashboard_oauth_gate_engages_on_non_loopback_bind(
     provider_names = [p.get("name") for p in payload.get("providers", [])]
     assert "nous" in provider_names, (
         "Bundled dashboard_auth/nous provider should register when "
-        f"HERMES_DASHBOARD_OAUTH_CLIENT_ID is set. Got: {payload!r}"
+        f"JANUS_DASHBOARD_OAUTH_CLIENT_ID is set. Got: {payload!r}"
     )
 
     # (2) A gated route (``/api/sessions``) returns 401 to an
@@ -360,7 +360,7 @@ def test_dashboard_oauth_gate_engages_on_non_loopback_bind(
     status_code, body = _http_probe(container_name, "/api/sessions")
     assert status_code == 401, (
         "OAuth gate must intercept gated /api/* routes on 0.0.0.0 bind "
-        "when a provider is registered and HERMES_DASHBOARD_INSECURE "
+        "when a provider is registered and JANUS_DASHBOARD_INSECURE "
         f"is unset. Got: status={status_code} body={body!r}"
     )
 
@@ -386,10 +386,10 @@ def test_dashboard_oauth_gate_engages_on_non_loopback_bind(
 def test_dashboard_insecure_env_var_opts_out_of_gate(
     built_image: str, container_name: str,
 ) -> None:
-    """``HERMES_DASHBOARD_INSECURE=1`` re-enables the legacy no-gate mode
+    """``JANUS_DASHBOARD_INSECURE=1`` re-enables the legacy no-gate mode
     for operators running on trusted LANs behind a reverse proxy without
     the OAuth contract. Same opt-out shape as the rest of the s6 boolean
-    envs (e.g. ``HERMES_DASHBOARD``).
+    envs (e.g. ``JANUS_DASHBOARD``).
 
     With the gate off, ``/api/status`` (a public endpoint under the
     legacy ``_SESSION_TOKEN`` middleware) returns 200 with the
@@ -397,9 +397,9 @@ def test_dashboard_insecure_env_var_opts_out_of_gate(
     """
     subprocess.run(
         ["docker", "run", "-d", "--name", container_name,
-         "-e", "HERMES_DASHBOARD=1",
-         "-e", "HERMES_DASHBOARD_HOST=0.0.0.0",
-         "-e", "HERMES_DASHBOARD_INSECURE=1",
+         "-e", "JANUS_DASHBOARD=1",
+         "-e", "JANUS_DASHBOARD_HOST=0.0.0.0",
+         "-e", "JANUS_DASHBOARD_INSECURE=1",
          built_image, "sleep", "120"],
         check=True, capture_output=True, timeout=30,
     )
@@ -410,6 +410,6 @@ def test_dashboard_insecure_env_var_opts_out_of_gate(
     )
     status = json.loads(body)
     assert status.get("auth_required") is False, (
-        "HERMES_DASHBOARD_INSECURE=1 must disable the auth gate (explicit "
+        "JANUS_DASHBOARD_INSECURE=1 must disable the auth gate (explicit "
         f"opt-in for trusted-LAN deployments). Got: {status!r}"
     )

@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import yaml
 
-from hermes_cli.plugins import PluginManager
+from janus_cli.plugins import PluginManager
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -166,7 +166,7 @@ def test_manifest_fields():
 
 
 def test_nemo_relay_plugin_is_discoverable_as_bundled_plugin(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_test"))
+    monkeypatch.setenv("JANUS_HOME", str(tmp_path / "janus_test"))
 
     manager = PluginManager()
     manager.discover_and_load()
@@ -189,16 +189,16 @@ def test_nemo_relay_plugin_uses_nemo_relay_runtime(monkeypatch):
 def test_nemo_relay_plugin_emits_llm_tool_and_exports_atif(tmp_path, monkeypatch):
     fake = _FakeNemoRelay()
     plugin = _fresh_plugin(monkeypatch, fake)
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATOF_ENABLED", "1")
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY", str(tmp_path / "atof"))
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATIF_ENABLED", "1")
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY", str(tmp_path / "atif"))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATOF_ENABLED", "1")
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATOF_OUTPUT_DIRECTORY", str(tmp_path / "atof"))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATIF_ENABLED", "1")
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY", str(tmp_path / "atif"))
 
     base = {
         "session_id": "s1",
         "task_id": "t1",
         "turn_id": "turn-1",
-        "telemetry_schema_version": "hermes.observer.v1",
+        "telemetry_schema_version": "janus.observer.v1",
     }
     plugin.on_session_start(**base, model="demo-model", platform="cli")
     plugin.on_pre_api_request(
@@ -226,7 +226,7 @@ def test_nemo_relay_plugin_emits_llm_tool_and_exports_atif(tmp_path, monkeypatch
     assert "tool.call" in event_names
     assert "tool.call_end" in event_names
     assert "scope.pop" in event_names
-    assert (tmp_path / "atif" / "hermes-atif-s1.json").exists()
+    assert (tmp_path / "atif" / "janus-atif-s1.json").exists()
 
 
 def test_nemo_relay_plugin_closes_api_span_on_error(monkeypatch):
@@ -236,7 +236,7 @@ def test_nemo_relay_plugin_closes_api_span_on_error(monkeypatch):
         "session_id": "s1",
         "task_id": "t1",
         "turn_id": "turn-1",
-        "telemetry_schema_version": "hermes.observer.v1",
+        "telemetry_schema_version": "janus.observer.v1",
     }
 
     plugin.on_pre_api_request(
@@ -269,8 +269,8 @@ def test_nemo_relay_plugin_emits_approval_marks(monkeypatch):
     plugin.on_post_approval_response(session_id="s1", approval_id="approval-1", approved=True)
 
     mark_names = [event[1] for event in fake.events if event[0] == "scope.event"]
-    assert "hermes.approval.request" in mark_names
-    assert "hermes.approval.response" in mark_names
+    assert "janus.approval.request" in mark_names
+    assert "janus.approval.response" in mark_names
 
 
 def test_nemo_relay_plugin_emits_unmatched_fallback_marks(monkeypatch):
@@ -286,9 +286,9 @@ def test_nemo_relay_plugin_emits_unmatched_fallback_marks(monkeypatch):
     plugin.on_post_tool_call(session_id="s1", tool_call_id="missing-tool", result={"ok": True})
 
     mark_names = [event[1] for event in fake.events if event[0] == "scope.event"]
-    assert "hermes.api.response.unmatched" in mark_names
-    assert "hermes.api.error" in mark_names
-    assert "hermes.tool.response.unmatched" in mark_names
+    assert "janus.api.response.unmatched" in mark_names
+    assert "janus.api.error" in mark_names
+    assert "janus.tool.response.unmatched" in mark_names
 
 
 def test_nemo_relay_plugin_metadata_promotes_trajectory_and_subagent_ids(monkeypatch):
@@ -299,7 +299,7 @@ def test_nemo_relay_plugin_metadata_promotes_trajectory_and_subagent_ids(monkeyp
         session_id="parent-session",
         task_id="task-1",
         turn_id="turn-1",
-        telemetry_schema_version="hermes.observer.v1",
+        telemetry_schema_version="janus.observer.v1",
     )
     plugin.on_subagent_start(
         parent_session_id="parent-session",
@@ -308,7 +308,7 @@ def test_nemo_relay_plugin_metadata_promotes_trajectory_and_subagent_ids(monkeyp
         child_session_id="child-session",
         child_subagent_id="child-sa",
         child_role="leaf",
-        telemetry_schema_version="hermes.observer.v1",
+        telemetry_schema_version="janus.observer.v1",
     )
     plugin.on_subagent_stop(
         parent_session_id="parent-session",
@@ -316,15 +316,15 @@ def test_nemo_relay_plugin_metadata_promotes_trajectory_and_subagent_ids(monkeyp
         child_session_id="child-session",
         child_role="leaf",
         child_status="completed",
-        telemetry_schema_version="hermes.observer.v1",
+        telemetry_schema_version="janus.observer.v1",
     )
 
-    turn_mark = next(event for event in fake.events if event[0] == "scope.event" and event[1] == "hermes.turn.start")
+    turn_mark = next(event for event in fake.events if event[0] == "scope.event" and event[1] == "janus.turn.start")
     turn_metadata = turn_mark[2]["metadata"]
     assert turn_metadata["session_id"] == "parent-session"
     assert turn_metadata["trajectory_id"] == "parent-session"
 
-    start_mark = next(event for event in fake.events if event[0] == "scope.event" and event[1] == "hermes.subagent.start")
+    start_mark = next(event for event in fake.events if event[0] == "scope.event" and event[1] == "janus.subagent.start")
     start_metadata = start_mark[2]["metadata"]
     assert start_metadata["parent_session_id"] == "parent-session"
     assert start_metadata["parent_trajectory_id"] == "parent-session"
@@ -333,7 +333,7 @@ def test_nemo_relay_plugin_metadata_promotes_trajectory_and_subagent_ids(monkeyp
     assert start_metadata["child_subagent_id"] == "child-sa"
     assert start_metadata["child_role"] == "leaf"
 
-    stop_mark = next(event for event in fake.events if event[0] == "scope.event" and event[1] == "hermes.subagent.stop")
+    stop_mark = next(event for event in fake.events if event[0] == "scope.event" and event[1] == "janus.subagent.stop")
     assert stop_mark[2]["metadata"]["child_status"] == "completed"
 
 
@@ -348,17 +348,17 @@ def test_nemo_relay_plugin_reparents_child_session_scope_for_embedded_atif(monke
         child_session_id="child-session",
         child_subagent_id="child-sa",
         child_role="leaf",
-        telemetry_schema_version="hermes.observer.v1",
+        telemetry_schema_version="janus.observer.v1",
     )
     plugin.on_session_start(session_id="child-session")
 
     child_push = next(
         event
         for event in fake.events
-        if event[0] == "scope.push" and event[1] == "hermes-session-child-session"
+        if event[0] == "scope.push" and event[1] == "janus-session-child-session"
     )
     child_kwargs = child_push[3]
-    assert child_kwargs["handle"] == ("scope", "hermes-session-parent-session")
+    assert child_kwargs["handle"] == ("scope", "janus-session-parent-session")
     assert child_kwargs["metadata"]["session_id"] == "child-session"
     assert child_kwargs["metadata"]["trajectory_id"] == "child-session"
     assert child_kwargs["metadata"]["nemo_relay_scope_role"] == "subagent"
@@ -369,8 +369,8 @@ def test_nemo_relay_plugin_reparents_child_session_scope_for_embedded_atif(monke
 def test_nemo_relay_plugin_skips_embedded_child_atif_file_by_default(tmp_path, monkeypatch):
     fake = _FakeNemoRelay()
     plugin = _fresh_plugin(monkeypatch, fake)
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATIF_ENABLED", "1")
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY", str(tmp_path / "atif"))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATIF_ENABLED", "1")
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY", str(tmp_path / "atif"))
 
     plugin.on_session_start(session_id="parent-session")
     plugin.on_subagent_start(
@@ -384,16 +384,16 @@ def test_nemo_relay_plugin_skips_embedded_child_atif_file_by_default(tmp_path, m
     plugin.on_session_end(session_id="parent-session")
     plugin.on_session_finalize(session_id="parent-session")
 
-    assert (tmp_path / "atif" / "hermes-atif-parent-session.json").exists()
-    assert not (tmp_path / "atif" / "hermes-atif-child-session.json").exists()
+    assert (tmp_path / "atif" / "janus-atif-parent-session.json").exists()
+    assert not (tmp_path / "atif" / "janus-atif-child-session.json").exists()
 
 
 def test_nemo_relay_plugin_can_write_embedded_child_atif_file_in_all_mode(tmp_path, monkeypatch):
     fake = _FakeNemoRelay()
     plugin = _fresh_plugin(monkeypatch, fake)
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATIF_ENABLED", "1")
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY", str(tmp_path / "atif"))
-    monkeypatch.setenv("HERMES_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE", "all")
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATIF_ENABLED", "1")
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATIF_OUTPUT_DIRECTORY", str(tmp_path / "atif"))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_ATIF_SUBAGENT_EXPORT_MODE", "all")
 
     plugin.on_session_start(session_id="parent-session")
     plugin.on_subagent_start(
@@ -407,8 +407,8 @@ def test_nemo_relay_plugin_can_write_embedded_child_atif_file_in_all_mode(tmp_pa
     plugin.on_session_end(session_id="parent-session")
     plugin.on_session_finalize(session_id="parent-session")
 
-    assert (tmp_path / "atif" / "hermes-atif-parent-session.json").exists()
-    assert (tmp_path / "atif" / "hermes-atif-child-session.json").exists()
+    assert (tmp_path / "atif" / "janus-atif-parent-session.json").exists()
+    assert (tmp_path / "atif" / "janus-atif-child-session.json").exists()
 
 
 def test_nemo_relay_plugin_can_initialize_plugins_toml(tmp_path, monkeypatch):
@@ -435,7 +435,7 @@ output_directory = "{atif_dir}"
 """,
         encoding="utf-8",
     )
-    monkeypatch.setenv("HERMES_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
 
     plugin.on_session_start(session_id="s1")
 
@@ -462,7 +462,7 @@ mode = "route"
 """,
         encoding="utf-8",
     )
-    monkeypatch.setenv("HERMES_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
 
     seen_request = {}
     raw_choice = SimpleNamespace(
@@ -560,7 +560,7 @@ mode = "route"
 """,
         encoding="utf-8",
     )
-    monkeypatch.setenv("HERMES_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
 
     seen_args = {}
 
@@ -618,7 +618,7 @@ mode = "route"
 """,
         encoding="utf-8",
     )
-    monkeypatch.setenv("HERMES_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
+    monkeypatch.setenv("JANUS_NEMO_RELAY_PLUGINS_TOML", str(plugins_toml))
 
     base = {
         "session_id": "s1",

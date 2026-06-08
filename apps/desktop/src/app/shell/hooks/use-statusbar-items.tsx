@@ -41,7 +41,7 @@ import {
 } from '@/store/session'
 import { $subagentsBySession, activeSubagentCount } from '@/store/subagents'
 import { $desktopVersion, $updateApply, $updateStatus, setUpdateOverlayOpen } from '@/store/updates'
-import type { StatusResponse } from '@/types/hermes'
+import type { StatusResponse } from '@/types/janus'
 
 import { CRON_ROUTE } from '../../routes'
 import type { StatusbarItem } from '../statusbar-controls'

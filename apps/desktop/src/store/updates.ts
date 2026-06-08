@@ -53,7 +53,7 @@ const UPDATE_TOAST_ID = 'desktop-update-available'
 // a day, so a "don't show this exact sha again" guard re-popped the toast on
 // every new commit. We instead suppress the toast for a cooldown window that
 // (re)starts whenever the user closes it.
-const UPDATE_TOAST_SNOOZE_KEY = 'hermes:update-toast-snooze-until'
+const UPDATE_TOAST_SNOOZE_KEY = 'janus:update-toast-snooze-until'
 const UPDATE_TOAST_COOLDOWN_MS = 24 * 60 * 60 * 1000
 
 function snoozeUpdateToast(): void {
@@ -86,7 +86,7 @@ export function reportBackendContract(contract: number | undefined): void {
   }
 
   notify({
-    action: { label: translateNow('notifications.updateHermes'), onClick: () => void applyUpdates() },
+    action: { label: translateNow('notifications.updateJanus'), onClick: () => void applyUpdates() },
     durationMs: 0,
     id: SKEW_TOAST_ID,
     kind: 'warning',
@@ -162,7 +162,7 @@ export async function refreshDesktopVersion(): Promise<DesktopVersionInfo | null
   // mid-reload, or the bridge not yet ready on first paint) would surface
   // as an unhandled promise rejection in the renderer. Swallow it.
   try {
-    const next = await window.hermesDesktop?.getVersion?.()
+    const next = await window.janusDesktop?.getVersion?.()
 
     if (next) {
       $desktopVersion.set(next)
@@ -175,7 +175,7 @@ export async function refreshDesktopVersion(): Promise<DesktopVersionInfo | null
 }
 
 export async function checkUpdates(): Promise<DesktopUpdateStatus | null> {
-  const bridge = window.hermesDesktop?.updates
+  const bridge = window.janusDesktop?.updates
 
   if (!bridge || $updateChecking.get()) {
     return $updateStatus.get()
@@ -187,7 +187,7 @@ export async function checkUpdates(): Promise<DesktopUpdateStatus | null> {
     const status = await bridge.check()
     $updateStatus.set(status)
     maybeNotifyUpdateAvailable(status)
-    // The update check pulls the latest hermes_cli + bundled package metadata
+    // The update check pulls the latest janus_cli + bundled package metadata
     // into place. Re-read the running version so About reflects the now-fresh
     // checkout rather than the one captured at process start.
     void refreshDesktopVersion()
@@ -213,7 +213,7 @@ export async function checkUpdates(): Promise<DesktopUpdateStatus | null> {
 }
 
 export async function applyUpdates(opts: DesktopUpdateApplyOptions = {}): Promise<DesktopUpdateApplyResult> {
-  const bridge = window.hermesDesktop?.updates
+  const bridge = window.janusDesktop?.updates
 
   if (!bridge) {
     return { ok: false, error: 'unavailable', message: 'Desktop bridge unavailable.' }
@@ -226,15 +226,15 @@ export async function applyUpdates(opts: DesktopUpdateApplyOptions = {}): Promis
     const result = await bridge.apply(opts)
 
     // CLI install with no staged updater: not an error — the user just runs
-    // `hermes update` themselves. Land on a dedicated manual state so the
+    // `janus update` themselves. Land on a dedicated manual state so the
     // overlay shows the command + copy button instead of a dead retry loop.
     if (result?.manual) {
       $updateApply.set({
         ...IDLE,
         applying: false,
         stage: 'manual',
-        message: result.command ?? 'hermes update',
-        command: result.command ?? 'hermes update'
+        message: result.command ?? 'janus update',
+        command: result.command ?? 'janus update'
       })
     }
 
@@ -274,7 +274,7 @@ export function startUpdatePoller(): void {
     return
   }
 
-  const bridge = window.hermesDesktop?.updates
+  const bridge = window.janusDesktop?.updates
 
   if (!bridge) {
     return
@@ -309,7 +309,7 @@ function onFocus() {
   lastFocusAt = now
   void checkUpdates()
   // Cheap and safe to re-read on every (throttled) focus: the user may have
-  // updated Hermes from another window/CLI between focuses, and About should
+  // updated Janus from another window/CLI between focuses, and About should
   // catch up without forcing a restart.
   void refreshDesktopVersion()
 }

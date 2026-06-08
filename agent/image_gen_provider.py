@@ -8,7 +8,7 @@ instances via ``PluginContext.register_image_gen_provider()``; the active one
 ``image_generate`` tool call.
 
 Providers live in ``<repo>/plugins/image_gen/<name>/`` (built-in, auto-loaded
-as ``kind: backend``) or ``~/.hermes/plugins/image_gen/<name>/`` (user, opt-in
+as ``kind: backend``) or ``~/.janus/plugins/image_gen/<name>/`` (user, opt-in
 via ``plugins.enabled``).
 
 Response shape
@@ -65,7 +65,7 @@ class ImageGenProvider(abc.ABC):
 
     @property
     def display_name(self) -> str:
-        """Human-readable label shown in ``hermes tools``. Defaults to ``name.title()``."""
+        """Human-readable label shown in ``janus tools``. Defaults to ``name.title()``."""
         return self.name.title()
 
     def is_available(self) -> bool:
@@ -77,7 +77,7 @@ class ImageGenProvider(abc.ABC):
         return True
 
     def list_models(self) -> List[Dict[str, Any]]:
-        """Return catalog entries for ``hermes tools`` model picker.
+        """Return catalog entries for ``janus tools`` model picker.
 
         Each entry::
 
@@ -94,7 +94,7 @@ class ImageGenProvider(abc.ABC):
         return []
 
     def get_setup_schema(self) -> Dict[str, Any]:
-        """Return provider metadata for the ``hermes tools`` picker.
+        """Return provider metadata for the ``janus tools`` picker.
 
         Used by ``tools_config.py`` to inject this provider as a row in
         the Image Generation provider list. Shape::
@@ -163,10 +163,10 @@ def resolve_aspect_ratio(value: Optional[str]) -> str:
 
 
 def _images_cache_dir() -> Path:
-    """Return ``$HERMES_HOME/cache/images/``, creating parents as needed."""
-    from hermes_constants import get_hermes_home
+    """Return ``$JANUS_HOME/cache/images/``, creating parents as needed."""
+    from janus_constants import get_janus_home
 
-    path = get_hermes_home() / "cache" / "images"
+    path = get_janus_home() / "cache" / "images"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -177,7 +177,7 @@ def save_b64_image(
     prefix: str = "image",
     extension: str = "png",
 ) -> Path:
-    """Decode base64 image data and write it under ``$HERMES_HOME/cache/images/``.
+    """Decode base64 image data and write it under ``$JANUS_HOME/cache/images/``.
 
     Returns the absolute :class:`Path` to the saved file.
 
@@ -211,7 +211,7 @@ def save_url_image(
     timeout: float = 60.0,
     max_bytes: int = 25 * 1024 * 1024,
 ) -> Path:
-    """Download an image URL and write it under ``$HERMES_HOME/cache/images/``.
+    """Download an image URL and write it under ``$JANUS_HOME/cache/images/``.
 
     Used by providers (xAI, fallback OpenAI) whose API returns an *ephemeral*
     URL instead of inline base64 — those URLs frequently expire before a

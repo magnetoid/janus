@@ -2,7 +2,7 @@ import type { ThreadMessageLike } from '@assistant-ui/react'
 
 import { mediaDisplayLabel, mediaMarkdownHref } from '@/lib/media'
 import { parseTodos } from '@/lib/todos'
-import type { SessionMessage, UsageStats } from '@/types/hermes'
+import type { SessionMessage, UsageStats } from '@/types/janus'
 
 export type ChatMessagePart = Exclude<ThreadMessageLike['content'], string>[number]
 

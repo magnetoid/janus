@@ -22,11 +22,11 @@ from tools.approval import (
 
 class TestApprovalModeParsing:
     def test_unquoted_yaml_off_boolean_false_maps_to_off(self):
-        with mock_patch("hermes_cli.config.load_config", return_value={"approvals": {"mode": False}}):
+        with mock_patch("janus_cli.config.load_config", return_value={"approvals": {"mode": False}}):
             assert _get_approval_mode() == "off"
 
     def test_string_off_still_maps_to_off(self):
-        with mock_patch("hermes_cli.config.load_config", return_value={"approvals": {"mode": "off"}}):
+        with mock_patch("janus_cli.config.load_config", return_value={"approvals": {"mode": "off"}}):
             assert _get_approval_mode() == "off"
 
 
@@ -149,7 +149,7 @@ class TestSessionKeyContext:
     def test_context_session_key_overrides_process_env(self):
         token = approval_module.set_current_session_key("alice")
         try:
-            with mock_patch.dict("os.environ", {"HERMES_SESSION_KEY": "bob"}, clear=False):
+            with mock_patch.dict("os.environ", {"JANUS_SESSION_KEY": "bob"}, clear=False):
                 assert approval_module.get_current_session_key() == "alice"
         finally:
             approval_module.reset_current_session_key(token)
@@ -363,18 +363,18 @@ class TestTeePattern:
         assert dangerous is True
         assert key is not None
 
-    def test_tee_hermes_env(self):
-        dangerous, key, desc = detect_dangerous_command("echo x | tee ~/.hermes/.env")
+    def test_tee_janus_env(self):
+        dangerous, key, desc = detect_dangerous_command("echo x | tee ~/.janus/.env")
         assert dangerous is True
         assert key is not None
 
-    def test_tee_custom_hermes_home_env(self):
-        dangerous, key, desc = detect_dangerous_command("echo x | tee $HERMES_HOME/.env")
+    def test_tee_custom_janus_home_env(self):
+        dangerous, key, desc = detect_dangerous_command("echo x | tee $JANUS_HOME/.env")
         assert dangerous is True
         assert key is not None
 
-    def test_tee_quoted_custom_hermes_home_env(self):
-        dangerous, key, desc = detect_dangerous_command('echo x | tee "$HERMES_HOME/.env"')
+    def test_tee_quoted_custom_janus_home_env(self):
+        dangerous, key, desc = detect_dangerous_command('echo x | tee "$JANUS_HOME/.env"')
         assert dangerous is True
         assert key is not None
 
@@ -389,63 +389,63 @@ class TestTeePattern:
         assert key is None
 
 
-class TestHermesConfigWriteProtection:
+class TestJanusConfigWriteProtection:
     """Terminal-side pairing for the file_tools write_file/patch deny on
-    ~/.hermes/config.yaml (#14639). config.yaml IS the security policy
+    ~/.janus/config.yaml (#14639). config.yaml IS the security policy
     (approvals.mode/yolo live there, mtime-keyed cache reloads mid-session),
     so a write_file deny without terminal-side coverage is unpaired theater.
     These pin every terminal write idiom against the config file."""
 
     def test_redirect_overwrite(self):
-        dangerous, key, desc = detect_dangerous_command("echo 'approvals:' > ~/.hermes/config.yaml")
+        dangerous, key, desc = detect_dangerous_command("echo 'approvals:' > ~/.janus/config.yaml")
         assert dangerous is True
         assert key is not None
 
     def test_append(self):
-        dangerous, key, desc = detect_dangerous_command("echo '  mode: off' >> ~/.hermes/config.yaml")
+        dangerous, key, desc = detect_dangerous_command("echo '  mode: off' >> ~/.janus/config.yaml")
         assert dangerous is True
 
     def test_tee(self):
-        dangerous, key, desc = detect_dangerous_command("echo x | tee ~/.hermes/config.yaml")
+        dangerous, key, desc = detect_dangerous_command("echo x | tee ~/.janus/config.yaml")
         assert dangerous is True
 
     def test_cp_over_config(self):
-        dangerous, key, desc = detect_dangerous_command("cp /tmp/evil.yaml ~/.hermes/config.yaml")
+        dangerous, key, desc = detect_dangerous_command("cp /tmp/evil.yaml ~/.janus/config.yaml")
         assert dangerous is True
 
     def test_sed_in_place(self):
         # The gap the pairing closes: sed -i mutates the file directly,
         # bypassing the redirection/tee patterns.
-        dangerous, key, desc = detect_dangerous_command("sed -i 's/manual/off/' ~/.hermes/config.yaml")
+        dangerous, key, desc = detect_dangerous_command("sed -i 's/manual/off/' ~/.janus/config.yaml")
         assert dangerous is True
-        assert "hermes config" in desc.lower() or "in-place" in desc.lower()
+        assert "janus config" in desc.lower() or "in-place" in desc.lower()
 
     def test_sed_in_place_long_flag(self):
-        dangerous, key, desc = detect_dangerous_command("sed --in-place 's/manual/off/' ~/.hermes/config.yaml")
+        dangerous, key, desc = detect_dangerous_command("sed --in-place 's/manual/off/' ~/.janus/config.yaml")
         assert dangerous is True
 
-    def test_custom_hermes_home(self):
-        dangerous, key, desc = detect_dangerous_command("echo x | tee $HERMES_HOME/config.yaml")
+    def test_custom_janus_home(self):
+        dangerous, key, desc = detect_dangerous_command("echo x | tee $JANUS_HOME/config.yaml")
         assert dangerous is True
 
     def test_perl_in_place_config(self):
         # perl -i performs the same in-place mutation as sed -i but was not
         # caught by the -e/-c pattern (which targets code evaluation).
         dangerous, key, desc = detect_dangerous_command(
-            "perl -i -pe 's/approvals.mode: on/approvals.mode: off/' ~/.hermes/config.yaml"
+            "perl -i -pe 's/approvals.mode: on/approvals.mode: off/' ~/.janus/config.yaml"
         )
         assert dangerous is True
         assert "in-place" in desc.lower() or "perl" in desc.lower()
 
     def test_ruby_in_place_config(self):
         dangerous, key, desc = detect_dangerous_command(
-            "ruby -i -pe 'gsub(/manual/, \"off\")' ~/.hermes/config.yaml"
+            "ruby -i -pe 'gsub(/manual/, \"off\")' ~/.janus/config.yaml"
         )
         assert dangerous is True
 
     def test_perl_in_place_env(self):
         dangerous, key, desc = detect_dangerous_command(
-            "perl -i -pe 's/SECRET=old/SECRET=new/' ~/.hermes/.env"
+            "perl -i -pe 's/SECRET=old/SECRET=new/' ~/.janus/.env"
         )
         assert dangerous is True
 
@@ -454,14 +454,14 @@ class TestHermesConfigWriteProtection:
         # splits the in-place flag out as its own token after -p; the pattern
         # must catch it the same as `perl -i -pe`.
         dangerous, key, desc = detect_dangerous_command(
-            "perl -p -i -e 's/approvals.mode: on/approvals.mode: off/' ~/.hermes/config.yaml"
+            "perl -p -i -e 's/approvals.mode: on/approvals.mode: off/' ~/.janus/config.yaml"
         )
         assert dangerous is True
 
     def test_perl_in_place_backup_suffix(self):
         # `perl -i.bak` keeps a backup but still mutates the file in place.
         dangerous, key, desc = detect_dangerous_command(
-            "perl -i.bak -pe 's/x/y/' ~/.hermes/config.yaml"
+            "perl -i.bak -pe 's/x/y/' ~/.janus/config.yaml"
         )
         assert dangerous is True
 
@@ -469,17 +469,17 @@ class TestHermesConfigWriteProtection:
         # `perl -e` with no -i flag is code evaluation, not file mutation —
         # the perl/ruby -i pattern must not fire on it.
         dangerous, key, desc = detect_dangerous_command(
-            "perl -wne 'print' ~/.hermes/config.yaml"
+            "perl -wne 'print' ~/.janus/config.yaml"
         )
         assert dangerous is False
 
     def test_read_is_safe(self):
         # Reading config is not a write — must not trip.
-        dangerous, key, desc = detect_dangerous_command("cat ~/.hermes/config.yaml")
+        dangerous, key, desc = detect_dangerous_command("cat ~/.janus/config.yaml")
         assert dangerous is False
 
     def test_normal_yaml_write_safe(self):
-        # A non-Hermes config.yaml in a project dir is handled by the project
+        # A non-Janus config.yaml in a project dir is handled by the project
         # patterns, but a plain temp write must not false-positive.
         dangerous, key, desc = detect_dangerous_command("echo data > /tmp/scratch.txt")
         assert dangerous is False
@@ -512,8 +512,8 @@ class TestFindExecFullPathRm:
 class TestSensitiveRedirectPattern:
     """Detect shell redirection writes to sensitive user-managed paths."""
 
-    def test_redirect_to_custom_hermes_home_env(self):
-        dangerous, key, desc = detect_dangerous_command("echo x > $HERMES_HOME/.env")
+    def test_redirect_to_custom_janus_home_env(self):
+        dangerous, key, desc = detect_dangerous_command("echo x > $JANUS_HOME/.env")
         assert dangerous is True
         assert key is not None
 
@@ -709,48 +709,48 @@ class TestGatewayProtection:
     """Prevent agents from starting the gateway outside systemd management."""
 
     def test_gateway_run_with_disown_detected(self):
-        cmd = "kill 1605 && cd ~/.hermes/hermes-agent && source venv/bin/activate && python -m hermes_cli.main gateway run --replace &disown; echo done"
+        cmd = "kill 1605 && cd ~/.janus/janus-agent && source venv/bin/activate && python -m janus_cli.main gateway run --replace &disown; echo done"
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
         assert "systemctl" in desc
 
     def test_gateway_run_with_ampersand_detected(self):
-        cmd = "python -m hermes_cli.main gateway run --replace &"
+        cmd = "python -m janus_cli.main gateway run --replace &"
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
 
     def test_gateway_run_with_nohup_detected(self):
-        cmd = "nohup python -m hermes_cli.main gateway run --replace"
+        cmd = "nohup python -m janus_cli.main gateway run --replace"
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
 
     def test_gateway_run_with_setsid_detected(self):
-        cmd = "hermes_cli.main gateway run --replace &disown"
+        cmd = "janus_cli.main gateway run --replace &disown"
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
 
     def test_gateway_run_foreground_not_flagged(self):
         """Normal foreground gateway run (as in systemd ExecStart) is fine."""
-        cmd = "python -m hermes_cli.main gateway run --replace"
+        cmd = "python -m janus_cli.main gateway run --replace"
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is False
 
     def test_systemctl_restart_flagged(self):
         """systemctl restart kills running agents and should require approval."""
-        cmd = "systemctl --user restart hermes-gateway"
+        cmd = "systemctl --user restart janus-gateway"
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
         assert "stop/restart" in desc
 
-    def test_pkill_hermes_detected(self):
-        """pkill targeting hermes/gateway processes must be caught."""
+    def test_pkill_janus_detected(self):
+        """pkill targeting janus/gateway processes must be caught."""
         cmd = 'pkill -f "cli.py --gateway"'
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
         assert "self-termination" in desc
 
-    def test_killall_hermes_detected(self):
-        cmd = "killall hermes"
+    def test_killall_janus_detected(self):
+        cmd = "killall janus"
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
         assert "self-termination" in desc
@@ -886,20 +886,20 @@ class TestHeredocScriptExecution:
 
 
 class TestPgrepKillExpansion:
-    """kill -9 $(pgrep hermes) bypasses the pkill/killall name-matching
+    """kill -9 $(pgrep janus) bypasses the pkill/killall name-matching
     pattern because the command substitution is opaque to regex.
 
     See security audit Test 7.
     """
 
     def test_kill_dollar_pgrep_detected(self):
-        cmd = 'kill -9 $(pgrep -f "hermes.*gateway")'
+        cmd = 'kill -9 $(pgrep -f "janus.*gateway")'
         dangerous, _, desc = detect_dangerous_command(cmd)
         assert dangerous is True
         assert "pgrep" in desc.lower()
 
     def test_kill_backtick_pgrep_detected(self):
-        cmd = "kill -9 `pgrep hermes`"
+        cmd = "kill -9 `pgrep janus`"
         dangerous, _, desc = detect_dangerous_command(cmd)
         assert dangerous is True
 
@@ -908,9 +908,9 @@ class TestPgrepKillExpansion:
         dangerous, _, _ = detect_dangerous_command(cmd)
         assert dangerous is True
 
-    def test_pkill_hermes_still_detected(self):
+    def test_pkill_janus_still_detected(self):
         """Existing pkill pattern must not regress."""
-        cmd = "pkill -9 hermes"
+        cmd = "pkill -9 janus"
         dangerous, _, _ = detect_dangerous_command(cmd)
         assert dangerous is True
 
@@ -1440,18 +1440,18 @@ class TestApprovalTimeoutIsNotConsent:
 
         self._saved_env = {
             k: os.environ.get(k)
-            for k in ("HERMES_GATEWAY_SESSION", "HERMES_CRON_SESSION",
-                      "HERMES_YOLO_MODE",
-                      "HERMES_SESSION_KEY", "HERMES_INTERACTIVE")
+            for k in ("JANUS_GATEWAY_SESSION", "JANUS_CRON_SESSION",
+                      "JANUS_YOLO_MODE",
+                      "JANUS_SESSION_KEY", "JANUS_INTERACTIVE")
         }
-        os.environ.pop("HERMES_YOLO_MODE", None)
-        os.environ.pop("HERMES_INTERACTIVE", None)
-        # HERMES_CRON_SESSION takes priority over HERMES_GATEWAY_SESSION in
+        os.environ.pop("JANUS_YOLO_MODE", None)
+        os.environ.pop("JANUS_INTERACTIVE", None)
+        # JANUS_CRON_SESSION takes priority over JANUS_GATEWAY_SESSION in
         # _is_gateway_approval_context(); a leaked value from a parent cron
         # process would force the cron path and break these gateway tests.
-        os.environ.pop("HERMES_CRON_SESSION", None)
-        os.environ["HERMES_GATEWAY_SESSION"] = "1"
-        os.environ["HERMES_SESSION_KEY"] = self.SESSION_KEY
+        os.environ.pop("JANUS_CRON_SESSION", None)
+        os.environ["JANUS_GATEWAY_SESSION"] = "1"
+        os.environ["JANUS_SESSION_KEY"] = self.SESSION_KEY
 
     def teardown_method(self):
         from tools import approval as mod

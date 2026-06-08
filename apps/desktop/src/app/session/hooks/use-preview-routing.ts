@@ -14,7 +14,7 @@ import {
   setSessionPreviewTarget
 } from '@/store/preview'
 import { $currentCwd } from '@/store/session'
-import type { RpcEvent } from '@/types/hermes'
+import type { RpcEvent } from '@/types/janus'
 
 type EventHandler = (event: RpcEvent) => void
 
@@ -135,7 +135,7 @@ export function usePreviewRouting({
         return
       }
 
-      const desktop = window.hermesDesktop
+      const desktop = window.janusDesktop
 
       if (!desktop?.normalizePreviewTarget) {
         return

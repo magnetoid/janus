@@ -23,12 +23,12 @@ def test_every_on_disk_subpackage_is_covered_by_packages_find():
     """Regression test for #34701 (and the bug class behind #34034 / #28149).
 
     ``[tool.setuptools.packages.find]`` ``include`` is hand-maintained. Every
-    top-level package is listed twice — bare (``hermes_cli``) for the package
-    itself and ``hermes_cli.*`` for its subpackages — EXCEPT when someone
-    forgets the wildcard. v0.15.x listed ``hermes_cli`` without ``hermes_cli.*``,
-    so the wheel shipped ``hermes_cli/*.py`` but dropped the ``dashboard_auth``
+    top-level package is listed twice — bare (``janus_cli``) for the package
+    itself and ``janus_cli.*`` for its subpackages — EXCEPT when someone
+    forgets the wildcard. v0.15.x listed ``janus_cli`` without ``janus_cli.*``,
+    so the wheel shipped ``janus_cli/*.py`` but dropped the ``dashboard_auth``
     and ``proxy`` subpackages. The dashboard then died on every install with
-    ``ModuleNotFoundError: No module named 'hermes_cli.dashboard_auth'``.
+    ``ModuleNotFoundError: No module named 'janus_cli.dashboard_auth'``.
 
     This drives setuptools' own discovery against the live tree: every package
     that exists on disk and would be found by a permissive ``<name>.*`` scan
@@ -81,7 +81,7 @@ def test_manifest_includes_bundled_skills():
 def test_bundled_plugin_manifests_ship_in_both_wheel_and_sdist():
     """Regression test for #34034 / #28149.
 
-    Plugin discovery (hermes_cli/plugins.py) registers each bundled plugin by
+    Plugin discovery (janus_cli/plugins.py) registers each bundled plugin by
     reading its ``plugin.yaml`` / ``plugin.yml`` manifest. Those manifests are
     data files, not Python modules, so they only reach installed packages when
     declared explicitly:

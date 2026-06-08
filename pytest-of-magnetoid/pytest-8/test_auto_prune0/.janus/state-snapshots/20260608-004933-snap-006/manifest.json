@@ -1,0 +1,14 @@
+{
+  "id": "20260608-004933-snap-006",
+  "timestamp": "20260608-004933",
+  "label": "snap-006",
+  "file_count": 5,
+  "total_size": 12381,
+  "files": {
+    "state.db": 12288,
+    "config.yaml": 30,
+    ".env": 32,
+    "auth.json": 18,
+    "cron/jobs.json": 13
+  }
+}

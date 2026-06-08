@@ -11,7 +11,7 @@ transport) which is what we invoke.
 
 The private SkyLight SPIs cua-driver uses (SLEventPostToPid, SLPSPostEvent-
 RecordTo, _AXObserverAddNotificationAndCheckRemote) are not Apple-public and
-can break on OS updates. Pin the installed version via `HERMES_CUA_DRIVER_
+can break on OS updates. Pin the installed version via `JANUS_CUA_DRIVER_
 VERSION` if you want reproducibility across an OS bump.
 """
 
@@ -42,9 +42,9 @@ logger = logging.getLogger(__name__)
 # Version pinning
 # ---------------------------------------------------------------------------
 
-PINNED_CUA_DRIVER_VERSION = os.environ.get("HERMES_CUA_DRIVER_VERSION", "0.5.0")
+PINNED_CUA_DRIVER_VERSION = os.environ.get("JANUS_CUA_DRIVER_VERSION", "0.5.0")
 
-_CUA_DRIVER_CMD = os.environ.get("HERMES_CUA_DRIVER_CMD", "cua-driver")
+_CUA_DRIVER_CMD = os.environ.get("JANUS_CUA_DRIVER_CMD", "cua-driver")
 _CUA_DRIVER_ARGS = ["mcp"]  # stdio MCP transport
 
 # Regex to parse list_windows text output lines:
@@ -79,18 +79,18 @@ def _is_macos() -> bool:
 
 
 def cua_driver_binary_available() -> bool:
-    """True if `cua-driver` is on $PATH or HERMES_CUA_DRIVER_CMD resolves."""
+    """True if `cua-driver` is on $PATH or JANUS_CUA_DRIVER_CMD resolves."""
     return bool(shutil.which(_CUA_DRIVER_CMD))
 
 
 def cua_driver_install_hint() -> str:
     return (
         "cua-driver is not installed. Install with one of:\n"
-        "  hermes computer-use install\n"
+        "  janus computer-use install\n"
         "Or run the upstream installer directly:\n"
         '  /bin/bash -c "$(curl -fsSL '
         'https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)"\n'
-        "Or run `hermes tools` and enable the Computer Use toolset to install it automatically."
+        "Or run `janus tools` and enable the Computer Use toolset to install it automatically."
     )
 
 
@@ -425,7 +425,7 @@ class CuaDriverBackend(ComputerUseBackend):
     def capture(self, mode: str = "som", app: Optional[str] = None) -> CaptureResult:
         """Capture the frontmost on-screen window (optionally filtered by app name).
 
-        Maps hermes `capture(mode, app)` → cua-driver `list_windows` +
+        Maps janus `capture(mode, app)` → cua-driver `list_windows` +
         `get_window_state` (ax/som) or `screenshot` (vision).
         """
         # Step 1: enumerate on-screen windows to find target pid/window_id.

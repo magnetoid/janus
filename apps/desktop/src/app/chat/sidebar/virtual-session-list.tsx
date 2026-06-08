@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { type FC, useCallback, useMemo, useRef } from 'react'
 
-import type { SessionInfo } from '@/hermes'
+import type { SessionInfo } from '@/janus'
 import { cn } from '@/lib/utils'
 import { sessionPinId } from '@/store/session'
 
