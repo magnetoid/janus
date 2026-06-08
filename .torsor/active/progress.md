@@ -4,10 +4,10 @@ status: active
 tags:
 - active
 links: []
-created: '2026-06-08T02:13:01'
-updated: '2026-06-08T02:13:01'
+created: '2026-06-08T03:18:20'
+updated: '2026-06-08T03:18:20'
 ---
 
 # Progress
 
-Stage 1 done and committed (39d5c6f): banner, skins, self-identity, display fallbacks, tests.
+Rebrand 2888 files/72 paths case-preserving, services protected, builds+imports OK. Feature #1 daily snapshots wired into memory add/replace/remove, 7 tests + 68 existing green.

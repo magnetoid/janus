@@ -14671,6 +14671,17 @@ Examples:
         default="all",
         help="Which store to reset: 'all' (default), 'memory', or 'user'",
     )
+    _log_parser = memory_sub.add_parser(
+        "log",
+        help="Browse the daily memory journal (append-only dated history)",
+    )
+    _log_parser.add_argument(
+        "--date", default=None, help="Show one day (YYYY-MM-DD) instead of recent days"
+    )
+    _log_parser.add_argument(
+        "--days", type=int, default=7,
+        help="How many recent days to show (default 7; 0 = all)",
+    )
 
     def cmd_memory(args):
         sub = getattr(args, "memory_command", None)
@@ -14729,6 +14740,22 @@ Examples:
                 f"\n  Memory reset complete. New sessions will start with a blank slate."
             )
             print(f"  Files were in: {display_janus_home()}/memories/\n")
+        elif sub == "log":
+            from tools.memory_tool import read_daily_snapshots
+            from janus_constants import display_janus_home
+
+            result = read_daily_snapshots(
+                date=getattr(args, "date", None), days=getattr(args, "days", 7)
+            )
+            days = result.get("days", [])
+            if not days:
+                print(
+                    f"\n  No daily memory snapshots yet — they appear under "
+                    f"{display_janus_home()}/memories/daily/ as memory is saved.\n"
+                )
+                return
+            for d in days:
+                print(d["text"].rstrip() + "\n")
         else:
             from janus_cli.memory_setup import memory_command
 

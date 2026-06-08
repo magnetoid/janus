@@ -4,14 +4,14 @@ status: active
 tags:
 - active
 links: []
-created: '2026-06-08T02:13:01'
-updated: '2026-06-08T02:13:01'
+created: '2026-06-08T03:18:20'
+updated: '2026-06-08T03:18:20'
 ---
 
 # Active Context
 
 ## Current focus
-Rebrand Hermes to Janus; Stage 1 committed.
+Goal delivered: all-in rebrand (94477fd) + daily memory snapshots feature (73581a3) committed.
 
 ## Open questions
-Next: rebrand protocol identities, rename HERMES_HOME with shims, docs, and pick first OpenClaw concept to import.
+Pending: regen uv.lock, full suite when disk allows, repoint URLs when Imba Labs infra exists, next OpenClaw concept (workspace profiles/cron/Gmail).
