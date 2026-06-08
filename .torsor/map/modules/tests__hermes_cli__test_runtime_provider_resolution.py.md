@@ -1,0 +1,147 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/hermes_cli/test_runtime_provider_resolution.py
+
+Symbols in `tests/hermes_cli/test_runtime_provider_resolution.py`.
+
+- L6 `test_resolve_runtime_provider_uses_credential_pool(monkeypatch)` (function)
+- L30 `test_resolve_runtime_provider_anthropic_pool_respects_config_base_url(monkeypatch)` (function)
+- L62 `test_resolve_runtime_provider_anthropic_explicit_override_skips_pool(monkeypatch)` (function)
+- L98 `test_resolve_runtime_provider_falls_back_when_pool_empty(monkeypatch)` (function)
+- L123 `test_resolve_runtime_provider_codex(monkeypatch)` (function)
+- L153 `test_resolve_runtime_provider_qwen_oauth(monkeypatch)` (function)
+- L176 `test_resolve_runtime_provider_uses_qwen_pool_entry(monkeypatch)` (function)
+- L202 `test_resolve_provider_alias_qwen(monkeypatch)` (function)
+- L210 `test_qwen_oauth_auto_fallthrough_on_auth_failure(monkeypatch)` (function) — When requested_provider is 'auto' and Qwen creds fail, fall through.
+- L229 `test_resolve_runtime_provider_lmstudio_uses_token_when_present(monkeypatch)` (function)
+- L264 `test_resolve_runtime_provider_lmstudio_honors_saved_base_url(monkeypatch)` (function) — Pre-existing configs with `provider: lmstudio` + custom base_url must keep working.
+- L305 `test_resolve_runtime_provider_lmstudio_saved_base_url_wins_over_env(monkeypatch)` (function) — Saved model.base_url takes precedence over LM_BASE_URL env var.
+- L340 `test_resolve_runtime_provider_openrouter_explicit(monkeypatch)` (function)
+- L361 `test_resolve_runtime_provider_auto_uses_openrouter_pool(monkeypatch)` (function)
+- L391 `test_resolve_runtime_provider_openrouter_explicit_api_key_skips_pool(monkeypatch)` (function)
+- L424 `test_resolve_runtime_provider_openrouter_ignores_codex_config_base_url(monkeypatch)` (function)
+- L445 `test_resolve_runtime_provider_auto_uses_custom_config_base_url(monkeypatch)` (function)
+- L466 `test_openrouter_key_takes_priority_over_openai_key(monkeypatch)` (function) — OPENROUTER_API_KEY should be used over OPENAI_API_KEY when both are set.
+- L484 `test_openai_key_used_when_no_openrouter_key(monkeypatch)` (function) — OPENAI_API_KEY is used as fallback when OPENROUTER_API_KEY is not set.
+- L498 `test_custom_endpoint_prefers_openai_key(monkeypatch)` (function) — Custom endpoint should use config api_key over OPENROUTER_API_KEY.
+- L520 `test_custom_endpoint_uses_saved_config_base_url_when_env_missing(monkeypatch)` (function) — Persisted custom endpoints in config.yaml must still resolve when
+- L547 `test_custom_endpoint_uses_config_api_key_over_env(monkeypatch)` (function) — provider: custom with base_url and api_key in config uses them (#1760).
+- L569 `test_custom_endpoint_uses_config_api_field_when_no_api_key(monkeypatch)` (function) — provider: custom with 'api' in config uses it as api_key (#1760).
+- L591 `test_custom_endpoint_explicit_custom_prefers_config_key(monkeypatch)` (function) — Explicit 'custom' provider with config base_url+api_key should use them.
+- L612 `test_bare_custom_uses_loopback_model_base_url_when_provider_not_custom(monkeypatch)` (function) — Regression for #14676: /model can select Custom while YAML still lists another provider.
+- L638 `test_bare_custom_custom_base_url_env_overrides_remote_yaml(monkeypatch)` (function)
+- L658 `test_bare_custom_does_not_trust_non_loopback_when_provider_not_custom(monkeypatch)` (function)
+- L679 `test_named_custom_provider_uses_saved_credentials(monkeypatch)` (function)
+- L715 `test_named_custom_provider_uses_providers_dict_when_list_missing(monkeypatch)` (function) — After v11→v12 migration deletes custom_providers, resolution should
+- L756 `test_named_custom_provider_uses_key_env_from_providers_dict(monkeypatch)` (function) — providers dict entries with key_env should resolve API key from env var.
+- L796 `test_named_custom_provider_same_url_uses_matching_key_env_and_api_mode(monkeypatch)` (function) — Named custom providers on one gateway must keep their own credentials and protocol.
+- L844 `test_named_custom_provider_falls_back_to_openai_api_key(monkeypatch)` (function)
+- L877 `test_named_custom_provider_does_not_shadow_builtin_provider(monkeypatch)` (function)
+- L910 `test_named_custom_provider_wins_over_builtin_alias(monkeypatch)` (function) — A custom_providers entry named after a built-in *alias* (not a canonical
+- L938 `test_named_custom_provider_skipped_for_canonical_built_in(monkeypatch)` (function) — Companion to the test above: ``nous`` is a canonical provider name
+- L962 `test_explicit_openrouter_skips_openai_base_url(monkeypatch)` (function) — When the user explicitly requests openrouter, OPENAI_BASE_URL
+- L981 `test_explicit_openrouter_honors_openrouter_base_url_over_pool(monkeypatch)` (function)
+- L1013 `test_resolve_requested_provider_precedence(monkeypatch)` (function)
+- L1029 `test_model_config_api_mode(monkeypatch)` (function) — model.api_mode in config.yaml should override the default chat_completions.
+- L1051 `test_model_config_api_mode_ignored_when_provider_differs(monkeypatch)` (function)
+- L1079 `test_invalid_api_mode_ignored(monkeypatch)` (function) — Invalid api_mode values should fall back to chat_completions.
+- L1093 `test_named_custom_provider_api_mode(monkeypatch)` (function) — custom_providers entries with api_mode should use it.
+- L1112 `test_named_custom_provider_without_api_mode_defaults(monkeypatch)` (function) — custom_providers entries without api_mode should default to chat_completions.
+- L1129 `test_anthropic_messages_in_valid_api_modes()` (function) — anthropic_messages should be accepted by _parse_api_mode.
+- L1134 `test_api_key_provider_anthropic_url_auto_detection(monkeypatch)` (function) — API-key providers with /anthropic base URL should auto-detect anthropic_messages mode.
+- L1148 `test_api_key_provider_explicit_api_mode_config(monkeypatch)` (function) — API-key providers should respect api_mode from model config.
+- L1161 `test_minimax_default_url_uses_anthropic_messages(monkeypatch)` (function) — MiniMax with default /anthropic URL should auto-detect anthropic_messages mode.
+- L1175 `test_minimax_v1_url_uses_chat_completions(monkeypatch)` (function) — MiniMax with /v1 base URL should use chat_completions (user override for regions where /anthropic 404s).
+- L1189 `test_minimax_cn_v1_url_uses_chat_completions(monkeypatch)` (function) — MiniMax-CN with /v1 base URL should use chat_completions (user override).
+- L1203 `test_minimax_explicit_api_mode_respected(monkeypatch)` (function) — Explicit api_mode config should override MiniMax auto-detection.
+- L1216 `test_minimax_config_base_url_overrides_hardcoded_default(monkeypatch)` (function) — model.base_url in config.yaml should override the hardcoded default (#6039).
+- L1233 `test_minimax_env_base_url_still_wins_over_config(monkeypatch)` (function) — MINIMAX_BASE_URL env var should take priority over config.yaml model.base_url.
+- L1249 `test_minimax_config_base_url_ignored_for_different_provider(monkeypatch)` (function) — model.base_url should NOT be used when model.provider doesn't match.
+- L1265 `test_alibaba_default_coding_intl_endpoint_uses_chat_completions(monkeypatch)` (function) — Alibaba default coding-intl /v1 URL should use chat_completions mode.
+- L1279 `test_alibaba_anthropic_endpoint_override_uses_anthropic_messages(monkeypatch)` (function) — Alibaba with /apps/anthropic URL override should auto-detect anthropic_messages mode.
+- L1293 `test_opencode_zen_gpt_defaults_to_responses(monkeypatch)` (function)
+- L1306 `test_opencode_zen_claude_defaults_to_messages(monkeypatch)` (function)
+- L1321 `test_opencode_go_minimax_defaults_to_messages(monkeypatch)` (function)
+- L1335 `test_opencode_go_glm_defaults_to_chat_completions(monkeypatch)` (function)
+- L1348 `test_opencode_go_model_derivation_beats_stale_persisted_api_mode(monkeypatch)` (function) — opencode-zen/go re-derive api_mode from the effective model on every
+- L1379 `test_named_custom_provider_anthropic_api_mode(monkeypatch)` (function) — Custom providers should accept api_mode: anthropic_messages.
+- L1403 `test_resolve_provider_custom_returns_custom()` (function) — resolve_provider('custom') must return 'custom', not 'openrouter'.
+- L1409 `test_resolve_provider_openrouter_unchanged()` (function) — resolve_provider('openrouter') must still return 'openrouter'.
+- L1415 `test_resolve_provider_lmstudio_returns_lmstudio(monkeypatch)` (function) — resolve_provider('lmstudio') must return 'lmstudio', not 'custom'.
+- L1430 `test_custom_provider_runtime_preserves_provider_name(monkeypatch)` (function) — resolve_runtime_provider with provider='custom' must return provider='custom'.
+- L1456 `test_custom_provider_no_key_gets_placeholder(monkeypatch)` (function) — Local server with no API key should get 'no-key-required' placeholder.
+- L1479 `test_auto_detected_nous_auth_failure_falls_through_to_openrouter(monkeypatch)` (function) — When auto-detect picks Nous but credentials are revoked, fall through to OpenRouter.
+- L1510 `test_auto_detected_codex_auth_failure_falls_through_to_openrouter(monkeypatch)` (function) — When auto-detect picks Codex but credentials are revoked, fall through to OpenRouter.
+- L1537 `test_explicit_nous_auth_failure_still_raises(monkeypatch)` (function) — When user explicitly requests Nous and auth fails, the error should propagate.
+- L1562 `test_openrouter_provider_not_affected_by_custom_fix(monkeypatch)` (function) — Fixing custom must not change openrouter behavior.
+- L1579 `test_get_named_custom_provider_includes_model(monkeypatch)` (function) — _get_named_custom_provider should include the model field from config.
+- L1596 `test_get_named_custom_provider_excludes_empty_model(monkeypatch)` (function) — Empty or whitespace-only model field should not appear in result.
+- L1618 `test_named_custom_runtime_propagates_model_direct_path(monkeypatch)` (function) — Model should propagate through the direct (non-pool) resolution path.
+- L1638 `test_named_custom_runtime_propagates_extra_body_direct_path(monkeypatch)` (function) — Custom provider extra_body should become runtime request_overrides.
+- L1665 `test_named_custom_runtime_propagates_model_pool_path(monkeypatch)` (function) — Model should propagate even when credential pool handles credentials.
+- L1696 `test_named_custom_runtime_propagates_extra_body_pool_path(monkeypatch)` (function) — Custom provider extra_body should survive credential-pool resolution.
+- L1726 `test_named_custom_runtime_no_model_when_absent(monkeypatch)` (function) — When custom_providers entry has no model field, runtime should not either.
+- L1754 `TestOllamaUrlSubstringLeak` (class) — Call-site regression tests for the fix in _resolve_openrouter_runtime.
+- L1757 `_make_cfg(self, base_url)` (method)
+- L1760 `test_ollama_key_not_leaked_to_path_injection(self, monkeypatch)` (method) — http://127.0.0.1:9000/ollama.com/v1 — attacker endpoint with
+- L1782 `test_ollama_key_not_leaked_to_lookalike_host(self, monkeypatch)` (method) — ollama.com.attacker.test — look-alike host. OLLAMA_API_KEY
+- L1800 `test_ollama_key_sent_to_genuine_ollama_com(self, monkeypatch)` (method) — https://ollama.com/v1 — legit Ollama Cloud. OLLAMA_API_KEY
+- L1816 `test_ollama_key_sent_to_ollama_subdomain(self, monkeypatch)` (method) — https://api.ollama.com/v1 — legit subdomain.
+- L1836 `TestAzureFoundryResolution` (class) — Verify Azure Foundry resolves correctly for both API modes.
+- L1839 `_make_cfg(self, base_url: str, api_mode: str='chat_completions')` (method)
+- L1850 `test_azure_foundry_openai_style_explicit(self, monkeypatch)` (method) — OpenAI-style Azure Foundry → chat_completions, keeps base_url as-is.
+- L1867 `test_azure_foundry_anthropic_style_strips_v1_suffix(self, monkeypatch)` (method) — Anthropic-style Azure Foundry → anthropic_messages, /v1 stripped
+- L1885 `test_azure_foundry_missing_base_url_raises(self, monkeypatch)` (method)
+- L1895 `test_azure_foundry_missing_api_key_raises(self, monkeypatch)` (method)
+- L1917 `_make_cfg_with_model(self, model: str, api_mode: str='chat_completions')` (method)
+- L1925 `test_gpt5_codex_upgrades_chat_completions_to_responses(self, monkeypatch)` (method) — Reproduces Bob's April 2026 bug: gpt-5.3-codex on chat_completions.
+- L1938 `test_gpt4o_stays_on_chat_completions(self, monkeypatch)` (method) — gpt-4o-pure worked on Bob's endpoint — must not get upgraded.
+- L1950 `test_anthropic_messages_not_downgraded(self, monkeypatch)` (method) — Anthropic-style endpoint: keep anthropic_messages even for gpt-5 names.
+- L1966 `test_target_model_overrides_stale_default(self, monkeypatch)` (method) — /model switch: target_model should drive api_mode, not the stale config default.
+- L1982 `test_target_model_downgrade_path(self, monkeypatch)` (method) — /model switch gpt-5.3-codex → gpt-4o: api_mode follows new model.
+- L2003 `test_o3_mini_upgrades(self, monkeypatch)` (method)
+- L2033 `TestAzureAnthropicEnvVarHint` (class)
+- L2036 `_cfg(self, **overrides)` (method)
+- L2041 `test_key_env_hint_picks_custom_var(self, monkeypatch)` (method) — model.key_env names a non-default env var → that var's value is used.
+- L2056 `test_api_key_env_alias_honored(self, monkeypatch)` (method) — The `api_key_env` alias (used in azure-foundry docs) also works.
+- L2070 `test_key_env_beats_fallback_chain(self, monkeypatch)` (method) — key_env takes priority over AZURE_ANTHROPIC_KEY / ANTHROPIC_API_KEY.
+- L2084 `test_inline_api_key_on_model_cfg(self, monkeypatch)` (method) — model.api_key (inline value) works for single-config setups.
+- L2097 `test_azure_anthropic_key_still_works_as_fallback(self, monkeypatch)` (method) — Historical fixed-name env vars still resolve when no hint is set.
+- L2109 `test_key_env_points_at_unset_var_falls_through(self, monkeypatch)` (method) — If key_env names an env var that isn't set, fall through to the
+- L2125 `test_no_key_anywhere_raises_helpful_error(self, monkeypatch)` (method) — When nothing resolves, the error message mentions key_env as an option.
+- L2136 `test_non_azure_anthropic_path_ignores_key_env(self, monkeypatch)` (method) — key_env is only consulted on Azure endpoints — non-Azure Anthropic
+- L2168 `TestProviderEntryApiKeyEnvAlias` (class) — The `providers.<name>` and `custom_providers[i]` normalizer must accept
+- L2174 `test_snake_case_api_key_env_normalizes_to_key_env(self)` (method)
+- L2185 `test_camel_case_api_key_env_normalizes_to_key_env(self)` (method)
+- L2196 `test_key_env_wins_if_both_forms_present(self)` (method) — If both key_env and api_key_env are set, the canonical key_env wins.
+- L2209 `test_valid_fields_set_lists_key_env(self)` (method) — The _VALID_CUSTOM_PROVIDER_FIELDS documentation set must include
+- L2215 `test_extra_body_is_supported_schema(self)` (method)
+- L2236 `TestTencentTokenhubRuntimeResolution` (class) — Verify Tencent TokenHub resolves correctly through the generic
+- L2240 `test_resolves_with_env_key(self, monkeypatch)` (method)
+- L2254 `test_custom_base_url_from_env(self, monkeypatch)` (method)
+- L2266 `test_config_base_url_honoured_when_provider_matches(self, monkeypatch)` (method) — model.base_url in config.yaml should override the hardcoded default
+- L2281 `test_config_base_url_ignored_for_different_provider(self, monkeypatch)` (method) — model.base_url should NOT be used when model.provider doesn't match.
+- L2296 `test_explicit_override_skips_env(self, monkeypatch)` (method)
+- L2317 `test_minimax_oauth_runtime_returns_anthropic_messages_mode(monkeypatch)` (function) — resolve_runtime_provider for minimax-oauth must return api_mode='anthropic_messages'.
+- L2353 `test_minimax_oauth_runtime_uses_inference_base_url(monkeypatch)` (function) — Base URL returned by resolve_runtime_provider should match the OAuth credentials.
+- L2379 `test_minimax_oauth_pool_forces_anthropic_messages_despite_stale_config(monkeypatch)` (function) — A pooled MiniMax OAuth token must not inherit stale chat_completions config.
+- L2432 `test_custom_aliases_with_lan_base_url_route_to_custom_not_openrouter(monkeypatch, alias, base_url)` (function) — provider: ollama|vllm|llamacpp + LAN IP must NOT fall through to OpenRouter.
+- L2459 `test_custom_alias_with_loopback_base_url_routes_to_custom(monkeypatch)` (function) — provider: ollama + loopback should also route to custom (regression guard).
+- L2475 `test_trustworthy_check_accepts_custom_aliases()` (function) — _config_base_url_trustworthy_for_bare_custom() must accept aliases for custom.
+- L2486 `test_openai_key_only_sent_to_openai_host(monkeypatch)` (function) — OPENAI_API_KEY must only be forwarded to api.openai.com, not to
+- L2511 `test_openai_key_reaches_openai_host(monkeypatch)` (function) — OPENAI_API_KEY must be forwarded when the base_url is api.openai.com.
+- L2531 `test_openrouter_key_reaches_openrouter_host(monkeypatch)` (function) — OPENROUTER_API_KEY must be forwarded when the base_url is openrouter.ai.
+- L2558 `test_host_derived_key_picked_up_for_deepseek(monkeypatch)` (function) — DEEPSEEK_API_KEY env var must be forwarded to api.deepseek.com.
+- L2578 `test_host_derived_key_picked_up_for_groq(monkeypatch)` (function) — GROQ_API_KEY env var must be forwarded to api.groq.com.
+- L2597 `test_host_derived_key_does_not_leak_to_lookalike_host(monkeypatch)` (function) — DEEPSEEK_API_KEY must NOT be sent to an attacker-controlled lookalike
+- L2621 `test_host_derived_key_ignored_for_loopback(monkeypatch)` (function) — Local LLM endpoints (127.0.0.1, localhost) must not derive any host
+- L2644 `test_host_derived_key_skips_already_handled_vendors(monkeypatch)` (function) — The host-derive helper must not double-resolve OPENAI / OPENROUTER /
+- L2671 `test_host_derived_key_helper_basic_cases()` (function) — Direct unit tests for the host-derive helper itself.

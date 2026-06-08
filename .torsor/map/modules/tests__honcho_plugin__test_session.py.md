@@ -1,0 +1,170 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/honcho_plugin/test_session.py
+
+Symbols in `tests/honcho_plugin/test_session.py`.
+
+- L21 `TestHonchoSession` (class)
+- L22 `_make_session(self)` (method)
+- L30 `test_initial_state(self)` (method)
+- L37 `test_add_message(self)` (method)
+- L45 `test_add_message_with_kwargs(self)` (method)
+- L50 `test_add_message_updates_timestamp(self)` (method)
+- L56 `test_get_history(self)` (method)
+- L65 `test_get_history_strips_extra_fields(self)` (method)
+- L72 `test_get_history_max_messages(self)` (method)
+- L81 `test_get_history_max_messages_larger_than_total(self)` (method)
+- L87 `test_clear(self)` (method)
+- L94 `test_clear_updates_timestamp(self)` (method)
+- L107 `TestSanitizeId` (class)
+- L108 `test_clean_id_unchanged(self)` (method)
+- L112 `test_colons_replaced(self)` (method)
+- L116 `test_special_chars_replaced(self)` (method)
+- L123 `test_alphanumeric_preserved(self)` (method)
+- L133 `TestFormatMigrationTranscript` (class)
+- L134 `test_basic_transcript(self)` (method)
+- L148 `test_empty_messages(self)` (method)
+- L154 `test_missing_fields_handled(self)` (method)
+- L166 `TestManagerCacheOps` (class)
+- L167 `test_delete_cached_session(self)` (method)
+- L177 `test_delete_nonexistent_returns_false(self)` (method)
+- L181 `test_list_sessions(self)` (method)
+- L196 `TestPeerLookupHelpers` (class)
+- L197 `_make_cached_manager(self)` (method)
+- L208 `test_get_peer_card_uses_direct_peer_lookup(self)` (method)
+- L217 `test_get_peer_card_falls_back_to_target_peer_own_card(self)` (method)
+- L237 `test_set_peer_card_uses_observer_target_in_ai_observe_others_mode(self)` (method)
+- L250 `test_search_context_uses_assistant_perspective_with_target(self)` (method)
+- L268 `test_search_context_unified_mode_uses_user_self_context(self)` (method)
+- L283 `test_search_context_accepts_explicit_ai_peer_id(self)` (method)
+- L300 `test_get_prefetch_context_fetches_user_and_ai_from_peer_api(self)` (method)
+- L331 `test_get_ai_representation_uses_peer_api(self)` (method)
+- L354 `test_create_conclusion_defaults_to_user_target(self)` (method)
+- L370 `test_create_conclusion_can_target_ai_peer(self)` (method)
+- L386 `test_create_conclusion_accepts_explicit_user_peer_id(self)` (method)
+- L403 `TestConcludeToolDispatch` (class)
+- L404 `test_conclude_schema_has_no_anyof(self)` (method) — anyOf/oneOf/allOf breaks Anthropic and Fireworks APIs — schema must be plain object.
+- L415 `test_honcho_conclude_defaults_to_user_peer(self)` (method)
+- L434 `test_honcho_conclude_can_target_ai_peer(self)` (method)
+- L453 `test_honcho_profile_can_target_explicit_peer_id(self)` (method)
+- L468 `test_honcho_search_can_target_explicit_peer_id(self)` (method)
+- L488 `test_honcho_reasoning_can_target_explicit_peer_id(self)` (method)
+- L508 `test_honcho_conclude_missing_both_params_returns_error(self)` (method) — Calling honcho_conclude with neither conclusion nor delete_id returns a tool error.
+- L523 `test_honcho_conclude_rejects_both_params_at_once(self)` (method) — Sending both conclusion and delete_id should be rejected.
+- L539 `test_honcho_conclude_rejects_whitespace_only_conclusion(self)` (method) — Whitespace-only conclusion should be treated as empty.
+- L551 `test_honcho_conclude_rejects_whitespace_only_delete_id(self)` (method) — Whitespace-only delete_id should be treated as empty.
+- L563 `test_sync_turn_strips_leaked_memory_context_before_honcho_ingest(self)` (method)
+- L607 `TestToolsModeInitBehavior` (class) — Verify initOnSessionStart controls session init timing in tools mode.
+- L610 `_make_provider_with_config(self, recall_mode='tools', init_on_session_start=False, peer_name=None, user_id=None, user_id_alt=None)` (method) — Create a HonchoMemoryProvider with mocked config and dependencies.
+- L647 `test_tools_lazy_default(self)` (method) — tools + initOnSessionStart=false → session NOT initialized after initialize().
+- L656 `test_tools_eager_init(self)` (method) — tools + initOnSessionStart=true → session IS initialized after initialize().
+- L664 `test_tools_eager_prefetch_still_empty(self)` (method) — tools mode with eager init still returns empty from prefetch() (no auto-injection).
+- L671 `test_tools_lazy_prefetch_empty(self)` (method) — tools mode with lazy init also returns empty from prefetch().
+- L678 `test_explicit_peer_name_not_overridden_by_user_id(self)` (method) — Explicit peerName in config must not be replaced by gateway user_id.
+- L686 `test_user_id_used_when_no_peer_name(self)` (method) — Gateway user_id is passed separately from config peer_name.
+- L695 `test_user_id_alt_is_passed_to_session_manager(self)` (method) — Gateway alternate user IDs are available for Honcho alias matching.
+- L705 `TestPerSessionMigrateGuard` (class) — Verify migrate_memory_files is skipped under per-session strategy.
+- L714 `_make_provider_with_strategy(self, strategy, init_on_session_start=True)` (method) — Create a HonchoMemoryProvider and track migrate_memory_files calls.
+- L742 `test_migrate_skipped_for_per_session(self)` (method) — per-session strategy must NOT call migrate_memory_files.
+- L747 `test_migrate_runs_for_per_directory(self)` (method) — per-directory strategy with empty session SHOULD call migrate_memory_files.
+- L753 `TestChunkMessage` (class)
+- L754 `test_short_message_single_chunk(self)` (method)
+- L758 `test_exact_limit_single_chunk(self)` (method)
+- L763 `test_splits_at_paragraph_boundary(self)` (method)
+- L771 `test_splits_at_sentence_boundary(self)` (method)
+- L778 `test_splits_at_word_boundary(self)` (method)
+- L787 `test_continuation_prefix(self)` (method)
+- L795 `test_empty_message(self)` (method)
+- L799 `test_large_message_many_chunks(self)` (method)
+- L812 `TestTruncateToBudget` (class)
+- L813 `test_truncates_oversized_context(self)` (method) — Text exceeding context_tokens budget is truncated at a word boundary.
+- L826 `test_no_truncation_within_budget(self)` (method) — Text within budget passes through unchanged.
+- L836 `test_no_truncation_when_context_tokens_none(self)` (method) — When context_tokens is None (explicit opt-out), no truncation.
+- L846 `test_context_tokens_cap_bounds_prefetch(self)` (method) — With an explicit token budget, oversized prefetch is bounded.
+- L866 `TestDialecticInputGuard` (class)
+- L867 `test_long_query_truncated(self)` (method) — Queries exceeding dialectic_max_input_chars are truncated.
+- L898 `_settle_prewarm(provider)` (function) — Wait for the session-start prewarm dialectic thread, then return the
+- L919 `TestDialecticCadenceDefaults` (class) — Regression tests for dialectic_cadence default value.
+- L923 `_make_provider(cfg_extra=None)` (method) — Create a HonchoMemoryProvider with mocked dependencies.
+- L947 `test_unset_falls_back_to_1(self)` (method) — Unset dialecticCadence falls back to 1 (every turn) for backwards
+- L954 `test_config_override(self)` (method) — dialecticCadence from config overrides the default.
+- L960 `TestBaseContextSummary` (class) — Base context injection should include session summary when available.
+- L963 `test_format_includes_summary(self)` (method) — Session summary should appear first in the formatted context.
+- L975 `test_format_without_summary(self)` (method) — No summary key means no summary section.
+- L983 `test_format_empty_summary_skipped(self)` (method) — Empty summary string should not produce a section.
+- L991 `TestDialecticDepth` (class) — Tests for the dialecticDepth multi-pass system.
+- L995 `_make_provider(cfg_extra=None)` (method)
+- L1018 `test_default_depth_is_1(self)` (method) — Default dialecticDepth should be 1 — single .chat() call.
+- L1023 `test_depth_from_config(self)` (method) — dialecticDepth from config sets the depth.
+- L1028 `test_depth_clamped_to_3(self)` (method) — dialecticDepth > 3 gets clamped to 3.
+- L1033 `test_depth_clamped_to_1(self)` (method) — dialecticDepth < 1 gets clamped to 1.
+- L1038 `test_depth_levels_from_config(self)` (method) — dialecticDepthLevels array is read from config.
+- L1046 `test_depth_levels_none_by_default(self)` (method) — When dialecticDepthLevels is not configured, it's None.
+- L1051 `test_resolve_pass_level_uses_depth_levels(self)` (method) — Per-pass levels from dialecticDepthLevels override proportional.
+- L1060 `test_resolve_pass_level_proportional_depth_1(self)` (method) — Depth 1 pass 0 uses the base reasoning level.
+- L1068 `test_resolve_pass_level_proportional_depth_2(self)` (method) — Depth 2: pass 0 is minimal, pass 1 is base level.
+- L1077 `test_cold_start_prompt(self)` (method) — Cold start (no base context) uses general user query.
+- L1084 `test_warm_session_prompt(self)` (method) — Warm session (has context) uses session-scoped query.
+- L1091 `test_signal_sufficient_short_response(self)` (method) — Short responses are not sufficient signal.
+- L1097 `test_signal_sufficient_structured_response(self)` (method) — Structured responses with bullets/headers are sufficient.
+- L1102 `test_signal_sufficient_long_unstructured(self)` (method) — Long responses are sufficient even without structure.
+- L1106 `test_run_dialectic_depth_single_pass(self)` (method) — Depth 1 makes exactly one .chat() call.
+- L1119 `test_run_dialectic_depth_two_passes(self)` (method) — Depth 2 makes two .chat() calls when pass 1 signal is weak.
+- L1135 `test_run_dialectic_depth_bails_early_on_strong_signal(self)` (method) — Depth 2 skips pass 1 when pass 0 returns strong signal.
+- L1156 `TestTrivialPromptHeuristic` (class) — Trivial prompts ('ok', 'y', slash commands) must short-circuit injection.
+- L1160 `_make_provider()` (method)
+- L1179 `test_classifier_catches_common_trivial_forms(self)` (method)
+- L1183 `test_classifier_lets_substantive_prompts_through(self)` (method)
+- L1187 `test_prefetch_skips_on_trivial_prompt(self)` (method)
+- L1199 `test_queue_prefetch_skips_on_trivial_prompt(self)` (method)
+- L1214 `TestDialecticCadenceAdvancesOnSuccess` (class) — Cadence tracker advances only when the dialectic call returns a
+- L1220 `_make_provider()` (method)
+- L1241 `test_empty_dialectic_result_does_not_advance_cadence(self)` (method)
+- L1258 `test_non_empty_dialectic_result_advances_cadence(self)` (method)
+- L1271 `test_in_flight_thread_is_not_stacked(self)` (method)
+- L1297 `TestSessionStartDialecticPrewarm` (class) — Session-start prewarm fires a depth-aware dialectic whose result is
+- L1302 `_make_provider(cfg_extra=None, dialectic_result='prewarm synthesis')` (method)
+- L1324 `test_prewarm_populates_prefetch_result(self)` (method)
+- L1333 `test_turn1_consumes_prewarm_without_duplicate_dialectic(self)` (method) — With prewarm result already in _prefetch_result, turn 1 prefetch
+- L1349 `test_turn1_falls_back_to_sync_when_prewarm_missing(self)` (method) — If the prewarm produced nothing (empty graph, API blip), turn 1
+- L1369 `TestDialecticLiveness` (class) — Liveness + observability: stale-thread recovery, stale-result discard,
+- L1374 `_make_provider(cfg_extra=None)` (method)
+- L1397 `test_stale_thread_is_treated_as_dead(self)` (method) — A thread older than timeout × multiplier no longer blocks new fires.
+- L1423 `test_stale_pending_result_is_discarded_on_read(self)` (method) — A pending dialectic result from many turns ago is discarded
+- L1443 `test_fresh_pending_result_is_kept(self)` (method) — A pending result within the staleness window is injected normally.
+- L1457 `test_empty_streak_widens_effective_cadence(self)` (method) — After N empty returns, the gate waits cadence + N turns.
+- L1464 `test_backoff_is_capped(self)` (method) — Effective cadence is capped at cadence × _BACKOFF_MAX.
+- L1471 `test_success_resets_empty_streak(self)` (method) — A non-empty result zeroes the streak so healthy operation restores
+- L1487 `test_empty_result_increments_streak(self)` (method)
+- L1500 `test_liveness_snapshot_shape(self)` (method)
+- L1510 `TestDialecticLifecycleSmoke` (class) — End-to-end smoke walking a multi-turn session through prewarm,
+- L1516 `_make_provider(cfg_extra=None)` (method)
+- L1542 `_await_thread(self, provider)` (method) — Block until the in-flight prefetch/prewarm thread has fully finished.
+- L1565 `test_full_multi_turn_session(self)` (method) — Walks init → turns 1..8 → session end. Asserts at every step that
+- L1669 `TestReasoningHeuristic` (class) — Char-count heuristic that scales the auto-injected reasoning level by
+- L1674 `_make_provider(cfg_extra=None)` (method)
+- L1697 `test_short_query_stays_at_base(self)` (method)
+- L1701 `test_medium_query_bumps_one_level(self)` (method)
+- L1706 `test_long_query_bumps_two_levels(self)` (method)
+- L1711 `test_bump_respects_cap(self)` (method)
+- L1716 `test_max_never_auto_selected_with_default_cap(self)` (method)
+- L1721 `test_heuristic_disabled_returns_base(self)` (method)
+- L1726 `test_resolve_pass_level_applies_heuristic_at_base_mapping(self)` (method) — Depth=1, pass 0 maps to 'base' → heuristic applies.
+- L1732 `test_resolve_pass_level_does_not_touch_explicit_per_pass(self)` (method) — dialecticDepthLevels wins absolutely — no heuristic scaling.
+- L1738 `test_resolve_pass_level_does_not_touch_lighter_passes(self)` (method) — Depth 3 pass 0 is hardcoded 'minimal' — heuristic must not bump it.
+- L1752 `TestSetPeerCardNoneGuard` (class) — set_peer_card must return None (not raise) when peer ID cannot be resolved.
+- L1755 `_make_manager(self)` (method)
+- L1766 `test_returns_none_when_peer_resolves_to_none(self)` (method) — set_peer_card returns None when _resolve_peer_id returns None.
+- L1784 `test_returns_none_when_session_missing(self)` (method) — set_peer_card returns None when session key is not in cache.
+- L1796 `TestGetSessionContextFallback` (class) — get_session_context fallback must honour the peer param when honcho_session is absent.
+- L1799 `_make_manager_with_session(self, user_peer_id='user-peer', assistant_peer_id='ai-peer')` (method)
+- L1823 `test_fallback_uses_user_peer_for_user(self)` (method) — On cache miss, peer='user' fetches user peer context.
+- L1841 `test_fallback_uses_ai_peer_for_ai(self)` (method) — On cache miss, peer='ai' fetches assistant peer context, not user.

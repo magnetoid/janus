@@ -1,0 +1,248 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:44'
+updated: '2026-06-08T00:38:44'
+---
+
+# tui_gateway/server.py
+
+Symbols in `tui_gateway/server.py`.
+
+- L55 `_panic_hook(exc_type, exc_value, exc_tb)` (function)
+- L84 `_thread_panic_hook(args)` (function)
+- L211 `_SlashWorker` (class) — Persistent HermesCLI subprocess for slash commands.
+- L214 `__init__(self, session_key: str, model: str)` (method)
+- L243 `_drain_stdout(self)` (method)
+- L251 `_drain_stderr(self)` (method)
+- L256 `run(self, command: str)` (method)
+- L283 `close(self)` (method)
+- L295 `_load_busy_input_mode()` (function)
+- L303 `_notify_session_boundary(event_type: str, session_id: str | None)` (function) — Fire session lifecycle hooks with CLI parity.
+- L313 `_finalize_session(session: dict | None, end_reason: str='tui_close')` (function) — Best-effort finalize hook + memory commit for a session.
+- L352 `_teardown_session(session: dict | None)` (function) — Fully tear down a session: finalize, unregister, close agent + worker.
+- L383 `_ws_session_is_orphaned(session: dict | None)` (function) — True if a WS session has no live transport and no in-flight turn.
+- L398 `_schedule_ws_orphan_reap(sid: str)` (function) — After a grace window, reap session ``sid`` iff it's still orphaned.
+- L424 `_shutdown_sessions()` (function)
+- L443 `_get_db()` (function)
+- L461 `_db_unavailable_error(rid, *, code: int)` (function)
+- L474 `_profile_home(profile: str | None)` (function) — Resolve a named profile's home on THIS host, or None for the launch profile.
+- L491 `write_json(obj: dict)` (function) — Emit one JSON frame. Routes via the most-specific transport available.
+- L512 `_emit(event: str, sid: str, payload: dict | None=None)` (function)
+- L519 `_status_update(sid: str, kind: str, text: str | None=None)` (function)
+- L530 `_estimate_image_tokens(width: int, height: int)` (function) — Very rough UI estimate for image prompt cost.
+- L541 `_image_meta(path: Path)` (function)
+- L556 `_ok(rid, result: dict)` (function)
+- L560 `_err(rid, code: int, msg: str)` (function)
+- L564 `method(name: str)` (function)
+- L572 `_normalize_request(req: Any)` (function) — Validate a JSON-RPC request enough for safe local dispatch.
+- L591 `handle_request(req: dict)` (function)
+- L603 `dispatch(req: dict, transport: Optional[Transport]=None)` (function) — Route inbound RPCs — long handlers to the pool, everything else inline.
+- L644 `_wait_agent(session: dict, rid: str, timeout: float=30.0)` (function)
+- L652 `_start_agent_build(sid: str, session: dict)` (function) — Start building the real AIAgent for a TUI session, once.
+- L773 `_sess_nowait(params, rid)` (function)
+- L778 `_sess(params, rid)` (function)
+- L786 `_normalize_completion_path(path_part: str)` (function)
+- L800 `_completion_cwd(params: dict | None=None)` (function)
+- L816 `_terminal_task_cwd(session: dict | None)` (function) — Return the cwd that terminal_tool should use for this TUI session.
+- L840 `_git_branch_for_cwd(cwd: str)` (function)
+- L865 `_session_cwd(session: dict | None)` (function)
+- L871 `_register_session_cwd(session: dict | None)` (function)
+- L884 `_ensure_session_db_row(session: dict)` (function) — Idempotently persist the session's DB row on first real activity.
+- L937 `_set_session_cwd(session: dict, cwd: str)` (function)
+- L971 `_load_cfg()` (function)
+- L1002 `_save_cfg(cfg: dict)` (function)
+- L1018 `_cwd_for_session_key(session_key: str)` (function) — Reverse-map session_key to the session's logical cwd.
+- L1034 `_set_session_context(session_key: str, cwd: str | None=None)` (function)
+- L1048 `_clear_session_context(tokens: list)` (function)
+- L1059 `_enable_gateway_prompts()` (function) — Route approvals through gateway callbacks instead of CLI input().
+- L1069 `_block(event: str, sid: str, payload: dict, timeout: int=300)` (function)
+- L1087 `_clear_pending(sid: str | None=None)` (function) — Release pending prompts with an empty answer.
+- L1106 `resolve_skin()` (function)
+- L1125 `_resolve_model()` (function)
+- L1140 `_resolve_startup_runtime()` (function)
+- L1175 `_write_config_key(key_path: str, value)` (function)
+- L1190 `_coerce_statusbar(raw)` (function)
+- L1218 `_display_mouse_tracking(display: dict)` (function) — Resolve display.mouse_tracking to one of ``off|wheel|buttons|all``.
+- L1244 `_load_reasoning_config()` (function)
+- L1253 `_load_service_tier()` (function)
+- L1266 `_load_show_reasoning()` (function)
+- L1270 `_load_tool_progress_mode()` (function)
+- L1283 `_load_enabled_toolsets()` (function)
+- L1410 `_session_tool_progress_mode(sid: str)` (function)
+- L1414 `_session_verbose(sid: str)` (function)
+- L1418 `_tool_progress_enabled(sid: str)` (function)
+- L1422 `_restart_slash_worker(session: dict)` (function)
+- L1438 `_persist_model_switch(result)` (function)
+- L1456 `_apply_model_switch(sid: str, session: dict, raw_input: str)` (function)
+- L1550 `_compress_session_history(session: dict, focus_topic: str | None=None, approx_tokens: int | None=None, before_messages: list | None=None, history_version: int | None=None)` (function)
+- L1603 `_sync_session_key_after_compress(sid: str, session: dict, *, clear_pending_title: bool=True, restart_slash_worker: bool=True)` (function) — Re-anchor session_key when AIAgent._compress_context rotates session_id.
+- L1679 `_get_usage(agent)` (function)
+- L1733 `_probe_credentials(agent)` (function) — Light credential check at session creation — returns warning or ''.
+- L1745 `_probe_config_health(cfg: dict)` (function) — Flag bare YAML keys (`agent:` with no value → None) that silently
+- L1778 `_current_profile_name()` (function)
+- L1794 `_session_info(agent, session: dict | None=None)` (function)
+- L1897 `_tool_ctx(name: str, args: dict)` (function)
+- L1917 `_cap_tui_verbose_text(text: str)` (function)
+- L1953 `_redact_tui_verbose_text(text: str)` (function)
+- L1963 `_tool_args_text(args: dict)` (function)
+- L1971 `_tool_result_text(result: object)` (function)
+- L1981 `_fmt_tool_duration(seconds: float | None)` (function)
+- L1992 `_count_list(obj: object, *path: str)` (function)
+- L2001 `_tool_summary(name: str, result: str, duration_s: float | None)` (function)
+- L2029 `_on_tool_start(sid: str, tool_call_id: str, name: str, args: dict)` (function)
+- L2056 `_on_tool_complete(sid: str, tool_call_id: str, name: str, args: dict, result: str)` (function)
+- L2103 `_on_tool_progress(sid: str, event_type: str, name: str | None=None, preview: str | None=None, _args: dict | None=None, **_kwargs)` (function)
+- L2184 `_agent_cbs(sid: str)` (function)
+- L2230 `_wire_callbacks(sid: str)` (function)
+- L2260 `_render_personality_prompt(value)` (function)
+- L2271 `_available_personalities(cfg: dict | None=None)` (function)
+- L2286 `_validate_personality(value: str, cfg: dict | None=None)` (function)
+- L2306 `_prompt_text(value)` (function) — Normalize config prompt values from YAML before handing them to AIAgent.
+- L2317 `_apply_personality_to_session(sid: str, session: dict, new_prompt: str, personality: str='')` (function) — Apply a personality change to an existing session without resetting history.
+- L2363 `_cfg_max_turns(cfg: dict, default: int)` (function)
+- L2374 `_parse_tui_skills_env()` (function)
+- L2386 `_background_agent_kwargs(agent, task_id: str)` (function)
+- L2424 `_ephemeral_preview_agent_kwargs(agent, task_id: str)` (function)
+- L2436 `_preview_restart_history(session: dict, max_messages: int=24, max_tool_chars: int=1200)` (function) — Distill the parent session's recent history into a context the
+- L2495 `_preview_tool_result_preview(name: str, result: str)` (function)
+- L2517 `_preview_restart_callbacks(parent: str, task_id: str)` (function)
+- L2551 `_reset_session_agent(sid: str, session: dict)` (function)
+- L2583 `_make_agent(sid: str, key: str, session_id: str | None=None, session_db=None, model_override: dict | None=None)` (function)
+- L2683 `_init_session(sid: str, key: str, agent, history: list, cols: int=80)` (function)
+- L2761 `_new_session_key()` (function)
+- L2765 `_with_checkpoints(session, fn)` (function)
+- L2769 `_resolve_checkpoint_hash(mgr, cwd: str, ref: str)` (function)
+- L2780 `_enrich_with_attached_images(user_text: str, image_paths: list[str])` (function) — Pre-analyze attached images via vision and prepend descriptions to user text.
+- L2817 `_content_display_text(content: Any)` (function)
+- L2847 `_coerce_message_text(content: Any)` (function) — Render ``message['content']`` as a plain string for transport.
+- L2934 `_history_to_messages(history: list[dict])` (function)
+- L2983 `_coerce_seed_history(value: Any)` (function)
+- L3007 `_content_display_text(content: Any)` (function)
+- L3037 `_inflight_text(value: Any)` (function)
+- L3041 `_start_inflight_turn(session: dict, text: Any)` (function)
+- L3052 `_append_inflight_delta(session: dict, delta: Any)` (function)
+- L3065 `_clear_inflight_turn(session: dict)` (function)
+- L3069 `_inflight_snapshot(session: dict)` (function)
+- L3089 `_(rid, params: dict)` (function)
+- L3187 `_(rid, params: dict)` (function)
+- L3233 `_(rid, params: dict)` (function) — Return the most recent human-facing session id, or ``None``.
+- L3277 `_(rid, params: dict)` (function)
+- L3407 `_(rid, params: dict)` (function)
+- L3430 `_session_pending_kind(sid: str)` (function)
+- L3439 `_session_live_status(sid: str, session: dict)` (function)
+- L3450 `_message_preview(history: list)` (function)
+- L3458 `_session_live_title(session: dict, key: str)` (function)
+- L3469 `_session_live_item(sid: str, session: dict, current_sid: str='')` (function)
+- L3494 `_find_live_session_by_key(session_key: str)` (function)
+- L3503 `_fallback_session_info(session: dict)` (function)
+- L3516 `_live_session_payload(sid: str, session: dict, *, cols: int | None=None, touch: bool=False, transport: Transport | None=None)` (function)
+- L3552 `_(rid, params: dict)` (function) — Return live TUI sessions in this gateway process.
+- L3574 `_(rid, params: dict)` (function) — Attach the frontend to an already-live TUI session.
+- L3592 `_(rid, params: dict)` (function) — Delete a stored session and its on-disk transcript files.
+- L3634 `_(rid, params: dict)` (function)
+- L3697 `_(rid, params: dict)` (function)
+- L3723 `_(rid, params: dict)` (function)
+- L3780 `_(rid, params: dict)` (function)
+- L3803 `_(rid, params: dict)` (function)
+- L3831 `_(rid, params: dict)` (function)
+- L3927 `_(rid, params: dict)` (function)
+- L3982 `_(rid, params: dict)` (function)
+- L3998 `_(rid, params: dict)` (function)
+- L4060 `_(rid, params: dict)` (function)
+- L4087 `_(rid, params: dict)` (function)
+- L4107 `_(rid, params: dict)` (function)
+- L4115 `_(rid, params: dict)` (function)
+- L4134 `_spawn_trees_root()` (function)
+- L4142 `_spawn_tree_session_dir(session_id: str)` (function)
+- L4157 `_append_spawn_tree_index(session_dir, entry: dict)` (function)
+- L4167 `_read_spawn_tree_index(session_dir)` (function)
+- L4188 `_(rid, params: dict)` (function)
+- L4231 `_(rid, params: dict)` (function)
+- L4282 `_(rid, params: dict)` (function)
+- L4306 `_(rid, params: dict)` (function) — Inject a user message into the next tool result without interrupting.
+- L4331 `_(rid, params: dict)` (function)
+- L4343 `_(rid, params: dict)` (function)
+- L4404 `_notification_event_belongs_elsewhere(session: dict, evt: dict)` (function) — True if ``evt`` is owned by a *different* live session.
+- L4434 `_notification_event_dedup_key(evt: dict)` (function) — Return the UI-emission identity for a process notification event.
+- L4466 `_notification_poller_loop(stop_event: threading.Event, sid: str, session: dict)` (function) — Poll completion_queue and dispatch notifications autonomously.
+- L4583 `_start_notification_poller(sid: str, session: dict)` (function) — Start the background notification poller for a TUI session.
+- L4595 `_run_prompt_submit(rid, sid: str, session: dict, text: Any)` (function)
+- L5018 `_(rid, params: dict)` (function)
+- L5058 `_(rid, params: dict)` (function)
+- L5116 `_decode_attach_base64(raw: str, *, mime_prefix: str)` (function) — Decode a base64 (optionally data-URL-wrapped) payload.
+- L5140 `_sniff_image_ext(img_bytes: bytes, filename: str='')` (function) — Resolve an image extension from a filename hint, else magic bytes.
+- L5159 `_allowed_image_extensions()` (function)
+- L5168 `_queue_attached_image(session: dict, img_bytes: bytes, ext: str, *, prefix: str)` (function) — Write image bytes into the gateway's images dir and queue them.
+- L5190 `_(rid, params: dict)` (function) — Attach an image to the session from base64 bytes (remote-client path).
+- L5251 `_(rid, params: dict)` (function) — Attach a PDF by rendering each page to PNG and queuing the pages.
+- L5369 `_(rid, params: dict)` (function)
+- L5389 `_(rid, params: dict)` (function)
+- L5436 `_(rid, params: dict)` (function)
+- L5482 `_(rid, params: dict)` (function)
+- L5597 `_respond(rid, params, key)` (function)
+- L5610 `_(rid, params: dict)` (function)
+- L5615 `_(rid, params: dict)` (function)
+- L5620 `_(rid, params: dict)` (function)
+- L5625 `_(rid, params: dict)` (function)
+- L5650 `_(rid, params: dict)` (function)
+- L6067 `_(rid, params: dict)` (function)
+- L6204 `_(rid, params: dict)` (function)
+- L6214 `_(rid, params: dict)` (function) — Strict provider check: does the configured/default model actually resolve to a usable runtime?
+- L6286 `_(rid, params: dict)` (function)
+- L6296 `_(rid, params: dict)` (function)
+- L6386 `_(rid, params: dict)` (function) — Re-read ``~/.hermes/.env`` into the gateway process via
+- L6446 `_(rid, params: dict)` (function) — Registry-backed slash metadata for the TUI — categorized, no aliases.
+- L6544 `_cli_exec_blocked(argv: list[str])` (function) — Return user hint if this argv must not run headless in the gateway process.
+- L6561 `_(rid, params: dict)` (function) — Run `python -m hermes_cli.main` with argv; capture stdout/stderr (non-interactive only).
+- L6590 `_(rid, params: dict)` (function)
+- L6609 `_resolve_name(name: str)` (function)
+- L6620 `_(rid, params: dict)` (function)
+- L6949 `_(rid, params: dict)` (function)
+- L7002 `_list_repo_files(root: str)` (function) — Return file paths relative to ``root``.
+- L7090 `_fuzzy_basename_rank(name: str, query: str)` (function) — Rank ``name`` against ``query``; lower is better. Returns None to reject.
+- L7146 `_(rid, params: dict)` (function)
+- L7277 `_details_completion_item(value: str, meta: str='')` (function)
+- L7281 `_details_root_completion_item(value: str, meta: str, needs_leading_space: bool)` (function)
+- L7290 `_details_completions(text: str)` (function)
+- L7369 `_(rid, params: dict)` (function)
+- L7448 `_(rid, params: dict)` (function)
+- L7488 `_(rid, params: dict)` (function) — Save an API key for a provider, then return its refreshed model list.
+- L7570 `_(rid, params: dict)` (function) — Remove credentials for a provider.
+- L7618 `_mirror_slash_side_effects(sid: str, session: dict, command: str)` (function) — Apply side effects that must also hit the gateway's live agent.
+- L7673 `_(rid, params: dict)` (function)
+- L7771 `_voice_emit(event: str, payload: dict | None=None)` (function) — Emit a voice event toward the session that most recently turned the
+- L7782 `_voice_mode_enabled()` (function) — Current voice-mode flag (runtime-only, CLI parity).
+- L7794 `_voice_tts_enabled()` (function) — Whether agent replies should be spoken back via TTS (runtime only).
+- L7799 `_voice_cfg_dict()` (function) — Shape-safe accessor for the ``voice:`` block in config.yaml.
+- L7816 `_voice_record_key()` (function) — Current ``voice.record_key`` value, documented default on error.
+- L7824 `_(rid, params: dict)` (function) — CLI parity for the ``/voice`` slash command.
+- L7921 `_(rid, params: dict)` (function) — VAD-bounded push-to-talk capture, CLI-parity.
+- L7998 `_(rid, params: dict)` (function)
+- L8017 `_(rid, params: dict)` (function)
+- L8045 `_(rid, params: dict)` (function)
+- L8075 `_(rid, params: dict)` (function)
+- L8122 `_(rid, params: dict)` (function)
+- L8147 `_resolve_browser_cdp_url()` (function) — Return the configured browser CDP override without network I/O.
+- L8180 `_is_default_local_cdp(parsed)` (function) — Match the discovery-style local default; never the concrete WS form.
+- L8201 `_http_ok(url: str, timeout: float)` (function)
+- L8211 `_probe_urls(parsed)` (function)
+- L8217 `_normalize_cdp_url(parsed)` (function)
+- L8227 `_failure_messages(url: str, port: int, system: str)` (function)
+- L8247 `_(rid, params: dict)` (function)
+- L8263 `_browser_connect(rid, params: dict)` (function)
+- L8369 `_browser_disconnect(rid)` (function)
+- L8387 `_(rid, params: dict)` (function)
+- L8409 `_(rid, params: dict)` (function)
+- L8448 `_(rid, params: dict)` (function)
+- L8479 `_(rid, params: dict)` (function)
+- L8519 `_(rid, params: dict)` (function)
+- L8588 `_(rid, params: dict)` (function)
+- L8618 `_(rid, params: dict)` (function)
+- L8642 `_(rid, params: dict)` (function)
+- L8669 `_(rid, params: dict)` (function)
+- L8728 `_(rid, params: dict)` (function)
+- L8756 `_(rid, params: dict)` (function)

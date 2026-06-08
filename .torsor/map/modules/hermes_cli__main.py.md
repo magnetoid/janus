@@ -1,0 +1,226 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:40'
+updated: '2026-06-08T00:38:40'
+---
+
+# hermes_cli/main.py
+
+Symbols in `hermes_cli/main.py`.
+
+- L68 `_set_process_title()` (function) — Set the process title to 'hermes' so tools like 'ps', 'top', and
+- L116 `_config_default_interface_early()` (function) — Return the configured default interface ("cli"/"tui") via a minimal
+- L145 `_wants_tui_early(argv: 'list[str] | None'=None)` (function) — Earliest TUI decision, usable before argparse/config imports.
+- L168 `_suppress_mouse_residue_early()` (function)
+- L193 `_is_termux_startup_environment_fast()` (function) — Tiny Termux check for pre-import startup shortcuts.
+- L203 `_is_termux_fast_version_argv(argv: list[str])` (function)
+- L207 `_read_openai_version_fast()` (function) — Read OpenAI SDK version without importing ``importlib.metadata``.
+- L227 `_print_fast_version_info()` (function)
+- L239 `_try_termux_ultrafast_version()` (function) — Handle ``hermes --version`` before config/logging imports on Termux.
+- L265 `_add_accept_hooks_flag(parser)` (function) — Attach the ``--accept-hooks`` flag.  Shared across every agent
+- L279 `_require_tty(command_name: str)` (function) — Exit with a clear error if stdin is not a terminal.
+- L310 `_apply_profile_override()` (function) — Pre-parse --profile/-p and set HERMES_HOME before module imports.
+- L474 `_is_termux_startup_environment(env: dict[str, str] | None=None)` (function) — Import-safe Termux check for cold-start-sensitive CLI paths.
+- L485 `_read_packed_ref(common_dir: Path, ref: str)` (function) — Look up a ref in .git/packed-refs without spawning git.
+- L504 `_read_git_revision_fingerprint(repo_root: Path)` (function) — Return a cheap checkout fingerprint without spawning git.
+- L549 `_termux_bundled_skills_fingerprint()` (function) — Cheap invalidation key for Termux bundled-skill startup sync.
+- L562 `_termux_bundled_skills_stamp_path()` (function)
+- L566 `_termux_bundled_skills_sync_needed()` (function)
+- L578 `_mark_termux_bundled_skills_synced()` (function)
+- L589 `_sync_bundled_skills_for_startup()` (function) — Sync bundled skills, but skip unchanged Termux checkouts cheaply.
+- L606 `_termux_should_prefetch_update_check()` (function)
+- L612 `_relative_time(ts)` (function) — Format a timestamp as relative time (e.g., '2h ago', 'yesterday').
+- L630 `_has_any_provider_configured()` (function) — Check if at least one inference provider is usable.
+- L744 `_session_browse_picker(sessions: list)` (function) — Interactive curses-based session browser with live search filtering.
+- L985 `_resolve_last_session(source: str='cli')` (function) — Look up the most recently-used session ID for a source.
+- L1005 `_probe_container(cmd: list, backend: str, via_sudo: bool=False)` (function) — Run a container inspect probe, returning the CompletedProcess.
+- L1023 `_exec_in_container(container_info: dict, cli_args: list)` (function) — Replace the current process with a command inside the managed container.
+- L1116 `_resolve_session_by_name_or_id(name_or_id: str)` (function) — Resolve a session name (title) or ID to a session ID.
+- L1156 `_read_tui_active_session_file(path: Optional[str])` (function)
+- L1167 `_print_tui_exit_summary(session_id: Optional[str], active_session_file: Optional[str]=None)` (function) — Print a shell-visible epilogue after TUI exits.
+- L1240 `_workspace_root(dir: Path)` (function) — Return the npm workspace root for *dir*.
+- L1267 `_termux_workspace_install_context(dir: Path, *, include_child_workspaces: bool=False)` (function) — Return Termux-only ``(cwd, npm_args)`` for installing deps for *dir* only.
+- L1293 `_tui_need_npm_install(root: Path)` (function) — True when @hermes/ink is missing or node_modules is behind package-lock.json.
+- L1396 `_iter_tui_build_inputs(root: Path)` (function) — Yield source/config files that affect ``ui-tui/dist/entry.js``.
+- L1412 `_tui_need_rebuild(root: Path)` (function) — True when ``dist/entry.js`` is missing or older than TUI inputs.
+- L1439 `_ensure_tui_node()` (function) — Make sure `node` + `npm` are on PATH for the TUI.
+- L1496 `_find_bundled_tui(hermes_cli_dir: Path | None=None)` (function) — Find a pre-built TUI entry.js bundled in the wheel.
+- L1504 `_make_tui_argv(tui_dir: Path, tui_dev: bool)` (function) — TUI: --dev → tsx src; else node dist (HERMES_TUI_DIR prebuilt or esbuild).
+- L1660 `_normalize_tui_toolsets(toolsets: object)` (function) — Normalize argparse/Fire-style toolset input for the TUI subprocess.
+- L1684 `_read_cgroup_memory_limit()` (function) — Return the container memory limit in bytes, or None if unconstrained.
+- L1731 `_resolve_tui_heap_mb(default_mb: int=8192)` (function) — Pick a V8 ``--max-old-space-size`` (MB) that fits the container.
+- L1755 `_launch_tui(resume_session_id: Optional[str]=None, tui_dev: bool=False, model: Optional[str]=None, provider: Optional[str]=None, toolsets: object=None, skills: object=None, verbose: Optional[bool]=None, quiet: bool=False, query: Optional[str]=None, image: Optional[str]=None, worktree: bool=False, checkpoints: bool=False, pass_session_id: bool=False, max_turns: Optional[int]=None, accept_hooks: bool=False)` (function) — Replace current process with the TUI.
+- L1915 `_pin_kanban_board_env()` (function) — Pin the active kanban board into ``HERMES_KANBAN_BOARD`` for the chat session.
+- L1936 `_sync_bundled_skills_quietly()` (function) — Seed ``~/.hermes/skills/`` with the bundled skill library on first launch.
+- L1956 `_resolve_use_tui(args)` (function) — Decide whether to launch the TUI for a chat/bare invocation.
+- L1981 `cmd_chat(args)` (function) — Run interactive chat CLI.
+- L2166 `cmd_gateway(args)` (function) — Gateway management commands.
+- L2175 `cmd_proxy(args)` (function) — Local OpenAI-compatible proxy to OAuth providers.
+- L2186 `cmd_whatsapp(args)` (function) — Set up WhatsApp: choose mode, configure, install bridge, pair via QR.
+- L2408 `cmd_setup(args)` (function) — Interactive setup wizard.
+- L2415 `cmd_postinstall(args)` (function) — One-shot bootstrap for pip users: install non-Python deps + run setup.
+- L2436 `cmd_model(args)` (function) — Select default model — starts with provider selection, then model picker.
+- L2449 `_is_profile_api_key_provider(provider_id: str)` (function) — Return True when provider_id maps to a profile with auth_type='api_key'.
+- L2464 `select_provider_and_model(args=None)` (function) — Core provider selection + model picking logic.
+- L2871 `_clear_stale_openai_base_url()` (function) — Remove OPENAI_BASE_URL from ~/.hermes/.env if the active provider is not 'custom'.
+- L2930 `_all_aux_tasks()` (function) — Return built-in + plugin-registered auxiliary tasks for picker/menu use.
+- L2951 `_format_aux_current(task_cfg: dict)` (function) — Render the current aux config for display in the task menu.
+- L2968 `_save_aux_choice(task: str, *, provider: str, model: str='', base_url: str='', api_key: str='')` (function) — Persist an auxiliary task's provider/model to config.yaml.
+- L3000 `_reset_aux_to_auto()` (function) — Reset every known aux task back to auto/empty. Returns number reset.
+- L3034 `_aux_config_menu()` (function) — Top-level auxiliary-model picker — choose a task to configure.
+- L3094 `_aux_select_for_task(task: str)` (function) — Pick a provider + model for a single auxiliary task and persist it.
+- L3173 `_aux_flow_provider_model(task: str, provider_slug: str, curated_models: list, current_model: str='')` (function) — Prompt for a model under an already-authenticated provider, save to aux.
+- L3225 `_aux_flow_custom_endpoint(task: str, task_cfg: dict)` (function) — Prompt for a direct OpenAI-compatible base_url + optional api_key/model.
+- L3279 `_prompt_provider_choice(choices, *, default=0)` (function) — Show provider selection menu with curses arrow-key navigation.
+- L3318 `_model_flow_openrouter(config, current_model='')` (function) — OpenRouter provider: ensure API key, then pick model.
+- L3379 `_model_flow_nous(config, current_model='', args=None)` (function) — Nous Portal provider: ensure logged in, then pick model.
+- L3598 `_model_flow_openai_codex(config, current_model='')` (function) — OpenAI Codex provider: ensure logged in, then pick model.
+- L3688 `_model_flow_xai_oauth(_config, current_model='', *, args=None)` (function) — xAI Grok OAuth (SuperGrok / Premium+) provider: ensure logged in, then pick model.
+- L3787 `_model_flow_qwen_oauth(_config, current_model='')` (function) — Qwen OAuth provider: reuse local Qwen CLI login, then pick model.
+- L3830 `_model_flow_minimax_oauth(config, current_model='', args=None)` (function) — MiniMax OAuth provider: ensure logged in, then pick model.
+- L3879 `_model_flow_google_gemini_cli(_config, current_model='')` (function) — Google Gemini OAuth (PKCE) via Cloud Code Assist — supports free AND paid tiers.
+- L3954 `_model_flow_custom(config)` (function) — Custom endpoint: collect URL, API key, and model name.
+- L4173 `_prompt_custom_api_mode_selection(base_url: str, current_api_mode: str='')` (function) — Prompt for a custom provider API mode.
+- L4243 `_auto_provider_name(base_url: str)` (function) — Generate a display name from a custom endpoint URL.
+- L4264 `_custom_provider_api_key_config_value(provider_info, resolved_api_key='')` (function) — Return the value that should be persisted for a custom provider key.
+- L4277 `_custom_provider_base_url_config_value(provider_info, resolved_base_url='')` (function) — Return the value that should be persisted for a custom provider URL.
+- L4285 `_save_custom_provider(base_url, api_key='', model='', context_length=None, name=None, api_mode=None)` (function) — Save a custom endpoint to custom_providers in config.yaml.
+- L4349 `_model_flow_azure_foundry(config, current_model='')` (function) — Azure Foundry provider: configure endpoint, auth mode, API mode, and model.
+- L4717 `_remove_custom_provider(config)` (function) — Let the user remove a saved custom provider from config.yaml.
+- L4775 `_model_flow_named_custom(config, provider_info)` (function) — Handle a named custom provider from config.yaml custom_providers list.
+- L4980 `__getattr__(name)` (function) — Defer the model-catalog import until something actually reads it.
+- L4990 `_current_reasoning_effort(config)` (function)
+- L4997 `_set_reasoning_effort(config, effort: str)` (function)
+- L5005 `_prompt_reasoning_effort_selection(efforts, current_effort='')` (function) — Prompt for a reasoning effort. Returns effort, 'none', or None to keep current.
+- L5085 `_model_flow_copilot(config, current_model='')` (function) — GitHub Copilot flow using env vars, gh CLI, or OAuth device code.
+- L5279 `_model_flow_copilot_acp(config, current_model='')` (function) — GitHub Copilot ACP flow using the local Copilot CLI.
+- L5393 `_prompt_api_key(pconfig, existing_key: str, provider_id: str='')` (function) — Shared API-key entry point for ``hermes setup`` / ``hermes model``.
+- L5476 `_model_flow_kimi(config, current_model='')` (function) — Kimi / Moonshot model selection with automatic endpoint routing.
+- L5573 `_infer_stepfun_region(base_url: str)` (function) — Infer the current StepFun region from the configured endpoint.
+- L5581 `_stepfun_base_url_for_region(region: str)` (function)
+- L5594 `_model_flow_stepfun(config, current_model='')` (function) — StepFun Step Plan flow with region-specific endpoints.
+- L5701 `_model_flow_bedrock_api_key(config, region, current_model='')` (function) — Bedrock API Key mode — uses the OpenAI-compatible bedrock-mantle endpoint.
+- L5791 `_model_flow_bedrock(config, current_model='')` (function) — AWS Bedrock provider: verify credentials, pick region, discover models.
+- L5974 `_model_flow_api_key_provider(config, provider_id, current_model='')` (function) — Generic flow for API-key providers (z.ai, MiniMax, OpenCode, etc.).
+- L6258 `_run_anthropic_oauth_flow(save_env_value)` (function) — Run the Claude OAuth setup-token flow. Returns True if credentials were saved.
+- L6351 `_model_flow_anthropic(config, current_model='')` (function) — Flow for Anthropic provider — OAuth subscription, API key, or Claude Code creds.
+- L6504 `cmd_login(args)` (function) — Authenticate Hermes CLI with a provider.
+- L6511 `cmd_logout(args)` (function) — Clear provider authentication.
+- L6518 `cmd_auth(args)` (function) — Manage pooled credentials.
+- L6525 `cmd_status(args)` (function) — Show status of all components.
+- L6532 `cmd_cron(args)` (function) — Cron job management.
+- L6539 `cmd_webhook(args)` (function) — Webhook subscription management.
+- L6546 `cmd_slack(args)` (function) — Slack integration helpers.
+- L6577 `cmd_kanban(args)` (function) — Multi-profile collaboration board.
+- L6584 `cmd_hooks(args)` (function) — Shell-hook inspection and management.
+- L6591 `cmd_doctor(args)` (function) — Check configuration and dependencies.
+- L6598 `cmd_security(args)` (function) — Dispatch `hermes security <subcmd>`.
+- L6611 `cmd_dump(args)` (function) — Dump setup summary for support/debugging.
+- L6618 `cmd_debug(args)` (function) — Debug tools (share report, etc.).
+- L6625 `cmd_config(args)` (function) — Configuration management.
+- L6632 `cmd_backup(args)` (function) — Back up Hermes home directory to a zip file.
+- L6644 `cmd_import(args)` (function) — Restore a Hermes backup from a zip file.
+- L6651 `_print_version_info(*, check_updates: bool=True)` (function)
+- L6694 `cmd_version(args)` (function) — Show version.
+- L6699 `cmd_uninstall(args)` (function) — Uninstall Hermes Agent (or just the Chat GUI with --gui).
+- L6729 `_clear_bytecode_cache(root: Path)` (function) — Remove all __pycache__ directories under *root*.
+- L6773 `_capture_head_sha(git_cmd, cwd)` (function) — Return the current HEAD SHA, or None if it can't be resolved.
+- L6788 `_validate_critical_files_syntax(root)` (function) — Compile each file in ``_UPDATE_CRITICAL_FILES`` to catch SyntaxErrors.
+- L6830 `_gateway_prompt(prompt_text: str, default: str='', timeout: float=300.0)` (function) — File-based IPC prompt for gateway mode.
+- L6880 `_web_ui_build_needed(web_dir: Path)` (function) — Return True if the web UI dist is missing or stale.
+- L6923 `_run_with_idle_timeout(cmd: list[str], cwd: Path, *, idle_timeout_seconds: int=180, indent: str='    ')` (function) — Run a subprocess that streams output, with an idle-output timeout.
+- L7021 `_run_npm_install_deterministic(npm: str, cwd: Path, *, extra_args: tuple[str, ...]=(), capture_output: bool=True)` (function) — Run a deterministic npm install that does not mutate ``package-lock.json``.
+- L7065 `_build_web_ui(web_dir: Path, *, fatal: bool=False)` (function) — Build the web UI frontend if npm is available.
+- L7184 `_desktop_dist_exists(desktop_dir: Path)` (function) — Return True when a local desktop renderer build is present.
+- L7210 `_compute_desktop_content_hash(project_root: Path)` (function) — Return a SHA-256 hex digest of all source files that feed the desktop build.
+- L7270 `_desktop_stamp_path()` (function) — Return the path to the desktop build stamp file under $HERMES_HOME.
+- L7276 `_desktop_build_needed(desktop_dir: Path, project_root: Path, *, source_mode: bool)` (function) — Return True when the desktop build output is stale or missing.
+- L7312 `_write_desktop_build_stamp(project_root: Path, *, source_mode: bool)` (function) — Write the desktop build stamp after a successful build.
+- L7330 `_desktop_packaged_executable(desktop_dir: Path)` (function) — Return the current platform's unpacked Electron app executable.
+- L7355 `_electron_download_cache_dirs()` (function) — Return the per-user Electron download cache directories for this OS.
+- L7392 `_purge_electron_build_cache(desktop_dir: Path)` (function) — Clear the cached Electron download + half-written unpacked dir so the
+- L7451 `_desktop_macos_relaunchable_fixup(desktop_dir: Path)` (function) — Make a locally-built (unsigned) macOS desktop app survive in-place self-update.
+- L7488 `_desktop_linux_sandbox_fixup(packaged_executable: Path)` (function) — Configure Electron's Linux SUID sandbox helper when required.
+- L7526 `cmd_gui(args: argparse.Namespace)` (function) — Build and launch the native Electron desktop GUI.
+- L7679 `_find_stale_dashboard_pids(*, exclude_pids: set[int] | None=None)` (function) — Return PIDs of ``hermes dashboard`` processes other than ourselves.
+- L7786 `_print_curator_first_run_notice()` (function) — Print a short heads-up about the skill curator after `hermes update`.
+- L7827 `_print_curator_recent_run_notice()` (function) — Print the most recent curator run summary, exactly once.
+- L7893 `_format_time_ago(iso_ts: str)` (function) — Render an ISO timestamp as `Xh ago` / `Xd ago` / `Xm ago`. Best effort.
+- L7913 `_kill_stale_dashboard_processes(reason: str='the running backend no longer matches the updated frontend')` (function) — Kill running ``hermes dashboard`` processes.
+- L8037 `_update_via_zip(args)` (function) — Update Hermes Agent by downloading a ZIP archive.
+- L8222 `_stash_local_changes_if_needed(git_cmd: list[str], cwd: Path)` (function)
+- L8268 `_resolve_stash_selector(git_cmd: list[str], cwd: Path, stash_ref: str)` (function)
+- L8285 `_print_stash_cleanup_guidance(stash_ref: str, stash_selector: Optional[str]=None)` (function)
+- L8300 `_restore_stashed_changes(git_cmd: list[str], cwd: Path, stash_ref: str, prompt_user: bool=False, input_fn=None)` (function)
+- L8408 `_discard_stashed_changes(git_cmd: list[str], cwd: Path, stash_ref: str)` (function) — Throw away a stash created before an update, without applying it.
+- L8470 `_get_origin_url(git_cmd: list[str], cwd: Path)` (function) — Get the URL of the origin remote, or None if not set.
+- L8486 `_is_fork(origin_url: Optional[str])` (function) — Check if the origin remote points to a fork (not the official repo).
+- L8503 `_has_upstream_remote(git_cmd: list[str], cwd: Path)` (function) — Check if an 'upstream' remote already exists.
+- L8517 `_add_upstream_remote(git_cmd: list[str], cwd: Path)` (function) — Add the official repo as the 'upstream' remote. Returns True on success.
+- L8531 `_count_commits_between(git_cmd: list[str], cwd: Path, base: str, head: str)` (function) — Count commits on `head` that are not on `base`. Returns -1 on error.
+- L8547 `_should_skip_upstream_prompt()` (function) — Check if user previously declined to add upstream.
+- L8554 `_mark_skip_upstream_prompt()` (function) — Create marker file to skip future upstream prompts.
+- L8564 `_sync_fork_with_upstream(git_cmd: list[str], cwd: Path)` (function) — Attempt to push updated main to origin (sync fork).
+- L8581 `_sync_with_upstream_if_needed(git_cmd: list[str], cwd: Path)` (function) — Check if fork is behind upstream and sync if safe.
+- L8695 `_invalidate_update_cache()` (function) — Delete the update-check cache for ALL profiles so no banner
+- L8723 `_load_installable_optional_extras(group: str='all')` (function) — Return optional extras referenced by a dependency group.
+- L8752 `_run_install_with_heartbeat(cmd: list[str], *, env: dict[str, str] | None=None, heartbeat_interval_seconds: int=30)` (function) — Run dependency install command with periodic heartbeat output.
+- L8791 `_is_windows()` (function)
+- L8795 `_venv_scripts_dir()` (function) — Return the venv Scripts directory if we're running inside the project venv.
+- L8804 `_hermes_exe_shims(scripts_dir: Path)` (function) — Entry-point shims that uv may try to rewrite during ``pip install -e .``.
+- L8819 `_detect_concurrent_hermes_instances(scripts_dir: Path, *, exclude_pid: int | None=None)` (function) — Find other live processes whose .exe is one of our entry-point shims.
+- L8936 `_format_concurrent_instances_message(matches: list[tuple[int, str]], scripts_dir: Path)` (function) — Build a human-readable explanation + remediation hint for the user.
+- L8962 `_quarantine_running_hermes_exe(scripts_dir: Path, *, max_attempts: int=4)` (function) — Pre-empt Windows file lock on the running ``hermes.exe``.
+- L9065 `_schedule_replace_on_reboot(shim: Path, quarantine_target: Path)` (function) — Schedule ``shim`` -> ``quarantine_target`` via PendingFileRenameOperations.
+- L9100 `_restore_quarantined_exes(moved: list[tuple[Path, Path]])` (function) — Roll back ``_quarantine_running_hermes_exe`` if uv didn't write replacements.
+- L9110 `_run_quarantined_install(cmd: list[str], *, env: dict[str, str] | None=None, scripts_dir: Path | None=None)` (function) — Run an editable install, quarantining the running ``hermes.exe`` first.
+- L9144 `_cleanup_quarantined_exes(scripts_dir: Path | None=None)` (function) — Sweep ``hermes.exe.old.*`` left by prior updates.
+- L9167 `_refresh_active_lazy_features()` (function) — Refresh lazy-installed backends after a code update.
+- L9235 `_install_python_dependencies_with_optional_fallback(install_cmd_prefix: list[str], *, env: dict[str, str] | None=None, group: str='all')` (function) — Install base deps plus as many optional extras as the environment supports.
+- L9299 `_verify_core_dependencies_installed(install_cmd_prefix: list[str], *, env: dict[str, str] | None=None, group: str='all')` (function) — Check that every base dep from pyproject.toml is importable; if not, retry.
+- L9482 `_resolve_install_target_python(install_cmd_prefix: list[str], env: dict[str, str] | None)` (function) — Figure out which Python interpreter the install just targeted.
+- L9510 `_is_termux_env(env: dict[str, str] | None=None)` (function)
+- L9514 `_is_android_python()` (function)
+- L9518 `_install_psutil_android_compat(install_cmd_prefix: list[str], *, env: dict[str, str] | None=None)` (function) — Install psutil on Android by patching upstream platform detection.
+- L9554 `_ensure_uv_for_termux(pip_cmd: list[str])` (function) — Best-effort uv bootstrap on Termux for faster update installs.
+- L9578 `_update_node_dependencies()` (function)
+- L9629 `_UpdateOutputStream` (class) — Stream wrapper used during ``hermes update`` to survive terminal loss.
+- L9647 `__init__(self, original, log_file)` (method)
+- L9652 `write(self, data)` (method)
+- L9672 `flush(self)` (method)
+- L9685 `isatty(self)` (method)
+- L9693 `fileno(self)` (method)
+- L9698 `__getattr__(self, name)` (method)
+- L9702 `_install_hangup_protection(gateway_mode: bool=False)` (function) — Protect ``cmd_update`` from SIGHUP and broken terminal pipes.
+- L9783 `_finalize_update_output(state)` (function) — Restore stdio and close the update.log handle opened by ``_install_hangup_protection``.
+- L9805 `_resolve_update_branch(args)` (function) — Normalize ``args.branch`` into a non-empty branch name.
+- L9816 `_cmd_update_check(branch: str='main', *, branch_explicit: bool=False)` (function) — Implement ``hermes update --check``: fetch and report without installing.
+- L9946 `_ensure_fhs_path_guard()` (function) — Ensure /usr/local/bin is on PATH for RHEL-family root non-login shells.
+- L10035 `_run_pre_update_backup(args)` (function) — Create a full zip backup of HERMES_HOME before running the update.
+- L10131 `_discard_lockfile_churn(git_cmd, repo_root)` (function) — Restore tracked ``package-lock.json`` files that npm dirtied locally.
+- L10168 `cmd_update(args)` (function) — Update Hermes Agent to the latest version.
+- L10218 `_cmd_update_pip(args)` (function) — Update Hermes via pip (for PyPI installs).
+- L10279 `_cmd_update_impl(args, gateway_mode: bool)` (function) — Body of ``cmd_update`` — kept separate so the wrapper can always
+- L11624 `_coalesce_session_name_args(argv: list)` (function) — Join unquoted multi-word session names after -c/--continue and -r/--resume.
+- L11701 `cmd_profile(args)` (function) — Profile management — create, delete, list, switch, alias.
+- L12276 `_render_distribution_plan(plan)` (function) — Print a human-readable summary of a pending distribution install.
+- L12338 `_report_dashboard_status()` (function) — Print ``hermes dashboard`` PIDs and return the count.
+- L12375 `cmd_dashboard(args)` (function) — Start the web UI server, or (with --stop/--status) manage running ones.
+- L12471 `cmd_dashboard_register(args)` (function) — Register a self-hosted dashboard OAuth client with Nous Portal.
+- L12478 `cmd_completion(args, parser=None)` (function) — Print shell completion script.
+- L12491 `cmd_prompt_size(args)` (function) — Show a byte/char breakdown of the system prompt + tool schemas.
+- L12498 `cmd_logs(args)` (function) — View and filter Hermes log files.
+- L12571 `_first_positional_argv()` (function) — Return the first non-flag, non-flag-value token in ``sys.argv[1:]``.
+- L12606 `_plugin_cli_discovery_needed()` (function) — True when the CLI might be invoking a plugin-registered subcommand.
+- L12635 `_is_tui_chat_launch(args)` (function)
+- L12639 `_command_has_dedicated_mcp_startup(args)` (function)
+- L12649 `_should_background_mcp_startup(args)` (function)
+- L12655 `_prepare_agent_startup(args)` (function) — Discover plugins/MCP/hooks for commands that can run an agent turn.
+- L12722 `_set_chat_arg_defaults(args)` (function)
+- L12737 `_try_termux_fast_cli_launch()` (function) — Run obvious Termux non-TUI chat/oneshot/version paths on a light parser.
+- L12810 `_try_termux_fast_tui_launch()` (function) — Launch obvious Termux TUI invocations before building every subparser.
+- L12851 `main()` (function) — Main entry point for hermes CLI.

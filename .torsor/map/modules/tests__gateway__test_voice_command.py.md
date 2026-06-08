@@ -1,0 +1,252 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:42'
+updated: '2026-06-08T00:38:42'
+---
+
+# tests/gateway/test_voice_command.py
+
+Symbols in `tests/gateway/test_voice_command.py`.
+
+- L15 `_ensure_discord_mock()` (function) — Install a lightweight discord mock when discord.py isn't available.
+- L61 `_make_event(text: str='', message_type=MessageType.TEXT, chat_id='123')` (function)
+- L74 `_make_runner(tmp_path)` (function) — Create a bare GatewayRunner without calling __init__.
+- L91 `TestHandleVoiceCommand` (class)
+- L94 `runner(self, tmp_path)` (method)
+- L98 `test_voice_on(self, runner)` (method)
+- L105 `test_voice_off(self, runner)` (method)
+- L113 `test_voice_tts(self, runner)` (method)
+- L120 `test_voice_status_off(self, runner)` (method)
+- L126 `test_voice_status_on(self, runner)` (method)
+- L133 `test_toggle_off_to_on(self, runner)` (method)
+- L140 `test_toggle_on_to_off(self, runner)` (method)
+- L148 `test_persistence_saved(self, runner)` (method)
+- L156 `test_persistence_loaded(self, runner)` (method)
+- L162 `test_persistence_saved_for_off(self, runner)` (method)
+- L168 `test_sync_voice_mode_state_to_adapter_restores_off_chats(self, runner)` (method)
+- L180 `test_sync_populates_enabled_chats_from_voice_modes(self, runner)` (method) — Issue #16007: sync also restores per-chat /voice on|tts opt-ins.
+- L207 `test_sync_pushes_config_default_onto_adapter(self, runner, monkeypatch)` (method) — Issue #16007: ``voice.auto_tts`` must propagate to ``_auto_tts_default``.
+- L227 `test_restart_restores_voice_off_state(self, runner, tmp_path)` (method)
+- L244 `test_per_chat_isolation(self, runner)` (method)
+- L253 `test_platform_isolation(self, runner)` (method) — Same chat_id on different platforms must not collide (#12542).
+- L270 `TestAutoVoiceReply` (class) — Test the real _should_send_voice_reply method on GatewayRunner.
+- L286 `runner(self, tmp_path)` (method)
+- L289 `_call(self, runner, voice_mode, message_type, agent_messages=None, response='Hello!', in_voice_channel=False)` (method) — Call real _should_send_voice_reply on a GatewayRunner instance.
+- L338 `test_voice_input_voice_only_skipped(self, runner)` (method) — voice_only + voice input: base auto-TTS handles it, runner skips.
+- L342 `test_voice_input_all_mode_skipped(self, runner)` (method) — all + voice input: base auto-TTS handles it, runner skips.
+- L348 `test_text_input_all_mode_runner_fires(self, runner)` (method) — all + text input: only runner fires (base auto-TTS only for voice).
+- L352 `test_text_input_voice_only_no_reply(self, runner)` (method) — voice_only + text input: neither fires.
+- L358 `test_off_mode_voice(self, runner)` (method)
+- L361 `test_off_mode_text(self, runner)` (method)
+- L366 `test_discord_vc_voice_input_base_handles(self, runner)` (method) — Discord VC + voice input: base adapter play_tts plays in VC,
+- L371 `test_discord_vc_voice_only_base_handles(self, runner)` (method) — Discord VC + voice_only + voice: base adapter handles.
+- L377 `test_error_response_skipped(self, runner)` (method)
+- L380 `test_empty_response_skipped(self, runner)` (method)
+- L383 `test_dedup_skips_when_agent_called_tts(self, runner)` (method)
+- L394 `test_no_dedup_for_other_tools(self, runner)` (method)
+- L410 `TestSendVoiceReply` (class)
+- L413 `runner(self, tmp_path)` (method)
+- L417 `test_calls_tts_and_send_voice(self, runner)` (method)
+- L437 `test_auto_voice_reply_uses_thread_metadata_helper(self, runner)` (method)
+- L472 `test_empty_text_after_strip_skips(self, runner)` (method)
+- L482 `test_tts_failure_no_crash(self, runner)` (method)
+- L497 `test_exception_caught(self, runner)` (method)
+- L510 `TestDiscordPlayTtsSkip` (class) — Discord adapter skips play_tts when bot is in a voice channel.
+- L513 `_make_discord_adapter(self)` (method)
+- L533 `test_play_tts_plays_in_vc_when_connected(self)` (method)
+- L552 `test_play_tts_not_skipped_when_not_in_vc(self)` (method)
+- L560 `test_play_tts_not_skipped_for_different_channel(self)` (method)
+- L580 `TestVoiceInHelp` (class)
+- L582 `test_voice_in_help_output(self)` (method) — The gateway help text includes /voice (generated from registry).
+- L588 `test_voice_is_known_command(self)` (method) — The /voice command is in GATEWAY_KNOWN_COMMANDS.
+- L598 `TestVoiceReceiver` (class) — Test VoiceReceiver silence detection, SSRC mapping, and lifecycle.
+- L601 `_make_receiver(self)` (method)
+- L613 `test_initial_state(self)` (method)
+- L620 `test_start_sets_running(self)` (method)
+- L625 `test_stop_clears_state(self)` (method)
+- L637 `test_map_ssrc(self)` (method)
+- L642 `test_map_ssrc_overwrites(self)` (method)
+- L648 `test_pause_resume(self)` (method)
+- L656 `test_check_silence_empty(self)` (method)
+- L660 `test_check_silence_returns_completed_utterance(self)` (method)
+- L677 `test_check_silence_ignores_short_buffer(self)` (method)
+- L686 `test_check_silence_ignores_recent_audio(self)` (method)
+- L694 `test_check_silence_unknown_user_discarded(self)` (method)
+- L702 `test_stale_buffer_discarded(self)` (method)
+- L711 `test_on_packet_skips_when_not_running(self)` (method)
+- L717 `test_on_packet_skips_when_paused(self)` (method)
+- L725 `test_on_packet_skips_short_data(self)` (method)
+- L731 `test_on_packet_skips_non_rtp(self)` (method)
+- L745 `TestVoiceChannelCommands` (class) — Test _handle_voice_channel_join, _handle_voice_channel_leave,
+- L750 `runner(self, tmp_path)` (method)
+- L753 `_make_discord_event(self, text='/voice channel', chat_id='123', guild_id=111, user_id='user1')` (method) — Create event with raw_message carrying guild info.
+- L771 `test_join_unsupported_platform(self, runner)` (method) — Platform without join_voice_channel returns unsupported message.
+- L780 `test_join_no_guild_id(self, runner)` (method) — DM context (no guild_id) returns error.
+- L791 `test_join_user_not_in_vc(self, runner)` (method) — User not in any voice channel.
+- L802 `test_join_success(self, runner)` (method) — Successful join sets voice_mode and returns confirmation.
+- L824 `test_join_failure(self, runner)` (method) — Failed join returns permissions error.
+- L837 `test_join_exception(self, runner)` (method) — Exception during join is caught and reported.
+- L850 `test_join_missing_voice_dependencies(self, runner)` (method) — Missing PyNaCl/davey should return a user-actionable install hint.
+- L870 `test_leave_not_in_vc(self, runner)` (method) — Leave when not in VC returns appropriate message.
+- L880 `test_leave_no_guild(self, runner)` (method) — Leave from DM returns not in voice channel.
+- L890 `test_leave_success(self, runner)` (method) — Successful leave disconnects and clears voice mode.
+- L906 `test_input_no_adapter(self, runner)` (method) — No Discord adapter — early return, no crash.
+- L912 `test_input_no_text_channel(self, runner)` (method) — No text channel mapped for guild — early return.
+- L922 `test_input_creates_event_and_dispatches(self, runner)` (method) — Voice input creates synthetic event and calls handle_message.
+- L942 `test_input_reuses_bound_source_metadata(self, runner)` (method) — Voice input should share the linked text channel session metadata.
+- L974 `test_input_posts_transcript_in_text_channel(self, runner)` (method) — Voice input sends transcript message to text channel.
+- L992 `test_input_suppresses_duplicate_transcript(self, runner)` (method) — Near-immediate duplicate STT output should not dispatch twice.
+- L1012 `test_input_suppresses_near_duplicate_transcript(self, runner)` (method) — Small STT wording drift should still be treated as the same utterance.
+- L1033 `test_get_guild_id_from_guild(self, runner)` (method)
+- L1041 `test_get_guild_id_from_interaction(self, runner)` (method)
+- L1047 `test_get_guild_id_none(self, runner)` (method)
+- L1053 `test_get_guild_id_dm(self, runner)` (method)
+- L1064 `TestDiscordVoiceChannelMethods` (class) — Test DiscordAdapter voice channel methods (join, leave, play, etc.).
+- L1067 `_make_adapter(self)` (method)
+- L1088 `test_is_in_voice_channel_true(self)` (method)
+- L1095 `test_is_in_voice_channel_false_no_client(self)` (method)
+- L1099 `test_is_in_voice_channel_false_disconnected(self)` (method)
+- L1107 `test_leave_voice_channel_cleans_up(self)` (method)
+- L1137 `test_leave_voice_channel_no_connection(self)` (method) — Leave when not connected — no crash.
+- L1143 `test_get_user_voice_channel_no_client(self)` (method)
+- L1150 `test_get_user_voice_channel_no_guild(self)` (method)
+- L1157 `test_get_user_voice_channel_user_not_in_vc(self)` (method)
+- L1168 `test_get_user_voice_channel_success(self)` (method)
+- L1181 `test_play_in_voice_channel_not_connected(self)` (method)
+- L1186 `test_is_allowed_user_empty_list(self)` (method)
+- L1190 `test_is_allowed_user_in_list(self)` (method)
+- L1195 `test_is_allowed_user_not_in_list(self)` (method)
+- L1201 `test_process_voice_input_success(self)` (method) — Successful voice input: PCM->WAV->STT->callback.
+- L1219 `test_process_voice_input_hallucination_filtered(self)` (method) — Whisper hallucination is filtered out.
+- L1234 `test_process_voice_input_stt_failure(self)` (method) — STT failure — callback not called.
+- L1248 `test_process_voice_input_exception_caught(self)` (method) — Exception during processing is caught, no crash.
+- L1267 `TestVoiceReceiverThreadSafety` (class) — Verify that VoiceReceiver buffer access is protected by lock.
+- L1270 `_make_receiver(self)` (method)
+- L1281 `test_check_silence_holds_lock(self)` (method) — check_silence must hold lock while iterating buffers.
+- L1302 `test_on_packet_buffer_write_holds_lock(self)` (method) — _on_packet must hold lock when writing to buffers.
+- L1319 `test_concurrent_buffer_access_safe(self)` (method) — Simulate concurrent buffer writes and reads under lock.
+- L1352 `TestCallbackWiringOrder` (class) — Verify callback is wired BEFORE join, not after.
+- L1355 `test_callback_set_before_join(self)` (method) — _handle_voice_channel_join wires callback before calling join.
+- L1377 `test_join_failure_clears_callback(self, tmp_path)` (method) — If join fails with exception, callback is cleaned up.
+- L1399 `test_join_returns_false_clears_callback(self, tmp_path)` (method) — If join returns False, callback is cleaned up.
+- L1423 `TestLeaveExceptionHandling` (class) — Verify state is cleaned up even when leave_voice_channel raises.
+- L1427 `runner(self, tmp_path)` (method)
+- L1431 `test_leave_exception_still_cleans_state(self, runner)` (method) — If leave_voice_channel raises, voice_mode is still cleaned up.
+- L1451 `test_leave_clears_callback(self, runner)` (method) — Normal leave also clears the voice input callback.
+- L1471 `TestAutoTtsEmptyTextGuard` (class) — Verify base adapter skips TTS when text is empty after markdown strip.
+- L1474 `test_empty_after_strip_skips_tts(self)` (method) — Markdown-only content should not trigger TTS call.
+- L1481 `test_code_block_response_skips_tts(self)` (method) — Code-only response results in empty speech text.
+- L1490 `test_base_empty_check_in_source(self)` (method) — base.py must check speech_text is non-empty before calling TTS.
+- L1500 `TestStreamTtsToSpeaker` (class) — Functional tests for the streaming TTS pipeline.
+- L1503 `test_none_sentinel_flushes_buffer(self)` (method) — None sentinel causes remaining buffer to be spoken.
+- L1521 `test_stop_event_aborts_early(self)` (method) — Setting stop_event causes early exit.
+- L1537 `test_done_event_set_on_exception(self)` (method) — tts_done_event is set even when an exception occurs.
+- L1551 `test_think_blocks_stripped(self)` (method) — <think>...</think> content is not spoken.
+- L1569 `test_sentence_splitting(self)` (method) — Sentences are split at boundaries and spoken individually.
+- L1586 `test_markdown_stripped_in_speech(self)` (method) — Markdown formatting is removed before display/speech.
+- L1602 `test_duplicate_sentences_deduped(self)` (method) — Repeated sentences are spoken only once.
+- L1620 `test_no_api_key_display_only(self)` (method) — Without ELEVENLABS_API_KEY, display callback still works.
+- L1637 `test_long_buffer_flushed_on_timeout(self)` (method) — Buffer longer than long_flush_len is flushed on queue timeout.
+- L1667 `TestStopAcquiresLock` (class) — stop() must acquire _lock before clearing buffers/state.
+- L1671 `_make_receiver()` (method)
+- L1679 `test_stop_clears_under_lock(self)` (method) — stop() acquires _lock before clearing buffers.
+- L1729 `test_stop_does_not_deadlock_with_on_packet(self)` (method) — stop() during _on_packet should not deadlock.
+- L1769 `TestPacketDebugCounterIsInstanceLevel` (class) — Each VoiceReceiver instance has its own debug counter.
+- L1773 `_make_receiver()` (method)
+- L1781 `test_counter_is_per_instance(self)` (method) — Two receivers have independent counters.
+- L1790 `test_counter_initialized_in_init(self)` (method) — Counter is set in __init__, not as a class variable.
+- L1801 `TestPlayInVoiceChannelUsesRunningLoop` (class) — play_in_voice_channel must use asyncio.get_running_loop().
+- L1804 `test_source_uses_get_running_loop(self)` (method) — The method source code calls get_running_loop, not get_event_loop.
+- L1819 `TestSendVoiceReplyFilename` (class) — _send_voice_reply uses uuid for unique filenames.
+- L1822 `test_filename_uses_uuid(self)` (method) — The method uses uuid in the filename, not time-based.
+- L1832 `test_filenames_are_unique(self)` (method) — Two calls produce different filenames.
+- L1846 `TestVoiceTimeoutCleansRunnerState` (class) — Timeout disconnect notifies runner to clean voice_mode.
+- L1850 `_make_discord_adapter()` (method)
+- L1873 `adapter(self)` (method)
+- L1876 `test_adapter_has_on_voice_disconnect_attr(self, adapter)` (method) — DiscordAdapter has _on_voice_disconnect callback attribute.
+- L1882 `test_timeout_calls_disconnect_callback(self, adapter)` (method) — _voice_timeout_handler calls _on_voice_disconnect with chat_id.
+- L1905 `test_runner_cleanup_method_removes_voice_mode(self, tmp_path)` (method) — _handle_voice_timeout_cleanup removes voice_mode for chat.
+- L1916 `test_timeout_without_callback_does_not_crash(self, adapter)` (method) — Timeout works even without _on_voice_disconnect set.
+- L1937 `TestPlaybackTimeout` (class) — play_in_voice_channel must time out instead of blocking forever.
+- L1941 `_make_discord_adapter()` (method)
+- L1963 `test_source_has_wait_for_timeout(self)` (method) — The method uses asyncio.wait_for with timeout.
+- L1973 `test_playback_timeout_constant_exists(self)` (method) — PLAYBACK_TIMEOUT constant is defined on DiscordAdapter.
+- L1980 `test_playback_timeout_fires(self)` (method) — When done event is never set, playback times out gracefully.
+- L2008 `test_is_playing_wait_has_timeout(self)` (method) — While loop waiting for previous playback has a timeout.
+- L2039 `TestSendVoiceReplyCleanup` (class) — _send_voice_reply must clean up temp files even on exception.
+- L2042 `test_cleanup_in_finally(self)` (method) — The method has cleanup in a finally block, not inside try.
+- L2062 `test_files_cleaned_on_send_exception(self, tmp_path)` (method) — Temp files are removed even when send_voice raises.
+- L2098 `TestAutoTtsTempFileCleanup` (class) — Base adapter auto-TTS must clean up generated audio file.
+- L2101 `test_source_has_finally_remove(self)` (method) — play_tts call is wrapped in try/finally with os.remove.
+- L2122 `TestVoiceChannelAwareness` (class) — Tests for get_voice_channel_info() and get_voice_channel_context().
+- L2125 `_make_adapter(self)` (method)
+- L2140 `_make_member(self, user_id, display_name, is_bot=False)` (method)
+- L2145 `test_returns_none_when_not_connected(self)` (method)
+- L2149 `test_returns_none_when_vc_disconnected(self)` (method)
+- L2156 `test_returns_info_with_members(self)` (method)
+- L2176 `test_speaking_detection(self)` (method)
+- L2201 `test_context_string_format(self)` (method)
+- L2215 `test_context_empty_when_not_connected(self)` (method)
+- L2225 `TestDisconnectVoiceCleanup` (class) — Bug: disconnect() left voice dicts populated after closing client.
+- L2229 `test_disconnect_clears_voice_state(self)` (method)
+- L2263 `TestVoiceReception` (class) — Audio reception: SSRC mapping, DAVE passthrough, buffer lifecycle.
+- L2267 `_make_receiver(allowed_ids=None, members=None, dave=False, bot_id=9999)` (method)
+- L2283 `_fill_buffer(receiver, ssrc, duration_s=1.0, age_s=3.0)` (method) — Add PCM data to buffer. 48kHz stereo 16-bit = 192000 bytes/sec.
+- L2291 `test_known_ssrc_returns_completed(self)` (method)
+- L2301 `test_known_ssrc_short_buffer_ignored(self)` (method)
+- L2309 `test_known_ssrc_recent_audio_waits(self)` (method)
+- L2319 `test_unknown_ssrc_no_automap_no_completed(self)` (method) — Unknown SSRC, no members to infer — buffer cleared, not returned.
+- L2328 `test_unknown_ssrc_late_speaking_event(self)` (method) — Audio buffered before SPEAKING → SPEAKING maps → next check returns it.
+- L2345 `test_automap_single_allowed_user(self)` (method)
+- L2358 `test_automap_multiple_allowed_users_no_map(self)` (method)
+- L2370 `test_automap_no_allowlist_single_member(self)` (method) — No allowed_user_ids → sole non-bot member inferred.
+- L2383 `test_automap_unallowed_user_rejected(self)` (method) — User in channel but not in allowed list — not mapped.
+- L2395 `test_automap_only_bot_in_channel(self)` (method) — Only bot in channel — no one to map to.
+- L2404 `test_automap_persists_across_calls(self)` (method) — Auto-mapped SSRC stays mapped for subsequent checks.
+- L2423 `test_stale_unknown_buffer_discarded(self)` (method) — Buffer with no user and very old timestamp is discarded.
+- L2434 `test_paused_receiver_ignores_packets(self)` (method)
+- L2441 `test_resumed_receiver_accepts_packets(self)` (method)
+- L2450 `_make_receiver_with_nacl(self, dave_session=None, mapped_ssrcs=None)` (method) — Create a receiver that can process _on_packet with mocked NaCl + Opus.
+- L2472 `_build_rtp_packet(ssrc=100, seq=1, timestamp=960)` (method) — Build a minimal valid RTP packet for _on_packet.
+- L2485 `_inject_mock_decoder(self, receiver, ssrc)` (method) — Pre-inject a mock Opus decoder for the given SSRC.
+- L2492 `test_on_packet_dave_known_user_decrypt_ok(self)` (method) — Known SSRC + DAVE decrypt success → audio buffered.
+- L2509 `test_on_packet_dave_unknown_ssrc_passthrough(self)` (method) — Unknown SSRC + DAVE → skip DAVE, attempt Opus decode (passthrough).
+- L2523 `test_on_packet_dave_unencrypted_error_passthrough(self)` (method) — DAVE decrypt 'Unencrypted' error → use data as-is, don't drop.
+- L2541 `test_on_packet_dave_other_error_drops(self)` (method) — DAVE decrypt non-Unencrypted error → packet dropped.
+- L2555 `test_on_packet_no_dave_direct_decode(self)` (method) — No DAVE session → decode directly.
+- L2567 `test_on_packet_bot_own_ssrc_ignored(self)` (method) — Bot's own SSRC → dropped (echo prevention).
+- L2574 `test_on_packet_multiple_ssrcs_separate_buffers(self)` (method) — Different SSRCs → separate buffers.
+- L2589 `TestVoiceTTSPlayback` (class) — TTS playback: play_tts in VC, dedup, fallback.
+- L2593 `_make_discord_adapter()` (method)
+- L2611 `test_play_tts_plays_in_vc(self)` (method) — play_tts calls play_in_voice_channel when bot is in VC.
+- L2630 `test_play_tts_fallback_when_not_in_vc(self)` (method) — play_tts sends as file attachment when bot is not in VC.
+- L2640 `test_play_tts_wrong_channel_no_match(self)` (method) — play_tts doesn't match if chat_id is for a different channel.
+- L2657 `_make_runner()` (method)
+- L2664 `_call_should_reply(self, runner, voice_mode, msg_type, response='Hello', agent_msgs=None, already_sent=False)` (method)
+- L2680 `test_voice_input_runner_skips(self)` (method) — Streaming OFF + voice input: runner skips — base adapter handles.
+- L2686 `test_text_input_voice_all_runner_fires(self)` (method) — Streaming OFF + text input + voice_mode=all: runner generates TTS.
+- L2692 `test_text_input_voice_off_no_tts(self)` (method) — Streaming OFF + text input + voice_mode=off: no TTS.
+- L2698 `test_text_input_voice_only_no_tts(self)` (method) — Streaming OFF + text input + voice_mode=voice_only: no TTS for text.
+- L2704 `test_error_response_no_tts(self)` (method) — Error response: no TTS regardless of voice_mode.
+- L2710 `test_empty_response_no_tts(self)` (method) — Empty response: no TTS.
+- L2716 `test_agent_tts_tool_dedup(self)` (method) — Agent already called text_to_speech tool: runner skips.
+- L2727 `test_streaming_on_voice_input_runner_fires(self)` (method) — Streaming ON + voice input: runner handles TTS (base adapter has no text).
+- L2733 `test_streaming_on_text_input_runner_fires(self)` (method) — Streaming ON + text input: runner handles TTS (same as before).
+- L2739 `test_streaming_on_voice_off_no_tts(self)` (method) — Streaming ON + voice_mode=off: no TTS regardless of streaming.
+- L2745 `test_streaming_on_empty_response_no_tts(self)` (method) — Streaming ON + empty response: no TTS.
+- L2751 `test_streaming_on_agent_tts_dedup(self)` (method) — Streaming ON + agent called TTS: runner skips (dedup still works).
+- L2763 `TestUDPKeepalive` (class) — UDP keepalive prevents Discord from dropping the voice session.
+- L2766 `test_keepalive_interval_is_reasonable(self)` (method)
+- L2772 `test_keepalive_sends_silence_frame(self)` (method) — Listen loop sends silence frame via send_packet after interval.
+- L2836 `TestShouldAutoTtsForChat` (class) — Three-layer gate: per-chat enable > per-chat disable > config default.
+- L2839 `_make_adapter(self, *, default: bool, enabled=(), disabled=())` (method) — Build a bare adapter with only the attrs the gate reads.
+- L2851 `test_default_false_no_override_suppresses(self)` (method) — Issue #16007: voice.auto_tts=False and no per-chat state → no TTS.
+- L2856 `test_default_true_no_override_fires(self)` (method)
+- L2860 `test_explicit_enable_overrides_false_default(self)` (method) — ``/voice on`` with config auto_tts=False still fires.
+- L2865 `test_explicit_disable_overrides_true_default(self)` (method) — ``/voice off`` with config auto_tts=True still suppresses.
+- L2870 `test_enabled_wins_over_disabled(self)` (method) — An explicit enable beats an explicit disable (enable takes priority).
+- L2877 `test_per_chat_isolation(self)` (method) — Enable for chat1 doesn't leak to chat2.

@@ -1,0 +1,121 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/run_agent/test_provider_parity.py
+
+Symbols in `tests/run_agent/test_provider_parity.py`.
+
+- L26 `_tool_defs(*names)` (function)
+- L40 `_fake_invoke_jwt()` (function)
+- L51 `_FakeOpenAI` (class)
+- L52 `__init__(self, **kw)` (method)
+- L55 `close(self)` (method)
+- L59 `_make_agent(monkeypatch, provider, api_mode='chat_completions', base_url='https://openrouter.ai/api/v1', model=None)` (function)
+- L85 `TestBuildApiKwargsOpenRouter` (class)
+- L86 `test_uses_chat_completions_format(self, monkeypatch)` (method)
+- L94 `test_includes_reasoning_in_extra_body(self, monkeypatch)` (method)
+- L103 `test_includes_tools(self, monkeypatch)` (method)
+- L111 `test_no_responses_api_fields(self, monkeypatch)` (method)
+- L119 `test_strips_codex_only_tool_call_fields_from_chat_messages(self, monkeypatch)` (method)
+- L165 `test_keeps_extra_content_for_gemini_target(self, monkeypatch)` (method) — Gemini-family targets must keep extra_content (thought_signature) —
+- L203 `test_gemini_native_passes_base_url_for_top_level_thinking_config(self, monkeypatch)` (method)
+- L218 `test_gemini_openai_compat_passes_base_url_for_nested_google_thinking_config(self, monkeypatch)` (method)
+- L233 `test_should_sanitize_tool_calls_codex_vs_chat(self, monkeypatch)` (method) — Codex API should NOT sanitize, all other APIs should sanitize.
+- L250 `_api_msg_with_extra_content(self)` (method)
+- L261 `test_sanitize_tool_calls_strips_extra_content_for_strict_model(self, monkeypatch)` (method) — Strict providers reject extra_content; strip it for non-Gemini models.
+- L271 `test_sanitize_tool_calls_strips_extra_content_when_model_none(self, monkeypatch)` (method) — Default (no model) strips extra_content — safe for strict providers.
+- L278 `test_sanitize_tool_calls_keeps_extra_content_for_gemini(self, monkeypatch)` (method) — Gemini thinking models 400 without the replayed thought_signature.
+- L292 `TestDeveloperRoleSwap` (class) — GPT-5 and Codex models should get 'developer' instead of 'system' role.
+- L304 `test_gpt5_codex_get_developer_role(self, monkeypatch, model)` (method)
+- L323 `test_non_matching_models_keep_system_role(self, monkeypatch, model)` (method)
+- L333 `test_no_system_message_no_crash(self, monkeypatch)` (method)
+- L340 `test_original_messages_not_mutated(self, monkeypatch)` (method)
+- L351 `test_developer_role_via_nous_portal(self, monkeypatch)` (method)
+- L366 `TestBuildApiKwargsChatCompletionsServiceTier` (class) — service_tier via request_overrides works on the chat_completions path.
+- L369 `test_includes_service_tier_via_request_overrides(self, monkeypatch)` (method)
+- L377 `test_no_service_tier_when_overrides_empty(self, monkeypatch)` (method)
+- L385 `test_no_crash_when_request_overrides_is_none(self, monkeypatch)` (method)
+- L394 `TestBuildApiKwargsKimiNoTemperatureOverride` (class)
+- L395 `test_kimi_for_coding_omits_temperature(self, monkeypatch)` (method) — Temperature should NOT be set client-side for Kimi models.
+- L411 `TestBuildApiKwargsNousPortal` (class)
+- L412 `test_includes_nous_product_tags(self, monkeypatch)` (method)
+- L425 `test_uses_chat_completions_format(self, monkeypatch)` (method)
+- L438 `TestBuildApiKwargsCustomEndpoint` (class)
+- L439 `test_uses_chat_completions_format(self, monkeypatch)` (method)
+- L446 `test_no_openrouter_extra_body(self, monkeypatch)` (method)
+- L453 `test_fireworks_tool_call_payload_strips_codex_only_fields(self, monkeypatch)` (method)
+- L500 `TestBuildApiKwargsCodex` (class)
+- L501 `test_uses_responses_api_format(self, monkeypatch)` (method)
+- L511 `test_includes_reasoning_config(self, monkeypatch)` (method)
+- L519 `test_includes_service_tier_via_request_overrides(self, monkeypatch)` (method)
+- L529 `test_omits_max_output_tokens_for_codex_backend(self, monkeypatch)` (method)
+- L538 `test_includes_encrypted_content_in_include(self, monkeypatch)` (method)
+- L545 `test_tools_converted_to_responses_format(self, monkeypatch)` (method)
+- L559 `TestChatMessagesToResponsesInput` (class) — Verify _chat_messages_to_responses_input for Codex mode.
+- L562 `test_user_message_passes_through(self, monkeypatch)` (method)
+- L569 `test_system_messages_filtered(self, monkeypatch)` (method)
+- L580 `test_assistant_tool_calls_become_function_call_items(self, monkeypatch)` (method)
+- L598 `test_tool_results_become_function_call_output(self, monkeypatch)` (method)
+- L607 `test_encrypted_reasoning_replayed(self, monkeypatch)` (method) — Encrypted reasoning items from previous turns must be included in input.
+- L627 `test_no_reasoning_items_for_non_codex_messages(self, monkeypatch)` (method) — Messages without codex_reasoning_items should not inject anything.
+- L639 `test_user_multimodal_content_uses_input_text(self, monkeypatch)` (method) — User messages with list content must use input_text type.
+- L654 `test_assistant_multimodal_content_uses_output_text(self, monkeypatch)` (method) — Assistant messages with list content must use output_text type.
+- L673 `test_preflight_preserves_assistant_output_text(self, monkeypatch)` (method) — _preflight_codex_input_items must preserve output_text for assistant.
+- L687 `test_full_round_trip_with_list_content(self, monkeypatch)` (method) — End-to-end: user + assistant with list content through both stages.
+- L706 `TestChatContentToResponsesParts` (class) — Unit tests for _chat_content_to_responses_parts role parameter (#15687).
+- L709 `test_default_role_emits_input_text(self)` (method) — Default (user) role emits input_text.
+- L714 `test_explicit_user_role_emits_input_text(self)` (method)
+- L720 `test_assistant_role_emits_output_text(self)` (method)
+- L726 `test_assistant_role_with_string_parts(self)` (method) — String parts in assistant content also get output_text.
+- L732 `test_assistant_role_with_mixed_input_output_text_types(self)` (method) — Parts already marked input_text or output_text get normalized to role's type.
+- L747 `TestNormalizeCodexResponse` (class) — Verify _normalize_codex_response extracts all fields correctly.
+- L750 `_make_codex_agent(self, monkeypatch)` (method)
+- L754 `test_text_response(self, monkeypatch)` (method)
+- L768 `test_reasoning_summary_extracted(self, monkeypatch)` (method)
+- L787 `test_encrypted_content_captured(self, monkeypatch)` (method)
+- L807 `test_no_encrypted_content_when_missing(self, monkeypatch)` (method)
+- L820 `test_tool_calls_extracted(self, monkeypatch)` (method)
+- L835 `test_message_items_captured_with_id_and_phase(self, monkeypatch)` (method) — Exact message items (with id/phase) must be captured for cache replay.
+- L863 `test_message_items_none_when_no_messages(self, monkeypatch)` (method) — Only reasoning + tool calls should yield None codex_message_items.
+- L877 `TestChatMessagesToResponsesInputMessageItems` (class) — Verify codex_message_items are replayed verbatim instead of reconstructed.
+- L880 `test_replays_exact_message_items(self, monkeypatch)` (method)
+- L907 `test_fallback_to_plain_when_no_message_items(self, monkeypatch)` (method)
+- L914 `test_skips_invalid_message_items(self, monkeypatch)` (method)
+- L935 `TestBuildAssistantMessage` (class) — Verify _build_assistant_message works for all provider response formats.
+- L938 `test_openrouter_reasoning_fields(self, monkeypatch)` (method)
+- L952 `test_openrouter_reasoning_details_preserved_unmodified(self, monkeypatch)` (method) — reasoning_details must be passed back exactly as received for
+- L978 `test_codex_preserves_encrypted_reasoning(self, monkeypatch)` (method)
+- L996 `test_plain_message_no_codex_items(self, monkeypatch)` (method)
+- L1011 `TestAuxiliaryClientProviderPriority` (class) — Verify auxiliary client resolution doesn't break for any provider.
+- L1014 `test_openrouter_always_wins(self, monkeypatch)` (method)
+- L1022 `test_nous_when_no_openrouter(self, monkeypatch)` (method)
+- L1035 `test_custom_endpoint_when_no_nous(self, monkeypatch)` (method) — Custom endpoint is used when no OpenRouter/Nous keys are available.
+- L1052 `test_codex_not_in_auto_fallback(self, monkeypatch)` (method) — Codex is deliberately NOT part of the auto fallback chain.
+- L1075 `TestProviderRouting` (class) — Verify provider_routing config flows into extra_body.provider.
+- L1078 `test_sort_throughput(self, monkeypatch)` (method)
+- L1084 `test_only_providers(self, monkeypatch)` (method)
+- L1090 `test_ignore_providers(self, monkeypatch)` (method)
+- L1096 `test_order_providers(self, monkeypatch)` (method)
+- L1102 `test_require_parameters(self, monkeypatch)` (method)
+- L1108 `test_data_collection_deny(self, monkeypatch)` (method)
+- L1114 `test_no_routing_when_unset(self, monkeypatch)` (method)
+- L1121 `test_combined_routing(self, monkeypatch)` (method)
+- L1132 `test_routing_not_injected_for_codex(self, monkeypatch)` (method) — Codex Responses API doesn't use extra_body.provider.
+- L1144 `TestCodexReasoningPreflight` (class) — Verify reasoning items pass through preflight normalization.
+- L1147 `test_reasoning_item_passes_through(self, monkeypatch)` (method)
+- L1166 `test_reasoning_item_without_id(self, monkeypatch)` (method)
+- L1177 `test_reasoning_item_empty_encrypted_skipped(self, monkeypatch)` (method)
+- L1188 `test_reasoning_items_replayed_from_history(self, monkeypatch)` (method) — Reasoning items stored in codex_reasoning_items get replayed.
+- L1211 `TestReasoningEffortDefaults` (class) — Verify reasoning effort defaults to medium across all provider paths.
+- L1214 `test_openrouter_default_medium(self, monkeypatch)` (method)
+- L1221 `test_codex_default_medium(self, monkeypatch)` (method)
+- L1227 `test_codex_reasoning_disabled(self, monkeypatch)` (method)
+- L1235 `test_codex_reasoning_low(self, monkeypatch)` (method)
+- L1242 `test_openrouter_reasoning_config_override(self, monkeypatch)` (method)

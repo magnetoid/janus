@@ -1,0 +1,147 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:44'
+updated: '2026-06-08T00:38:44'
+---
+
+# tests/tools/test_transcription_tools.py
+
+Symbols in `tests/tools/test_transcription_tools.py`.
+
+- L34 `sample_wav(tmp_path)` (function) — Create a minimal valid WAV file (1 second of silence at 16kHz).
+- L50 `sample_ogg(tmp_path)` (function) — Create a fake OGG file for validation tests.
+- L61 `clean_env(monkeypatch)` (function) — Ensure no real API keys leak into tests.
+- L76 `TestGetProviderGroq` (class) — Groq-specific provider selection tests.
+- L79 `test_groq_when_key_set(self, monkeypatch)` (method)
+- L86 `test_groq_explicit_no_fallback(self, monkeypatch)` (method) — Explicit groq with no key returns none — no cross-provider fallback.
+- L93 `test_groq_nothing_available(self, monkeypatch)` (method)
+- L102 `TestGetProviderFallbackPriority` (class) — Auto-detect fallback priority and explicit provider behaviour.
+- L105 `test_auto_detect_prefers_local(self)` (method) — Auto-detect prefers local over any cloud provider.
+- L111 `test_auto_detect_prefers_groq_over_openai(self, monkeypatch)` (method) — Auto-detect: groq (free) is preferred over openai (paid).
+- L121 `test_explicit_openai_no_key_returns_none(self, monkeypatch)` (method) — Explicit openai with no key returns none — no cross-provider fallback.
+- L130 `test_unknown_provider_passed_through(self)` (method)
+- L134 `test_empty_config_defaults_to_local(self)` (method)
+- L144 `TestExplicitProviderRespected` (class) — When stt.provider is explicitly set, that choice is authoritative.
+- L148 `test_explicit_local_no_fallback_to_openai(self, monkeypatch)` (method) — GH-1774: provider=local must not silently fall back to openai
+- L160 `test_explicit_local_no_fallback_to_groq(self, monkeypatch)` (method)
+- L169 `test_explicit_local_uses_local_command_fallback(self, monkeypatch)` (method) — Local-to-local_command fallback is fine — both are local.
+- L180 `test_explicit_groq_no_fallback_to_openai(self, monkeypatch)` (method)
+- L189 `test_explicit_openai_no_fallback_to_groq(self, monkeypatch)` (method)
+- L199 `test_auto_detect_still_falls_back_to_cloud(self, monkeypatch)` (method) — When no provider is explicitly set, auto-detect cloud fallback works.
+- L211 `test_auto_detect_prefers_groq_over_openai(self, monkeypatch)` (method)
+- L226 `TestTranscribeGroq` (class)
+- L227 `test_no_key(self, monkeypatch)` (method)
+- L234 `test_openai_package_not_installed(self, monkeypatch)` (method)
+- L242 `test_successful_transcription(self, monkeypatch, sample_wav)` (method)
+- L258 `test_whitespace_stripped(self, monkeypatch, sample_wav)` (method)
+- L271 `test_uses_groq_base_url(self, monkeypatch, sample_wav)` (method)
+- L285 `test_api_error_returns_failure(self, monkeypatch, sample_wav)` (method)
+- L300 `test_permission_error(self, monkeypatch, sample_wav)` (method)
+- L319 `TestTranscribeOpenAIExtended` (class)
+- L320 `test_openai_package_not_installed(self, monkeypatch)` (method)
+- L328 `test_uses_openai_base_url(self, monkeypatch, sample_wav)` (method)
+- L342 `test_whitespace_stripped(self, monkeypatch, sample_wav)` (method)
+- L356 `test_permission_error(self, monkeypatch, sample_wav)` (method)
+- L372 `TestTranscribeLocalCommand` (class)
+- L373 `test_auto_detects_local_whisper_binary(self, monkeypatch)` (method)
+- L386 `test_command_fallback_with_template(self, monkeypatch, sample_ogg, tmp_path)` (method)
+- L437 `TestTranscribeLocalExtended` (class)
+- L438 `test_model_reuse_on_second_call(self, tmp_path)` (method) — Second call with same model should NOT reload the model.
+- L464 `test_model_reloaded_on_change(self, tmp_path)` (method) — Switching model name should reload the model.
+- L489 `test_exception_returns_failure(self, tmp_path)` (method)
+- L504 `test_multiple_segments_joined(self, tmp_path)` (method)
+- L528 `test_load_time_cuda_lib_failure_falls_back_to_cpu(self, tmp_path)` (method) — Missing libcublas at load time → reload on CPU, succeed.
+- L561 `test_runtime_cuda_lib_failure_evicts_cache_and_retries_on_cpu(self, tmp_path)` (method) — libcublas dlopen fails at transcribe() → evict cache, reload CPU, retry.
+- L604 `test_cuda_out_of_memory_does_not_trigger_cpu_fallback(self, tmp_path)` (method) — 'CUDA out of memory' is a real error, not a missing lib — surface it.
+- L628 `TestModelAutoCorrection` (class)
+- L629 `test_groq_corrects_openai_model(self, monkeypatch, sample_wav)` (method)
+- L643 `test_groq_corrects_gpt4o_transcribe(self, monkeypatch, sample_wav)` (method)
+- L657 `test_openai_corrects_groq_model(self, monkeypatch, sample_wav)` (method)
+- L671 `test_openai_corrects_distil_whisper(self, monkeypatch, sample_wav)` (method)
+- L685 `test_compatible_groq_model_not_overridden(self, monkeypatch, sample_wav)` (method)
+- L699 `test_compatible_openai_model_not_overridden(self, monkeypatch, sample_wav)` (method)
+- L713 `test_unknown_model_passes_through_groq(self, monkeypatch, sample_wav)` (method) — A model not in either known set should not be overridden.
+- L728 `test_unknown_model_passes_through_openai(self, monkeypatch, sample_wav)` (method)
+- L747 `TestLoadSttConfig` (class)
+- L748 `test_returns_dict_when_import_fails(self)` (method)
+- L754 `test_real_load_returns_dict(self)` (method) — _load_stt_config should always return a dict, even on import error.
+- L766 `TestValidateAudioFileEdgeCases` (class)
+- L767 `test_directory_is_not_a_file(self, tmp_path)` (method)
+- L777 `test_symlink_with_supported_extension_is_rejected(self, tmp_path)` (method)
+- L794 `test_stat_oserror(self, tmp_path)` (method)
+- L807 `test_all_supported_formats_accepted(self, tmp_path)` (method)
+- L814 `test_case_insensitive_extension(self, tmp_path)` (method)
+- L825 `TestTranscribeAudioDispatch` (class)
+- L826 `test_dispatches_to_groq(self, sample_ogg)` (method)
+- L838 `test_dispatches_to_local(self, sample_ogg)` (method)
+- L849 `test_dispatches_to_openai(self, sample_ogg)` (method)
+- L860 `test_no_provider_returns_error(self, sample_ogg)` (method)
+- L871 `test_explicit_openai_no_key_returns_error(self, monkeypatch, sample_ogg)` (method) — Explicit provider=openai with no key returns an error, not a fallback.
+- L885 `test_invalid_file_short_circuits(self)` (method)
+- L891 `test_model_override_passed_to_groq(self, sample_ogg)` (method)
+- L902 `test_model_override_passed_to_local(self, sample_ogg)` (method)
+- L912 `test_default_model_used_when_none(self, sample_ogg)` (method)
+- L922 `test_config_local_model_used(self, sample_ogg)` (method)
+- L933 `test_config_openai_model_used(self, sample_ogg)` (method)
+- L951 `mock_mistral_module()` (function) — Inject a fake mistralai module into sys.modules for testing.
+- L963 `TestTranscribeMistral` (class)
+- L964 `test_no_key(self, monkeypatch)` (method)
+- L971 `test_successful_transcription(self, monkeypatch, sample_ogg, mock_mistral_module)` (method)
+- L987 `test_api_error_returns_failure(self, monkeypatch, sample_ogg, mock_mistral_module)` (method)
+- L998 `test_permission_error(self, monkeypatch, sample_ogg, mock_mistral_module)` (method)
+- L1013 `TestGetProviderMistral` (class) — Mistral-specific provider selection tests.
+- L1016 `test_mistral_when_key_and_sdk_available(self, monkeypatch)` (method)
+- L1022 `test_mistral_explicit_no_key_returns_none(self, monkeypatch)` (method) — Explicit mistral with no key returns none — no cross-provider fallback.
+- L1029 `test_mistral_explicit_no_sdk_returns_none(self, monkeypatch)` (method) — Explicit mistral with key but no SDK returns none.
+- L1036 `test_auto_detect_mistral_after_openai(self, monkeypatch)` (method) — Auto-detect: mistral is tried after openai when both are unavailable.
+- L1049 `test_auto_detect_openai_preferred_over_mistral(self, monkeypatch)` (method) — Auto-detect: openai is preferred over mistral (both paid, openai more common).
+- L1061 `test_auto_detect_groq_preferred_over_mistral(self, monkeypatch)` (method) — Auto-detect: groq (free) is preferred over mistral (paid).
+- L1072 `test_auto_detect_skips_mistral_without_sdk(self, monkeypatch)` (method) — Auto-detect: mistral skipped when key is set but SDK is not installed.
+- L1090 `TestTranscribeAudioMistralDispatch` (class)
+- L1091 `test_dispatches_to_mistral(self, sample_ogg)` (method)
+- L1103 `test_config_mistral_model_used(self, sample_ogg)` (method)
+- L1114 `test_model_override_passed_to_mistral(self, sample_ogg)` (method)
+- L1131 `mock_xai_http_module()` (function) — Inject a fake tools.xai_http module for testing.
+- L1139 `TestTranscribeXAI` (class)
+- L1140 `test_no_key(self, monkeypatch)` (method)
+- L1147 `test_successful_transcription(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1167 `test_whitespace_stripped(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1181 `test_api_error_returns_failure(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1198 `test_empty_transcript_returns_failure(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1213 `test_permission_error(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1224 `test_network_error_returns_failure(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1235 `test_sends_language_and_format(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1255 `test_custom_base_url(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1272 `test_diarize_sent_when_configured(self, monkeypatch, sample_ogg, mock_xai_http_module)` (method)
+- L1293 `TestGetProviderXAI` (class) — xAI-specific provider selection tests.
+- L1296 `test_xai_when_key_set(self, monkeypatch)` (method)
+- L1301 `test_xai_explicit_no_key_returns_none(self, monkeypatch)` (method) — Explicit xai with no key returns none — no cross-provider fallback.
+- L1307 `test_auto_detect_xai_after_mistral(self, monkeypatch)` (method) — Auto-detect: xai is tried after mistral when all above are unavailable.
+- L1321 `test_auto_detect_mistral_preferred_over_xai(self, monkeypatch)` (method) — Auto-detect: mistral is preferred over xai.
+- L1335 `test_auto_detect_no_key_returns_none(self, monkeypatch)` (method) — Auto-detect: xai skipped when no key is set.
+- L1350 `TestTranscribeAudioXAIDispatch` (class)
+- L1351 `test_dispatches_to_xai(self, sample_ogg)` (method)
+- L1363 `test_model_default_is_grok_stt(self, sample_ogg)` (method)
+- L1373 `test_model_override_passed_to_xai(self, sample_ogg)` (method)
+- L1388 `TestTranscribeElevenLabs` (class)
+- L1389 `test_no_key(self, monkeypatch)` (method)
+- L1396 `test_successful_transcription(self, monkeypatch, sample_ogg)` (method)
+- L1425 `test_api_error_returns_failure(self, monkeypatch, sample_ogg)` (method)
+- L1442 `test_empty_transcript_returns_failure(self, monkeypatch, sample_ogg)` (method)
+- L1462 `TestGetProviderElevenLabs` (class) — ElevenLabs-specific provider selection tests.
+- L1465 `test_elevenlabs_when_key_set(self, monkeypatch)` (method)
+- L1470 `test_elevenlabs_explicit_no_key_returns_none(self, monkeypatch)` (method) — Explicit elevenlabs with no key returns none — no cross-provider fallback.
+- L1476 `test_auto_detect_elevenlabs_after_xai(self, monkeypatch)` (method) — Auto-detect: elevenlabs is tried after xai when all above are unavailable.
+- L1491 `test_auto_detect_xai_preferred_over_elevenlabs(self, monkeypatch)` (method) — Auto-detect: xai is preferred over elevenlabs.
+- L1507 `TestTranscribeAudioElevenLabsDispatch` (class)
+- L1508 `test_dispatches_to_elevenlabs(self, sample_ogg)` (method)
+- L1520 `test_config_elevenlabs_model_used(self, sample_ogg)` (method)
+- L1531 `test_model_override_passed_to_elevenlabs(self, sample_ogg)` (method)
+- L1544 `TestShellSafety` (class)
+- L1545 `test_auto_detected_template_is_shlex_safe(self, monkeypatch)` (method) — Auto-detected whisper command should be safely splittable.
+- L1566 `test_env_var_template_uses_shell_path(self, monkeypatch)` (method) — When HERMES_LOCAL_STT_COMMAND is set, use_shell should be True.
+- L1574 `test_no_env_var_uses_list_mode(self, monkeypatch)` (method) — When no env var is set, use_shell should be False.

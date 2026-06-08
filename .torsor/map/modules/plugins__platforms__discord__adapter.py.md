@@ -1,0 +1,155 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:41'
+updated: '2026-06-08T00:38:41'
+---
+
+# plugins/platforms/discord/adapter.py
+
+Symbols in `plugins/platforms/discord/adapter.py`.
+
+- L71 `_find_discord_windows_bundled_opus(discord_module: Any=None)` (function) — Return discord.py's bundled Windows opus DLL path when present.
+- L91 `_clean_discord_id(entry: str)` (function) — Strip common prefixes from a Discord user ID or username entry.
+- L108 `check_discord_requirements()` (function) — Check if Discord dependencies are available.
+- L138 `_build_allowed_mentions()` (function) — Build Discord ``AllowedMentions`` with safe defaults, overridable via env.
+- L173 `VoiceReceiver` (class) — Captures and decodes voice audio from a Discord voice channel.
+- L187 `__init__(self, voice_client, allowed_user_ids: set=None)` (method)
+- L218 `start(self)` (method) — Start listening for voice packets.
+- L230 `stop(self)` (method) — Stop listening and clean up.
+- L244 `pause(self)` (method)
+- L247 `resume(self)` (method)
+- L254 `map_ssrc(self, ssrc: int, user_id: int)` (method)
+- L258 `_install_speaking_hook(self, conn)` (method) — Wrap the voice websocket hook to capture SPEAKING events (op 5).
+- L295 `_on_packet(self, data: bytes)` (method)
+- L439 `_infer_user_for_ssrc(self, ssrc: int)` (method) — Try to infer user_id for an unmapped SSRC.
+- L465 `check_silence(self)` (method) — Return list of (user_id, pcm_bytes) for completed utterances.
+- L503 `pcm_to_wav(pcm_data: bytes, output_path: str, src_rate: int=48000, src_channels: int=2)` (method) — Convert raw PCM to 16kHz mono WAV via ffmpeg.
+- L531 `_read_dm_role_auth_guild()` (function) — Return the guild ID opted-in for DM role-based auth, or None.
+- L559 `DiscordAdapter` (class) — Discord bot adapter.
+- L580 `__init__(self, config: PlatformConfig)` (method)
+- L630 `connect(self)` (method) — Connect to Discord and start receiving events.
+- L911 `disconnect(self)` (method) — Disconnect from Discord.
+- L942 `_command_sync_state_path(self)` (method)
+- L952 `_read_command_sync_state(self)` (method)
+- L962 `_write_command_sync_state(self, state: dict)` (method)
+- L970 `_command_sync_state_key(self, app_id: Any)` (method)
+- L973 `_desired_command_sync_fingerprint(self)` (method)
+- L985 `_command_sync_skip_reason(self, app_id: Any, fingerprint: str)` (method)
+- L998 `_record_command_sync_attempt(self, app_id: Any, fingerprint: str)` (method)
+- L1011 `_record_command_sync_rate_limit(self, app_id: Any, fingerprint: str, retry_after: float)` (method)
+- L1027 `_record_command_sync_success(self, app_id: Any, fingerprint: str, summary: dict)` (method)
+- L1038 `_extract_discord_retry_after(exc: BaseException)` (method)
+- L1062 `_is_discord_rate_limit(exc: BaseException)` (method) — True only for exceptions that look like Discord 429 rate limits.
+- L1095 `_command_sync_mutation_interval_seconds(self)` (method)
+- L1098 `_sleep_between_command_sync_mutations(self)` (method)
+- L1103 `_run_post_connect_initialization(self)` (method) — Finish non-critical startup work after Discord is connected.
+- L1179 `_get_discord_command_sync_policy(self)` (method)
+- L1191 `_canonicalize_app_command_payload(self, payload: Dict[str, Any])` (method) — Reduce command payloads to the semantic fields Hermes manages.
+- L1216 `_normalize_permissions(value: Any)` (method) — Discord emits default_member_permissions as str server-side but discord.py
+- L1223 `_existing_command_to_payload(self, command: Any)` (method) — Build a canonical-ready dict from an AppCommand.
+- L1246 `_canonicalize_app_command_option(self, payload: Dict[str, Any])` (method)
+- L1273 `_patchable_app_command_payload(self, payload: Dict[str, Any])` (method) — Fields supported by discord.py's edit_global_command route.
+- L1282 `_safe_sync_slash_commands(self)` (method) — Diff existing global commands and only mutate the commands that changed.
+- L1365 `_add_reaction(self, message: Any, emoji: str)` (method) — Add an emoji reaction to a Discord message.
+- L1376 `_remove_reaction(self, message: Any, emoji: str)` (method) — Remove the bot's own emoji reaction from a Discord message.
+- L1387 `_reactions_enabled(self)` (method) — Check if message reactions are enabled via config/env.
+- L1391 `on_processing_start(self, event: MessageEvent)` (method) — Add an in-progress reaction for normal Discord message events.
+- L1399 `on_processing_complete(self, event: MessageEvent, outcome: ProcessingOutcome)` (method) — Swap the in-progress reaction for a final success/failure reaction.
+- L1411 `send(self, chat_id: str, content: str, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a message to a Discord channel or thread.
+- L1523 `_send_to_forum(self, forum_channel: Any, content: str)` (method) — Create a thread post in a forum channel with the message as starter content.
+- L1579 `_forum_post_file(self, forum_channel: Any, *, thread_name: Optional[str]=None, content: str='', file: Any=None, files: Optional[list]=None)` (method) — Create a forum thread whose starter message carries file attachments.
+- L1639 `edit_message(self, chat_id: str, message_id: str, content: str, *, finalize: bool=False)` (method) — Edit a previously sent Discord message.
+- L1664 `_send_file_attachment(self, chat_id: str, file_path: str, caption: Optional[str]=None, file_name: Optional[str]=None)` (method) — Send a local file as a Discord attachment.
+- L1697 `send_multiple_images(self, chat_id: str, images: List[Tuple[str, str]], metadata: Optional[Dict[str, Any]]=None, human_delay: float=0.0)` (method) — Send a batch of images as a single Discord message with multiple attachments.
+- L1825 `play_tts(self, chat_id: str, audio_path: str, **kwargs)` (method) — Play auto-TTS audio.
+- L1843 `send_voice(self, chat_id: str, audio_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send audio as a Discord file attachment.
+- L1934 `_load_voice_fx_config(self)` (method) — Read voice mixer / ambient / ack settings from config.yaml.
+- L1971 `_get_ambient_pcm(self)` (method) — Return decoded 48k/stereo/s16le PCM for the ambient idle bed.
+- L1997 `_install_voice_mixer(self, guild_id: int, vc)` (method) — Create a VoiceMixer, start the ambient bed, and play it on the VC.
+- L2027 `play_ack_in_voice(self, guild_id: int, phrase: Optional[str]=None)` (method) — Speak a short acknowledgement over the ambient bed.
+- L2083 `voice_mixer_active(self, guild_id: int)` (method) — True when a continuous mixer is installed for this guild.
+- L2088 `join_voice_channel(self, channel)` (method) — Join a Discord voice channel. Returns True on success.
+- L2131 `leave_voice_channel(self, guild_id: int)` (method) — Disconnect from the voice channel in a guild.
+- L2163 `play_in_voice_channel(self, guild_id: int, audio_path: str)` (method) — Play an audio file in the connected voice channel.
+- L2238 `get_user_voice_channel(self, guild_id: int, user_id: str)` (method) — Return the voice channel the user is currently in, or None.
+- L2250 `_reset_voice_timeout(self, guild_id: int)` (method) — Reset the auto-disconnect inactivity timer.
+- L2259 `_voice_timeout_handler(self, guild_id: int)` (method) — Auto-disconnect after VOICE_TIMEOUT seconds of inactivity.
+- L2281 `is_in_voice_channel(self, guild_id: int)` (method) — Check if the bot is connected to a voice channel in this guild.
+- L2286 `get_voice_channel_info(self, guild_id: int)` (method) — Return voice channel awareness info for the given guild.
+- L2337 `get_voice_channel_context(self, guild_id: int)` (method) — Return a human-readable voice channel context string.
+- L2362 `_voice_listen_loop(self, guild_id: int)` (method) — Periodically check for completed utterances and process them.
+- L2402 `_process_voice_input(self, guild_id: int, user_id: int, pcm_data: bytes)` (method) — Convert PCM -> WAV -> STT -> callback.
+- L2437 `_is_allowed_user(self, user_id: str, author=None, *, guild=None, is_dm: bool=False)` (method) — Check if user is allowed via DISCORD_ALLOWED_USERS or DISCORD_ALLOWED_ROLES.
+- L2538 `_evaluate_slash_authorization(self, interaction: 'discord.Interaction')` (method) — Evaluate slash authorization without producing any response.
+- L2634 `_check_slash_authorization(self, interaction: 'discord.Interaction', command_text: str)` (method) — Mirror on_message's user/role/channel gates onto a slash invocation.
+- L2651 `_reject_slash(self, interaction: 'discord.Interaction', command_text: str, *, reason: str)` (method) — Send ephemeral reject + log warning + schedule admin alert. Returns False.
+- L2700 `_notify_unauthorized_slash(self, user_name: str, user_id: str, chan_id, guild_id, command_text: str, reason: str)` (method) — Best-effort cross-platform alert to the gateway operator.
+- L2750 `send_image_file(self, chat_id: str, image_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a local image file natively as a Discord file attachment.
+- L2767 `send_image(self, chat_id: str, image_url: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send an image natively as a Discord file attachment.
+- L2846 `send_animation(self, chat_id: str, animation_url: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send an animated GIF natively as a Discord file attachment.
+- L2915 `send_video(self, chat_id: str, video_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a local video file natively as a Discord attachment.
+- L2932 `send_document(self, chat_id: str, file_path: str, caption: Optional[str]=None, file_name: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send an arbitrary file natively as a Discord attachment.
+- L2950 `send_typing(self, chat_id: str, metadata=None)` (method) — Start a persistent typing indicator for a channel.
+- L3004 `stop_typing(self, chat_id: str)` (method) — Stop the persistent typing indicator for a channel.
+- L3014 `get_chat_info(self, chat_id: str)` (method) — Get information about a Discord channel.
+- L3053 `_resolve_allowed_usernames(self)` (method) — Resolve non-numeric entries in DISCORD_ALLOWED_USERS to Discord user IDs.
+- L3117 `format_message(self, content: str)` (method) — Format message for Discord.
+- L3126 `_run_simple_slash(self, interaction: discord.Interaction, command_text: str, followup_msg: str | None=None)` (method) — Common handler for simple slash commands that dispatch a command string.
+- L3173 `_register_slash_commands(self)` (method) — Register Discord slash commands on the command tree.
+- L3444 `_apply_owner_only_visibility(self, tree)` (method) — Set default_member_permissions=0 on every registered slash command.
+- L3481 `_register_skill_group(self, tree)` (method) — Register a single ``/skill`` command with autocomplete on the name.
+- L3618 `_refresh_skill_catalog_state(self)` (method) — Re-scan disk for skills and repopulate ``self._skill_entries``.
+- L3644 `refresh_skill_group(self)` (method) — Rescan skills and update the live ``/skill`` autocomplete state.
+- L3676 `_build_slash_event(self, interaction: discord.Interaction, text: str)` (method) — Build a MessageEvent from a Discord slash command interaction.
+- L3725 `_handle_thread_create_slash(self, interaction: discord.Interaction, name: str, message: str='', auto_archive_duration: int=1440)` (method) — Create a Discord thread from a slash command and start a session in it.
+- L3764 `_dispatch_thread_session(self, interaction: discord.Interaction, thread_id: str, thread_name: str, text: str)` (method) — Build a MessageEvent pointing at a thread and send it through handle_message.
+- L3806 `_resolve_channel_skills(self, channel_id: str, parent_id: str | None=None)` (method) — Look up auto-skill bindings for a Discord channel/forum thread.
+- L3818 `_resolve_channel_prompt(self, channel_id: str, parent_id: str | None=None)` (method) — Resolve a Discord per-channel prompt, preferring the exact channel over its parent.
+- L3823 `_discord_require_mention(self)` (method) — Return whether Discord channel messages require a bot mention.
+- L3832 `_discord_allow_any_attachment(self)` (method) — Return whether Discord attachments bypass the SUPPORTED_DOCUMENT_TYPES allowlist.
+- L3847 `_discord_max_attachment_bytes(self)` (method) — Return the per-attachment byte cap. 0 means unlimited.
+- L3870 `_is_discord_voice_message_attachment(att: Any)` (method) — Return True when a Discord audio attachment is a native voice note.
+- L3887 `_discord_free_response_channels(self)` (method) — Return Discord channel IDs where no bot mention is required.
+- L3910 `_discord_thread_require_mention(self)` (method) — Return whether thread participation requires @mention to follow up.
+- L3929 `_discord_history_backfill(self)` (method) — Return whether history backfill is enabled for shared sessions.
+- L3938 `_discord_history_backfill_limit(self)` (method) — Return the max number of messages to scan backwards for context.
+- L3958 `_fetch_channel_context(self, channel: Any, before: 'DiscordMessage')` (method) — Fetch recent channel messages for conversational context.
+- L4057 `_thread_parent_channel(self, channel: Any)` (method) — Return the parent text channel when invoked from a thread.
+- L4061 `_resolve_interaction_channel(self, interaction: discord.Interaction)` (method) — Return the interaction channel, fetching it if the payload is partial.
+- L4079 `_create_thread(self, interaction: discord.Interaction, *, name: str, message: str='', auto_archive_duration: int=1440)` (method) — Create a thread in the current Discord channel.
+- L4154 `_auto_create_thread(self, message: 'DiscordMessage')` (method) — Create a thread from a user message for auto-threading.
+- L4195 `create_handoff_thread(self, parent_chat_id: str, name: str)` (method) — Create a Discord thread under a text channel for a handoff.
+- L4273 `send_exec_approval(self, chat_id: str, command: str, session_key: str, description: str='dangerous command', metadata: Optional[dict]=None)` (method) — Send a button-based exec approval prompt for a dangerous command.
+- L4320 `send_slash_confirm(self, chat_id: str, title: str, message: str, session_key: str, confirm_id: str, metadata: Optional[dict]=None)` (method) — Send a three-button slash-command confirmation prompt.
+- L4359 `send_clarify(self, chat_id: str, question: str, choices: Optional[list], clarify_id: str, session_key: str, metadata: Optional[Dict[str, Any]]=None)` (method) — Render a clarify prompt with one Discord button per choice.
+- L4439 `send_update_prompt(self, chat_id: str, prompt: str, default: str='', session_key: str='', metadata: Optional[Dict[str, Any]]=None)` (method) — Send an interactive button-based update prompt (Yes / No).
+- L4474 `send_model_picker(self, chat_id: str, providers: list, current_model: str, current_provider: str, session_key: str, on_model_selected, metadata: Optional[Dict[str, Any]]=None)` (method) — Send an interactive select-menu model picker.
+- L4536 `_get_parent_channel_id(self, channel: Any)` (method) — Return the parent channel ID for a Discord thread-like channel, if present.
+- L4546 `_is_forum_parent(self, channel: Any)` (method) — Best-effort check for whether a Discord channel is a forum channel.
+- L4560 `_get_effective_topic(self, channel: Any, is_thread: bool=False)` (method) — Return the channel topic, falling back to the parent forum's topic for forum threads.
+- L4569 `_format_thread_chat_name(self, thread: Any)` (method) — Build a readable chat name for thread-like Discord channels, including forum context when available.
+- L4610 `_read_attachment_bytes(self, att)` (method) — Read an attachment via discord.py's authenticated bot session.
+- L4631 `_cache_discord_image(self, att, ext: str)` (method) — Cache a Discord image attachment to local disk.
+- L4650 `_cache_discord_audio(self, att, ext: str)` (method) — Cache a Discord audio attachment to local disk.
+- L4669 `_cache_discord_document(self, att, ext: str)` (method) — Download a Discord document attachment and return the raw bytes.
+- L4703 `_handle_message(self, message: DiscordMessage)` (method) — Handle incoming Discord messages.
+- L5101 `_text_batch_key(self, event: MessageEvent)` (method) — Session-scoped key for text message batching.
+- L5110 `_enqueue_text_event(self, event: MessageEvent)` (method) — Buffer a text event and reset the flush timer.
+- L5138 `_flush_text_batch(self, key: str)` (method) — Wait for the quiet period then dispatch the aggregated text.
+- L5184 `_component_check_auth(interaction, allowed_user_ids: Optional[set], allowed_role_ids: Optional[set])` (function) — Shared user-or-role OR semantics for component view button clicks.
+- L5250 `_define_discord_view_classes()` (function) — Register Discord UI view classes as module globals.
+- L6036 `_remember_channel_is_forum(chat_id: str, is_forum: bool)` (function)
+- L6040 `_probe_is_forum_cached(chat_id: str)` (function)
+- L6044 `_derive_forum_thread_name(message: str)` (function) — Derive a thread name from the first line of the message, capped at 100 chars.
+- L6054 `_standalone_sanitize_error(text)` (function) — Local copy of tools.send_message_tool._sanitize_error_text — strips bot
+- L6070 `_standalone_send(pconfig, chat_id: str, message: str, *, thread_id: Optional[str]=None, media_files: Optional[list]=None, force_document: bool=False)` (function) — Send via Discord REST API without a live gateway adapter.
+- L6279 `_clean_discord_user_ids(raw: str)` (function) — Strip common Discord mention prefixes from a comma-separated ID string.
+- L6293 `interactive_setup()` (function) — Guide the user through Discord bot setup.
+- L6361 `_apply_yaml_config(yaml_cfg: dict, discord_cfg: dict)` (function) — Translate ``config.yaml`` ``discord:`` keys into env vars.
+- L6468 `_is_connected(config)` (function) — Discord is considered connected when DISCORD_BOT_TOKEN is set.
+- L6481 `_build_adapter(config)` (function) — Factory wrapper that constructs DiscordAdapter from a PlatformConfig.
+- L6486 `register(ctx)` (function) — Plugin entry point — called by the Hermes plugin system.

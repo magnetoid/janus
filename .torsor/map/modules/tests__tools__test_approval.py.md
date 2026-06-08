@@ -1,0 +1,255 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/tools/test_approval.py
+
+Symbols in `tests/tools/test_approval.py`.
+
+- L23 `TestApprovalModeParsing` (class)
+- L24 `test_unquoted_yaml_off_boolean_false_maps_to_off(self)` (method)
+- L28 `test_string_off_still_maps_to_off(self)` (method)
+- L33 `TestSmartApproval` (class)
+- L34 `test_smart_approval_uses_call_llm(self)` (method)
+- L48 `TestDetectDangerousRm` (class)
+- L49 `test_rm_rf_detected(self)` (method)
+- L55 `test_rm_recursive_long_flag(self)` (method)
+- L62 `TestDetectDangerousSudo` (class)
+- L63 `test_shell_via_c_flag(self)` (method)
+- L69 `test_curl_pipe_sh(self)` (method)
+- L75 `test_shell_via_lc_flag(self)` (method) — bash -lc should be treated as dangerous just like bash -c.
+- L81 `test_shell_via_lc_with_newline(self)` (method) — Multi-line bash -lc invocations must still be detected.
+- L88 `test_ksh_via_c_flag(self)` (method) — ksh -c should be caught by the expanded pattern.
+- L95 `TestDetectSqlPatterns` (class)
+- L96 `test_drop_table(self)` (method)
+- L101 `test_delete_without_where(self)` (method)
+- L106 `test_delete_with_where_safe(self)` (method)
+- L113 `TestSafeCommand` (class)
+- L114 `test_echo_is_safe(self)` (method)
+- L119 `test_ls_is_safe(self)` (method)
+- L125 `test_git_is_safe(self)` (method)
+- L132 `_clear_session(key)` (function) — Replace for removed clear_session() — directly clear internal state.
+- L138 `TestApproveAndCheckSession` (class)
+- L139 `test_session_approval(self)` (method)
+- L148 `TestSessionKeyContext` (class)
+- L149 `test_context_session_key_overrides_process_env(self)` (method)
+- L157 `test_gateway_runner_binds_session_key_to_context_before_agent_run(self)` (method)
+- L180 `TestRmFalsePositiveFix` (class) — Regression tests: filenames starting with 'r' must NOT trigger recursive delete.
+- L183 `test_rm_readme_not_flagged(self)` (method)
+- L188 `test_rm_requirements_not_flagged(self)` (method)
+- L193 `test_rm_report_not_flagged(self)` (method)
+- L198 `test_rm_results_not_flagged(self)` (method)
+- L203 `test_rm_robots_not_flagged(self)` (method)
+- L208 `test_rm_run_not_flagged(self)` (method)
+- L213 `test_rm_force_readme_not_flagged(self)` (method)
+- L218 `test_rm_verbose_readme_not_flagged(self)` (method)
+- L224 `TestRmRecursiveFlagVariants` (class) — Ensure all recursive delete flag styles are still caught.
+- L227 `test_rm_r(self)` (method)
+- L233 `test_rm_rf(self)` (method)
+- L238 `test_rm_rfv(self)` (method)
+- L243 `test_rm_fr(self)` (method)
+- L248 `test_rm_irf(self)` (method)
+- L253 `test_rm_recursive_long(self)` (method)
+- L258 `test_sudo_rm_rf(self)` (method)
+- L264 `TestMultilineBypass` (class) — Newlines in commands must not bypass dangerous pattern detection.
+- L267 `test_curl_pipe_sh_with_newline(self)` (method)
+- L273 `test_wget_pipe_bash_with_newline(self)` (method)
+- L279 `test_dd_with_newline(self)` (method)
+- L285 `test_chmod_recursive_with_newline(self)` (method)
+- L291 `test_find_exec_rm_with_newline(self)` (method)
+- L297 `test_find_delete_with_newline(self)` (method)
+- L304 `TestProcessSubstitutionPattern` (class) — Detect remote code execution via process substitution.
+- L307 `test_bash_curl_process_sub(self)` (method)
+- L312 `test_sh_wget_process_sub(self)` (method)
+- L317 `test_zsh_curl_process_sub(self)` (method)
+- L322 `test_ksh_curl_process_sub(self)` (method)
+- L327 `test_bash_redirect_from_process_sub(self)` (method)
+- L332 `test_plain_curl_not_flagged(self)` (method)
+- L337 `test_bash_script_not_flagged(self)` (method)
+- L343 `TestTeePattern` (class) — Detect tee writes to sensitive system files.
+- L346 `test_tee_etc_passwd(self)` (method)
+- L351 `test_tee_etc_sudoers(self)` (method)
+- L356 `test_tee_ssh_authorized_keys(self)` (method)
+- L361 `test_tee_block_device(self)` (method)
+- L366 `test_tee_hermes_env(self)` (method)
+- L371 `test_tee_custom_hermes_home_env(self)` (method)
+- L376 `test_tee_quoted_custom_hermes_home_env(self)` (method)
+- L381 `test_tee_tmp_safe(self)` (method)
+- L386 `test_tee_local_file_safe(self)` (method)
+- L392 `TestHermesConfigWriteProtection` (class) — Terminal-side pairing for the file_tools write_file/patch deny on
+- L399 `test_redirect_overwrite(self)` (method)
+- L404 `test_append(self)` (method)
+- L408 `test_tee(self)` (method)
+- L412 `test_cp_over_config(self)` (method)
+- L416 `test_sed_in_place(self)` (method)
+- L423 `test_sed_in_place_long_flag(self)` (method)
+- L427 `test_custom_hermes_home(self)` (method)
+- L431 `test_perl_in_place_config(self)` (method)
+- L440 `test_ruby_in_place_config(self)` (method)
+- L446 `test_perl_in_place_env(self)` (method)
+- L452 `test_perl_in_place_separate_flag_token(self)` (method)
+- L461 `test_perl_in_place_backup_suffix(self)` (method)
+- L468 `test_perl_eval_no_inplace_safe(self)` (method)
+- L476 `test_read_is_safe(self)` (method)
+- L481 `test_normal_yaml_write_safe(self)` (method)
+- L488 `TestFindExecFullPathRm` (class) — Detect find -exec with full-path rm bypasses.
+- L491 `test_find_exec_bin_rm(self)` (method)
+- L496 `test_find_exec_usr_bin_rm(self)` (method)
+- L501 `test_find_exec_bare_rm_still_works(self)` (method)
+- L506 `test_find_print_safe(self)` (method)
+- L512 `TestSensitiveRedirectPattern` (class) — Detect shell redirection writes to sensitive user-managed paths.
+- L515 `test_redirect_to_custom_hermes_home_env(self)` (method)
+- L520 `test_append_to_home_ssh_authorized_keys(self)` (method)
+- L525 `test_append_to_tilde_ssh_authorized_keys(self)` (method)
+- L530 `test_redirect_to_safe_tmp_file(self)` (method)
+- L535 `test_redirect_to_local_dotenv_requires_approval(self)` (method)
+- L541 `test_redirect_to_nested_config_yaml_requires_approval(self)` (method)
+- L547 `test_redirect_from_local_dotenv_source_is_safe(self)` (method)
+- L554 `TestProjectSensitiveCopyPattern` (class)
+- L555 `test_cp_to_local_dotenv_requires_approval(self)` (method)
+- L561 `test_cp_absolute_path_to_dotenv_requires_approval(self)` (method)
+- L571 `test_redirect_absolute_path_to_dotenv_requires_approval(self)` (method)
+- L579 `test_mv_to_nested_config_yaml_requires_approval(self)` (method)
+- L585 `test_install_to_dotenv_requires_approval(self)` (method)
+- L591 `test_cp_from_config_yaml_source_is_safe(self)` (method)
+- L598 `TestProjectSensitiveTeePattern` (class)
+- L599 `test_tee_to_local_dotenv_requires_approval(self)` (method)
+- L606 `TestPatternKeyUniqueness` (class) — Bug: pattern_key is derived by splitting on \b and taking [1], so
+- L611 `test_find_exec_rm_and_find_delete_have_different_keys(self)` (method)
+- L619 `test_approving_find_exec_does_not_approve_find_delete(self)` (method) — Session approval for find -exec rm must not carry over to find -delete.
+- L632 `test_legacy_find_key_still_approves_find_exec(self)` (method) — Old allowlist entry 'find' should keep approving the matching command.
+- L639 `test_legacy_find_key_still_approves_find_delete(self)` (method) — Old colliding allowlist entry 'find' should remain backwards compatible.
+- L647 `TestFullCommandAlwaysShown` (class) — The full command is always shown in the approval prompt (no truncation).
+- L655 `test_once_with_long_command(self)` (method) — Pressing 'o' approves once even for very long commands.
+- L662 `test_session_with_long_command(self)` (method) — Pressing 's' approves for session with long commands.
+- L669 `test_always_with_long_command(self)` (method) — Pressing 'a' approves always with long commands.
+- L676 `test_deny_with_long_command(self)` (method) — Pressing 'd' denies with long commands.
+- L683 `test_invalid_input_denies(self)` (method) — Invalid input (like 'v' which no longer exists) falls through to deny.
+- L691 `TestForkBombDetection` (class) — The fork bomb regex must match the classic :(){ :|:& };: pattern.
+- L694 `test_classic_fork_bomb(self)` (method)
+- L699 `test_fork_bomb_with_spaces(self)` (method)
+- L703 `test_colon_in_safe_command_not_flagged(self)` (method)
+- L708 `TestGatewayProtection` (class) — Prevent agents from starting the gateway outside systemd management.
+- L711 `test_gateway_run_with_disown_detected(self)` (method)
+- L717 `test_gateway_run_with_ampersand_detected(self)` (method)
+- L722 `test_gateway_run_with_nohup_detected(self)` (method)
+- L727 `test_gateway_run_with_setsid_detected(self)` (method)
+- L732 `test_gateway_run_foreground_not_flagged(self)` (method) — Normal foreground gateway run (as in systemd ExecStart) is fine.
+- L738 `test_systemctl_restart_flagged(self)` (method) — systemctl restart kills running agents and should require approval.
+- L745 `test_pkill_hermes_detected(self)` (method) — pkill targeting hermes/gateway processes must be caught.
+- L752 `test_killall_hermes_detected(self)` (method)
+- L758 `test_pkill_gateway_detected(self)` (method)
+- L763 `test_pkill_unrelated_not_flagged(self)` (method) — pkill targeting unrelated processes should not be flagged.
+- L770 `TestNormalizationBypass` (class) — Obfuscation techniques must not bypass dangerous command detection.
+- L773 `test_fullwidth_unicode_rm(self)` (method) — Fullwidth Unicode 'ｒｍ -ｒｆ /' must be caught after NFKC normalization.
+- L779 `test_fullwidth_unicode_dd(self)` (method) — Fullwidth 'ｄｄ if=/dev/zero' must be caught.
+- L785 `test_fullwidth_unicode_chmod(self)` (method) — Fullwidth 'ｃｈｍｏｄ 777' must be caught.
+- L791 `test_ansi_csi_wrapped_rm(self)` (method) — ANSI CSI color codes wrapping 'rm' must be stripped and caught.
+- L797 `test_ansi_osc_embedded_rm(self)` (method) — ANSI OSC sequences embedded in command must be stripped.
+- L803 `test_ansi_8bit_c1_wrapped_rm(self)` (method) — 8-bit C1 CSI (0x9b) wrapping 'rm' must be stripped and caught.
+- L809 `test_null_byte_in_rm(self)` (method) — Null bytes injected into 'rm' must be stripped and caught.
+- L815 `test_null_byte_in_dd(self)` (method) — Null bytes in 'dd' must be stripped.
+- L821 `test_mixed_fullwidth_and_ansi(self)` (method) — Combined fullwidth + ANSI obfuscation must still be caught.
+- L827 `test_safe_command_after_normalization(self)` (method) — Normal safe commands must not be flagged after normalization.
+- L833 `test_fullwidth_safe_command_not_flagged(self)` (method) — Fullwidth 'ｌｓ -ｌａ' is safe and must not be flagged.
+- L840 `TestHeredocScriptExecution` (class) — Script execution via heredoc bypasses the -e/-c flag patterns.
+- L847 `test_python3_heredoc_detected(self)` (method)
+- L855 `test_python_heredoc_detected(self)` (method)
+- L860 `test_perl_heredoc_detected(self)` (method)
+- L865 `test_ruby_heredoc_detected(self)` (method)
+- L870 `test_node_heredoc_detected(self)` (method)
+- L875 `test_python3_dash_c_still_detected(self)` (method) — Existing -c pattern must not regress.
+- L881 `test_safe_python_not_flagged(self)` (method) — Plain 'python3 script.py' without heredoc or -c must stay safe.
+- L888 `TestPgrepKillExpansion` (class) — kill -9 $(pgrep hermes) bypasses the pkill/killall name-matching
+- L895 `test_kill_dollar_pgrep_detected(self)` (method)
+- L901 `test_kill_backtick_pgrep_detected(self)` (method)
+- L906 `test_kill_dollar_pgrep_no_flags(self)` (method)
+- L911 `test_pkill_hermes_still_detected(self)` (method) — Existing pkill pattern must not regress.
+- L917 `test_safe_kill_pid_not_flagged(self)` (method) — A plain 'kill 12345' (literal PID, no expansion) must stay safe.
+- L924 `TestGitDestructiveOps` (class) — git reset --hard, push --force, clean -f, branch -D can destroy
+- L931 `test_git_reset_hard_detected(self)` (method)
+- L937 `test_git_push_force_detected(self)` (method)
+- L943 `test_git_push_dash_f_detected(self)` (method)
+- L948 `test_git_clean_force_detected(self)` (method)
+- L954 `test_git_branch_force_delete_detected(self)` (method)
+- L959 `test_safe_git_status_not_flagged(self)` (method)
+- L964 `test_safe_git_push_not_flagged(self)` (method) — Normal push without --force must not be flagged.
+- L970 `test_git_branch_lowercase_d_also_flagged(self)` (method) — git branch -d triggers approval too — IGNORECASE is global.
+- L981 `TestChmodExecuteCombo` (class) — chmod +x && ./ is the two-step social engineering pattern where a
+- L989 `test_chmod_and_execute_detected(self)` (method)
+- L995 `test_chmod_semicolon_execute_detected(self)` (method)
+- L1002 `test_safe_chmod_without_execute_not_flagged(self)` (method) — chmod +x alone without immediate execution must not be flagged.
+- L1009 `TestFailClosedUnderPromptToolkit` (class) — Regression guard for #15216.
+- L1019 `test_denies_when_prompt_toolkit_active_and_no_callback(self)` (method)
+- L1048 `test_callback_path_still_wins_over_guard(self)` (method) — Guard must not short-circuit a valid callback.
+- L1068 `TestDetectSudoStdin` (class) — Sudo with stdin / askpass / shell / list-privileges flags (#17873 cat 4).
+- L1085 `test_canonical_pipe_to_sudo_S_detected(self)` (method)
+- L1092 `test_long_flag_stdin_detected(self)` (method)
+- L1096 `test_non_interactive_plus_stdin_detected(self)` (method)
+- L1100 `test_user_then_stdin_detected(self)` (method)
+- L1110 `test_long_non_interactive_plus_stdin_detected(self)` (method)
+- L1116 `test_long_user_equals_stdin_detected(self)` (method)
+- L1122 `test_herestring_input_detected(self)` (method)
+- L1128 `test_combined_short_flags_nS_detected(self)` (method)
+- L1133 `test_printf_form_detected(self)` (method)
+- L1139 `test_askpass_short_flag_detected(self)` (method)
+- L1143 `test_askpass_long_flag_detected(self)` (method)
+- L1147 `test_two_sudo_invocations_second_caught(self)` (method)
+- L1158 `test_plain_sudo_safe(self)` (method)
+- L1162 `test_sudo_interactive_shell_safe(self)` (method)
+- L1166 `test_sudo_with_user_no_stdin_flag_safe(self)` (method)
+- L1170 `test_man_sudo_safe(self)` (method)
+- L1174 `test_which_sudo_safe(self)` (method)
+- L1178 `test_sudo_user_env_reference_safe(self)` (method)
+- L1184 `test_apt_install_sudo_safe(self)` (method)
+- L1188 `test_ls_etc_sudoers_safe(self)` (method)
+- L1192 `test_pseudosudo_safe_word_boundary(self)` (method)
+- L1198 `test_unrelated_redirection_safe(self)` (method)
+- L1205 `TestMacOSPrivateSystemPaths` (class) — Inspired by Claude Code 2.1.113 "dangerous path protection".
+- L1216 `test_private_etc_redirect(self)` (method)
+- L1223 `test_private_var_redirect(self)` (method)
+- L1229 `test_private_etc_via_tee(self)` (method)
+- L1236 `test_private_etc_cp(self)` (method)
+- L1243 `test_private_etc_mv(self)` (method)
+- L1249 `test_private_etc_install(self)` (method)
+- L1255 `test_private_etc_sed_in_place(self)` (method)
+- L1262 `test_private_var_sed_long_flag(self)` (method)
+- L1268 `test_private_tmp_cp(self)` (method)
+- L1274 `test_ls_private_is_safe(self)` (method) — Reading under /private/ must not trigger approval.
+- L1279 `test_echo_mentioning_private_path_is_safe(self)` (method) — Literal mention of /private/etc in an echo string must not fire.
+- L1287 `TestKillallKillSignals` (class) — Inspired by Claude Code 2.1.113 expanded deny rules.
+- L1295 `test_killall_dash_9(self)` (method)
+- L1300 `test_killall_dash_kill(self)` (method)
+- L1304 `test_killall_dash_sigkill(self)` (method)
+- L1308 `test_killall_dash_s_kill(self)` (method)
+- L1312 `test_killall_dash_s_signum(self)` (method)
+- L1316 `test_killall_regex(self)` (method) — killall -r <regex> is a broad sweep; require approval.
+- L1322 `test_killall_combined_flags(self)` (method)
+- L1326 `test_killall_list_signals_is_safe(self)` (method) — `killall -l` lists signals and is harmless — must not fire.
+- L1331 `test_killall_version_is_safe(self)` (method)
+- L1336 `TestFindExecdir` (class) — Inspired by Claude Code 2.1.113 tightening of find rules.
+- L1344 `test_find_execdir_rm(self)` (method)
+- L1351 `test_find_execdir_with_absolute_rm(self)` (method)
+- L1357 `test_find_exec_rm_still_caught(self)` (method) — Original -exec pattern must still fire (regression guard).
+- L1364 `test_find_execdir_ls_is_safe(self)` (method) — -execdir with a read-only command is not dangerous.
+- L1372 `TestEtcPatternsUnaffectedByRefactor` (class) — Regression guard: the /etc/ patterns were refactored to share the
+- L1378 `test_etc_redirect(self)` (method)
+- L1382 `test_etc_cp(self)` (method)
+- L1386 `test_etc_sed_inline(self)` (method)
+- L1392 `test_etc_tee(self)` (method)
+- L1398 `test_cat_etc_hostname_is_safe(self)` (method) — Reading /etc/ files is safe — only writes require approval.
+- L1403 `test_grep_etc_passwd_is_safe(self)` (method)
+- L1427 `TestApprovalTimeoutIsNotConsent` (class) — The gateway approval contract: silence is not consent (#24912).
+- L1432 `setup_method(self)` (method) — Reset module state and force tight gateway_timeout for fast tests.
+- L1456 `teardown_method(self)` (method)
+- L1466 `_force_short_timeout(self, monkeypatch, seconds=1)` (method)
+- L1473 `test_timeout_returns_approved_false_with_no_consent(self, monkeypatch)` (method) — The reported #24912 scenario — user never responds, agent must see BLOCKED.
+- L1491 `test_timeout_message_is_emphatic_against_retry_and_rephrase(self, monkeypatch)` (method) — The BLOCKED message must explicitly tell the agent not to rephrase.
+- L1513 `test_explicit_deny_carries_same_no_consent_shape(self)` (method) — An explicit /deny must produce the same shape as timeout —
+- L1545 `test_timeout_emits_post_hook_with_timeout_outcome(self, monkeypatch)` (method) — Plugins must be able to distinguish timeout from explicit deny.

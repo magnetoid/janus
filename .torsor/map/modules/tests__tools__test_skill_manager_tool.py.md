@@ -1,0 +1,122 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:44'
+updated: '2026-06-08T00:38:44'
+---
+
+# tests/tools/test_skill_manager_tool.py
+
+Symbols in `tests/tools/test_skill_manager_tool.py`.
+
+- L27 `_skill_dir(tmp_path)` (function) — Patch both SKILLS_DIR and get_all_skills_dirs so _find_skill searches
+- L63 `TestValidateName` (class)
+- L64 `test_valid_names(self)` (method)
+- L70 `test_empty_name(self)` (method)
+- L73 `test_too_long(self)` (method)
+- L77 `test_uppercase_rejected(self)` (method)
+- L81 `test_starts_with_hyphen_rejected(self)` (method)
+- L85 `test_special_chars_rejected(self)` (method)
+- L94 `TestValidateCategory` (class)
+- L95 `test_valid_categories(self)` (method)
+- L101 `test_path_traversal_rejected(self)` (method)
+- L105 `test_absolute_path_rejected(self)` (method)
+- L115 `TestValidateFrontmatter` (class)
+- L116 `test_valid_content(self)` (method)
+- L119 `test_empty_content(self)` (method)
+- L123 `test_no_frontmatter(self)` (method)
+- L127 `test_unclosed_frontmatter(self)` (method)
+- L131 `test_missing_name_field(self)` (method)
+- L135 `test_missing_description_field(self)` (method)
+- L139 `test_no_body_after_frontmatter(self)` (method)
+- L143 `test_invalid_yaml(self)` (method)
+- L153 `TestValidateFilePath` (class)
+- L154 `test_valid_paths(self)` (method)
+- L160 `test_empty_path(self)` (method)
+- L163 `test_path_traversal_blocked(self)` (method)
+- L167 `test_disallowed_subdirectory(self)` (method)
+- L172 `test_directory_only_rejected(self)` (method)
+- L177 `test_root_level_file_rejected(self)` (method)
+- L182 `test_skill_md_accepted_at_root(self)` (method)
+- L187 `test_skill_md_accepted_name_prefixed(self)` (method)
+- L190 `test_skill_md_traversal_still_rejected(self)` (method)
+- L195 `test_other_root_md_still_rejected(self)` (method)
+- L206 `TestCreateSkill` (class)
+- L207 `test_create_skill(self, tmp_path)` (method)
+- L213 `test_create_with_category(self, tmp_path)` (method)
+- L220 `test_create_duplicate_blocked(self, tmp_path)` (method)
+- L227 `test_create_invalid_name(self, tmp_path)` (method)
+- L232 `test_create_invalid_content(self, tmp_path)` (method)
+- L237 `test_create_rejects_category_traversal(self, tmp_path)` (method)
+- L249 `test_create_rejects_absolute_category(self, tmp_path)` (method)
+- L263 `TestEditSkill` (class)
+- L264 `test_edit_existing_skill(self, tmp_path)` (method)
+- L272 `test_edit_nonexistent_skill(self, tmp_path)` (method)
+- L278 `test_edit_invalid_content_rejected(self, tmp_path)` (method)
+- L288 `TestPatchSkill` (class)
+- L289 `test_patch_unique_match(self, tmp_path)` (method)
+- L297 `test_patch_nonexistent_string(self, tmp_path)` (method)
+- L304 `test_patch_ambiguous_match_rejected(self, tmp_path)` (method)
+- L321 `test_patch_replace_all(self, tmp_path)` (method)
+- L337 `test_patch_supporting_file(self, tmp_path)` (method)
+- L344 `test_patch_skill_not_found(self, tmp_path)` (method)
+- L349 `test_patch_supporting_file_symlink_escape_blocked(self, tmp_path)` (method)
+- L369 `TestDeleteSkill` (class)
+- L370 `test_delete_existing(self, tmp_path)` (method)
+- L377 `test_delete_nonexistent(self, tmp_path)` (method)
+- L382 `test_delete_cleans_empty_category_dir(self, tmp_path)` (method)
+- L388 `test_delete_with_absorbed_into_valid_target(self, tmp_path)` (method)
+- L398 `test_delete_with_absorbed_into_empty_string_means_pruned(self, tmp_path)` (method)
+- L406 `test_delete_with_absorbed_into_nonexistent_target_rejected(self, tmp_path)` (method)
+- L415 `test_delete_with_absorbed_into_equals_self_rejected(self, tmp_path)` (method)
+- L423 `test_delete_with_absorbed_into_whitespace_only_treated_as_prune(self, tmp_path)` (method)
+- L431 `test_delete_without_absorbed_into_backward_compat(self, tmp_path)` (method)
+- L445 `TestWriteFile` (class)
+- L446 `test_write_reference_file(self, tmp_path)` (method)
+- L453 `test_write_to_nonexistent_skill(self, tmp_path)` (method)
+- L458 `test_write_to_disallowed_path(self, tmp_path)` (method)
+- L464 `test_write_symlink_escape_blocked(self, tmp_path)` (method)
+- L484 `TestRemoveFile` (class)
+- L485 `test_remove_existing_file(self, tmp_path)` (method)
+- L493 `test_remove_nonexistent_file(self, tmp_path)` (method)
+- L499 `test_remove_symlink_escape_blocked(self, tmp_path)` (method)
+- L526 `TestSkillManageDispatcher` (class)
+- L527 `test_unknown_action(self, tmp_path)` (method)
+- L534 `test_create_without_content(self, tmp_path)` (method)
+- L541 `test_patch_without_old_string(self, tmp_path)` (method)
+- L547 `test_full_create_via_dispatcher(self, tmp_path)` (method) — Foreground create does NOT mark the skill as agent-created.
+- L566 `test_create_from_background_review_marks_agent_created(self, tmp_path)` (method) — Background-review fork creates ARE marked as agent-created.
+- L584 `test_delete_via_dispatcher_threads_absorbed_into(self, tmp_path)` (method)
+- L595 `test_delete_via_dispatcher_rejects_missing_absorbed_target(self, tmp_path)` (method)
+- L604 `TestSecurityScanGate` (class) — _security_scan_skill is gated by skills.guard_agent_created config flag.
+- L607 `test_scan_noop_when_flag_off(self, tmp_path)` (method) — Default config (flag off) short-circuits before running scan_skill.
+- L618 `test_scan_runs_when_flag_on(self, tmp_path)` (method) — When flag is on, scan_skill is invoked and its verdict is honored.
+- L639 `test_scan_blocks_dangerous_when_flag_on(self, tmp_path)` (method) — Dangerous verdict + flag on → returns an error string for the agent.
+- L663 `test_guard_flag_reads_config_default_false(self)` (method) — _guard_agent_created_enabled returns False when config doesn't set it.
+- L670 `test_guard_flag_reads_config_when_set(self)` (method) — _guard_agent_created_enabled returns True when user explicitly enables.
+- L678 `test_guard_flag_handles_config_error(self)` (method) — If load_config raises, _guard_agent_created_enabled defaults to False (fail-safe off).
+- L685 `test_guard_flag_quoted_false_stays_disabled(self)` (method) — Quoted 'false' from YAML edits must not enable the guard.
+- L695 `test_guard_flag_quoted_true_enables(self)` (method) — Quoted truthy strings must enable the guard.
+- L712 `_two_roots(local_dir: Path, external_dir: Path)` (function) — Patch the skill manager so local SKILLS_DIR = local_dir and
+- L721 `_write_external_skill(external_dir: Path, name: str='ext-skill')` (function)
+- L731 `TestExternalSkillMutations` (class) — Verify skill_manage can patch/edit/write/remove/delete skills that live
+- L741 `test_patch_external_skill_writes_in_place(self, tmp_path)` (method)
+- L755 `test_edit_external_skill_writes_in_place(self, tmp_path)` (method)
+- L772 `test_write_file_on_external_skill(self, tmp_path)` (method)
+- L785 `test_remove_file_on_external_skill(self, tmp_path)` (method)
+- L799 `test_delete_external_skill_removes_skill_not_root(self, tmp_path)` (method)
+- L813 `test_delete_external_skill_cleans_empty_category(self, tmp_path)` (method) — When a skill lives under external/<category>/<name>, deleting the
+- L837 `test_create_still_writes_to_local_root(self, tmp_path)` (method) — Creating a new skill always lands in local SKILLS_DIR, never
+- L860 `TestPinnedGuard` (class) — Delete is refused on pinned skills; patch/edit/write_file/remove_file are allowed.
+- L864 `_pin(name: str)` (method) — Return a patch context that marks *name* as pinned in skill_usage.
+- L870 `test_edit_allowed_when_pinned(self, tmp_path)` (method) — Pin does NOT block edit — agent can still improve pinned skills.
+- L881 `test_patch_allowed_when_pinned(self, tmp_path)` (method)
+- L890 `test_patch_supporting_file_allowed_when_pinned(self, tmp_path)` (method) — Supporting-file patches also go through on pinned skills.
+- L903 `test_delete_refuses_pinned(self, tmp_path)` (method) — Delete is the one action pin still blocks — it's the irrecoverable one.
+- L916 `test_write_file_allowed_when_pinned(self, tmp_path)` (method)
+- L924 `test_remove_file_allowed_when_pinned(self, tmp_path)` (method)
+- L933 `test_unpinned_skills_still_editable(self, tmp_path)` (method) — Sanity check: the guard doesn't fire for unpinned skills on delete.
+- L948 `test_broken_sidecar_fails_open(self, tmp_path)` (method) — If skill_usage.get_record raises, we allow delete through.

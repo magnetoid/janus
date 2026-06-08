@@ -1,0 +1,155 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/tools/test_clipboard.py
+
+Symbols in `tests/tools/test_clipboard.py`.
+
+- L49 `TestSaveClipboardImage` (class)
+- L50 `test_dispatches_to_macos_on_darwin(self, tmp_path)` (method)
+- L58 `test_dispatches_to_windows_on_win32(self, tmp_path)` (method)
+- L66 `test_dispatches_to_linux_on_linux(self, tmp_path)` (method)
+- L74 `test_creates_parent_dirs(self, tmp_path)` (method)
+- L85 `TestMacosPngpaste` (class)
+- L86 `test_success_writes_file(self, tmp_path)` (method)
+- L95 `test_not_installed(self, tmp_path)` (method)
+- L99 `test_no_image_in_clipboard(self, tmp_path)` (method)
+- L106 `test_empty_file_rejected(self, tmp_path)` (method)
+- L114 `test_timeout_returns_false(self, tmp_path)` (method)
+- L121 `TestMacosHasImage` (class)
+- L122 `test_png_detected(self)` (method)
+- L129 `test_tiff_detected(self)` (method)
+- L136 `test_text_only(self)` (method)
+- L144 `TestMacosOsascript` (class)
+- L145 `test_no_image_type_in_clipboard(self, tmp_path)` (method)
+- L152 `test_clipboard_info_fails(self, tmp_path)` (method)
+- L156 `test_success_with_png(self, tmp_path)` (method)
+- L169 `test_success_with_tiff(self, tmp_path)` (method)
+- L181 `test_extraction_returns_fail(self, tmp_path)` (method)
+- L192 `test_extraction_writes_empty_file(self, tmp_path)` (method)
+- L207 `TestIsWsl` (class)
+- L208 `setup_method(self)` (method)
+- L216 `teardown_method(self)` (method)
+- L223 `test_wsl2_detected(self)` (method)
+- L228 `test_wsl1_detected(self)` (method)
+- L233 `test_regular_linux(self)` (method)
+- L245 `test_proc_version_missing(self)` (method)
+- L249 `test_result_is_cached(self)` (method)
+- L260 `TestWslHasImage` (class)
+- L261 `test_clipboard_has_image(self)` (method)
+- L266 `test_clipboard_no_image(self)` (method)
+- L271 `test_falls_back_to_get_clipboard_image(self)` (method)
+- L280 `test_powershell_not_found(self)` (method)
+- L284 `test_powershell_error(self)` (method)
+- L290 `TestWslSave` (class)
+- L291 `test_successful_extraction(self, tmp_path)` (method)
+- L299 `test_falls_back_to_get_clipboard_extraction(self, tmp_path)` (method)
+- L311 `test_no_image_returns_false(self, tmp_path)` (method)
+- L318 `test_empty_output(self, tmp_path)` (method)
+- L324 `test_powershell_not_found(self, tmp_path)` (method)
+- L329 `test_invalid_base64(self, tmp_path)` (method)
+- L335 `test_timeout(self, tmp_path)` (method)
+- L344 `TestWaylandHasImage` (class)
+- L345 `test_has_png(self)` (method)
+- L352 `test_has_bmp_only(self)` (method)
+- L359 `test_text_only(self)` (method)
+- L366 `test_wl_paste_not_installed(self)` (method)
+- L371 `TestWaylandSave` (class)
+- L372 `test_png_extraction(self, tmp_path)` (method)
+- L387 `test_bmp_extraction_with_pillow_convert(self, tmp_path)` (method)
+- L407 `test_jpeg_extraction_converts_to_real_png(self, tmp_path)` (method)
+- L429 `test_non_png_conversion_failure_cleans_up(self, tmp_path)` (method)
+- L445 `test_no_image_types(self, tmp_path)` (method)
+- L453 `test_wl_paste_not_installed(self, tmp_path)` (method)
+- L458 `test_list_types_fails(self, tmp_path)` (method)
+- L464 `test_prefers_png_over_bmp(self, tmp_path)` (method) — When both PNG and BMP are available, PNG should be preferred.
+- L486 `TestXclipHasImage` (class)
+- L487 `test_has_image(self)` (method)
+- L494 `test_no_image(self)` (method)
+- L501 `test_xclip_not_installed(self)` (method)
+- L506 `TestXclipSave` (class)
+- L507 `test_no_xclip_installed(self, tmp_path)` (method)
+- L511 `test_no_image_in_clipboard(self, tmp_path)` (method)
+- L516 `test_image_extraction_success(self, tmp_path)` (method)
+- L528 `test_extraction_fails_cleans_up(self, tmp_path)` (method)
+- L538 `test_targets_check_timeout(self, tmp_path)` (method)
+- L546 `TestLinuxSave` (class) — Test that _linux_save dispatches correctly to WSL → Wayland → X11.
+- L549 `setup_method(self)` (method)
+- L553 `test_wsl_tried_first(self, tmp_path)` (method)
+- L560 `test_wsl_fails_falls_through_to_xclip(self, tmp_path)` (method)
+- L569 `test_wayland_tried_when_display_set(self, tmp_path)` (method)
+- L577 `test_wayland_fails_falls_through_to_xclip(self, tmp_path)` (method)
+- L586 `test_xclip_used_on_plain_x11(self, tmp_path)` (method)
+- L597 `TestWindowsHasImage` (class)
+- L598 `setup_method(self)` (method)
+- L602 `test_clipboard_has_image(self)` (method)
+- L608 `test_clipboard_no_image(self)` (method)
+- L614 `test_falls_back_to_get_clipboard_image(self)` (method)
+- L624 `test_no_powershell_available(self)` (method)
+- L628 `test_powershell_error(self)` (method)
+- L634 `test_subprocess_exception(self)` (method)
+- L641 `TestWindowsSave` (class)
+- L642 `setup_method(self)` (method)
+- L646 `test_successful_extraction(self, tmp_path)` (method)
+- L655 `test_falls_back_to_filedrop_image(self, tmp_path)` (method)
+- L669 `test_no_image_returns_false(self, tmp_path)` (method)
+- L677 `test_empty_output(self, tmp_path)` (method)
+- L684 `test_no_powershell_returns_false(self, tmp_path)` (method)
+- L689 `test_invalid_base64(self, tmp_path)` (method)
+- L696 `test_timeout(self, tmp_path)` (method)
+- L704 `TestHasClipboardImageWin32` (class) — Verify has_clipboard_image dispatches to _windows_has_image on win32.
+- L707 `test_dispatches_on_win32(self)` (method)
+- L717 `TestConvertToPng` (class)
+- L718 `test_pillow_conversion(self, tmp_path)` (method)
+- L731 `test_pillow_not_available_tries_imagemagick(self, tmp_path)` (method)
+- L764 `test_file_still_usable_when_no_converter(self, tmp_path)` (method) — BMP file should still be reported as success if no converter available.
+- L776 `test_imagemagick_failure_preserves_original(self, tmp_path)` (method) — When ImageMagick convert fails, the original file must not be lost.
+- L794 `test_imagemagick_not_installed_preserves_original(self, tmp_path)` (method) — When ImageMagick is not installed, the original file must not be lost.
+- L807 `test_imagemagick_timeout_preserves_original(self, tmp_path)` (method) — When ImageMagick times out, the original file must not be lost.
+- L824 `TestHasClipboardImage` (class)
+- L825 `setup_method(self)` (method)
+- L829 `test_macos_dispatch(self)` (method)
+- L836 `test_linux_wsl_dispatch(self)` (method)
+- L844 `test_wsl_falls_through_to_wayland_when_windows_path_empty(self)` (method) — WSLg often bridges images to wl-paste even when powershell.exe check fails.
+- L856 `test_linux_wayland_dispatch(self)` (method)
+- L865 `test_linux_x11_dispatch(self)` (method)
+- L879 `TestPreprocessImagesWithVision` (class) — Test vision-based image pre-processing for the CLI.
+- L883 `cli(self)` (method) — Minimal HermesCLI with mocked internals.
+- L906 `_make_image(self, tmp_path, name='test.png', content=FAKE_PNG)` (method)
+- L911 `_mock_vision_success(self, description='A test image with colored pixels.')` (method) — Return an async mock that simulates a successful vision_analyze_tool call.
+- L918 `_mock_vision_failure(self)` (method) — Return an async mock that simulates a failed vision_analyze_tool call.
+- L925 `test_single_image_with_text(self, cli, tmp_path)` (method)
+- L936 `test_multiple_images(self, cli, tmp_path)` (method)
+- L947 `test_empty_text_gets_default_question(self, cli, tmp_path)` (method)
+- L954 `test_missing_image_skipped(self, cli, tmp_path)` (method)
+- L961 `test_mix_of_existing_and_missing(self, cli, tmp_path)` (method)
+- L970 `test_vision_failure_includes_path(self, cli, tmp_path)` (method)
+- L978 `test_vision_exception_includes_path(self, cli, tmp_path)` (method)
+- L992 `TestTryAttachClipboardImage` (class) — Test the clipboard → state flow.
+- L996 `cli(self)` (method)
+- L1003 `test_image_found_attaches(self, cli)` (method)
+- L1010 `test_no_image_doesnt_attach(self, cli)` (method)
+- L1017 `test_multiple_attaches_increment_counter(self, cli)` (method)
+- L1025 `test_mixed_success_and_failure(self, cli)` (method)
+- L1034 `test_image_path_follows_naming_convention(self, cli)` (method)
+- L1043 `TestAutoAttachClipboardImageOnPaste` (class)
+- L1044 `test_skips_auto_attach_for_plain_text_paste(self)` (method)
+- L1047 `test_skips_auto_attach_for_whitespace_and_text_paste(self)` (method)
+- L1050 `test_allows_auto_attach_for_empty_paste(self)` (method)
+- L1053 `test_allows_auto_attach_for_whitespace_only_paste(self)` (method)
+- L1057 `TestVoiceSubmission` (class)
+- L1059 `cli(self)` (method)
+- L1074 `test_voice_transcript_clears_stale_attached_images(self, cli)` (method)
+- L1089 `TestQueueRouting` (class) — Test that (text, images) tuples are correctly unpacked and routed.
+- L1092 `test_plain_string_stays_string(self)` (method) — Regular text input has no images.
+- L1101 `test_tuple_unpacks_text_and_images(self, tmp_path)` (method) — (text, images) tuple is correctly split.
+- L1114 `test_empty_text_with_images(self, tmp_path)` (method) — Images without text — text should be empty string.
+- L1126 `test_command_with_images_not_treated_as_command(self)` (method) — Text starting with / in a tuple should still be a command.
+- L1135 `test_images_only_not_treated_as_command(self, tmp_path)` (method) — Empty text + images should not be treated as a command.

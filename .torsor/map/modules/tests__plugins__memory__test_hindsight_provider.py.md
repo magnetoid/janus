@@ -1,0 +1,138 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/plugins/memory/test_hindsight_provider.py
+
+Symbols in `tests/plugins/memory/test_hindsight_provider.py`.
+
+- L37 `_clean_env(monkeypatch)` (function) — Ensure no stale env vars leak between tests.
+- L49 `_make_mock_client()` (function) — Create a mock Hindsight client with async methods.
+- L83 `_FakeSessionDB` (class)
+- L84 `__init__(self, messages=None)` (method)
+- L87 `get_messages_as_conversation(self, session_id)` (method)
+- L92 `provider(tmp_path, monkeypatch)` (function) — Create an initialized HindsightMemoryProvider with a mock client.
+- L117 `provider_with_config(tmp_path, monkeypatch)` (function) — Create a provider factory that accepts custom config overrides.
+- L144 `test_normalize_retain_tags_accepts_csv_and_dedupes()` (function)
+- L151 `test_normalize_retain_tags_accepts_json_array_string()` (function)
+- L161 `TestSchemas` (class)
+- L162 `test_retain_schema_has_content(self)` (method)
+- L168 `test_recall_schema_has_query(self)` (method)
+- L173 `test_reflect_schema_has_query(self)` (method)
+- L177 `test_get_tool_schemas_returns_three(self, provider)` (method)
+- L183 `test_context_mode_returns_no_tools(self, provider_with_config)` (method)
+- L193 `TestConfig` (class)
+- L194 `test_default_values(self, provider)` (method)
+- L210 `test_recall_types_default_is_observation_only(self, provider)` (method) — Auto-recall must filter to observation by default.
+- L214 `test_recall_types_explicit_list_overrides_default(self, provider_with_config)` (method)
+- L218 `test_recall_types_csv_string_accepted(self, provider_with_config)` (method) — For parity with recall_tags, comma-separated strings work too.
+- L223 `test_recall_types_empty_list_falls_back_to_default(self, provider_with_config)` (method) — An empty list shouldn't disable the filter (would be wider than default).
+- L228 `test_custom_config_values(self, provider_with_config)` (method)
+- L265 `test_config_from_env_fallback(self, tmp_path, monkeypatch)` (method) — When no config file exists, falls back to env vars.
+- L281 `test_embedded_profile_env_includes_idle_timeout_from_config(self)` (method)
+- L290 `test_embedded_profile_env_includes_idle_timeout_from_env(self, monkeypatch)` (method)
+- L300 `test_get_client_passes_idle_timeout_to_hindsight_embedded(self, monkeypatch)` (method)
+- L327 `TestPostSetup` (class)
+- L328 `test_local_embedded_setup_materializes_profile_env(self, tmp_path, monkeypatch)` (method)
+- L362 `test_local_embedded_setup_respects_existing_profile_name(self, tmp_path, monkeypatch)` (method)
+- L385 `test_local_embedded_setup_preserves_existing_key_when_input_left_blank(self, tmp_path, monkeypatch)` (method)
+- L411 `test_local_embedded_setup_blank_inputs_preserve_existing_config(self, tmp_path, monkeypatch)` (method) — Pressing Enter through setup should keep existing Hindsight values.
+- L465 `TestToolHandlers` (class)
+- L466 `test_retain_success(self, provider)` (method)
+- L476 `test_retain_with_tags(self, provider_with_config)` (method)
+- L482 `test_retain_merges_per_call_tags_with_config_tags(self, provider_with_config)` (method)
+- L491 `test_retain_without_tags(self, provider)` (method)
+- L496 `test_retain_missing_content(self, provider)` (method)
+- L502 `test_recall_success(self, provider)` (method)
+- L509 `test_recall_passes_max_tokens(self, provider_with_config)` (method)
+- L515 `test_recall_passes_tags(self, provider_with_config)` (method)
+- L522 `test_recall_passes_types(self, provider_with_config)` (method)
+- L528 `test_recall_no_results(self, provider)` (method)
+- L535 `test_recall_missing_query(self, provider)` (method)
+- L541 `test_reflect_success(self, provider)` (method)
+- L547 `test_reflect_missing_query(self, provider)` (method)
+- L553 `test_unknown_tool(self, provider)` (method)
+- L559 `test_retain_error_handling(self, provider)` (method)
+- L567 `test_recall_error_handling(self, provider)` (method)
+- L574 `test_local_embedded_recall_reconnects_after_idle_shutdown(self, provider, monkeypatch)` (method)
+- L602 `TestPrefetch` (class)
+- L603 `test_prefetch_returns_empty_when_no_result(self, provider)` (method)
+- L606 `test_prefetch_default_preamble(self, provider)` (method)
+- L612 `test_prefetch_custom_preamble(self, provider_with_config)` (method)
+- L619 `test_queue_prefetch_skipped_in_tools_mode(self, provider_with_config)` (method)
+- L625 `test_queue_prefetch_skipped_when_auto_recall_off(self, provider_with_config)` (method)
+- L630 `test_queue_prefetch_truncates_query(self, provider_with_config)` (method)
+- L651 `test_queue_prefetch_passes_recall_params(self, provider_with_config)` (method)
+- L674 `TestSyncTurn` (class)
+- L675 `test_sync_turn_retains_metadata_rich_turn(self, provider_with_config)` (method)
+- L728 `test_sync_turn_skipped_when_auto_retain_off(self, provider_with_config)` (method)
+- L734 `test_sync_turn_with_tags(self, provider_with_config)` (method)
+- L743 `test_sync_turn_uses_aretain_batch(self, provider)` (method) — sync_turn should use aretain_batch with retain_async.
+- L754 `test_sync_turn_custom_context(self, provider_with_config)` (method)
+- L761 `test_sync_turn_every_n_turns(self, provider_with_config)` (method)
+- L783 `test_sync_turn_accumulates_full_session(self, provider_with_config)` (method) — Each retain sends the ENTIRE session, not just the latest batch.
+- L804 `test_sync_turn_passes_document_id(self, provider)` (method) — sync_turn should pass document_id (session_id + per-startup ts).
+- L813 `test_resume_creates_new_document(self, tmp_path, monkeypatch)` (method) — Resuming a session (re-initializing) gets a new document_id
+- L837 `test_sync_turn_session_tag(self, provider)` (method) — Each retain should be tagged with session:<id> for filtering.
+- L844 `test_sync_turn_parent_session_tag(self, tmp_path, monkeypatch)` (method) — When initialized with parent_session_id, parent tag is added.
+- L867 `test_sync_turn_error_does_not_raise(self, provider)` (method)
+- L872 `test_sync_turn_preserves_unicode(self, provider_with_config)` (method) — Non-ASCII text (CJK, ZWJ emoji) must survive JSON round-trip intact.
+- L894 `TestShutdownRace` (class)
+- L895 `test_sync_turn_uses_single_writer_thread(self, provider)` (method) — All retains run through one long-lived writer thread.
+- L909 `test_sync_turn_after_shutdown_is_dropped(self, provider)` (method) — Once shutdown has fired, new sync_turn() calls are no-ops.
+- L927 `test_queue_prefetch_after_shutdown_is_dropped(self, provider)` (method)
+- L932 `test_shutdown_drains_pending_retains(self, provider)` (method) — Shutdown must wait for queued retains to complete, not abandon them.
+- L946 `test_shutdown_is_idempotent(self, provider)` (method)
+- L959 `TestSessionSwitchBufferFlush` (class)
+- L960 `test_buffered_turns_flushed_before_clear(self, provider_with_config)` (method) — retain_every_n_turns > 1 must not silently drop partial buffers
+- L999 `test_no_flush_when_buffer_empty(self, provider)` (method) — Switch with no buffered turns must not fire a spurious retain.
+- L1007 `test_prefetch_result_cleared_on_switch(self, provider)` (method) — Stale recall text from the old session must not leak into the
+- L1016 `test_in_flight_prefetch_thread_drained_on_switch(self, provider, monkeypatch)` (method) — on_session_switch must wait for an in-flight prefetch from the
+- L1042 `test_flush_serializes_behind_pending_retains_via_writer_queue(self, provider_with_config)` (method) — The flush closure must ride the same _retain_queue sync_turn
+- L1103 `TestUpdateModeAppendCapability` (class)
+- L1104 `_clear_capability_cache(self)` (method)
+- L1109 `test_legacy_api_falls_back_to_per_process_doc_id(self, provider, monkeypatch)` (method) — API returns no /version (or pre-0.5.0) — sync_turn must use the
+- L1127 `test_modern_api_uses_stable_doc_id_with_append(self, provider, monkeypatch)` (method) — API on >=0.5.0 — retain uses stable session_id and sets update_mode='append'.
+- L1143 `test_capability_cached_per_url(self, provider, monkeypatch)` (method) — The /version probe must run at most once per (process, api_url).
+- L1161 `test_legacy_warning_emitted_once(self, provider, monkeypatch, caplog)` (method) — One-time WARN nudges users to upgrade Hindsight.
+- L1180 `test_session_switch_flush_picks_capability_against_old_session(self, provider_with_config, monkeypatch)` (method) — When the API supports append, the flush on /reset must land
+- L1207 `TestSystemPrompt` (class)
+- L1208 `test_hybrid_mode_prompt(self, provider)` (method)
+- L1214 `test_context_mode_prompt(self, provider_with_config)` (method)
+- L1220 `test_tools_mode_prompt(self, provider_with_config)` (method)
+- L1232 `TestConfigSchema` (class)
+- L1233 `test_schema_has_all_new_fields(self, provider)` (method)
+- L1256 `TestBankIdTemplate` (class)
+- L1257 `test_sanitize_bank_segment_passthrough(self)` (method)
+- L1261 `test_sanitize_bank_segment_strips_unsafe(self)` (method)
+- L1266 `test_sanitize_bank_segment_empty(self)` (method)
+- L1270 `test_resolve_empty_template_uses_fallback(self)` (method)
+- L1276 `test_resolve_with_profile(self)` (method)
+- L1283 `test_resolve_with_multiple_placeholders(self)` (method)
+- L1292 `test_resolve_collapses_empty_placeholders(self)` (method)
+- L1300 `test_resolve_collapses_double_dashes(self)` (method)
+- L1308 `test_resolve_empty_rendered_falls_back(self)` (method)
+- L1315 `test_resolve_sanitizes_placeholder_values(self)` (method)
+- L1323 `test_resolve_invalid_template_returns_fallback(self)` (method)
+- L1331 `test_provider_uses_bank_id_template_from_config(self, tmp_path, monkeypatch)` (method)
+- L1355 `test_provider_without_template_uses_static_bank_id(self, tmp_path, monkeypatch)` (method)
+- L1376 `test_provider_template_with_missing_profile_falls_back(self, tmp_path, monkeypatch)` (method)
+- L1400 `TestAvailability` (class)
+- L1401 `test_available_with_api_key(self, tmp_path, monkeypatch)` (method)
+- L1410 `test_not_available_without_config(self, tmp_path, monkeypatch)` (method)
+- L1418 `test_available_in_local_mode(self, tmp_path, monkeypatch)` (method)
+- L1431 `test_available_with_snake_case_api_key_in_config(self, tmp_path, monkeypatch)` (method)
+- L1447 `test_local_mode_unavailable_when_runtime_import_fails(self, tmp_path, monkeypatch)` (method)
+- L1466 `test_initialize_disables_local_mode_when_runtime_import_fails(self, tmp_path, monkeypatch)` (method)
+- L1488 `TestSharedEventLoopLifecycle` (class) — Regression tests for #11923 — Hindsight leaking aiohttp ClientSession /
+- L1501 `test_shutdown_does_not_stop_shared_event_loop(self, provider_with_config)` (method)
+- L1544 `test_client_aclose_called_on_cloud_mode_shutdown(self, provider)` (method) — Per-provider session cleanup still runs even though the shared
+- L1558 `TestShutdown` (class)
+- L1559 `test_local_embedded_shutdown_closes_inner_async_client_on_shared_loop(self, provider)` (method)
+- L1577 `test_save_config_sets_owner_only_permissions(tmp_path)` (function) — hindsight/config.json must be written with 0o600 so API key is not world-readable.

@@ -1,0 +1,122 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:44'
+updated: '2026-06-08T00:38:44'
+---
+
+# tests/tools/test_voice_cli_integration.py
+
+Symbols in `tests/tools/test_voice_cli_integration.py`.
+
+- L13 `_make_voice_cli(**overrides)` (function) — Create a minimal HermesCLI with only voice-related attrs initialized.
+- L48 `TestMarkdownStripping` (class)
+- L49 `test_strips_bold(self)` (method)
+- L52 `test_strips_italic(self)` (method)
+- L55 `test_strips_inline_code(self)` (method)
+- L58 `test_strips_fenced_code_blocks(self)` (method)
+- L64 `test_strips_headers(self)` (method)
+- L67 `test_strips_list_markers(self)` (method)
+- L74 `test_strips_urls(self)` (method)
+- L80 `test_strips_markdown_links(self)` (method)
+- L87 `test_strips_horizontal_rules(self)` (method)
+- L94 `test_empty_after_stripping_returns_empty(self)` (method)
+- L99 `test_long_text_not_truncated(self)` (method) — _strip_markdown_for_tts does NOT truncate — that's the caller's job.
+- L105 `test_complex_response(self)` (method)
+- L130 `TestVoiceCommandParsing` (class) — Test _handle_voice_command logic without full CLI setup.
+- L133 `test_parse_subcommands(self)` (method) — Verify subcommand extraction from /voice commands.
+- L153 `TestVoiceStateLock` (class)
+- L154 `test_lock_protects_state(self)` (method) — Verify that concurrent state changes don't corrupt state.
+- L178 `TestStreamingTTSActivation` (class) — Verify streaming TTS uses lazy imports to check availability.
+- L181 `test_activates_when_elevenlabs_and_sounddevice_available(self)` (method) — use_streaming_tts should be True when provider is elevenlabs
+- L219 `test_does_not_activate_when_elevenlabs_missing(self)` (method) — use_streaming_tts stays False when elevenlabs import fails.
+- L242 `test_does_not_activate_when_sounddevice_missing(self)` (method) — use_streaming_tts stays False when sounddevice import fails.
+- L266 `test_does_not_activate_for_non_elevenlabs_provider(self)` (method) — use_streaming_tts stays False when provider is not elevenlabs.
+- L288 `test_stale_boolean_imports_no_longer_exist(self)` (method) — Confirm _HAS_ELEVENLABS and _HAS_AUDIO are not in tts_tool module.
+- L301 `TestVoiceMessagePrefix` (class) — Voice mode should inject instruction via user message prefix,
+- L305 `test_prefix_added_when_voice_mode_active(self)` (method) — When voice mode is active and message is str, agent_message
+- L322 `test_no_prefix_when_voice_mode_inactive(self)` (method) — When voice mode is off, message passes through unchanged.
+- L337 `test_no_prefix_for_multimodal_content(self)` (method) — When message is a list (multimodal), no prefix is added.
+- L352 `test_history_stays_clean(self)` (method) — conversation_history should contain the original message,
+- L373 `test_enable_voice_mode_does_not_modify_system_prompt(self)` (method) — _enable_voice_mode should NOT modify self.system_prompt or
+- L398 `TestVprintForceParameter` (class) — _vprint should suppress output during streaming TTS unless force=True.
+- L401 `_make_agent_with_stream(self, stream_active: bool)` (method) — Create a minimal agent-like object with _vprint.
+- L415 `test_suppressed_during_streaming(self, capsys)` (method) — Normal _vprint output is suppressed when streaming TTS is active.
+- L422 `test_shown_when_not_streaming(self, capsys)` (method) — Normal _vprint output is shown when streaming is not active.
+- L429 `test_force_shown_during_streaming(self, capsys)` (method) — force=True bypasses the streaming suppression.
+- L436 `test_force_shown_when_not_streaming(self, capsys)` (method) — force=True works normally when not streaming (no regression).
+- L443 `test_error_messages_use_force_in_run_agent(self)` (method) — Verify that critical error _vprint calls in run_agent.py
+- L497 `TestEdgeTTSLazyImport` (class) — Bug #3: _generate_edge_tts must use lazy import, not bare module name.
+- L500 `test_generate_edge_tts_calls_lazy_import(self)` (method) — AST check: _generate_edge_tts must call _import_edge_tts(), not
+- L535 `TestStreamingTTSOutputStreamCleanup` (class) — Bug #7: output_stream must be closed in finally block.
+- L538 `test_output_stream_closed_in_finally(self)` (method) — AST check: stream_tts_to_speaker's finally block must close
+- L562 `TestCtrlCResetsContinuousMode` (class) — Bug #4: Ctrl+C cancel must reset _voice_continuous.
+- L565 `test_ctrl_c_handler_resets_voice_continuous(self)` (method) — Source check: Ctrl+C voice cancel block must set
+- L591 `TestDisableVoiceModeStopsTTS` (class) — Bug #5: _disable_voice_mode must stop active TTS playback.
+- L594 `test_disable_voice_mode_calls_stop_playback(self)` (method) — Source check: _disable_voice_mode must call stop_playback().
+- L608 `TestVoiceStatusUsesConfigKey` (class) — Bug #8: _show_voice_status must read record key from config.
+- L611 `test_show_voice_status_not_hardcoded(self)` (method) — Source check: _show_voice_status must not hardcode Ctrl+B.
+- L629 `test_show_voice_status_reads_config(self)` (method) — Source check: _show_voice_status must use load_config().
+- L651 `TestChatTTSCleanupOnException` (class) — Bug #2: chat() must clean up streaming TTS resources on exception.
+- L654 `test_chat_has_finally_for_tts_cleanup(self)` (method) — AST check: chat() method must have a finally block that cleans up
+- L684 `TestBrowserToolSignalHandlerRemoved` (class) — browser_tool.py must NOT register SIGINT/SIGTERM handlers that call
+- L689 `test_no_signal_handler_registration(self)` (method) — Source check: browser_tool.py must not call signal.signal()
+- L711 `TestKeyHandlerNeverBlocks` (class) — The Ctrl+B key handler runs in prompt_toolkit's event-loop thread.
+- L719 `test_start_recording_not_called_directly_in_handler(self)` (method) — AST check: handle_voice_record must NOT call _voice_start_recording()
+- L741 `test_processing_guard_in_start_path(self)` (method) — Source check: key handler must check _voice_processing before
+- L767 `test_processing_set_atomically_with_recording_false(self)` (method) — Source check: _voice_stop_and_transcribe must set _voice_processing = True
+- L805 `TestHandleVoiceCommandReal` (class) — Tests _handle_voice_command routing with real CLI instance.
+- L808 `_cli(self)` (method)
+- L817 `test_on_calls_enable(self, _cp)` (method)
+- L823 `test_off_calls_disable(self, _cp)` (method)
+- L829 `test_tts_calls_toggle(self, _cp)` (method)
+- L835 `test_status_calls_show(self, _cp)` (method)
+- L841 `test_toggle_off_when_enabled(self, _cp)` (method)
+- L848 `test_toggle_on_when_disabled(self, _cp)` (method)
+- L855 `test_unknown_subcommand(self, mock_cp)` (method)
+- L865 `TestEnableVoiceModeReal` (class) — Tests _enable_voice_mode with real CLI instance.
+- L874 `test_success_sets_voice_mode(self, _env, _req, _cfg, _cp)` (method)
+- L880 `test_already_enabled_noop(self, _cp)` (method)
+- L888 `test_env_check_fails(self, _env, _cp)` (method)
+- L899 `test_requirements_fail(self, _env, _req, _cp)` (method)
+- L910 `test_auto_tts_from_config(self, _env, _req, _cfg, _cp)` (method)
+- L921 `test_no_auto_tts_default(self, _env, _req, _cfg, _cp)` (method)
+- L932 `test_config_exception_still_enables(self, _env, _req, _cfg, _cp)` (method)
+- L938 `TestVoiceBeepConfigReal` (class) — Tests the CLI voice beep toggle.
+- L942 `test_beeps_enabled_by_default(self, _cfg)` (method)
+- L947 `test_beeps_can_be_disabled(self, _cfg)` (method)
+- L975 `test_start_recording_skips_beep_when_disabled(self, _cfg, _req, mock_create, mock_beep, mock_thread, _cp)` (method)
+- L990 `TestDisableVoiceModeReal` (class) — Tests _disable_voice_mode with real CLI instance.
+- L995 `test_all_flags_reset(self, _sp, _cp)` (method)
+- L1005 `test_active_recording_cancelled(self, _sp, _cp)` (method)
+- L1014 `test_stop_playback_called(self, mock_sp, _cp)` (method)
+- L1021 `test_tts_done_event_set(self, _sp, _cp)` (method)
+- L1029 `test_no_recorder_no_crash(self, _sp, _cp)` (method)
+- L1036 `test_stop_playback_exception_swallowed(self, _sp, _cp)` (method)
+- L1042 `TestVoiceSpeakResponseReal` (class) — Tests _voice_speak_response with real CLI instance.
+- L1045 `test_async_scheduling_clears_done_before_thread_start(self)` (method)
+- L1065 `test_early_return_when_tts_off(self, _cp)` (method)
+- L1078 `test_markdown_stripped(self, mock_tts, _play, _mkd, _isf, _gsz, _unl, _cp)` (method)
+- L1089 `test_code_blocks_removed(self, mock_tts, _mkd, _cp)` (method)
+- L1099 `test_empty_after_strip_returns_early(self, _mkd, _cp)` (method)
+- L1108 `test_long_text_truncated(self, mock_tts, _mkd, _cp)` (method)
+- L1117 `test_exception_sets_done_event(self, _tts, _mkd, _cp)` (method)
+- L1130 `test_play_audio_called(self, _tts, mock_play, _mkd, _isf, _gsz, _unl, _cp)` (method)
+- L1136 `TestVoiceStopAndTranscribeReal` (class) — Tests _voice_stop_and_transcribe with real CLI instance.
+- L1140 `test_guard_not_recording(self, _cp)` (method)
+- L1147 `test_no_recorder_returns_early(self, _cp)` (method)
+- L1156 `test_no_speech_detected(self, _beep, _cp)` (method)
+- L1166 `test_no_speech_detected_skips_beep_when_disabled(self, mock_beep, _cfg, _cp)` (method)
+- L1180 `test_successful_transcription_queues_input(self, _beep, _tr, _cfg, _isf, _unl, _cp)` (method)
+- L1196 `test_empty_transcript_not_queued(self, _beep, _tr, _cfg, _isf, _unl, _cp)` (method)
+- L1210 `test_transcription_failure(self, _beep, _tr, _cfg, _isf, _unl, _cp)` (method)
+- L1229 `test_exception_caught(self, _beep, _tr, _cfg, _isf, _unl, _cp)` (method)
+- L1242 `test_processing_flag_cleared(self, _beep, _cp)` (method)
+- L1251 `test_continuous_restarts_on_no_speech(self, _beep, _cp)` (method)
+- L1267 `test_continuous_no_restart_on_success(self, _beep, _tr, _cfg, _isf, _unl, _cp)` (method)
+- L1285 `test_stt_model_from_config(self, _beep, mock_tr, _cfg, _isf, _unl, _cp)` (method)
+- L1298 `TestRefreshLevelLock` (class) — Bug: _refresh_level thread read _voice_recording without lock.
+- L1301 `test_refresh_stops_when_recording_false(self)` (method)

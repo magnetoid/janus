@@ -1,0 +1,166 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:40'
+updated: '2026-06-08T00:38:40'
+---
+
+# hermes_cli/gateway.py
+
+Symbols in `hermes_cli/gateway.py`.
+
+- L57 `GatewayRuntimeSnapshot` (class)
+- L65 `running(self)` (method)
+- L69 `has_process_service_mismatch(self)` (method)
+- L74 `ProfileGatewayProcess` (class)
+- L80 `_get_service_pids()` (function) — Return PIDs currently managed by systemd or launchd gateway services.
+- L154 `_get_parent_pid(pid: int)` (function) — Return the parent PID for ``pid``, or ``None`` when unavailable.
+- L197 `_is_pid_ancestor_of_current_process(target_pid: int)` (function) — Return True when ``target_pid`` is this process or one of its ancestors.
+- L212 `_request_gateway_self_restart(pid: int)` (function) — Ask a running gateway ancestor to restart itself asynchronously.
+- L225 `_graceful_restart_via_sigusr1(pid: int, drain_timeout: float)` (function) — Send SIGUSR1 to a gateway PID and wait for it to exit gracefully.
+- L279 `_get_ancestor_pids()` (function) — Return the set of PIDs in the current process's ancestor chain.
+- L299 `_append_unique_pid(pids: list[int], pid: int | None, exclude_pids: set[int])` (function)
+- L309 `_scan_gateway_pids(exclude_pids: set[int], all_profiles: bool=False)` (function) — Best-effort process-table scan for gateway PIDs.
+- L527 `_filter_venv_launcher_stubs(pids: list[int])` (function) — Drop venv-launcher ``pythonw.exe`` stubs that are parents of the real
+- L557 `find_gateway_pids(exclude_pids: set | None=None, all_profiles: bool=False)` (function) — Find PIDs of running gateway processes.
+- L587 `find_profile_gateway_processes(exclude_pids: set | None=None)` (function) — Return running gateway PIDs mapped to Hermes profiles via PID files.
+- L614 `_gateway_run_args_for_profile(profile: str)` (function)
+- L622 `launch_detached_profile_gateway_restart(profile: str, old_pid: int)` (function) — Relaunch a manually-run profile gateway after its current PID exits.
+- L746 `_probe_systemd_service_running(system: bool=False)` (function)
+- L764 `_read_systemd_unit_environment(system: bool=False)` (function) — Parse the gateway unit's ``Environment=`` directives.
+- L803 `_sync_hermes_home_from_systemd_unit(system: bool)` (function) — When acting on a system-scope unit, adopt its ``HERMES_HOME``.
+- L824 `_read_systemd_unit_properties(system: bool=False, properties: tuple[str, ...]=('ActiveState', 'SubState', 'Result', 'ExecMainStatus', 'MainPID'))` (function) — Return selected ``systemctl show`` properties for the gateway unit.
+- L865 `_systemd_main_pid_from_props(props: dict[str, str])` (function)
+- L873 `_systemd_main_pid(system: bool=False)` (function)
+- L877 `_read_gateway_runtime_status()` (function)
+- L887 `_gateway_runtime_status_for_pid(pid: int | None)` (function)
+- L900 `_wait_for_systemd_service_restart(*, system: bool=False, previous_pid: int | None=None, timeout: float=60.0)` (function) — Wait for the gateway service to become active after a restart handoff.
+- L967 `_systemd_unit_is_start_limited(props: dict[str, str])` (function)
+- L973 `_systemd_error_indicates_start_limit(exc: subprocess.CalledProcessError)` (function)
+- L990 `_systemd_service_is_start_limited(system: bool=False)` (function)
+- L994 `_print_systemd_start_limit_wait(system: bool=False)` (function)
+- L1009 `_recover_pending_systemd_restart(system: bool=False, previous_pid: int | None=None)` (function) — Recover a planned service restart that is stuck in systemd state.
+- L1067 `_probe_launchd_service_running()` (function)
+- L1082 `get_gateway_runtime_snapshot(system: bool=False)` (function) — Return a unified view of gateway liveness for the current profile.
+- L1137 `_format_gateway_pids(pids: tuple[int, ...] | list[int], *, limit: int | None=3)` (function)
+- L1150 `_print_gateway_process_mismatch(snapshot: GatewayRuntimeSnapshot)` (function)
+- L1162 `_print_other_profiles_gateway_status()` (function) — Print a summary of gateway status across all profiles.
+- L1187 `_gateway_list()` (function) — List all profiles and their gateway running status.
+- L1228 `kill_gateway_processes(force: bool=False, exclude_pids: set | None=None, all_profiles: bool=False)` (function) — Kill any running gateway processes. Returns count killed.
+- L1258 `stop_profile_gateway()` (function) — Stop only the gateway for the current profile (HERMES_HOME-scoped).
+- L1304 `is_linux()` (function)
+- L1311 `_wsl_systemd_operational()` (function) — Check if systemd is actually running as PID 1 on WSL.
+- L1320 `_systemd_operational(system: bool=False)` (function) — Return True when the requested systemd scope is usable.
+- L1337 `_container_systemd_operational()` (function) — Return True when a container exposes working user or system systemd.
+- L1356 `supports_systemd_services()` (function)
+- L1368 `is_macos()` (function)
+- L1372 `is_windows()` (function)
+- L1376 `_windows_gateway_should_absorb_console_controls()` (function) — Return True for detached Windows gateway runs that should ignore Ctrl+C.
+- L1405 `_profile_suffix()` (function) — Derive a service-name suffix from the current HERMES_HOME.
+- L1433 `_profile_arg(hermes_home: str | None=None)` (function) — Return ``--profile <name>`` only when HERMES_HOME is a named profile.
+- L1462 `get_service_name()` (function) — Derive a systemd service name scoped to this HERMES_HOME.
+- L1475 `get_systemd_unit_path(system: bool=False)` (function)
+- L1482 `UserSystemdUnavailableError` (class) — Raised when ``systemctl --user`` cannot reach the user D-Bus session.
+- L1491 `SystemScopeRequiresRootError` (class) — Raised when a system-scope gateway operation is attempted as non-root.
+- L1508 `__str__(self)` (method)
+- L1512 `_user_dbus_socket_path()` (function) — Return the expected per-user D-Bus socket path (regardless of existence).
+- L1518 `_user_systemd_private_socket_path()` (function) — Return the per-user systemd private socket path (regardless of existence).
+- L1524 `_user_systemd_socket_ready()` (function) — Return True when user-scope systemd has a reachable control socket.
+- L1537 `_ensure_user_systemd_env()` (function) — Ensure DBUS_SESSION_BUS_ADDRESS and XDG_RUNTIME_DIR are set for systemctl --user.
+- L1559 `_wait_for_user_dbus_socket(timeout: float=3.0)` (function) — Poll for the user systemd runtime socket(s), up to ``timeout`` seconds.
+- L1577 `_preflight_user_systemd(*, auto_enable_linger: bool=True)` (function) — Ensure ``systemctl --user`` will reach the user-scope systemd instance.
+- L1665 `_raise_user_systemd_unavailable(username: str, *, reason: str, fix_hint: str)` (function) — Build a user-facing error message and raise UserSystemdUnavailableError.
+- L1683 `_systemctl_cmd(system: bool=False)` (function)
+- L1689 `_journalctl_cmd(system: bool=False)` (function)
+- L1693 `_run_systemctl(args: list[str], *, system: bool=False, **kwargs)` (function) — Run a systemctl command, raising RuntimeError if systemctl is missing.
+- L1708 `_service_scope_label(system: bool=False)` (function)
+- L1712 `get_installed_systemd_scopes()` (function)
+- L1725 `has_conflicting_systemd_units()` (function)
+- L1746 `_legacy_unit_search_paths()` (function) — Return ``[(is_system, base_dir), ...]`` — directories to scan for legacy units.
+- L1758 `_find_legacy_hermes_units()` (function) — Return ``[(unit_name, unit_path, is_system)]`` for legacy Hermes gateway units.
+- L1796 `has_legacy_hermes_units()` (function) — Return True when any legacy Hermes gateway unit files exist.
+- L1801 `print_legacy_unit_warning()` (function) — Warn about legacy Hermes gateway unit files if any are installed.
+- L1820 `remove_legacy_hermes_units(interactive: bool=True, dry_run: bool=False)` (function) — Stop, disable, and remove legacy Hermes gateway unit files.
+- L1922 `print_systemd_scope_conflict_warning()` (function)
+- L1940 `_require_root_for_system_service(action: str)` (function)
+- L1948 `_system_service_identity(run_as_user: str | None=None)` (function)
+- L1983 `_read_systemd_user_from_unit(unit_path: Path)` (function)
+- L1994 `_default_system_service_user()` (function)
+- L2001 `prompt_linux_gateway_install_scope()` (function)
+- L2014 `install_linux_gateway_from_setup(force: bool=False, enable_on_startup: bool=True)` (function)
+- L2053 `get_systemd_linger_status()` (function) — Return systemd linger status for the current user.
+- L2103 `print_systemd_linger_guidance()` (function) — Print the current linger status and the fix when it is disabled.
+- L2117 `_launchd_user_home()` (function) — Return the real macOS user home for launchd artifacts.
+- L2128 `get_launchd_plist_path()` (function) — Return the launchd plist path, scoped per profile.
+- L2139 `_detect_venv_dir()` (function) — Detect the active virtualenv directory.
+- L2172 `get_python_path()` (function)
+- L2189 `_build_user_local_paths(home: Path, path_entries: list[str])` (function) — Return user-local bin dirs that exist and aren't already in *path_entries*.
+- L2200 `_build_wsl_interop_paths(path_entries: list[str])` (function) — Return WSL Windows interop PATH entries for generated systemd units.
+- L2240 `_remap_path_for_user(path: str, target_home_dir: str)` (function) — Remap *path* from the current user's home to *target_home_dir*.
+- L2266 `_hermes_home_for_target_user(target_home_dir: str)` (function) — Remap the current HERMES_HOME to the equivalent under a target user's home.
+- L2292 `_build_service_path_dirs(project_root: Path | None=None)` (function) — Build PATH directory list for service units, excluding non-existent dirs.
+- L2326 `_stable_service_working_dir()` (function) — Return a WorkingDirectory that will not disappear out from under systemd.
+- L2354 `generate_systemd_unit(system: bool=False, run_as_user: str | None=None)` (function)
+- L2472 `_normalize_service_definition(text: str)` (function)
+- L2476 `_normalize_launchd_plist_for_comparison(text: str)` (function) — Normalize launchd plist text for staleness checks.
+- L2495 `systemd_unit_is_current(system: bool=False)` (function)
+- L2508 `refresh_systemd_unit_if_needed(system: bool=False)` (function) — Rewrite the installed systemd unit when the generated definition has changed.
+- L2546 `_print_linger_enable_warning(username: str, detail: str | None=None)` (function)
+- L2560 `_ensure_linger_enabled()` (function) — Enable linger when possible so the user gateway survives logout.
+- L2603 `_select_systemd_scope(system: bool=False)` (function)
+- L2612 `_system_scope_wizard_would_need_root(system: bool=False)` (function) — True when the setup wizard is about to trigger a system-scope operation
+- L2627 `_print_system_scope_remediation(action: str)` (function) — Print actionable remediation when the wizard skips a system-scope
+- L2652 `_get_restart_drain_timeout()` (function) — Return the configured gateway restart drain timeout in seconds.
+- L2666 `systemd_install(force: bool=False, system: bool=False, run_as_user: str | None=None, enable_on_startup: bool=True)` (function)
+- L2742 `systemd_uninstall(system: bool=False)` (function)
+- L2761 `_require_service_installed(action: str, system: bool=False)` (function)
+- L2770 `systemd_start(system: bool=False)` (function)
+- L2785 `systemd_stop(system: bool=False)` (function)
+- L2813 `systemd_restart(system: bool=False)` (function)
+- L2912 `systemd_status(deep: bool=False, system: bool=False, full: bool=False)` (function)
+- L3038 `get_launchd_label()` (function) — Return the launchd service label, scoped per profile.
+- L3044 `_launchd_domain()` (function)
+- L3064 `_launchd_error_indicates_unloaded(exc: subprocess.CalledProcessError)` (function) — True when launchctl failed because the job isn't loaded (retry bootstrap).
+- L3069 `_launchctl_domain_unsupported(returncode: int)` (function) — True when launchctl can't manage the domain even after a fresh bootstrap.
+- L3079 `_gateway_run_command()` (function) — Build the `python -m hermes_cli.main [--profile X] gateway run --replace` argv.
+- L3093 `_spawn_detached_gateway()` (function) — Launch the gateway as a detached background process (launchd fallback).
+- L3127 `_launchd_fallback_to_detached(reason: str, *, exit_on_failure: bool=True)` (function) — Start the gateway detached when launchd can't manage it, with guidance.
+- L3153 `generate_launchd_plist()` (function)
+- L3250 `launchd_plist_is_current()` (function) — Check if the installed launchd plist matches the currently generated one.
+- L3263 `refresh_launchd_plist_if_needed()` (function) — Rewrite the installed launchd plist when the generated definition has changed.
+- L3293 `launchd_install(force: bool=False)` (function)
+- L3332 `launchd_uninstall()` (function)
+- L3348 `launchd_start()` (function)
+- L3409 `launchd_stop()` (function)
+- L3440 `_wait_for_gateway_exit(timeout: float=10.0, force_after: float | None=5.0)` (function) — Wait for the gateway process (by saved PID) to exit.
+- L3492 `launchd_restart()` (function)
+- L3543 `launchd_status(deep: bool=False)` (function)
+- L3587 `_truthy_env(value: str | None)` (function)
+- L3591 `_is_official_docker_checkout()` (function)
+- L3598 `_guard_official_docker_root_gateway()` (function) — Refuse gateway startup when the official Docker privilege drop was bypassed.
+- L3625 `run_gateway(verbose: int=0, quiet: bool=False, replace: bool=False)` (function) — Run the gateway in foreground.
+- L4378 `_all_platforms()` (function) — Return the full list of platforms for setup menus.
+- L4438 `_platform_status(platform: dict)` (function) — Return a plain-text status string for a platform.
+- L4518 `_runtime_health_lines()` (function) — Summarize the latest persisted gateway runtime health state.
+- L4553 `_setup_standard_platform(platform: dict)` (function) — Interactive setup for Telegram, Discord, or Slack.
+- L4712 `_setup_whatsapp()` (function) — Delegate to the existing WhatsApp setup flow.
+- L4720 `_setup_dingtalk()` (function) — Configure DingTalk — QR scan (recommended) or manual credential entry.
+- L4780 `_setup_wecom()` (function) — Interactive setup for WeCom — scan QR code or manual credential input.
+- L4905 `_is_service_installed()` (function) — Check if the gateway is installed as a system service.
+- L4921 `_is_service_running()` (function) — Check if the gateway service is currently running.
+- L4978 `_setup_weixin()` (function) — Interactive setup for Weixin / WeChat personal accounts.
+- L5145 `_setup_feishu()` (function) — Interactive setup for Feishu / Lark — scan-to-create or manual credentials.
+- L5338 `_setup_qqbot()` (function) — Interactive setup for QQ Bot — scan-to-configure or manual credentials.
+- L5464 `_setup_signal()` (function) — Interactive setup for Signal messenger.
+- L5595 `_builtin_setup_fn(key: str)` (function) — Resolve the interactive setup function for a built-in platform key.
+- L5625 `_configure_platform(platform: dict)` (function) — Run the interactive setup flow for a single platform.
+- L5669 `gateway_setup()` (function) — Interactive setup for messaging platforms + gateway service.
+- L5932 `_dispatch_via_service_manager_if_s6(action: str, profile: str | None=None)` (function) — If we're in a container with s6, dispatch gateway lifecycle via s6.
+- L5983 `_dispatch_all_via_service_manager_if_s6(action: str)` (function) — Inside a container with s6, dispatch ``--all`` lifecycle to every
+- L6035 `gateway_command(args)` (function) — Handle gateway subcommands.
+- L6056 `_maybe_redirect_run_to_s6_supervision(args)` (function) — Inside an s6 container, redirect bare ``gateway run`` to the
+- L6148 `_block_until_terminated()` (function) — Keep the s6 CMD process alive until the container is stopped.
+- L6171 `_gateway_command_inner(args)` (function)

@@ -1,0 +1,231 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:40'
+updated: '2026-06-08T00:38:40'
+---
+
+# gateway/platforms/feishu.py
+
+Symbols in `gateway/platforms/feishu.py`.
+
+- L313 `FeishuPostMediaRef` (class)
+- L320 `FeishuMentionRef` (class)
+- L328 `_FeishuBotIdentity` (class)
+- L333 `matches(self, *, open_id: str, user_id: str, name: str)` (method)
+- L345 `FeishuPostParseResult` (class)
+- L352 `FeishuNormalizedMessage` (class)
+- L364 `FeishuAdapterSettings` (class)
+- L401 `FeishuGroupRule` (class) — Per-group policy rule for controlling which users may interact with the bot.
+- L411 `FeishuBatchState` (class)
+- L431 `_is_bot_sender(sender: Any)` (function)
+- L436 `_sender_identity(sender: Any)` (function)
+- L456 `_escape_markdown_text(text: str)` (function)
+- L460 `_to_boolean(value: Any)` (function)
+- L464 `_is_style_enabled(style: Dict[str, Any] | None, key: str)` (function)
+- L470 `_wrap_inline_code(text: str)` (function)
+- L477 `_sanitize_fence_language(language: str)` (function)
+- L481 `_render_text_element(element: Dict[str, Any])` (function)
+- L503 `_render_code_block_element(element: Dict[str, Any])` (function)
+- L514 `_strip_markdown_to_plain_text(text: str)` (function) — Strip markdown formatting to plain text for Feishu text fallbacks.
+- L532 `_coerce_int(value: Any, default: Optional[int]=None, min_value: int=0)` (function) — Coerce value to int with optional default and minimum constraint.
+- L541 `_coerce_required_int(value: Any, default: int, min_value: int=0)` (function)
+- L551 `_build_markdown_post_payload(content: str)` (function)
+- L563 `_build_markdown_post_rows(content: str)` (function) — Build Feishu post rows while isolating fenced code blocks.
+- L612 `parse_feishu_post_payload(payload: Any, *, mentions_map: Optional[Dict[str, FeishuMentionRef]]=None)` (function)
+- L648 `_resolve_post_payload(payload: Any)` (function)
+- L662 `_resolve_locale_payload(payload: Any)` (function)
+- L680 `_to_post_payload(candidate: Any)` (function)
+- L692 `_render_post_element(element: Any, image_keys: List[str], media_refs: List[FeishuPostMediaRef], mentions_map: Optional[Dict[str, FeishuMentionRef]]=None)` (function)
+- L772 `_render_nested_post(value: Any, image_keys: List[str], media_refs: List[FeishuPostMediaRef], mentions_map: Optional[Dict[str, FeishuMentionRef]]=None)` (function)
+- L805 `normalize_feishu_message(*, message_type: str, raw_content: str, mentions: Optional[Sequence[Any]]=None, bot: _FeishuBotIdentity=_FeishuBotIdentity())` (function)
+- L878 `_load_feishu_payload(raw_content: str)` (function)
+- L886 `_normalize_merge_forward_message(payload: Dict[str, Any])` (function)
+- L907 `_normalize_share_chat_message(payload: Dict[str, Any])` (function)
+- L935 `_normalize_interactive_message(message_type: str, payload: Dict[str, Any])` (function)
+- L968 `_collect_forward_entries(payload: Dict[str, Any])` (function)
+- L1006 `_collect_card_lines(payload: Any)` (function)
+- L1012 `_collect_action_labels(payload: Any)` (function)
+- L1031 `_collect_text_segments(value: Any, *, in_rich_block: bool)` (function)
+- L1072 `_build_media_ref_from_payload(payload: Dict[str, Any], *, resource_type: str)` (function)
+- L1083 `_attachment_placeholder(file_name: str)` (function)
+- L1088 `_find_header_title(payload: Any)` (function)
+- L1100 `_find_first_text(payload: Any, *, keys: tuple[str, ...])` (function)
+- L1113 `_walk_nodes(value: Any)` (function)
+- L1123 `_first_non_empty_text(*values: Any)` (function)
+- L1141 `_normalize_feishu_text(text: str, mentions_map: Optional[Dict[str, FeishuMentionRef]]=None)` (function)
+- L1162 `_unique_lines(lines: List[str])` (function)
+- L1178 `_extract_mention_ids(mention: Any)` (function)
+- L1198 `_build_mentions_map(mentions: Optional[Sequence[Any]], bot: _FeishuBotIdentity)` (function)
+- L1220 `_build_mention_hint(mentions: Sequence[FeishuMentionRef])` (function)
+- L1239 `_strip_edge_self_mentions(text: str, mentions: Sequence[FeishuMentionRef])` (function)
+- L1284 `_run_official_feishu_ws_client(ws_client: Any, adapter: Any)` (function) — Run the official Lark WS client in its own thread-local event loop.
+- L1347 `check_feishu_requirements()` (function) — Check if Feishu/Lark dependencies are available.
+- L1409 `FeishuAdapter` (class) — Feishu/Lark bot adapter.
+- L1424 `__init__(self, config: PlatformConfig)` (method)
+- L1477 `_load_settings(extra: Dict[str, Any])` (method)
+- L1578 `_apply_settings(self, settings: FeishuAdapterSettings)` (method)
+- L1609 `_build_event_handler(self)` (method)
+- L1641 `connect(self)` (method) — Connect to Feishu/Lark.
+- L1691 `disconnect(self)` (method) — Disconnect from Feishu/Lark.
+- L1736 `_cancel_pending_tasks(self, tasks: Dict[str, asyncio.Task])` (method)
+- L1744 `_reset_batch_buffers(self)` (method)
+- L1749 `_disable_websocket_auto_reconnect(self)` (method)
+- L1759 `_stop_webhook_server(self)` (method)
+- L1772 `send(self, chat_id: str, content: str, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a Feishu message.
+- L1829 `edit_message(self, chat_id: str, message_id: str, content: str, *, finalize: bool=False)` (method) — Edit a previously sent Feishu text/post message.
+- L1864 `send_exec_approval(self, chat_id: str, command: str, session_key: str, description: str='dangerous command', metadata: Optional[Dict[str, Any]]=None)` (method) — Send an interactive card with approval buttons.
+- L1935 `_build_update_prompt_card(*, prompt: str, default: str, prompt_id: int)` (method)
+- L1967 `send_update_prompt(self, chat_id: str, prompt: str, default: str='', session_key: str='', metadata: Optional[Dict[str, Any]]=None)` (method) — Send an interactive update prompt with Yes/No buttons.
+- L2003 `_build_resolved_approval_card(*, choice: str, user_name: str)` (method) — Build raw card JSON for a resolved approval action.
+- L2022 `_build_resolved_update_prompt_card(*, answer: str, user_name: str)` (method)
+- L2037 `_write_update_prompt_response(answer: str)` (method)
+- L2043 `send_voice(self, chat_id: str, audio_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send audio to Feishu as a file attachment plus optional caption.
+- L2062 `send_document(self, chat_id: str, file_path: str, caption: Optional[str]=None, file_name: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send a document/file attachment to Feishu.
+- L2082 `send_video(self, chat_id: str, video_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send a video file to Feishu.
+- L2101 `send_image_file(self, chat_id: str, image_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send a local image file to Feishu.
+- L2162 `send_typing(self, chat_id: str, metadata=None)` (method) — Feishu bot API does not expose a typing indicator.
+- L2166 `send_image(self, chat_id: str, image_url: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Download a remote image then send it through the native Feishu image flow.
+- L2194 `send_animation(self, chat_id: str, animation_url: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Feishu has no native GIF bubble; degrade to a downloadable file.
+- L2228 `get_chat_info(self, chat_id: str)` (method) — Return real chat metadata from Feishu when available.
+- L2265 `format_message(self, content: str)` (method) — Feishu text messages are plain text by default.
+- L2273 `_on_message_event(self, data: Any)` (method) — Normalize Feishu inbound events into MessageEvent.
+- L2293 `_enqueue_pending_inbound_event(self, data: Any)` (method) — Append an event to the pending-inbound queue.
+- L2328 `_drain_pending_inbound_events(self)` (method) — Replay queued inbound events once the adapter loop is ready.
+- L2407 `_handle_message_event_data(self, data: Any)` (method) — Shared inbound message handling for websocket and webhook transports.
+- L2436 `_on_message_read_event(self, data: P2ImMessageMessageReadV1)` (method) — Ignore read-receipt events that Hermes does not act on.
+- L2443 `_on_bot_added_to_chat(self, data: Any)` (method) — Handle bot being added to a group chat.
+- L2450 `_on_bot_removed_from_chat(self, data: Any)` (method) — Handle bot being removed from a group chat.
+- L2457 `_on_p2p_chat_entered(self, data: Any)` (method)
+- L2460 `_on_message_recalled(self, data: Any)` (method)
+- L2463 `_on_drive_comment_event(self, data: Any)` (method) — Handle drive document comment notification (drive.notice.comment_add_v1).
+- L2481 `_on_meeting_invited_event(self, data: Any)` (method) — Handle VC bot meeting invitation notification (vc.bot.meeting_invited_v1).
+- L2491 `_on_reaction_event(self, event_type: str, data: Any)` (method) — Route user reactions on bot messages as synthetic text events.
+- L2519 `_on_card_action_trigger(self, data: Any)` (method) — Handle card-action callback from the Feishu SDK (synchronous).
+- L2557 `_loop_accepts_callbacks(loop: Any)` (method) — Return True when the adapter loop can accept thread-safe submissions.
+- L2561 `_submit_on_loop(self, loop: Any, coro: Any)` (method) — Schedule background work on the adapter loop with shared failure logging.
+- L2575 `_is_interactive_operator_authorized(self, open_id: str)` (method) — Return whether this card-action operator may answer gated prompts.
+- L2585 `_handle_approval_card_action(self, *, event: Any, action_value: Dict[str, Any], loop: Any)` (method) — Schedule approval resolution and build the synchronous callback response.
+- L2641 `_handle_update_prompt_card_action(self, *, event: Any, action_value: Dict[str, Any], loop: Any)` (method) — Schedule update prompt resolution and build the synchronous callback response.
+- L2698 `_resolve_approval(self, approval_id: Any, choice: str, user_name: str, *, open_id: str='', chat_id: str='')` (method) — Pop approval state and unblock the waiting agent thread.
+- L2736 `_resolve_update_prompt(self, prompt_id: Any, answer: str, user_name: str, *, open_id: str='', chat_id: str='')` (method) — Persist an update prompt answer for the detached update process.
+- L2777 `_handle_reaction_event(self, event_type: str, data: Any)` (method) — Fetch the reacted-to message; if it was sent by this bot, emit a synthetic text event.
+- L2837 `_is_card_action_duplicate(self, token: str)` (method) — Return True if this card action token was already processed within the dedup window.
+- L2849 `_handle_card_action_event(self, data: Any)` (method) — Route Feishu interactive card button clicks as synthetic COMMAND events.
+- L2903 `_get_chat_lock(self, chat_id: str)` (method) — Return (creating if needed) the per-chat asyncio.Lock for serial message processing.
+- L2928 `_handle_message_with_guards(self, event: MessageEvent)` (method) — Dispatch a single event through the agent pipeline with per-chat serialization
+- L2944 `_reactions_enabled(self)` (method)
+- L2947 `_add_reaction(self, message_id: str, emoji_type: str)` (method) — Return the reaction_id on success, else None. The id is needed later for deletion.
+- L2987 `_remove_reaction(self, message_id: str, reaction_id: str)` (method)
+- L3017 `_remember_processing_reaction(self, message_id: str, reaction_id: str)` (method)
+- L3024 `_pop_processing_reaction(self, message_id: str)` (method)
+- L3027 `on_processing_start(self, event: MessageEvent)` (method)
+- L3037 `on_processing_complete(self, event: MessageEvent, outcome: ProcessingOutcome)` (method)
+- L3062 `_record_webhook_anomaly(self, remote_ip: str, status: str)` (method) — Increment the anomaly counter for remote_ip and emit a WARNING every threshold hits.
+- L3088 `_clear_webhook_anomaly(self, remote_ip: str)` (method) — Reset the anomaly counter for remote_ip after a successful request.
+- L3096 `_process_inbound_message(self, *, data: Any, message: Any, sender_id: Any, chat_type: str, message_id: str, is_bot: bool=False)` (method)
+- L3177 `_dispatch_inbound_event(self, event: MessageEvent)` (method) — Apply Feishu-specific burst protection before entering the base adapter.
+- L3191 `_should_batch_media_event(self, event: MessageEvent)` (method)
+- L3197 `_media_batch_key(self, event: MessageEvent)` (method)
+- L3208 `_media_batch_is_compatible(existing: MessageEvent, incoming: MessageEvent)` (method)
+- L3216 `_enqueue_media_event(self, event: MessageEvent)` (method)
+- L3237 `_schedule_media_batch_flush(self, key: str)` (method)
+- L3244 `_flush_media_batch(self, key: str)` (method)
+- L3253 `_flush_media_batch_now(self, key: str)` (method)
+- L3264 `_download_remote_image(self, image_url: str)` (method)
+- L3268 `_download_remote_document(self, file_url: str, *, default_ext: str, preferred_name: str)` (method)
+- L3305 `_guess_remote_extension(url: str, *, default: str)` (method)
+- L3310 `_derive_remote_filename(file_url: str, *, content_type: str, default_name: str, default_ext: str)` (method)
+- L3319 `_namespace_from_mapping(value: Any)` (method)
+- L3326 `_handle_webhook_request(self, request: Any)` (method)
+- L3426 `_is_webhook_signature_valid(self, headers: Any, body_bytes: bytes)` (method) — Verify Feishu webhook signature using timing-safe comparison.
+- L3447 `_check_webhook_rate_limit(self, rate_key: str)` (method) — Return False when the composite rate_key has exceeded _FEISHU_WEBHOOK_RATE_LIMIT_MAX.
+- L3485 `_text_batch_key(self, event: MessageEvent)` (method) — Return the session-scoped key used for Feishu text aggregation.
+- L3496 `_text_batch_is_compatible(existing: MessageEvent, incoming: MessageEvent)` (method) — Only merge text events when reply/thread context is identical.
+- L3504 `_enqueue_text_event(self, event: MessageEvent)` (method) — Debounce rapid Feishu text bursts into a single MessageEvent.
+- L3542 `_schedule_text_batch_flush(self, key: str)` (method) — Reset the debounce timer for a pending Feishu text batch.
+- L3551 `_reschedule_batch_task(task_map: Dict[str, asyncio.Task], key: str, flush_fn: Any)` (method)
+- L3561 `_flush_text_batch(self, key: str)` (method) — Flush a pending text batch after the quiet period.
+- L3583 `_flush_text_batch_now(self, key: str)` (method) — Dispatch the current text batch immediately.
+- L3600 `_extract_message_content(self, message: Any)` (method)
+- L3632 `_download_feishu_message_resources(self, *, message_id: str, normalized: FeishuNormalizedMessage)` (method)
+- L3664 `_resolve_media_message_type(media_type: str, *, default: MessageType)` (method)
+- L3674 `_resolve_normalized_message_type(self, normalized: FeishuNormalizedMessage, media_types: List[str])` (method)
+- L3688 `_maybe_extract_text_document(self, cached_path: str, media_type: str)` (method)
+- L3704 `_download_feishu_image(self, *, message_id: str, image_key: str)` (method)
+- L3735 `_download_feishu_message_resource(self, *, message_id: str, file_key: str, resource_type: str, fallback_filename: str)` (method)
+- L3818 `_read_binary_response(response: Any)` (method)
+- L3827 `_get_response_header(response: Any, name: str)` (method)
+- L3833 `_guess_extension(filename: str, content_type: str, default: str, *, allowed: set[str])` (method)
+- L3843 `_normalize_media_type(content_type: str, *, default: str)` (method)
+- L3848 `_guess_document_media_type(filename: str)` (method)
+- L3853 `_display_name_from_cached_path(path: str)` (method)
+- L3860 `_guess_media_type_from_filename(filename: str)` (method)
+- L3874 `_map_chat_type(raw_chat_type: str)` (method)
+- L3885 `_resolve_source_chat_type(*, chat_info: Dict[str, Any], event_chat_type: str)` (method)
+- L3893 `_resolve_sender_profile(self, sender_id: Any, *, is_bot: bool=False)` (method) — Map Feishu's three-tier user IDs onto Hermes' SessionSource fields.
+- L3926 `_get_cached_sender_name(self, sender_id: Optional[str])` (method) — Return a cached sender name only while its TTL is still valid.
+- L3939 `_resolve_sender_name_from_api(self, sender_id: Optional[str], *, is_bot: bool=False)` (method) — Bots divert to bot/basic_batch — contact API doesn't return bot names.
+- L3994 `_fetch_bot_names(self, bot_ids: List[str])` (method)
+- L4023 `_fetch_message_text(self, message_id: str)` (method)
+- L4056 `_extract_text_from_raw_content(self, *, msg_type: str, raw_content: str, mentions: Optional[Sequence[Any]]=None)` (method)
+- L4075 `_default_image_media_type(ext: str)` (method)
+- L4082 `_log_background_failure(future: Any)` (method)
+- L4092 `_admit(self, sender: Any, message: Any)` (method)
+- L4128 `_require_mention_for(self, chat_id: str)` (method)
+- L4136 `_allow_group_message(self, sender_id: Any, chat_id: str='', *, is_bot: bool=False)` (method) — Per-group policy gate for non-DM traffic.
+- L4181 `_mentions_self(self, message: Any)` (method)
+- L4197 `_message_mentions_bot(self, mentions: List[Any])` (method)
+- L4220 `_post_mentions_bot(self, mentions: List[FeishuMentionRef])` (method)
+- L4223 `_bot_identity(self)` (method)
+- L4230 `_hydrate_bot_identity(self)` (method) — Best-effort discovery of bot identity for precise group mention gating
+- L4308 `_load_seen_message_ids(self)` (method)
+- L4344 `_persist_seen_message_ids(self)` (method)
+- L4354 `_is_duplicate(self, message_id: str)` (method)
+- L4374 `_build_outbound_payload(self, content: str)` (method)
+- L4386 `_send_uploaded_file_message(self, *, chat_id: str, file_path: str, reply_to: Optional[str], metadata: Optional[Dict[str, Any]], caption: Optional[str]=None, file_name: Optional[str]=None, outbound_message_type: str='file')` (method)
+- L4450 `_send_raw_message(self, *, chat_id: str, msg_type: str, payload: str, reply_to: Optional[str], metadata: Optional[Dict[str, Any]])` (method)
+- L4504 `_response_succeeded(response: Any)` (method)
+- L4508 `_extract_response_field(response: Any, field_name: str)` (method)
+- L4514 `_response_error_result(self, response: Any, *, default_message: str, override_error: Optional[str]=None)` (method)
+- L4527 `_finalize_send_result(self, response: Any, default_message: str)` (method)
+- L4540 `_connect_with_retry(self)` (method)
+- L4565 `_connect_websocket(self)` (method)
+- L4591 `_connect_webhook(self)` (method)
+- L4607 `_build_lark_client(self, domain: Any)` (method)
+- L4617 `_feishu_send_with_retry(self, *, chat_id: str, msg_type: str, payload: str, reply_to: Optional[str], metadata: Optional[Dict[str, Any]])` (method)
+- L4685 `_release_app_lock(self)` (method)
+- L4700 `_build_get_chat_request(chat_id: str)` (method)
+- L4706 `_build_get_message_request(message_id: str)` (method)
+- L4712 `_build_message_resource_request(*, message_id: str, file_key: str, resource_type: str)` (method)
+- L4724 `_build_get_application_request(*, app_id: str, lang: str)` (method)
+- L4735 `_build_reply_message_body(*, content: str, msg_type: str, reply_in_thread: bool, uuid_value: str)` (method)
+- L4753 `_build_reply_message_request(message_id: str, request_body: Any)` (method)
+- L4764 `_build_update_message_body(*, msg_type: str, content: str)` (method)
+- L4775 `_build_update_message_request(message_id: str, request_body: Any)` (method)
+- L4786 `_build_create_message_body(*, receive_id: str, msg_type: str, content: str, uuid_value: str)` (method)
+- L4804 `_build_create_message_request(receive_id_type: str, request_body: Any)` (method)
+- L4815 `_build_image_upload_body(*, image_type: str, image: Any)` (method)
+- L4826 `_build_image_upload_request(request_body: Any)` (method)
+- L4832 `_build_file_upload_body(*, file_type: str, file_name: str, file: Any)` (method)
+- L4844 `_build_file_upload_request(request_body: Any)` (method)
+- L4849 `_build_post_payload(self, content: str)` (method)
+- L4852 `_build_media_post_payload(self, *, caption: str, media_tag: Dict[str, str])` (method)
+- L4859 `_resolve_outbound_file_routing(*, file_path: str, requested_message_type: str)` (method)
+- L4890 `_accounts_base_url(domain: str)` (function)
+- L4894 `_onboard_open_base_url(domain: str)` (function)
+- L4898 `_post_registration(base_url: str, body: Dict[str, str])` (function) — POST form-encoded data to the registration endpoint, return parsed JSON.
+- L4921 `_init_registration(domain: str='feishu')` (function) — Verify the environment supports client_secret auth.
+- L4936 `_begin_registration(domain: str='feishu')` (function) — Start the device-code flow. Returns device_code, qr_url, user_code, interval, expire_in.
+- L4962 `_poll_registration(*, device_code: str, interval: int, expire_in: int, domain: str='feishu')` (function) — Poll until the user scans the QR code, or timeout/denial.
+- L5039 `_render_qr(url: str)` (function) — Try to render a QR code in the terminal. Returns True if successful.
+- L5053 `probe_bot(app_id: str, app_secret: str, domain: str)` (function) — Verify bot connectivity via /open-apis/bot/v3/info.
+- L5067 `_build_onboard_client(app_id: str, app_secret: str, domain: str)` (function) — Build a lark Client for the given credentials and domain.
+- L5080 `_parse_bot_response(data: dict)` (function)
+- L5091 `_probe_bot_sdk(app_id: str, app_secret: str, domain: str)` (function) — Probe bot info using lark_oapi SDK.
+- L5112 `_probe_bot_http(app_id: str, app_secret: str, domain: str)` (function) — Fallback probe using raw HTTP (when lark_oapi is not installed).
+- L5145 `qr_register(*, initial_domain: str='feishu', timeout_seconds: int=600)` (function) — Run the Feishu / Lark scan-to-create QR registration flow.
+- L5173 `_qr_register_inner(*, initial_domain: str, timeout_seconds: int)` (function) — Run init → begin → poll → probe. Raises on network/protocol errors.

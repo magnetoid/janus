@@ -1,0 +1,128 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:41'
+updated: '2026-06-08T00:38:41'
+---
+
+# tests/agent/test_gemini_cloudcode.py
+
+Symbols in `tests/agent/test_gemini_cloudcode.py`.
+
+- L30 `_isolate_env(monkeypatch, tmp_path)` (function)
+- L54 `TestPkce` (class)
+- L55 `test_verifier_and_challenge_s256_roundtrip(self)` (method)
+- L66 `TestRefreshParts` (class)
+- L67 `test_parse_bare_token(self)` (method)
+- L75 `test_parse_packed(self)` (method)
+- L83 `test_format_bare_token(self)` (method)
+- L88 `test_format_with_project(self)` (method)
+- L101 `test_format_empty_refresh_token_returns_empty(self)` (method)
+- L107 `TestClientCredResolution` (class)
+- L108 `test_env_override(self, monkeypatch)` (method)
+- L114 `test_shipped_default_used_when_no_env(self)` (method) — Out of the box, the public gemini-cli desktop client is used.
+- L123 `test_shipped_default_secret_present(self)` (method)
+- L130 `test_falls_back_to_scrape_when_defaults_wiped(self, tmp_path, monkeypatch)` (method) — Forks that wipe the shipped defaults should still work with gemini-cli.
+- L152 `test_missing_everything_raises_with_install_hint(self, monkeypatch)` (method) — When env + defaults + scrape all fail, raise with install instructions.
+- L165 `test_locate_gemini_cli_oauth_js_when_absent(self, monkeypatch)` (method)
+- L171 `test_scrape_client_credentials_parses_id_and_secret(self, tmp_path, monkeypatch)` (method)
+- L196 `TestCredentialIo` (class)
+- L197 `_make(self)` (method)
+- L208 `test_save_and_load_packed_refresh(self)` (method)
+- L218 `test_save_uses_0600_permissions(self)` (method)
+- L225 `test_disk_format_is_packed(self)` (method)
+- L233 `test_update_project_ids(self)` (method)
+- L250 `TestAccessTokenExpired` (class)
+- L251 `test_fresh_token_not_expired(self)` (method)
+- L260 `test_near_expiry_considered_expired(self)` (method) — 60s skew — a token with 30s left is considered expired.
+- L270 `test_no_token_is_expired(self)` (method)
+- L279 `TestGetValidAccessToken` (class)
+- L280 `_save(self, **over)` (method)
+- L291 `test_returns_cached_when_fresh(self)` (method)
+- L297 `test_refreshes_when_near_expiry(self, monkeypatch)` (method)
+- L307 `test_invalid_grant_clears_credentials(self, monkeypatch)` (method)
+- L325 `test_preserves_refresh_when_google_omits(self, monkeypatch)` (method)
+- L337 `TestProjectIdResolution` (class)
+- L343 `test_env_vars_checked(self, monkeypatch, env_var)` (method)
+- L349 `test_priority_order(self, monkeypatch)` (method)
+- L356 `test_no_env_returns_empty(self)` (method)
+- L362 `TestHeadlessDetection` (class)
+- L363 `test_detects_ssh(self, monkeypatch)` (method)
+- L369 `test_detects_hermes_headless(self, monkeypatch)` (method)
+- L375 `test_default_not_headless(self)` (method)
+- L385 `TestCodeAssistVpcScDetection` (class)
+- L386 `test_detects_vpc_sc_in_json(self)` (method)
+- L397 `test_detects_vpc_sc_in_message(self)` (method)
+- L403 `test_non_vpc_sc_returns_false(self)` (method)
+- L410 `TestLoadCodeAssist` (class)
+- L411 `test_parses_response(self, monkeypatch)` (method)
+- L427 `test_vpc_sc_forces_standard_tier(self, monkeypatch)` (method)
+- L442 `TestOnboardUser` (class)
+- L443 `test_paid_tier_requires_project_id(self)` (method)
+- L451 `test_free_tier_no_project_required(self, monkeypatch)` (method)
+- L461 `test_lro_polling(self, monkeypatch)` (method) — Simulate a long-running operation that completes on the second poll.
+- L483 `TestRetrieveUserQuota` (class)
+- L484 `test_parses_buckets(self, monkeypatch)` (method)
+- L510 `TestResolveProjectContext` (class)
+- L511 `test_configured_shortcircuits(self, monkeypatch)` (method)
+- L525 `test_env_shortcircuits(self, monkeypatch)` (method)
+- L536 `test_discovers_via_load_code_assist(self, monkeypatch)` (method)
+- L556 `TestBuildGeminiRequest` (class)
+- L557 `test_user_assistant_messages(self)` (method)
+- L571 `test_system_instruction_separated(self)` (method)
+- L582 `test_multiple_system_messages_joined(self)` (method)
+- L592 `test_tool_call_translation(self)` (method)
+- L614 `test_tool_result_translation(self)` (method)
+- L636 `test_tools_translated_to_function_declarations(self)` (method)
+- L653 `test_tools_strip_json_schema_only_fields_from_parameters(self)` (method)
+- L689 `test_tool_choice_auto(self)` (method)
+- L698 `test_tool_choice_required(self)` (method)
+- L707 `test_tool_choice_specific_function(self)` (method)
+- L718 `test_generation_config_params(self)` (method)
+- L734 `test_thinking_config_normalization(self)` (method)
+- L746 `TestWrapCodeAssistRequest` (class)
+- L747 `test_envelope_shape(self)` (method)
+- L761 `TestTranslateGeminiResponse` (class)
+- L762 `test_text_response(self)` (method)
+- L786 `test_function_call_response(self)` (method)
+- L805 `test_thought_parts_go_to_reasoning(self)` (method)
+- L822 `test_unwraps_direct_format(self)` (method) — If response is already at top level (no 'response' wrapper), still parse.
+- L835 `test_empty_candidates(self)` (method)
+- L842 `test_finish_reason_mapping(self)` (method)
+- L851 `TestTranslateStreamEvent` (class)
+- L852 `test_parallel_calls_to_same_tool_get_unique_indices(self)` (method) — Gemini may emit several functionCall parts with the same name in a
+- L877 `test_counter_persists_across_events(self)` (method) — Index assignment must continue across SSE events in the same stream.
+- L895 `test_finish_reason_switches_to_tool_calls_when_any_seen(self)` (method)
+- L914 `TestMakeStreamChunk` (class)
+- L915 `test_reasoning_only_chunk_has_content_none(self)` (method)
+- L923 `test_content_only_chunk_has_reasoning_none(self)` (method)
+- L932 `test_finish_only_chunk_has_all_fields_none(self)` (method)
+- L943 `TestGeminiCloudCodeClient` (class)
+- L944 `test_client_exposes_openai_interface(self)` (method)
+- L956 `TestGeminiHttpErrorParsing` (class) — Regression coverage for _gemini_http_error Google-envelope parsing.
+- L966 `_fake_response(status: int, body: dict | str='', headers=None)` (method) — Minimal httpx.Response stand-in (duck-typed for _gemini_http_error).
+- L978 `test_model_capacity_exhausted_produces_friendly_message(self)` (method)
+- L1013 `test_resource_exhausted_without_reason(self)` (method)
+- L1029 `test_404_model_not_found_produces_model_retired_message(self)` (method)
+- L1046 `test_unauthorized_preserves_status_code(self)` (method)
+- L1055 `test_retry_after_header_fallback(self)` (method) — If the body has no RetryInfo detail, fall back to Retry-After header.
+- L1067 `test_malformed_body_still_produces_structured_error(self)` (method) — Non-JSON body must not swallow status_code — we still want the classifier path.
+- L1076 `test_status_code_flows_through_error_classifier(self)` (method) — End-to-end: CodeAssistError from a 429 must classify as rate_limit.
+- L1113 `TestProviderRegistration` (class)
+- L1114 `test_registry_entry(self)` (method)
+- L1120 `test_google_gemini_alias_still_goes_to_api_key_gemini(self)` (method) — Regression guard: don't shadow the existing google-gemini → gemini alias.
+- L1126 `test_runtime_provider_raises_when_not_logged_in(self)` (method)
+- L1134 `test_runtime_provider_returns_correct_shape_when_logged_in(self)` (method)
+- L1154 `test_determine_api_mode(self)` (method)
+- L1159 `test_oauth_capable_set_preserves_existing(self)` (method)
+- L1165 `test_config_env_vars_registered(self)` (method)
+- L1176 `TestAuthStatus` (class)
+- L1177 `test_not_logged_in(self)` (method)
+- L1183 `test_logged_in_reports_email_and_project(self)` (method)
+- L1200 `TestGquotaCommand` (class)
+- L1201 `test_gquota_registered(self)` (method)
+- L1207 `TestRunGeminiOauthLoginPure` (class)
+- L1208 `test_returns_pool_compatible_dict(self, monkeypatch)` (method)

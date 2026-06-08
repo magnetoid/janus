@@ -1,0 +1,194 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:41'
+updated: '2026-06-08T00:38:41'
+---
+
+# tests/agent/test_anthropic_adapter.py
+
+Symbols in `tests/agent/test_anthropic_adapter.py`.
+
+- L37 `TestIsOAuthToken` (class)
+- L38 `test_setup_token(self)` (method)
+- L41 `test_api_key(self)` (method)
+- L44 `test_managed_key(self)` (method)
+- L53 `test_jwt_token(self)` (method)
+- L57 `test_empty(self)` (method)
+- L61 `TestBuildAnthropicClient` (class)
+- L62 `test_setup_token_uses_auth_token(self)` (method)
+- L77 `test_oauth_drop_context_1m_beta_strips_only_1m(self)` (method) — drop_context_1m_beta=True strips context-1m-2025-08-07 while
+- L94 `test_api_key_uses_api_key(self)` (method)
+- L107 `test_custom_base_url(self)` (method)
+- L116 `test_azure_anthropic_endpoint_keeps_context_1m_beta(self)` (method)
+- L126 `test_azure_anthropic_endpoint_detection_is_host_and_path_scoped(self)` (method)
+- L140 `test_bedrock_client_keeps_context_1m_beta(self)` (method)
+- L148 `test_minimax_anthropic_endpoint_uses_bearer_auth_for_regular_api_keys(self)` (method)
+- L161 `test_minimax_cn_anthropic_endpoint_omits_tool_streaming_beta(self)` (method)
+- L174 `test_azure_foundry_anthropic_endpoint_uses_bearer_auth(self)` (method) — Azure AI Foundry's /anthropic endpoint requires Authorization: Bearer.
+- L196 `TestReadClaudeCodeCredentials` (class)
+- L198 `no_keychain(self, monkeypatch)` (method)
+- L204 `test_reads_valid_credentials(self, tmp_path, monkeypatch)` (method)
+- L221 `test_ignores_primary_api_key_for_native_anthropic_resolution(self, tmp_path, monkeypatch)` (method)
+- L229 `test_returns_none_for_missing_file(self, tmp_path, monkeypatch)` (method)
+- L233 `test_returns_none_for_missing_oauth_key(self, tmp_path, monkeypatch)` (method)
+- L240 `test_returns_none_for_empty_access_token(self, tmp_path, monkeypatch)` (method)
+- L250 `TestIsClaudeCodeTokenValid` (class)
+- L251 `test_valid_token(self)` (method)
+- L255 `test_expired_token(self)` (method)
+- L259 `test_no_expiry_but_has_token(self)` (method)
+- L264 `TestResolveAnthropicToken` (class)
+- L265 `test_prefers_oauth_token_over_api_key(self, monkeypatch, tmp_path)` (method)
+- L272 `test_does_not_resolve_primary_api_key_as_native_anthropic_token(self, monkeypatch, tmp_path)` (method)
+- L281 `test_falls_back_to_api_key_when_no_oauth_sources_exist(self, monkeypatch, tmp_path)` (method)
+- L288 `test_falls_back_to_token(self, monkeypatch, tmp_path)` (method)
+- L295 `test_returns_none_with_no_creds(self, monkeypatch, tmp_path)` (method)
+- L302 `test_falls_back_to_claude_code_oauth_token(self, monkeypatch, tmp_path)` (method)
+- L309 `test_falls_back_to_claude_code_credentials(self, monkeypatch, tmp_path)` (method)
+- L325 `test_prefers_refreshable_claude_code_credentials_over_static_anthropic_token(self, monkeypatch, tmp_path)` (method)
+- L342 `test_keeps_static_anthropic_token_when_only_non_refreshable_claude_key_exists(self, monkeypatch, tmp_path)` (method)
+- L353 `TestRefreshOauthToken` (class)
+- L354 `test_returns_none_without_refresh_token(self)` (method)
+- L358 `test_successful_refresh(self, tmp_path, monkeypatch)` (method)
+- L391 `test_failed_refresh_returns_none(self)` (method)
+- L402 `TestWriteClaudeCodeCredentials` (class)
+- L403 `test_writes_new_file(self, tmp_path, monkeypatch)` (method)
+- L413 `test_preserves_existing_fields(self, tmp_path, monkeypatch)` (method)
+- L425 `test_credentials_file_created_with_0o600(self, tmp_path, monkeypatch)` (method) — Refreshed Claude Code credentials must land on disk at 0o600.
+- L443 `TestResolveWithRefresh` (class)
+- L444 `test_auto_refresh_on_expired_creds(self, monkeypatch, tmp_path)` (method) — When cred file has expired token + refresh token, auto-refresh is attempted.
+- L468 `test_static_env_oauth_token_does_not_block_refreshable_claude_creds(self, monkeypatch, tmp_path)` (method)
+- L490 `TestRunOauthSetupToken` (class)
+- L491 `test_raises_when_claude_not_installed(self, monkeypatch)` (method)
+- L496 `test_returns_token_from_credential_files(self, monkeypatch, tmp_path)` (method) — After subprocess completes, reads credentials from Claude Code files.
+- L525 `test_returns_token_from_env_var(self, monkeypatch, tmp_path)` (method) — Falls back to CLAUDE_CODE_OAUTH_TOKEN env var when no cred files.
+- L538 `test_returns_none_when_no_creds_found(self, monkeypatch, tmp_path)` (method) — Returns None when subprocess completes but no credentials are found.
+- L551 `test_returns_none_on_keyboard_interrupt(self, monkeypatch)` (method) — Returns None gracefully when user interrupts the flow.
+- L566 `TestNormalizeModelName` (class)
+- L567 `test_strips_anthropic_prefix(self)` (method)
+- L570 `test_leaves_bare_name(self)` (method)
+- L573 `test_converts_dots_to_hyphens(self)` (method) — OpenRouter uses dots (4.6), Anthropic uses hyphens (4-6).
+- L579 `test_already_hyphenated_unchanged(self)` (method) — Names already in Anthropic format should pass through.
+- L584 `test_preserve_dots_for_alibaba_dashscope(self)` (method) — Alibaba/DashScope use dots in model names (e.g. qwen3.5-plus). Fixes #1739.
+- L596 `TestConvertTools` (class)
+- L597 `test_converts_openai_to_anthropic_format(self)` (method)
+- L618 `test_empty_tools(self)` (method)
+- L622 `test_strips_nullable_union_from_input_schema(self)` (method)
+- L658 `TestConvertMessages` (class)
+- L659 `test_extracts_system_prompt(self)` (method)
+- L669 `test_converts_user_image_url_blocks_to_anthropic_image_blocks(self)` (method)
+- L692 `test_converts_data_url_image_blocks_to_base64_anthropic_image_blocks(self)` (method)
+- L722 `test_converts_tool_calls(self)` (method)
+- L746 `test_converts_tool_results(self)` (method)
+- L763 `test_merges_consecutive_tool_results(self)` (method)
+- L782 `test_strips_orphaned_tool_use(self)` (method)
+- L798 `test_strips_orphaned_tool_result(self)` (method) — tool_result with no matching tool_use should be stripped.
+- L822 `test_strips_orphaned_tool_result_preserves_valid(self)` (method) — Orphaned tool_results are stripped while valid ones survive.
+- L843 `test_system_with_cache_control(self)` (method)
+- L858 `test_assistant_cache_control_blocks_are_preserved(self)` (method)
+- L871 `test_tool_cache_control_is_preserved_on_tool_result_block(self)` (method)
+- L893 `test_preserved_thinking_blocks_are_rehydrated_before_tool_use(self)` (method)
+- L920 `test_converts_data_url_image_to_anthropic_image_block(self)` (method)
+- L946 `test_converts_remote_image_url_to_anthropic_image_block(self)` (method)
+- L970 `test_empty_cached_assistant_tool_turn_converts_without_empty_text_block(self)` (method)
+- L992 `test_empty_user_message_string_gets_placeholder(self)` (method) — Empty user message strings should get '(empty message)' placeholder.
+- L1005 `test_whitespace_only_user_message_gets_placeholder(self)` (method) — Whitespace-only user messages should also get placeholder.
+- L1013 `test_empty_user_message_list_gets_placeholder(self)` (method) — Empty content list for user messages should get placeholder block.
+- L1024 `test_user_message_with_empty_text_blocks_gets_placeholder(self)` (method) — User message with only empty text blocks should get placeholder.
+- L1040 `TestBuildAnthropicKwargs` (class)
+- L1041 `test_basic_kwargs(self)` (method)
+- L1058 `test_strips_anthropic_prefix(self)` (method)
+- L1068 `test_fast_mode_oauth_default_omits_context_1m_beta(self)` (method) — Default OAuth fast-mode avoids context-1m for subscriptions without it.
+- L1084 `test_fast_mode_oauth_drop_context_1m_beta_strips_only_1m(self)` (method) — drop_context_1m_beta=True strips context-1m from fast-mode
+- L1104 `test_reasoning_config_maps_to_manual_thinking_for_pre_4_6_models(self)` (method)
+- L1118 `test_reasoning_config_maps_to_adaptive_thinking_for_4_6_models(self)` (method)
+- L1134 `test_reasoning_config_downgrades_xhigh_to_max_for_4_6_models(self)` (method)
+- L1151 `test_reasoning_config_preserves_xhigh_for_4_7_models(self)` (method)
+- L1164 `test_reasoning_config_maps_max_effort_for_4_7_models(self)` (method)
+- L1175 `test_opus_4_7_strips_sampling_params(self)` (method)
+- L1197 `test_supports_fast_mode_predicate(self)` (method) — Fast mode is Opus 4.6 only — Opus 4.7 and others must be excluded.
+- L1216 `test_fast_mode_omitted_for_unsupported_model(self)` (method) — fast_mode=True on Opus 4.7 must NOT inject speed=fast (API 400s).
+- L1232 `test_fast_mode_still_applied_on_opus_46(self)` (method) — Regression guard — fast mode must still work on Opus 4.6.
+- L1245 `test_reasoning_disabled(self)` (method)
+- L1255 `test_default_max_tokens_uses_model_output_limit(self)` (method) — When max_tokens is None, use the model's native output limit.
+- L1266 `test_default_max_tokens_opus_4_6(self)` (method)
+- L1276 `test_default_max_tokens_sonnet_4_6(self)` (method)
+- L1286 `test_default_max_tokens_date_stamped_model(self)` (method) — Date-stamped model IDs should resolve via substring match.
+- L1297 `test_default_max_tokens_older_model(self)` (method)
+- L1307 `test_default_max_tokens_unknown_model_uses_highest(self)` (method) — Unknown future models should get the highest known limit.
+- L1318 `test_explicit_max_tokens_overrides_default(self)` (method) — User-specified max_tokens should be respected.
+- L1329 `test_context_length_clamp(self)` (method) — max_tokens should be clamped to context_length if it's smaller.
+- L1341 `test_context_length_no_clamp_when_larger(self)` (method) — No clamping when context_length exceeds output limit.
+- L1359 `TestGetAnthropicMaxOutput` (class)
+- L1360 `test_opus_4_6(self)` (method)
+- L1364 `test_opus_4_6_variant(self)` (method)
+- L1368 `test_sonnet_4_6(self)` (method)
+- L1372 `test_sonnet_4_date_stamped(self)` (method)
+- L1376 `test_claude_3_5_sonnet(self)` (method)
+- L1380 `test_claude_3_opus(self)` (method)
+- L1384 `test_unknown_future_model(self)` (method)
+- L1388 `test_longest_prefix_wins(self)` (method) — 'claude-3-5-sonnet' should match before 'claude-3-5'.
+- L1400 `TestToPlainData` (class)
+- L1401 `test_simple_dict(self)` (method)
+- L1404 `test_pydantic_like_model_dump(self)` (method)
+- L1412 `test_circular_reference_does_not_recurse_forever(self)` (method) — Circular dict reference should be stringified, not infinite-loop.
+- L1421 `test_shared_sibling_objects_are_not_falsely_detected_as_cycles(self)` (method) — Two siblings referencing the same dict must both be converted.
+- L1430 `test_deep_nesting_is_capped(self)` (method)
+- L1437 `test_plain_values_pass_through(self)` (method)
+- L1442 `test_object_with_dunder_dict(self)` (method)
+- L1453 `TestNormalizeResponse` (class)
+- L1454 `_make_response(self, content_blocks, stop_reason='end_turn')` (method)
+- L1461 `test_text_response(self)` (method)
+- L1468 `test_tool_use_response(self)` (method)
+- L1487 `test_thinking_response(self)` (method)
+- L1497 `test_thinking_response_preserves_signature(self)` (method)
+- L1510 `test_stop_reason_mapping(self)` (method)
+- L1525 `test_stop_reason_refusal_and_context_exceeded(self)` (method)
+- L1540 `test_no_text_content(self)` (method)
+- L1556 `TestRoleAlternation` (class)
+- L1557 `test_merges_consecutive_user_messages(self)` (method)
+- L1568 `test_preserves_proper_alternation(self)` (method)
+- L1584 `TestThinkingBlockSignatureManagement` (class) — Tests for the thinking block handling strategy:
+- L1588 `test_thinking_stripped_from_non_last_assistant(self)` (method) — Thinking blocks are removed from all assistant messages except the last.
+- L1633 `test_signed_thinking_preserved_on_last_turn(self)` (method) — A signed thinking block on the last assistant message is kept.
+- L1650 `test_unsigned_thinking_downgraded_to_text_on_last_turn(self)` (method) — Unsigned thinking blocks on the last turn become text blocks.
+- L1671 `test_redacted_thinking_with_data_preserved(self)` (method) — Redacted thinking with 'data' field is kept on last turn.
+- L1688 `test_redacted_thinking_without_data_dropped(self)` (method) — Redacted thinking without 'data' is dropped — can't be validated.
+- L1704 `test_cache_control_stripped_from_thinking_blocks(self)` (method) — cache_control markers are removed from thinking/redacted_thinking blocks.
+- L1730 `test_thinking_stripped_from_merged_consecutive_assistants(self)` (method) — When consecutive assistants are merged, second one's thinking is dropped.
+- L1760 `test_empty_content_after_strip_gets_placeholder(self)` (method) — If stripping thinking leaves an empty message, a placeholder is added.
+- L1781 `test_multi_turn_conversation_preserves_only_last(self)` (method) — Full multi-turn conversation: only last assistant keeps thinking.
+- L1830 `test_orphan_stripped_tool_use_demotes_dead_signed_thinking(self)` (method) — Regression: extended-thinking + interrupted parallel tool batch.
+- L1877 `test_signed_thinking_preserved_when_no_tool_use_stripped(self)` (method) — Control: an intact latest turn keeps its signed thinking verbatim.
+- L1909 `TestToolChoice` (class)
+- L1921 `test_auto_tool_choice(self)` (method)
+- L1932 `test_required_tool_choice(self)` (method)
+- L1943 `test_specific_tool_choice(self)` (method)
+- L1966 `TestResolvePositiveMaxTokens` (class) — Unit tests for the positive-int resolver helper.
+- L1969 `test_positive_int_passes_through(self)` (method)
+- L1972 `test_zero_returns_none(self)` (method)
+- L1975 `test_negative_int_returns_none(self)` (method)
+- L1979 `test_fractional_float_floored_and_kept_if_positive(self)` (method)
+- L1983 `test_small_positive_float_below_one_returns_none(self)` (method)
+- L1987 `test_negative_float_returns_none(self)` (method)
+- L1990 `test_nan_returns_none(self)` (method)
+- L1993 `test_infinity_returns_none(self)` (method)
+- L1997 `test_bool_true_returns_none(self)` (method)
+- L2002 `test_string_returns_none(self)` (method)
+- L2005 `test_none_returns_none(self)` (method)
+- L2009 `TestResolveMessagesMaxTokens` (class) — Integration tests for the full Messages resolver.
+- L2012 `test_positive_requested_wins(self)` (method)
+- L2017 `test_zero_falls_back_to_model_default(self)` (method)
+- L2022 `test_none_falls_back_to_model_default(self)` (method)
+- L2026 `test_negative_falls_back_to_model_default(self)` (method)
+- L2031 `test_fractional_positive_floored(self)` (method)
+- L2036 `test_sub_one_float_falls_back(self)` (method)
+- L2047 `TestConvertToolsToAnthropicDedup` (class) — convert_tools_to_anthropic must deduplicate tool names.
+- L2055 `_make_openai_tool(self, name: str)` (method)
+- L2065 `test_unique_tools_pass_through(self)` (method)
+- L2072 `test_duplicate_tool_names_are_deduplicated(self)` (method) — RED test — must fail until dedup guard is added.
+- L2088 `test_empty_tools_returns_empty(self)` (method)
+- L2091 `test_none_tools_returns_empty(self)` (method)

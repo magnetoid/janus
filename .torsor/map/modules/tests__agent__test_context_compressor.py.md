@@ -1,0 +1,137 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:41'
+updated: '2026-06-08T00:38:41'
+---
+
+# tests/agent/test_context_compressor.py
+
+Symbols in `tests/agent/test_context_compressor.py`.
+
+- L10 `compressor()` (function) — Create a ContextCompressor with mocked dependencies.
+- L23 `TestShouldCompress` (class)
+- L24 `test_below_threshold(self, compressor)` (method)
+- L28 `test_above_threshold(self, compressor)` (method)
+- L32 `test_exact_threshold(self, compressor)` (method)
+- L36 `test_explicit_tokens(self, compressor)` (method)
+- L42 `TestUpdateFromResponse` (class)
+- L43 `test_updates_fields(self, compressor)` (method)
+- L57 `test_missing_fields_default_zero(self, compressor)` (method)
+- L62 `TestPreflightDeferral` (class)
+- L63 `test_defers_when_recent_real_usage_fit_and_rough_growth_is_small(self, compressor)` (method)
+- L71 `test_does_not_defer_when_rough_growth_is_large(self, compressor)` (method)
+- L78 `test_does_not_defer_without_recent_real_usage(self, compressor)` (method)
+- L87 `TestCompress` (class)
+- L88 `_make_messages(self, n)` (method)
+- L91 `test_too_few_messages_returns_unchanged(self, compressor)` (method)
+- L96 `test_truncation_fallback_no_client(self, compressor)` (method)
+- L111 `test_summary_failure_uses_deterministic_fallback_with_recovered_context(self)` (method) — Regression: failed LLM summaries should not emit a content-free marker.
+- L169 `test_compression_increments_count(self, compressor)` (method)
+- L178 `test_protects_first_and_last(self, compressor)` (method)
+- L191 `TestGenerateSummaryNoneContent` (class) — Regression: content=None (from tool-call-only assistant messages) must not crash.
+- L194 `test_none_content_does_not_crash(self)` (method)
+- L217 `test_none_content_in_system_message_compress(self)` (method) — System message with content=None should not crash during compress.
+- L230 `TestNonStringContent` (class) — Regression: content as dict (e.g., llama.cpp tool calls) must not crash.
+- L233 `test_dict_content_coerced_to_string(self)` (method)
+- L251 `test_none_content_coerced_to_empty(self)` (method)
+- L270 `test_summary_call_does_not_force_temperature(self)` (method)
+- L289 `test_summary_prompt_avoids_filter_sensitive_handoff_framing(self)` (method)
+- L313 `test_summary_call_passes_live_main_runtime(self)` (method)
+- L345 `TestSummaryFailureCooldown` (class)
+- L346 `test_summary_failure_enters_cooldown_and_skips_retry(self)` (method)
+- L364 `TestSummaryFallbackToMainModel` (class) — When ``summary_model`` differs from the main model and the summary LLM
+- L371 `_msgs(self)` (method)
+- L377 `test_model_not_found_404_falls_back_to_main_and_succeeds(self)` (method) — Classic misconfiguration: ``auxiliary.compression.model`` points at
+- L414 `test_unknown_error_falls_back_to_main_and_succeeds(self)` (method) — Errors that don't match the 404/503/model_not_found fast-path
+- L450 `test_no_fallback_when_summary_model_equals_main_model(self)` (method) — If the aux model IS the main model, there's nowhere to fall back
+- L474 `test_fallback_only_happens_once_per_compressor(self)` (method) — If the retry-on-main ALSO fails, don't loop forever — enter
+- L498 `test_json_decode_error_falls_back_to_main_and_succeeds(self)` (method) — JSONDecodeError from the OpenAI SDK's ``response.json()`` (raised
+- L539 `test_json_decode_error_substring_match_in_wrapped_exception(self)` (method) — When the OpenAI SDK wraps the raw JSONDecodeError inside its own
+- L570 `test_json_decode_error_on_main_uses_short_cooldown(self)` (method) — When already on the main model (no separate summary_model, or
+- L597 `TestStreamingClosedFallback` (class) — httpcore / httpx streaming premature-close errors must be classified the
+- L609 `_msgs(self)` (method)
+- L615 `test_incomplete_chunked_read_falls_back_to_main(self)` (method) — ``httpcore.RemoteProtocolError: incomplete chunked read`` triggers
+- L646 `test_peer_closed_connection_falls_back_to_main(self)` (method) — ``peer closed connection`` triggers the retry-on-main path.
+- L673 `test_streaming_closed_on_main_uses_short_cooldown(self)` (method) — When already on the main model, a streaming-closed error should use
+- L698 `test_non_streaming_unknown_error_still_uses_long_cooldown(self)` (method) — Unclassified errors should retain the 60s default cooldown to
+- L722 `TestAuxModelFallbackSurfacedToCallers` (class) — When summary_model fails but retry-on-main succeeds, compress() must
+- L729 `_make_msgs(self)` (method)
+- L741 `test_compress_exposes_aux_failure_fields_after_successful_fallback(self)` (method)
+- L775 `test_compress_clears_aux_failure_fields_at_start_of_next_call(self)` (method) — A subsequent successful compression must clear the aux-failure
+- L813 `TestSummaryFailureTrackingForGatewayWarning` (class) — Default behavior (compression.abort_on_summary_failure=False):
+- L819 `test_compress_records_fallback_and_dropped_count_on_summary_failure(self)` (method)
+- L847 `test_summary_failure_fallback_preserves_tool_paths_and_redacts_secret_context(self)` (method)
+- L884 `test_summary_failure_fallback_supports_object_tool_calls_and_content_path_mentions(self)` (method)
+- L916 `test_summary_failure_fallback_preserves_last_dropped_turns_without_tail(self)` (method)
+- L940 `test_summary_failure_fallback_is_bounded(self)` (method)
+- L964 `test_compress_clears_fallback_flag_on_subsequent_success(self)` (method)
+- L994 `TestAbortOnSummaryFailure` (class) — Opt-in behavior (compression.abort_on_summary_failure=True):
+- L1000 `_make_msgs(self)` (method)
+- L1012 `_make_compressor(self)` (method)
+- L1022 `test_compress_aborts_and_preserves_messages_on_summary_failure(self)` (method)
+- L1041 `test_compress_clears_abort_flag_on_subsequent_success(self)` (method)
+- L1060 `test_force_true_bypasses_failure_cooldown(self)` (method) — Manual /compress passes force=True so it can retry immediately
+- L1082 `TestSummaryPrefixNormalization` (class)
+- L1083 `test_legacy_prefix_is_replaced(self)` (method)
+- L1087 `test_existing_new_prefix_is_not_duplicated(self)` (method)
+- L1092 `TestCompressWithClient` (class)
+- L1093 `test_system_content_list_gets_compression_note_without_crashing(self)` (method)
+- L1122 `test_summarization_path(self)` (method)
+- L1141 `test_summarization_does_not_split_tool_call_pairs(self)` (method)
+- L1188 `test_sanitizer_matches_responses_call_id_when_id_differs(self, compressor)` (method)
+- L1212 `test_user_role_summary_carries_end_marker(self)` (method) — When the summary lands as standalone role='user' (e.g. head ends
+- L1250 `test_summary_role_avoids_consecutive_user_messages(self)` (method) — Summary role should alternate with the last head message to avoid consecutive same-role messages.
+- L1283 `test_summary_role_avoids_consecutive_user_when_head_ends_with_user(self)` (method) — When last head message is 'user', summary must be 'assistant' to avoid two consecutive user messages.
+- L1316 `test_summary_role_flips_to_avoid_tail_collision(self)` (method) — When summary role collides with the first tail message but flipping
+- L1350 `test_double_collision_merges_summary_into_tail(self)` (method) — When neither role avoids collision with both neighbors, the summary
+- L1396 `test_double_collision_merges_summary_into_list_tail_content(self)` (method) — Structured tail content should accept a merged summary without TypeError.
+- L1431 `test_double_collision_user_head_assistant_tail(self)` (method) — Reverse double collision: head ends with 'user', tail starts with 'assistant'.
+- L1473 `test_no_collision_scenarios_still_work(self)` (method) — Verify that the common no-collision cases (head=assistant/tail=assistant,
+- L1502 `test_summarization_does_not_start_tail_with_tool_outputs(self)` (method)
+- L1544 `TestSummaryTargetRatio` (class) — Verify that summary_target_ratio properly scales budgets with context window.
+- L1547 `test_tail_budget_scales_with_context(self)` (method) — Tail token budget should be threshold_tokens * summary_target_ratio.
+- L1559 `test_summary_cap_scales_with_context(self)` (method) — Max summary tokens should be 5% of context, capped at 12K.
+- L1569 `test_ratio_clamped(self)` (method) — Ratio should be clamped to [0.10, 0.80].
+- L1579 `test_default_threshold_is_50_percent(self)` (method) — Default compression threshold should be 50%, with a 64K floor.
+- L1587 `test_threshold_floor_does_not_apply_above_128k(self)` (method) — On large-context models the 50% percentage is used directly.
+- L1594 `test_default_protect_last_n_is_20(self)` (method) — Default protect_last_n should be 20.
+- L1600 `test_default_protect_first_n_is_3(self)` (method) — Default protect_first_n is 3 (system + 3 extra non-system messages =
+- L1611 `test_protect_first_n_override(self)` (method) — protect_first_n=0 should be honoured — for users who rely on rolling
+- L1619 `test_protect_first_n_0_preserves_only_system_prompt(self)` (method) — End-to-end: when protect_first_n=0, compression should treat only
+- L1651 `test_protect_first_n_semantics_stable_without_system_prompt(self)` (method) — Regression: gateway /compress handler strips the system prompt
+- L1687 `TestTokenBudgetTailProtection` (class) — Tests for token-budget-based tail protection (PR #6240).
+- L1696 `budget_compressor(self)` (method) — Compressor with known token budget for tail protection tests.
+- L1708 `test_large_tool_outputs_no_longer_block_compaction(self, budget_compressor)` (method) — The motivating scenario: 20 messages with large tool outputs should
+- L1741 `test_min_tail_always_3_messages(self, budget_compressor)` (method) — Even with a tiny token budget, at least 3 messages are protected.
+- L1760 `test_soft_ceiling_allows_oversized_message(self, budget_compressor)` (method) — The 1.5x soft ceiling allows an oversized message to be included
+- L1784 `test_small_conversation_still_compresses(self, budget_compressor)` (method) — With the new min of 8 messages (head=2 + 3 + 1 guard + 2 middle),
+- L1801 `test_prune_with_token_budget(self, budget_compressor)` (method) — _prune_old_tool_results with protect_tail_tokens respects the budget.
+- L1822 `test_prune_short_conv_protects_entire_tail(self, budget_compressor)` (method) — Regression guard for PR #17025.
+- L1850 `test_prune_without_token_budget_uses_message_count(self, budget_compressor)` (method) — Without protect_tail_tokens, falls back to message-count behavior.
+- L1869 `test_multimodal_message_accumulates_text_chars_not_block_count(self, budget_compressor)` (method) — _find_tail_cut_by_tokens must use text char count, not list length,
+- L1907 `test_plain_string_content_unchanged(self, budget_compressor)` (method) — Plain string content must still be estimated correctly after the fix.
+- L1930 `test_image_only_block_contributes_zero_text_chars(self, budget_compressor)` (method) — Image-only content blocks (no 'text' key) contribute 0 chars + base overhead.
+- L1945 `test_mixed_list_with_bare_strings_does_not_crash(self, budget_compressor)` (method) — Content list may contain bare strings (not dicts) — must not raise AttributeError.
+- L1960 `test_generous_budget_protects_everything_floor_does_not_override(self, budget_compressor)` (method) — A budget that covers the whole transcript must prune nothing —
+- L2002 `TestUpdateModelBudgets` (class) — Regression: update_model() must recalculate token budgets.
+- L2005 `test_tail_budget_recalculated(self)` (method) — tail_token_budget must change after switching to a different context length.
+- L2018 `test_budgets_proportional(self)` (method) — Budgets should be proportional to context_length after update.
+- L2028 `TestTruncateToolCallArgsJson` (class) — Regression tests for #11762.
+- L2038 `_helper(self)` (method)
+- L2042 `test_shrunken_args_remain_valid_json(self)` (method)
+- L2056 `test_non_json_arguments_pass_through(self)` (method)
+- L2061 `test_short_string_leaves_unchanged(self)` (method)
+- L2067 `test_nested_structures_are_walked(self)` (method)
+- L2082 `test_non_string_leaves_preserved(self)` (method)
+- L2099 `test_scalar_json_string_gets_shrunk(self)` (method)
+- L2107 `test_unicode_preserved(self)` (method)
+- L2115 `test_pass3_emits_valid_json_for_downstream_provider(self)` (method) — End-to-end: Pass 3 must never produce the exact failure payload
+- L2152 `TestPreflightSentinelGuard` (class) — Regression for #36718: the preflight token-display seed in
+- L2164 `_seed(self, last_prompt_tokens, preflight_tokens)` (method)
+- L2171 `test_sentinel_preserved_after_compression(self, compressor)` (method)
+- L2177 `test_real_value_still_revises_upward(self, compressor)` (method)
+- L2182 `test_real_value_not_revised_downward(self, compressor)` (method)

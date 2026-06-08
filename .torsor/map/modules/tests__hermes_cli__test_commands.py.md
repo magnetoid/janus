@@ -1,0 +1,184 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:42'
+updated: '2026-06-08T00:38:42'
+---
+
+# tests/hermes_cli/test_commands.py
+
+Symbols in `tests/hermes_cli/test_commands.py`.
+
+- L32 `_completions(completer: SlashCommandCompleter, text: str)` (function)
+- L45 `TestCommandRegistry` (class)
+- L46 `test_registry_is_nonempty(self)` (method)
+- L49 `test_every_entry_is_commanddef(self)` (method)
+- L53 `test_no_duplicate_canonical_names(self)` (method)
+- L57 `test_no_alias_collides_with_canonical_name(self)` (method) — An alias must not shadow another command's canonical name.
+- L69 `test_every_entry_has_valid_category(self)` (method)
+- L74 `test_reasoning_subcommands_are_in_logical_order(self)` (method)
+- L85 `test_cli_only_and_gateway_only_are_mutually_exclusive(self)` (method)
+- L95 `TestResolveCommand` (class)
+- L96 `test_canonical_name_resolves(self)` (method)
+- L102 `test_alias_resolves_to_canonical(self)` (method)
+- L113 `test_topic_is_gateway_command(self)` (method)
+- L119 `test_leading_slash_stripped(self)` (method)
+- L123 `test_unknown_returns_none(self)` (method)
+- L132 `TestDerivedDicts` (class)
+- L133 `test_commands_dict_excludes_gateway_only(self)` (method) — gateway_only commands should NOT appear in the CLI COMMANDS dict.
+- L140 `test_commands_dict_includes_all_cli_commands(self)` (method)
+- L146 `test_commands_dict_includes_aliases(self)` (method)
+- L154 `test_commands_by_category_covers_all_categories(self)` (method)
+- L158 `test_every_command_has_nonempty_description(self)` (method)
+- L167 `TestGatewayKnownCommands` (class)
+- L168 `test_excludes_cli_only_without_config_gate(self)` (method)
+- L174 `test_includes_config_gated_cli_only(self)` (method) — Commands with gateway_config_gate are always in GATEWAY_KNOWN_COMMANDS.
+- L181 `test_includes_gateway_commands(self)` (method)
+- L188 `test_bg_alias_in_gateway(self)` (method)
+- L192 `test_is_frozenset(self)` (method)
+- L196 `TestGatewayHelpLines` (class)
+- L197 `test_returns_nonempty_list(self)` (method)
+- L201 `test_excludes_cli_only_commands_without_config_gate(self)` (method)
+- L212 `test_includes_alias_note_for_bg(self)` (method)
+- L219 `TestTelegramBotCommands` (class)
+- L220 `test_returns_list_of_tuples(self)` (method)
+- L227 `test_no_hyphens_in_command_names(self)` (method) — Telegram does not support hyphens in command names.
+- L232 `test_all_names_valid_telegram_chars(self)` (method) — Telegram requires: lowercase a-z, 0-9, underscores only.
+- L239 `test_excludes_cli_only_without_config_gate(self)` (method)
+- L246 `test_includes_builtin_commands_with_required_args(self)` (method) — Built-in arg-taking commands (e.g. /queue, /steer, /background)
+- L255 `test_hyphenated_codex_runtime_is_exposed_as_underscore_command(self)` (method) — Telegram autocomplete exposes /codex-runtime as /codex_runtime.
+- L262 `TestSlackSubcommandMap` (class)
+- L263 `test_returns_dict(self)` (method)
+- L268 `test_values_are_slash_prefixed(self)` (method)
+- L272 `test_includes_aliases(self)` (method)
+- L277 `test_excludes_cli_only_without_config_gate(self)` (method)
+- L284 `TestSlackNativeSlashes` (class) — Slack native slash command generation — used to register every
+- L289 `test_returns_triples(self)` (method)
+- L299 `test_hermes_catchall_is_first(self)` (method) — ``/hermes`` must be reserved as the first slot so the legacy
+- L306 `test_names_respect_slack_limits(self)` (method)
+- L314 `test_under_fifty_command_cap(self)` (method) — Slack allows at most 50 slash commands per app.
+- L318 `test_unique_names(self)` (method)
+- L322 `test_includes_canonical_commands(self)` (method)
+- L328 `test_excludes_slack_reserved_commands(self)` (method) — Slack built-in commands (e.g. /status, /me, /join) cannot be
+- L338 `test_includes_aliases_as_first_class_slashes(self)` (method) — Aliases (/btw, /bg, /reset) must be registered as standalone
+- L353 `test_telegram_parity(self)` (method) — Every Telegram bot command must be registerable on Slack too.
+- L381 `TestSlackAppManifest` (class) — Generated Slack app manifest (used by `hermes slack manifest`).
+- L384 `test_returns_dict(self)` (method)
+- L390 `test_each_slash_has_required_fields(self)` (method)
+- L400 `test_btw_is_in_manifest(self)` (method) — Regression: /btw must be a native Slack slash, not just a
+- L407 `test_custom_request_url(self)` (method)
+- L417 `TestGatewayConfigGate` (class) — Tests for the gateway_config_gate mechanism on CommandDef.
+- L420 `test_verbose_has_config_gate(self)` (method)
+- L426 `test_verbose_in_gateway_known_commands(self)` (method) — Config-gated commands are always recognized by the gateway.
+- L430 `test_config_gate_excluded_from_help_when_off(self, tmp_path, monkeypatch)` (method) — When the config gate is falsy, the command should not appear in help.
+- L441 `test_config_gate_included_in_help_when_on(self, tmp_path, monkeypatch)` (method) — When the config gate is truthy, the command should appear in help.
+- L451 `test_config_gate_quoted_false_stays_disabled_everywhere(self, tmp_path, monkeypatch)` (method) — Quoted false must not enable config-gated gateway commands.
+- L466 `test_config_gate_excluded_from_telegram_when_off(self, tmp_path, monkeypatch)` (method)
+- L474 `test_config_gate_included_in_telegram_when_on(self, tmp_path, monkeypatch)` (method)
+- L482 `test_config_gate_excluded_from_slack_when_off(self, tmp_path, monkeypatch)` (method)
+- L490 `test_config_gate_included_in_slack_when_on(self, tmp_path, monkeypatch)` (method)
+- L503 `TestSlashCommandCompleter` (class)
+- L506 `test_builtin_prefix_completion_uses_shared_registry(self)` (method)
+- L514 `test_builtin_completion_display_meta_shows_description(self)` (method)
+- L521 `test_exact_match_completion_adds_trailing_space(self)` (method)
+- L526 `test_partial_match_does_not_add_trailing_space(self)` (method)
+- L533 `test_no_completions_for_non_slash_input(self)` (method)
+- L536 `test_no_completions_for_empty_input(self)` (method)
+- L541 `test_skill_commands_are_completed_from_provider(self)` (method)
+- L555 `test_skill_exact_match_adds_trailing_space(self)` (method)
+- L567 `test_no_skill_provider_means_no_skill_completions(self)` (method) — Default (None) provider should not blow up or add completions.
+- L574 `test_skill_provider_exception_is_swallowed(self)` (method) — A broken provider should not crash autocomplete.
+- L584 `test_skill_description_truncated_at_50_chars(self)` (method)
+- L597 `test_skill_missing_description_uses_fallback(self)` (method)
+- L611 `TestSubcommands` (class)
+- L612 `test_explicit_subcommands_extracted(self)` (method) — Commands with explicit subcommands on CommandDef are extracted.
+- L617 `test_reasoning_has_subcommands(self)` (method)
+- L624 `test_fast_has_subcommands(self)` (method)
+- L631 `test_voice_has_subcommands(self)` (method)
+- L636 `test_cron_has_subcommands(self)` (method)
+- L641 `test_commands_without_subcommands_not_in_dict(self)` (method) — Plain commands should not appear in SUBCOMMANDS.
+- L651 `TestSubcommandCompletion` (class)
+- L652 `test_subcommand_completion_after_space(self)` (method) — Typing '/reasoning ' then Tab should show subcommands.
+- L659 `test_fast_subcommand_completion_after_space(self)` (method)
+- L665 `test_fast_command_filtered_out_when_unavailable(self)` (method)
+- L673 `test_subcommand_prefix_filters(self)` (method) — Typing '/reasoning sh' should only show 'show'.
+- L679 `test_subcommand_exact_match_suppressed(self)` (method) — Typing the full subcommand shouldn't re-suggest it.
+- L685 `test_no_subcommands_for_plain_command(self)` (method) — Commands without subcommands yield nothing after space.
+- L694 `_suggestion(text: str, completer=None)` (function) — Get ghost text suggestion for given input.
+- L706 `TestGhostText` (class)
+- L707 `test_command_name_suggestion(self)` (method) — /he → 'lp'
+- L711 `test_command_name_suggestion_reasoning(self)` (method) — /rea → 'soning'
+- L715 `test_no_suggestion_for_complete_command(self)` (method)
+- L718 `test_subcommand_suggestion(self)` (method) — /reasoning h → 'igh'
+- L722 `test_subcommand_suggestion_show(self)` (method) — /reasoning sh → 'ow'
+- L726 `test_fast_subcommand_suggestion(self)` (method)
+- L729 `test_fast_subcommand_suggestion_hidden_when_filtered(self)` (method)
+- L733 `test_no_suggestion_for_non_slash(self)` (method)
+- L742 `TestSanitizeTelegramName` (class) — Tests for _sanitize_telegram_name() — Telegram requires [a-z0-9_] only.
+- L745 `test_hyphens_replaced_with_underscores(self)` (method)
+- L748 `test_plus_sign_stripped(self)` (method) — Regression: skill name 'Jellyfin + Jellystat 24h Summary'.
+- L752 `test_slash_stripped(self)` (method) — Regression: skill name 'Sonarr v3/v4 API Integration'.
+- L756 `test_uppercase_lowercased(self)` (method)
+- L759 `test_dots_and_special_chars_stripped(self)` (method)
+- L762 `test_consecutive_underscores_collapsed(self)` (method)
+- L766 `test_leading_trailing_underscores_stripped(self)` (method)
+- L771 `test_digits_preserved(self)` (method)
+- L774 `test_empty_after_sanitization(self)` (method)
+- L777 `test_spaces_only_becomes_empty(self)` (method)
+- L780 `test_already_valid(self)` (method)
+- L789 `TestClampTelegramNames` (class) — Tests for _clamp_telegram_names() — 32-char enforcement + collision.
+- L792 `test_short_names_unchanged(self)` (method)
+- L797 `test_long_name_truncated(self)` (method)
+- L804 `test_collision_with_reserved_gets_digit_suffix(self)` (method)
+- L814 `test_collision_between_entries_gets_incrementing_digits(self)` (method)
+- L823 `test_collision_with_reserved_and_entries_skips_taken_digits(self)` (method)
+- L833 `test_all_digits_exhausted_drops_entry(self)` (method)
+- L841 `test_exact_32_chars_not_truncated(self)` (method)
+- L846 `test_duplicate_short_name_deduplicated(self)` (method)
+- L853 `TestClampCommandNamesTriples` (class) — Tests for _clamp_command_names with 3-tuples (name, desc, cmd_key).
+- L863 `test_short_triple_preserved(self)` (method)
+- L868 `test_long_name_preserves_cmd_key(self)` (method)
+- L877 `test_collision_preserves_cmd_key(self)` (method)
+- L888 `test_multiple_long_names_preserve_respective_keys(self)` (method)
+- L899 `test_backward_compat_with_pairs(self)` (method) — Legacy 2-tuple callers (Telegram) must still work.
+- L906 `TestDiscordSkillCmdKeyDispatch` (class) — Integration: discord_skill_commands preserves cmd_key for long names.
+- L915 `test_long_skill_name_retains_cmd_key(self, tmp_path, monkeypatch)` (method)
+- L950 `TestTelegramMenuCommands` (class) — Integration: telegram_menu_commands enforces the 32-char limit.
+- L953 `test_all_names_within_limit(self)` (method)
+- L960 `test_operational_builtins_survive_thirty_command_cap(self, tmp_path, monkeypatch)` (method)
+- L984 `test_includes_plugin_commands_via_lazy_discovery(self, tmp_path, monkeypatch)` (method) — Telegram menu generation should discover plugin slash commands on first access.
+- L1010 `test_excludes_telegram_disabled_skills(self, tmp_path, monkeypatch)` (method) — Skills disabled for telegram should not appear in the menu.
+- L1051 `test_external_dir_skills_included_in_telegram_menu(self, tmp_path, monkeypatch)` (method) — External skills (``skills.external_dirs``) must appear in the Telegram menu.
+- L1118 `test_special_chars_in_skill_names_sanitized(self, tmp_path, monkeypatch)` (method) — Skills with +, /, or other special chars produce valid Telegram names.
+- L1152 `test_empty_sanitized_names_excluded(self, tmp_path, monkeypatch)` (method) — Skills whose names sanitize to empty string are silently dropped.
+- L1191 `TestBackwardCompatAliases` (class) — The renamed constants/functions still exist under the old names.
+- L1194 `test_tg_name_limit_alias(self)` (method)
+- L1197 `test_clamp_telegram_names_is_clamp_command_names(self)` (method)
+- L1205 `TestDiscordSkillCommands` (class) — Tests for discord_skill_commands() — centralized skill registration.
+- L1208 `test_returns_skill_entries(self, tmp_path, monkeypatch)` (method) — Skills under SKILLS_DIR (not .hub) should be returned.
+- L1246 `test_names_allow_hyphens(self, tmp_path, monkeypatch)` (method) — Discord names should keep hyphens (unlike Telegram's _ sanitization).
+- L1271 `test_cap_enforcement(self, tmp_path, monkeypatch)` (method) — Entries beyond max_slots should be hidden.
+- L1298 `test_excludes_discord_disabled_skills(self, tmp_path, monkeypatch)` (method) — Skills disabled for discord should not appear.
+- L1339 `test_reserved_names_not_overwritten(self, tmp_path, monkeypatch)` (method) — Skills whose names collide with built-in commands should be skipped.
+- L1365 `test_description_truncated_at_100_chars(self, tmp_path, monkeypatch)` (method) — Descriptions exceeding 100 chars should be truncated.
+- L1392 `test_all_names_within_32_chars(self, tmp_path, monkeypatch)` (method) — All returned names must respect the 32-char Discord limit.
+- L1429 `TestDiscordSkillCommandsByCategory` (class) — Tests for discord_skill_commands_by_category() — /skill group registration.
+- L1432 `test_groups_skills_by_category(self, tmp_path, monkeypatch)` (method) — Skills nested 2+ levels deep should be grouped by top-level category.
+- L1479 `test_root_level_skills_are_uncategorized(self, tmp_path, monkeypatch)` (method) — Skills directly under SKILLS_DIR (only 1 path component) → uncategorized.
+- L1507 `test_hub_skills_excluded(self, tmp_path, monkeypatch)` (method) — Skills under .hub should be excluded.
+- L1534 `test_deep_nested_skills_use_top_category(self, tmp_path, monkeypatch)` (method) — Skills like mlops/training/axolotl should group under 'mlops'.
+- L1572 `test_no_legacy_25x25_cap(self, tmp_path, monkeypatch)` (method) — The old nested-layout caps (25 groups × 25 skills/group) are gone.
+- L1628 `test_external_dirs_skills_included(self, tmp_path, monkeypatch)` (method) — Skills in ``skills.external_dirs`` must appear in /skill autocomplete.
+- L1690 `TestPluginCommandEnumeration` (class) — Plugin commands registered via ctx.register_command() must be surfaced
+- L1695 `_patch_plugin_commands(self, monkeypatch, commands)` (method) — Monkeypatch hermes_cli.plugins.get_plugin_commands() to a fixed dict.
+- L1703 `test_plugin_command_appears_in_telegram_menu(self, monkeypatch)` (method) — /metricas registered by a plugin must appear in Telegram BotCommand menu.
+- L1716 `test_plugin_command_with_required_args_excluded_from_telegram_menu(self, monkeypatch)` (method) — Telegram BotCommand selections cannot supply required arguments.
+- L1729 `test_plugin_command_appears_in_slack_subcommand_map(self, monkeypatch)` (method) — /hermes metricas must route through the Slack subcommand map.
+- L1742 `test_plugin_command_does_not_shadow_builtin_in_slack(self, monkeypatch)` (method) — If a plugin registers a name that collides with a built-in, the built-in mapping wins.
+- L1756 `test_plugin_command_with_hyphens_sanitized_for_telegram(self, monkeypatch)` (method) — Plugin names containing hyphens must be underscore-normalized for Telegram.
+- L1770 `test_is_gateway_known_command_recognizes_plugin_commands(self, monkeypatch)` (method) — is_gateway_known_command() must return True for plugin commands.
+- L1785 `test_is_gateway_known_command_still_recognizes_builtins(self, monkeypatch)` (method) — Built-in commands must remain known even when plugin discovery fails.
+- L1799 `test_plugin_enumerator_handles_missing_plugin_manager(self, monkeypatch)` (method) — Enumerators must never raise when plugin discovery raises.

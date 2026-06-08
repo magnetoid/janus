@@ -1,0 +1,308 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/hermes_cli/test_web_server.py
+
+Symbols in `tests/hermes_cli/test_web_server.py`.
+
+- L34 `_install_example_plugin(_isolate_hermes_home)` (function) — Drop the example-dashboard fixture into the per-test HERMES_HOME
+- L114 `TestReloadEnv` (class) — Tests for reload_env() — re-reads .env into os.environ.
+- L117 `test_adds_new_vars(self, tmp_path)` (method) — reload_env() adds vars from .env that are not in os.environ.
+- L128 `test_updates_changed_vars(self, tmp_path)` (method) — reload_env() updates vars whose value changed on disk.
+- L141 `test_removes_deleted_known_vars(self, tmp_path)` (method) — reload_env() removes known Hermes vars not present in .env.
+- L153 `test_does_not_remove_unknown_vars(self, tmp_path)` (method) — reload_env() preserves non-Hermes env vars even when absent from .env.
+- L169 `TestRedactKey` (class)
+- L170 `test_long_key_shows_prefix_suffix(self)` (method)
+- L176 `test_short_key_fully_masked(self)` (method)
+- L179 `test_empty_key(self)` (method)
+- L184 `TestSessionTokenInjection` (class) — The desktop shell mints HERMES_DASHBOARD_SESSION_TOKEN and signs its
+- L191 `test_honors_injected_token(self, monkeypatch)` (method)
+- L203 `test_falls_back_to_random_token(self, monkeypatch)` (method)
+- L218 `TestWebServerEndpoints` (class) — Test the FastAPI REST endpoints using Starlette TestClient.
+- L222 `_setup_test_client(self, monkeypatch, _isolate_hermes_home)` (method) — Create a TestClient and isolate the state DB under the test HERMES_HOME.
+- L238 `test_get_status(self)` (method)
+- L248 `test_get_media_serves_image_in_root(self)` (method) — An image under the gateway's images dir is returned as a data URL.
+- L261 `test_get_media_rejects_path_outside_roots(self, tmp_path)` (method) — An image-extension file outside the media roots is forbidden.
+- L269 `test_get_media_rejects_non_image_extension(self)` (method)
+- L280 `test_get_media_404_for_missing_file(self)` (method)
+- L287 `test_get_media_requires_auth(self)` (method)
+- L299 `test_get_dashboard_font_defaults_to_theme(self)` (method) — With no override persisted, the active font is the theme sentinel.
+- L305 `test_set_dashboard_font_persists_valid_choice(self)` (method) — A valid catalog id is accepted, persisted, and read back.
+- L320 `test_set_dashboard_font_clears_with_theme_sentinel(self)` (method) — Setting 'theme' clears any prior override.
+- L328 `test_set_dashboard_font_rejects_unknown_id(self)` (method) — An id not in the curated catalog coerces to the theme sentinel,
+- L337 `test_get_dashboard_font_coerces_stale_persisted_value(self)` (method) — A config value no longer in the catalog reads back as 'theme'.
+- L347 `test_dashboard_font_override_independent_of_theme(self)` (method) — The font override and the theme are stored separately — setting
+- L360 `test_get_sessions_uses_only_persisted_cwd(self, monkeypatch)` (method) — Session rows without persisted cwd must not inherit TERMINAL_CWD.
+- L383 `test_get_sessions_forwards_min_messages(self, monkeypatch)` (method) — The ?min_messages= filter must reach SessionDB.
+- L414 `test_rename_session_updates_title(self)` (method) — PATCH /api/sessions/{id} renames a session (regression: the route
+- L435 `test_rename_session_clears_title_when_empty(self)` (method)
+- L455 `test_rename_session_not_found(self)` (method)
+- L459 `test_archive_session_via_patch(self)` (method) — PATCH archived=true soft-hides a session; archived=false restores it.
+- L485 `test_patch_session_without_fields_is_400(self)` (method) — An existing session + empty body is a bad request, not a 404.
+- L498 `test_profiles_sessions_tags_default_profile(self)` (method) — The cross-profile aggregator returns the default profile's rows
+- L518 `test_profiles_sessions_rejects_unknown_archived_value(self)` (method)
+- L522 `test_get_sessions_rejects_unknown_archived_value(self)` (method)
+- L526 `test_get_sessions_rejects_unknown_order_value(self)` (method)
+- L530 `test_get_sessions_order_recent_surfaces_compression_tip(self)` (method) — A long-running conversation that auto-compresses must stay on the
+- L569 `test_search_dedupes_compression_lineage_to_tip(self)` (method) — A conversation that auto-compresses leaves the matched term in both
+- L607 `test_search_keeps_branch_specific_hits_on_branch(self)` (method) — Branch sessions share parent_session_id, but they are not compression
+- L641 `test_get_sessions_archived_is_boolean(self)` (method)
+- L654 `test_rename_response_omits_archived_when_not_set(self)` (method) — Title-only PATCH keeps its legacy {ok, title} response shape.
+- L668 `test_audio_transcription_endpoint(self, monkeypatch)` (method)
+- L700 `test_audio_transcription_rejects_invalid_base64(self)` (method)
+- L712 `test_desktop_audio_routes_registered(self)` (method) — All three desktop voice endpoints must exist.
+- L727 `test_elevenlabs_voices_unavailable_without_key(self, monkeypatch)` (method)
+- L737 `test_speak_text_returns_base64_data_url(self, monkeypatch, tmp_path)` (method)
+- L762 `test_speak_text_requires_nonempty_text(self)` (method)
+- L766 `test_update_hermes_returns_docker_guidance_without_spawning(self, monkeypatch)` (method)
+- L800 `test_update_hermes_spawns_on_non_docker_install(self, monkeypatch)` (method)
+- L826 `test_get_status_filters_unconfigured_gateway_platforms(self, monkeypatch)` (method)
+- L862 `test_get_status_hides_stale_platforms_when_gateway_not_running(self, monkeypatch)` (method)
+- L892 `test_cron_delivery_targets_lists_configured_platforms(self, monkeypatch)` (method) — The cron dropdown endpoint returns Local + configured platforms dynamically.
+- L920 `test_get_config_schema(self)` (method)
+- L934 `test_get_config_defaults(self)` (method)
+- L940 `test_get_env_vars(self)` (method)
+- L947 `test_get_env_vars_marks_channel_managed_keys(self)` (method)
+- L960 `test_platform_scoped_messaging_env_vars_are_channel_managed(self)` (method)
+- L978 `test_reveal_env_var(self, tmp_path)` (method) — POST /api/env/reveal should return the real unredacted value.
+- L993 `test_reveal_env_var_not_found(self)` (method) — POST /api/env/reveal should 404 for unknown keys.
+- L1003 `test_reveal_env_var_no_token(self, tmp_path)` (method) — POST /api/env/reveal without token should return 401.
+- L1017 `test_reveal_env_var_bad_token(self, tmp_path)` (method) — POST /api/env/reveal with wrong token should return 401.
+- L1029 `test_reveal_env_var_custom_session_header_ignores_proxy_authorization(self, tmp_path)` (method) — A valid dashboard session header should coexist with proxy auth.
+- L1047 `test_reveal_env_var_legacy_authorization_header_still_works(self, tmp_path)` (method) — Keep old dashboard bundles working while the new header rolls out.
+- L1061 `test_get_messaging_platforms(self)` (method)
+- L1071 `test_messaging_catalog_covers_gateway_platforms(self)` (method) — Catalog is derived from the Platform enum, so every built-in shows up.
+- L1083 `test_messaging_catalog_includes_plugin_platforms(self, monkeypatch)` (method) — Plugin-registered adapters appear in the catalog without per-platform code.
+- L1106 `test_update_messaging_platform_saves_env_and_enablement(self)` (method)
+- L1125 `test_messaging_platform_test_reports_missing_required_setup(self)` (method)
+- L1137 `test_telegram_onboarding_start_strips_poll_token(self, monkeypatch)` (method)
+- L1176 `test_telegram_onboarding_ready_and_apply_never_returns_bot_token(self, monkeypatch)` (method)
+- L1232 `test_telegram_onboarding_apply_requires_ready_pairing(self, monkeypatch)` (method)
+- L1261 `test_telegram_onboarding_cancel_clears_local_session(self, monkeypatch)` (method)
+- L1288 `test_session_token_endpoint_removed(self)` (method) — GET /api/auth/session-token should no longer exist (token injected via HTML).
+- L1301 `test_unauthenticated_api_blocked(self)` (method) — API requests without the session token should be rejected.
+- L1321 `test_path_traversal_blocked(self)` (method) — Verify URL-encoded path traversal is blocked.
+- L1331 `test_path_traversal_dotdot_blocked(self)` (method) — Direct .. path traversal via encoded sequences.
+- L1338 `test_set_model_main_nous_applies_gateway_defaults(self, monkeypatch)` (method) — Switching the main provider to Nous calls apply_nous_managed_defaults
+- L1367 `test_set_model_main_non_nous_skips_gateway_defaults(self, monkeypatch)` (method) — Non-Nous providers must NOT trigger Tool Gateway auto-routing.
+- L1385 `test_apply_main_model_assignment_base_url_and_context_reconcile(self)` (method) — The shared main-slot assignment helper must persist a supplied
+- L1442 `test_parse_model_ids_handles_openai_and_bare_shapes(self)` (method) — Model discovery must tolerate the common /v1/models shapes and
+- L1470 `test_set_model_main_custom_persists_base_url(self)` (method) — Custom/local providers must persist model.base_url so the runtime
+- L1498 `test_set_model_main_non_custom_clears_stale_base_url(self)` (method) — Switching to a hosted provider must clear a stale base_url so the
+- L1518 `test_set_model_main_same_provider_preserves_base_url(self)` (method) — Re-picking a model under the SAME provider must NOT wipe a configured
+- L1546 `test_set_model_main_reports_stale_auxiliary_pins(self)` (method) — Switching the main provider must report auxiliary slots still pinned
+- L1579 `test_set_model_main_no_stale_when_aux_matches_new_provider(self)` (method) — Aux slots pinned to the SAME provider as the new main are not stale.
+- L1602 `test_set_model_main_gateway_failure_does_not_block_save(self, monkeypatch)` (method) — A Portal/gateway hiccup must never prevent saving the model.
+- L1620 `test_recommended_default_nous_honors_free_tier(self, monkeypatch)` (method) — For a free-tier Nous user, the recommended default must be a free
+- L1648 `test_recommended_default_nous_paid_uses_curated_default(self, monkeypatch)` (method) — A paid Nous user gets the first curated/paid-augmented model.
+- L1667 `test_recommended_default_handles_failure_gracefully(self, monkeypatch)` (method) — Endpoint never 500s — returns empty model on internal error.
+- L1688 `TestBuildSchemaFromConfig` (class)
+- L1689 `test_produces_expected_field_count(self)` (method)
+- L1694 `test_schema_entries_have_required_fields(self)` (method)
+- L1700 `test_overrides_applied(self)` (method)
+- L1709 `test_empty_prefix_produces_correct_keys(self)` (method)
+- L1716 `test_top_level_scalars_get_general_category(self)` (method) — Top-level scalar fields should be in 'general' category.
+- L1721 `test_nested_keys_get_parent_category(self)` (method) — Nested fields should use the top-level parent as their category.
+- L1727 `test_category_merge_applied(self)` (method) — Small categories should be merged into larger ones.
+- L1735 `test_no_single_field_categories(self)` (method) — After merging, no category should have just 1 field.
+- L1749 `TestConfigRoundTrip` (class) — Verify config survives GET → edit → PUT without data loss.
+- L1753 `_setup(self)` (method)
+- L1762 `test_get_config_no_internal_keys(self)` (method) — GET /api/config should not expose _config_version or _model_meta.
+- L1768 `test_get_config_model_is_string(self)` (method) — GET /api/config should normalize model dict to a string.
+- L1774 `test_round_trip_preserves_model_subkeys(self)` (method) — Save and reload should not lose model.provider, model.base_url, etc.
+- L1803 `test_edit_model_name_preserved(self)` (method) — Changing the model string should update model.default on disk.
+- L1824 `test_edit_nested_value(self)` (method) — Editing a nested config value should persist correctly.
+- L1845 `test_schema_types_match_config_values(self)` (method) — Every schema field should have a matching-type value in the config.
+- L1882 `TestNewEndpoints` (class) — Tests for session detail, logs, cron, skills, tools, raw config, analytics.
+- L1886 `_setup(self, monkeypatch, _isolate_hermes_home)` (method)
+- L1901 `test_get_logs_default(self)` (method)
+- L1909 `test_get_logs_invalid_file(self)` (method)
+- L1913 `test_cron_list(self)` (method)
+- L1918 `test_cron_job_not_found(self)` (method)
+- L1924 `test_profiles_list_includes_default(self)` (method)
+- L1933 `test_profiles_list_falls_back_when_profile_listing_fails(self, monkeypatch)` (method)
+- L1964 `test_profiles_create_rename_delete_round_trip(self, monkeypatch)` (method)
+- L1988 `test_profile_setup_command_uses_named_profile_wrapper(self)` (method)
+- L1998 `test_profile_setup_command_uses_hermes_for_default_profile(self)` (method)
+- L2008 `test_profiles_create_creates_wrapper_alias_when_safe(self, monkeypatch, tmp_path)` (method)
+- L2025 `test_profiles_create_with_clone_from_default_copies_default_skills(self, monkeypatch)` (method)
+- L2045 `test_profiles_create_with_clone_from_duplicates_source(self, monkeypatch)` (method)
+- L2069 `test_profiles_create_without_clone_seeds_bundled_skills(self, monkeypatch)` (method)
+- L2094 `test_profile_open_terminal_uses_macos_terminal(self, monkeypatch)` (method)
+- L2110 `test_profile_open_terminal_uses_windows_cmd(self, monkeypatch)` (method)
+- L2126 `test_profiles_create_rejects_invalid_name(self)` (method)
+- L2130 `test_profiles_delete_default_forbidden(self)` (method)
+- L2134 `test_profiles_delete_not_found(self)` (method)
+- L2138 `test_profile_soul_round_trip(self, monkeypatch)` (method)
+- L2158 `test_profile_soul_unknown_profile_404(self)` (method)
+- L2164 `test_profiles_active_defaults(self)` (method)
+- L2174 `test_profiles_set_active_round_trip(self, monkeypatch)` (method)
+- L2185 `test_profiles_set_active_unknown_404(self)` (method)
+- L2189 `test_profile_description_round_trip(self, monkeypatch)` (method)
+- L2208 `test_profile_description_unknown_404(self)` (method)
+- L2214 `test_profile_model_round_trip(self, monkeypatch)` (method)
+- L2234 `test_profile_model_requires_provider_and_model(self, monkeypatch)` (method)
+- L2245 `test_profile_describe_auto_success(self, monkeypatch)` (method)
+- L2267 `test_profile_describe_auto_failure_is_not_auto(self, monkeypatch)` (method)
+- L2288 `test_skills_list(self)` (method)
+- L2297 `test_skills_list_includes_disabled_skills(self, monkeypatch)` (method)
+- L2334 `test_toolsets_list(self)` (method)
+- L2344 `test_toolsets_list_matches_cli_enabled_state(self, monkeypatch)` (method)
+- L2412 `test_toggle_toolset_enable_disable(self)` (method) — PUT /api/tools/toolsets/{name} round-trips through config and the list view.
+- L2433 `test_toggle_toolset_unknown_returns_400(self)` (method)
+- L2439 `test_get_toolset_config_returns_provider_matrix(self)` (method) — GET .../config returns provider rows with structured env_vars.
+- L2471 `test_get_toolset_config_reflects_selected_provider(self)` (method) — Selecting a provider is reflected in the next /config read.
+- L2495 `test_get_toolset_config_no_category_toolset(self)` (method) — A toolset without a TOOL_CATEGORIES entry returns has_category False.
+- L2504 `test_get_toolset_config_unknown_returns_400(self)` (method)
+- L2508 `test_select_toolset_provider_persists_backend(self)` (method) — PUT .../provider writes the backend selection to config.
+- L2524 `test_select_toolset_provider_unknown_provider_returns_400(self)` (method)
+- L2531 `test_select_toolset_provider_unknown_toolset_returns_400(self)` (method)
+- L2538 `test_config_raw_get(self)` (method)
+- L2543 `test_config_raw_put_valid(self)` (method)
+- L2551 `test_config_raw_put_invalid(self)` (method)
+- L2558 `test_analytics_usage(self)` (method)
+- L2579 `test_analytics_usage_includes_skill_breakdown(self)` (method)
+- L2635 `test_session_token_endpoint_removed(self)` (method) — GET /api/auth/session-token no longer exists.
+- L2652 `TestModelContextLength` (class) — Tests for model_context_length in normalize/denormalize and /api/model/info.
+- L2655 `test_normalize_extracts_context_length_from_dict(self)` (method) — normalize should surface context_length from model dict.
+- L2670 `test_normalize_bare_string_model_yields_zero(self)` (method) — normalize should set model_context_length=0 for bare string model.
+- L2678 `test_normalize_dict_without_context_length_yields_zero(self)` (method) — normalize should default to 0 when model dict has no context_length.
+- L2686 `test_normalize_non_int_context_length_yields_zero(self)` (method) — normalize should coerce non-int context_length to 0.
+- L2694 `test_denormalize_writes_context_length_into_model_dict(self)` (method) — denormalize should write model_context_length back into model dict.
+- L2712 `test_denormalize_zero_removes_context_length(self)` (method) — denormalize with model_context_length=0 should remove context_length key.
+- L2732 `test_denormalize_upgrades_bare_string_to_dict(self)` (method) — denormalize should upgrade bare string model to dict when context_length set.
+- L2748 `test_denormalize_bare_string_stays_string_when_zero(self)` (method) — denormalize should keep bare string model as string when context_length=0.
+- L2761 `test_denormalize_coerces_string_context_length(self)` (method) — denormalize should handle string model_context_length from frontend.
+- L2778 `TestModelContextLengthSchema` (class) — Tests for model_context_length placement in CONFIG_SCHEMA.
+- L2781 `test_schema_has_model_context_length(self)` (method)
+- L2785 `test_schema_model_context_length_after_model(self)` (method) — model_context_length should appear immediately after model in schema.
+- L2792 `test_schema_model_context_length_is_number(self)` (method)
+- L2799 `TestModelInfoEndpoint` (class) — Tests for GET /api/model/info endpoint.
+- L2803 `_setup(self)` (method)
+- L2811 `test_model_info_returns_200(self)` (method)
+- L2822 `test_model_info_with_dict_config(self, monkeypatch)` (method)
+- L2843 `test_model_info_auto_detect_when_no_override(self, monkeypatch)` (method)
+- L2858 `test_model_info_empty_model(self, monkeypatch)` (method)
+- L2868 `test_model_info_bare_string_model(self, monkeypatch)` (method)
+- L2884 `test_model_info_capabilities(self, monkeypatch)` (method)
+- L2910 `test_model_info_graceful_on_metadata_error(self, monkeypatch)` (method) — Endpoint should return zeros on import/resolution errors, not 500.
+- L2931 `TestProbeGatewayHealth` (class) — Tests for _probe_gateway_health() — cross-container gateway detection.
+- L2934 `test_returns_false_when_no_url_configured(self, monkeypatch)` (method) — When GATEWAY_HEALTH_URL is unset, the probe returns (False, None).
+- L2942 `test_normalizes_url_with_health_suffix(self, monkeypatch)` (method) — If the user sets the URL to include /health, it's stripped to base.
+- L2962 `test_normalizes_url_with_health_detailed_suffix(self, monkeypatch)` (method) — If the user sets the URL to include /health/detailed, it's stripped to base.
+- L2978 `test_successful_detailed_probe(self, monkeypatch)` (method) — Successful /health/detailed probe returns (True, body_dict).
+- L3002 `test_detailed_fails_falls_back_to_simple_health(self, monkeypatch)` (method) — If /health/detailed fails, falls back to /health.
+- L3028 `TestStatusRemoteGateway` (class) — Tests for /api/status with remote gateway health fallback.
+- L3032 `_setup_test_client(self)` (method)
+- L3042 `test_status_falls_back_to_remote_probe(self, monkeypatch)` (method) — When local PID check fails and remote probe succeeds, gateway shows running.
+- L3064 `test_status_remote_probe_not_attempted_when_local_pid_found(self, monkeypatch)` (method) — When local PID check succeeds, the remote probe is never called.
+- L3087 `test_status_remote_probe_not_attempted_when_no_url(self, monkeypatch)` (method) — When GATEWAY_HEALTH_URL is unset, no probe is attempted.
+- L3101 `test_status_remote_running_null_pid(self, monkeypatch)` (method) — Remote gateway running but PID not in response — pid should be None.
+- L3125 `TestNormaliseThemeDefinition` (class) — Tests for _normalise_theme_definition() — parses YAML theme files.
+- L3128 `test_rejects_missing_name(self)` (method)
+- L3134 `test_rejects_non_dict(self)` (method)
+- L3140 `test_loose_colors_shorthand(self)` (method) — Bare hex strings under `colors` parse as {hex, alpha=1.0}.
+- L3154 `test_full_palette_form(self)` (method)
+- L3170 `test_default_typography_applied_when_missing(self)` (method)
+- L3180 `test_partial_typography_merges_with_defaults(self)` (method)
+- L3194 `test_layout_defaults(self)` (method)
+- L3200 `test_invalid_density_falls_back(self)` (method)
+- L3208 `test_valid_densities_accepted(self)` (method)
+- L3214 `test_color_overrides_filter_unknown_keys(self)` (method)
+- L3230 `test_color_overrides_omitted_when_empty(self)` (method)
+- L3235 `test_alpha_clamped_to_unit_range(self)` (method)
+- L3248 `test_invalid_alpha_uses_default(self)` (method)
+- L3257 `TestDiscoverUserThemes` (class) — Tests for _discover_user_themes() — scans ~/.hermes/dashboard-themes/.
+- L3260 `test_returns_empty_when_dir_missing(self, tmp_path, monkeypatch)` (method)
+- L3265 `test_loads_and_normalises_yaml(self, tmp_path, monkeypatch)` (method)
+- L3289 `test_malformed_yaml_skipped(self, tmp_path, monkeypatch)` (method)
+- L3304 `TestNormaliseThemeExtensions` (class) — Tests for the extended normaliser fields (assets, customCSS,
+- L3309 `test_layout_variant_defaults_to_standard(self)` (method)
+- L3314 `test_layout_variant_accepts_known_values(self)` (method)
+- L3320 `test_layout_variant_rejects_unknown(self)` (method)
+- L3327 `test_assets_named_slots_passthrough(self)` (method)
+- L3345 `test_assets_custom_block(self)` (method)
+- L3363 `test_assets_absent_means_no_field(self)` (method)
+- L3368 `test_custom_css_passthrough_and_capped(self)` (method)
+- L3382 `test_custom_css_empty_dropped(self)` (method)
+- L3388 `test_component_styles_per_bucket(self)` (method)
+- L3409 `test_component_styles_empty_buckets_dropped(self)` (method)
+- L3423 `test_component_styles_accepts_numeric_values(self)` (method) — Numeric values (e.g. opacity: 0.8) are coerced to strings.
+- L3433 `TestBulkDeleteSessionsEndpoint` (class) — Tests for ``POST /api/sessions/bulk-delete`` — backs the
+- L3450 `_setup_test_client(self, monkeypatch, _isolate_hermes_home)` (method)
+- L3468 `_seed(self, ids)` (method)
+- L3478 `test_requires_auth(self)` (method)
+- L3482 `test_deletes_listed_sessions_only(self)` (method)
+- L3500 `test_unknown_ids_silently_skipped(self)` (method) — The endpoint never 404s on a missing ID — it returns the
+- L3512 `test_empty_list_is_noop(self)` (method) — ``ids: []`` returns ``deleted: 0`` (200, not 400) — the UI
+- L3521 `test_payload_cap_enforced(self)` (method) — 501 IDs returns 400 — a hard cap stops a runaway selection
+- L3537 `test_route_order_not_shadowed_by_session_id(self)` (method) — Pin the route-ordering contract: ``POST /api/sessions/bulk-delete``
+- L3555 `TestDeleteEmptySessionsEndpoint` (class) — Tests for ``GET /api/sessions/empty/count`` and
+- L3574 `_setup_test_client(self, monkeypatch, _isolate_hermes_home)` (method)
+- L3594 `_seed(self)` (method) — Build the standard test corpus:
+- L3623 `test_count_endpoint_requires_auth(self)` (method) — GET /api/sessions/empty/count must 401 without the session token.
+- L3628 `test_delete_endpoint_requires_auth(self)` (method) — DELETE /api/sessions/empty must 401 without the session token.
+- L3637 `test_count_returns_only_empty_ended_unarchived(self)` (method) — With the standard corpus, the count is exactly 2 — only
+- L3646 `test_delete_returns_count_and_removes_only_empties(self)` (method) — DELETE returns the deleted count and removes only the
+- L3671 `test_delete_with_no_empties_returns_zero(self)` (method) — No empty sessions → endpoint returns ``deleted: 0`` (200,
+- L3679 `test_route_order_empty_not_shadowed_by_session_id(self)` (method) — Pin the route-ordering contract: ``DELETE /api/sessions/empty``
+- L3699 `TestPluginAPIAuth` (class) — Tests that plugin API routes require the session token (issue #19533).
+- L3703 `_setup_test_client(self, monkeypatch, _isolate_hermes_home, _install_example_plugin)` (method) — Create a TestClient without the session token header.
+- L3726 `test_plugin_route_requires_auth(self)` (method) — Plugin API routes should return 401 without a valid session token.
+- L3732 `test_plugin_route_allows_auth(self)` (method) — Plugin API routes should work with a valid session token.
+- L3750 `test_plugin_post_requires_auth(self)` (method) — Plugin POST routes should return 401 without a valid session token.
+- L3755 `test_plugin_patch_requires_auth(self)` (method) — Plugin PATCH routes should return 401 without a valid session token.
+- L3768 `test_plugin_delete_requires_auth(self)` (method) — Plugin DELETE routes should return 401 without a valid session token.
+- L3773 `test_non_kanban_plugin_route_requires_auth(self)` (method) — Auth must be plugin-agnostic, not kanban-specific.
+- L3790 `test_plugin_websocket_unaffected_by_http_middleware(self)` (method) — The kanban /events WebSocket has its own ``?token=`` check;
+- L3817 `TestDashboardPluginManifestExtensions` (class) — Tests for the extended plugin manifest fields (tab.override,
+- L3821 `_write_plugin(self, tmp_path, name, manifest)` (method)
+- L3828 `test_override_and_hidden_carried_through(self, tmp_path, monkeypatch)` (method)
+- L3846 `test_override_requires_leading_slash(self, tmp_path, monkeypatch)` (method)
+- L3860 `test_slots_default_empty(self, tmp_path, monkeypatch)` (method)
+- L3876 `test_slots_filters_non_string_entries(self, tmp_path, monkeypatch)` (method)
+- L3891 `test_page_scoped_slots_preserved(self, tmp_path, monkeypatch)` (method) — Page-scoped slot names (e.g. ``sessions:top``) round-trip through
+- L3949 `TestPtyWebSocket` (class)
+- L3951 `_setup(self, monkeypatch, _isolate_hermes_home)` (method)
+- L3963 `_url(self, token: str | None=None, **params: str)` (method)
+- L3972 `test_resolve_chat_argv_uses_dashboard_scroll_env(self, monkeypatch)` (method) — Dashboard chat runs the TUI in browser-scrollback mode.
+- L3987 `test_rejects_when_embedded_chat_disabled(self, monkeypatch)` (method)
+- L3996 `test_rejects_missing_token(self, monkeypatch)` (method)
+- L4009 `test_rejects_bad_token(self, monkeypatch)` (method)
+- L4022 `test_streams_child_stdout_to_client(self, monkeypatch)` (method)
+- L4050 `test_client_input_reaches_child_stdin(self, monkeypatch)` (method)
+- L4072 `test_resize_escape_is_forwarded(self, monkeypatch)` (method)
+- L4116 `test_unavailable_platform_closes_with_message(self, monkeypatch)` (method)
+- L4137 `test_resume_parameter_is_forwarded_to_argv(self, monkeypatch)` (method)
+- L4154 `test_channel_param_propagates_sidecar_url(self, monkeypatch)` (method) — When /api/pty is opened with ?channel=, the PTY child gets a
+- L4186 `test_pub_broadcasts_to_events_subscribers(self)` (method) — A frame handed to _broadcast_event is sent verbatim to every
+- L4243 `test_events_rejects_missing_channel(self)` (method)
+- L4254 `test_resolve_chat_argv_injects_gateway_ws_url(monkeypatch)` (function)
+- L4274 `TestDashboardPluginStaticAssetAllowlist` (class) — ``/dashboard-plugins/<name>/<path>`` is unauthenticated by design —
+- L4288 `_setup_test_client(self, monkeypatch, _isolate_hermes_home, _install_example_plugin)` (method) — Create a TestClient and install the example-dashboard fixture.
+- L4307 `test_python_source_is_404(self)` (method) — The example plugin's ``plugin_api.py`` must NOT be served as
+- L4314 `test_pycache_is_404(self)` (method) — Same protection for compiled Python (``.pyc``) inside the
+- L4328 `test_manifest_json_still_served(self)` (method) — JSON files remain browser-fetchable — manifests, localized
+- L4338 `test_unknown_plugin_is_404(self)` (method) — Existing behaviour preserved: nonexistent plugin name → 404.
+- L4345 `test_path_traversal_still_blocked(self)` (method) — The allowlist is on top of the existing ``.resolve()`` /
+- L4357 `_fake_httpx_client(*, status: int | None=None, raise_exc: bool=False)` (function) — Build a drop-in for httpx.Client whose .get() returns a canned status
+- L4387 `TestValidateProviderCredential` (class) — Live-probe credential validation (/api/providers/validate).
+- L4391 `_setup_test_client(self, monkeypatch, _isolate_hermes_home)` (method)
+- L4402 `_post(self, key, value)` (method)
+- L4405 `test_rejected_key_blocks(self, monkeypatch)` (method)
+- L4410 `test_valid_key_passes(self, monkeypatch)` (method)
+- L4415 `test_rate_limited_counts_as_valid(self, monkeypatch)` (method)
+- L4420 `test_network_error_is_unreachable_not_blocking(self, monkeypatch)` (method)
+- L4425 `test_unknown_provider_is_not_validated(self)` (method)
+- L4430 `test_empty_value_rejected(self)` (method)
+- L4435 `TestDesktopCronTicker` (class) — The dashboard backend fires cron jobs itself only when desktop-spawned.
+- L4438 `_client(self)` (method)
+- L4447 `test_ticker_runs_when_desktop(self, monkeypatch, _isolate_hermes_home)` (method)
+- L4458 `test_ticker_skipped_without_desktop(self, monkeypatch, _isolate_hermes_home)` (method)

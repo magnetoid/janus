@@ -1,0 +1,113 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:44'
+updated: '2026-06-08T00:38:44'
+---
+
+# tests/tools/test_voice_mode.py
+
+Symbols in `tests/tools/test_voice_mode.py`.
+
+- L13 `_non_wsl_proc_version(real_open)` (function) — Return an open() shim that makes host WSL detection deterministic.
+- L30 `sample_wav(tmp_path)` (function) — Create a minimal valid WAV file (1 second of silence at 16kHz).
+- L46 `temp_voice_dir(tmp_path, monkeypatch)` (function) — Redirect _TEMP_DIR to a temporary path.
+- L55 `mock_sd(monkeypatch)` (function) — Mock _import_audio to return (mock_sd, real_np) so lazy imports work.
+- L75 `TestPulseSocketReachable` (class)
+- L76 `test_no_env_no_socket(self, monkeypatch)` (method)
+- L83 `test_stale_socket_file_not_reachable(self, monkeypatch, tmp_path)` (method) — A socket file with no listener should not count as reachable.
+- L98 `test_listening_socket_reachable_via_xdg_runtime(self, monkeypatch, tmp_path)` (method) — A live PulseAudio-style socket under XDG_RUNTIME_DIR is reachable (#35622).
+- L115 `test_listening_socket_reachable_via_pulse_server_env(self, monkeypatch, tmp_path)` (method)
+- L131 `TestDetectAudioEnvironment` (class)
+- L132 `test_clean_environment_is_available(self, monkeypatch)` (method) — No SSH, Docker, or WSL — should be available.
+- L146 `test_ssh_blocks_voice(self, monkeypatch)` (method) — SSH environment without a reachable sound server should block voice mode.
+- L160 `test_ssh_with_pulse_server_allows_voice(self, monkeypatch)` (method) — SSH with PULSE_SERVER set should NOT block voice mode (#35622).
+- L175 `test_ssh_with_reachable_pulse_socket_allows_voice(self, monkeypatch)` (method) — SSH with a reachable PulseAudio socket (no env vars) allows voice (#35622).
+- L193 `test_wsl_without_pulse_blocks_voice(self, monkeypatch, tmp_path)` (method) — WSL without PULSE_SERVER should block voice mode.
+- L220 `test_wsl_with_pulse_allows_voice(self, monkeypatch, tmp_path)` (method) — WSL with PULSE_SERVER set should NOT block voice mode.
+- L246 `test_wsl_device_query_fails_with_pulse_continues(self, monkeypatch, tmp_path)` (method) — WSL device query failure should not block if PULSE_SERVER is set.
+- L274 `test_device_query_fails_without_pulse_blocks(self, monkeypatch)` (method) — Device query failure without PULSE_SERVER should block.
+- L293 `test_termux_import_error_shows_termux_install_guidance(self, monkeypatch)` (method)
+- L309 `test_termux_api_package_without_android_app_blocks_voice(self, monkeypatch)` (method)
+- L326 `test_docker_with_pulse_server_allows_voice(self, monkeypatch)` (method) — Docker with PULSE_SERVER set should NOT block voice mode (#21203).
+- L344 `test_docker_with_pipewire_remote_allows_voice(self, monkeypatch)` (method) — Docker with PIPEWIRE_REMOTE set should NOT block voice mode (#21203).
+- L362 `test_docker_with_pipewire_remote_and_no_devices_allows_voice(self, monkeypatch)` (method) — PIPEWIRE_REMOTE should bypass empty PortAudio device lists in Docker.
+- L382 `test_docker_with_pipewire_remote_and_query_failure_allows_voice(self, monkeypatch)` (method) — PIPEWIRE_REMOTE should bypass PortAudio query failures in Docker.
+- L402 `test_docker_without_audio_forwarding_blocks_voice(self, monkeypatch)` (method) — Docker without PULSE_SERVER/PIPEWIRE_REMOTE keeps blocking voice mode.
+- L421 `test_termux_api_microphone_allows_voice_without_sounddevice(self, monkeypatch)` (method)
+- L444 `TestCheckVoiceRequirements` (class)
+- L445 `test_termux_api_capture_counts_as_audio_available(self, monkeypatch)` (method)
+- L460 `test_all_requirements_met(self, monkeypatch)` (method)
+- L474 `test_missing_audio_packages(self, monkeypatch)` (method)
+- L488 `test_missing_stt_provider(self, monkeypatch)` (method)
+- L506 `TestCreateAudioRecorder` (class)
+- L507 `test_termux_uses_termux_audio_recorder_when_api_present(self, monkeypatch)` (method)
+- L519 `test_termux_without_android_app_falls_back_to_audio_recorder(self, monkeypatch)` (method)
+- L531 `TestTermuxAudioRecorder` (class)
+- L532 `test_start_and_stop_use_termux_microphone_commands(self, monkeypatch, temp_voice_dir)` (method)
+- L559 `test_cancel_removes_partial_termux_recording(self, monkeypatch, temp_voice_dir)` (method)
+- L583 `TestAudioRecorder` (class)
+- L584 `test_start_raises_without_audio_libs(self, monkeypatch)` (method)
+- L595 `test_start_creates_and_starts_stream(self, mock_sd)` (method)
+- L608 `test_double_start_is_noop(self, mock_sd)` (method)
+- L621 `TestAudioRecorderStop` (class)
+- L622 `test_stop_returns_none_when_not_recording(self)` (method)
+- L628 `test_stop_writes_wav_file(self, mock_sd, temp_voice_dir)` (method)
+- L657 `test_stop_returns_none_for_very_short_recording(self, mock_sd, temp_voice_dir)` (method)
+- L675 `test_stop_returns_none_for_silent_recording(self, mock_sd, temp_voice_dir)` (method)
+- L695 `TestAudioRecorderCancel` (class)
+- L696 `test_cancel_discards_frames(self, mock_sd)` (method)
+- L714 `test_cancel_when_not_recording_is_safe(self)` (method)
+- L722 `TestAudioRecorderProperties` (class)
+- L723 `test_elapsed_seconds_when_not_recording(self)` (method)
+- L729 `test_elapsed_seconds_when_recording(self, mock_sd)` (method)
+- L750 `TestTranscribeRecording` (class)
+- L751 `test_delegates_to_transcribe_audio(self)` (method)
+- L765 `test_filters_whisper_hallucination(self)` (method)
+- L779 `test_does_not_filter_real_speech(self)` (method)
+- L792 `test_oversized_wav_is_chunked_and_stitched(self, tmp_path, monkeypatch)` (method)
+- L832 `test_oversized_wav_reports_failing_chunk(self, tmp_path, monkeypatch)` (method)
+- L860 `TestWhisperHallucinationFilter` (class)
+- L861 `test_known_hallucinations(self)` (method)
+- L871 `test_real_speech_not_filtered(self)` (method)
+- L883 `TestPlayAudioFile` (class)
+- L884 `test_play_wav_via_sounddevice(self, monkeypatch, sample_wav)` (method)
+- L906 `test_returns_false_when_no_player(self, monkeypatch, sample_wav)` (method)
+- L917 `test_returns_false_for_missing_file(self)` (method)
+- L928 `TestCleanupTempRecordings` (class)
+- L929 `test_old_files_deleted(self, temp_voice_dir)` (method)
+- L943 `test_recent_files_preserved(self, temp_voice_dir)` (method)
+- L954 `test_nonexistent_dir_returns_zero(self, monkeypatch)` (method)
+- L961 `test_non_recording_files_ignored(self, temp_voice_dir)` (method)
+- L979 `TestPlayBeep` (class)
+- L980 `test_beep_calls_sounddevice_play(self, mock_sd)` (method)
+- L999 `test_beep_double_produces_longer_audio(self, mock_sd)` (method)
+- L1011 `test_beep_noop_without_audio(self, monkeypatch)` (method)
+- L1021 `test_beep_handles_playback_error(self, mock_sd)` (method)
+- L1034 `TestSilenceDetection` (class)
+- L1035 `test_silence_callback_fires_after_speech_then_silence(self, mock_sd)` (method)
+- L1081 `test_silence_without_speech_does_not_fire(self, mock_sd)` (method)
+- L1110 `test_micro_pause_tolerance_during_speech(self, mock_sd)` (method) — Brief dips below threshold during speech should NOT reset speech tracking.
+- L1151 `test_no_callback_means_no_silence_detection(self, mock_sd)` (method)
+- L1181 `TestPlaybackInterrupt` (class) — Verify that TTS playback can be interrupted.
+- L1184 `test_stop_playback_terminates_process(self)` (method)
+- L1201 `test_stop_playback_noop_when_nothing_playing(self)` (method)
+- L1209 `test_play_audio_file_sets_active_playback(self, monkeypatch, sample_wav)` (method)
+- L1234 `TestContinuousModeFlow` (class) — Verify continuous mode: auto-restart after transcription or silence.
+- L1237 `test_continuous_restart_on_no_speech(self, mock_sd, temp_voice_dir)` (method)
+- L1277 `test_recorder_reusable_after_stop(self, mock_sd, temp_voice_dir)` (method)
+- L1307 `TestAudioLevelIndicator` (class) — Verify current_rms property updates in real-time for UI feedback.
+- L1310 `test_rms_updates_with_audio_chunks(self, mock_sd)` (method)
+- L1336 `test_peak_rms_tracks_maximum(self, mock_sd)` (method)
+- L1369 `TestConfigurableSilenceParams` (class) — Verify that silence detection params can be configured.
+- L1372 `test_custom_threshold_and_duration(self, mock_sd)` (method)
+- L1416 `TestSubprocessTimeoutKill` (class) — Bug: proc.wait(timeout) raised TimeoutExpired but process was not killed.
+- L1419 `test_timeout_kills_process(self)` (method)
+- L1435 `TestStreamLeakOnStartFailure` (class) — Bug: stream.start() failure left stream unclosed.
+- L1438 `test_stream_closed_on_start_failure(self, mock_sd)` (method)
+- L1452 `TestSilenceCallbackLock` (class) — Bug: _on_silence_stop was read/written without lock in audio callback.
+- L1455 `test_fire_block_acquires_lock(self)` (method)
+- L1467 `test_cancel_clears_callback_under_lock(self, mock_sd)` (method)

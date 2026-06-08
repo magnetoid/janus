@@ -1,0 +1,288 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:40'
+updated: '2026-06-08T00:38:40'
+---
+
+# gateway/run.py
+
+Symbols in `gateway/run.py`.
+
+- L138 `_gateway_platform_value(platform: Any)` (function) — Return a normalized gateway platform value for enums or raw strings.
+- L143 `_is_transient_network_error(exc: BaseException)` (function) — Return True for transient network errors safe to log + swallow.
+- L187 `_gateway_loop_exception_handler(loop: 'asyncio.AbstractEventLoop', context: Dict[str, Any])` (function) — Loop-level safety net for transient network errors.
+- L222 `_redact_gateway_user_facing_secrets(text: str)` (function) — Best-effort secret redaction before text can leave the gateway.
+- L230 `_gateway_provider_error_reply(text: str)` (function) — Map raw provider/API errors to a short user-safe Telegram reply.
+- L265 `_looks_like_gateway_provider_error(text: str)` (function) — True when text is infrastructure/provider failure, not normal content.
+- L288 `_sanitize_gateway_final_response(platform: Any, text: str)` (function) — Sanitize final gateway replies before sending them to high-noise chats.
+- L306 `_prepare_gateway_status_message(platform: Any, event_type: str, message: str)` (function) — Filter/sanitize agent status callbacks before platform delivery.
+- L322 `render_notice_line(notice)` (function) — Render an AgentNotice to a single plaintext line for messaging platforms.
+- L337 `_send_or_update_status_coro(adapter, chat_id, status_key, content, metadata)` (function) — Route a status message through adapter.send_or_update_status when supported.
+- L350 `_telegramize_command_mentions(text: str, platform: Any)` (function) — Rewrite slash-command mentions to Telegram-valid command names.
+- L391 `_coerce_gateway_timestamp(value: Any)` (function) — Best-effort conversion of stored gateway timestamps to epoch seconds.
+- L425 `_auto_continue_freshness_window()` (function) — Return the configured auto-continue freshness window in seconds.
+- L444 `_float_env(name: str, default: float)` (function) — Read an env var as float, falling back to ``default`` on typos/empty.
+- L459 `_is_fresh_gateway_interruption(value: Any, *, now: Optional[float]=None, window_secs: Optional[float]=None)` (function) — Return True when an interruption marker is fresh enough to auto-continue.
+- L526 `_build_replay_entry(role: str, content: Any, msg: Dict[str, Any])` (function) — Build a replay entry for a non-tool-calling message, preserving the
+- L564 `_uses_telegram_observed_group_context(channel_prompt: Optional[str])` (function) — Return True for Telegram group turns that may include observed chatter.
+- L578 `_build_gateway_agent_history(history: List[Dict[str, Any]], *, channel_prompt: Optional[str]=None)` (function) — Convert stored gateway transcript rows into agent replay messages.
+- L636 `_wrap_current_message_with_observed_context(message: Any, observed_context: Optional[str])` (function) — Prepend observed Telegram context to the API-only current user turn.
+- L662 `_last_transcript_timestamp(history: Optional[List[Dict[str, Any]]])` (function) — Return the ``timestamp`` of the last usable transcript row, if any.
+- L707 `_collect_auto_append_media_tags(messages: List[Dict[str, Any]], history_offset: int=0, history_media_paths: Optional[set]=None)` (function) — Collect real media tags from current-turn producer-tool results only.
+- L773 `_ensure_ssl_certs()` (function) — Set SSL_CERT_FILE if the system doesn't expose CA certs to Python.
+- L824 `_home_target_env_var(platform_name: str)` (function) — Return the configured home-target env var for a platform.
+- L839 `_home_thread_env_var(platform_name: str)` (function) — Return the optional thread/topic env var for a platform home target.
+- L844 `_restart_notification_pending()` (function) — Return True when a /restart completion marker is waiting to be delivered.
+- L849 `_planned_restart_notification_path()` (function)
+- L853 `_planned_restart_notification_pending()` (function) — Return True when a non-chat planned restart should notify home channels.
+- L858 `_clear_planned_restart_notification()` (function)
+- L884 `_reload_runtime_env_preserving_config_authority()` (function) — Reload .env for fresh credentials without letting stale .env override config.
+- L1195 `_resolve_runtime_agent_kwargs()` (function) — Resolve provider credentials for gateway-created AIAgent instances.
+- L1265 `_try_resolve_fallback_provider()` (function) — Attempt to resolve credentials from the fallback_model/fallback_providers config.
+- L1319 `_build_media_placeholder(event)` (function) — Build a text placeholder for media-only events so they aren't dropped.
+- L1341 `_format_duration(seconds: float)` (function)
+- L1352 `_probe_audio_duration(path: str)` (function) — Best-effort duration probe. Returns formatted MM:SS / HH:MM:SS, or None on failure.
+- L1394 `_dequeue_pending_event(adapter, session_key: str)` (function) — Consume and return the full pending event for a session.
+- L1423 `_is_control_interrupt_message(message: Optional[str])` (function) — Return True when an interrupt message is internal control flow.
+- L1431 `_skill_slug_from_frontmatter(skill_md: Path)` (function) — Derive the /command slug and declared frontmatter name from a SKILL.md.
+- L1481 `_check_unavailable_skill(command_name: str)` (function) — Check if a command matches a known-but-inactive skill.
+- L1545 `_platform_config_key(platform: 'Platform')` (function) — Map a Platform enum to its config.yaml key (LOCAL→"cli", rest→enum value).
+- L1550 `_teams_pipeline_plugin_enabled()` (function) — Return True when the standalone Teams pipeline plugin is enabled.
+- L1559 `_load_gateway_config()` (function) — Load and parse ~/.hermes/config.yaml, returning {} on any error.
+- L1588 `_load_gateway_runtime_config()` (function) — Load gateway config for runtime reads, expanding supported ``${VAR}`` refs.
+- L1608 `_resolve_gateway_model(config: dict | None=None)` (function) — Read model from config.yaml — single source of truth.
+- L1624 `_resolve_hermes_bin()` (function) — Resolve the Hermes update command as argv parts.
+- L1651 `_parse_session_key(session_key: str)` (function) — Parse a session key into its component parts.
+- L1677 `_format_gateway_process_notification(evt: dict)` (function) — Format a watch pattern event from completion_queue into a [IMPORTANT:] message.
+- L1711 `_normalize_empty_agent_response(agent_result: dict, response: str, *, history_len: int=0)` (function) — Normalize empty/None agent responses into user-facing messages.
+- L1757 `_should_clear_resume_pending_after_turn(agent_result: dict)` (function) — Return True only when a gateway turn really completed successfully.
+- L1777 `_preserve_queued_followup_history_offset(current_result: dict, followup_result: dict)` (function) — Carry the outer history offset through queued follow-up drains.
+- L1809 `_dispose_unused_adapter(adapter: 'BasePlatformAdapter | None')` (function) — Best-effort dispose for an adapter that never made it onto ``self.adapters``.
+- L1863 `GatewayRunner` (class) — Main gateway controller.
+- L1888 `__init__(self, config: Optional[GatewayConfig]=None)` (method)
+- L2118 `_wire_teams_pipeline_runtime(self)` (method) — Bind the Teams meeting pipeline runtime to Graph webhook ingress.
+- L2149 `_warn_if_docker_media_delivery_is_risky(self)` (method) — Warn when Docker-backed gateways lack an explicit export mount.
+- L2200 `_has_setup_skill(self)` (method) — Check if the hermes-agent-setup skill is installed.
+- L2212 `_voice_key(self, platform: Platform, chat_id: str)` (method) — Return a platform-namespaced key for voice mode state.
+- L2216 `_load_voice_modes(self)` (method)
+- L2242 `_save_voice_modes(self)` (method)
+- L2251 `_set_adapter_auto_tts_disabled(self, adapter, chat_id: str, disabled: bool)` (method) — Update an adapter's in-memory auto-TTS suppression set if present.
+- L2265 `_set_adapter_auto_tts_enabled(self, adapter, chat_id: str, enabled: bool)` (method) — Update an adapter's per-chat auto-TTS opt-in set if present.
+- L2283 `_sync_voice_mode_state_to_adapter(self, adapter)` (method) — Restore persisted /voice state into a live platform adapter.
+- L2327 `_safe_adapter_disconnect(self, adapter, platform)` (method) — Call adapter.disconnect() defensively, swallowing any error.
+- L2357 `_adapter_disconnect_timeout_secs(self)` (method) — Return the per-adapter disconnect timeout used during shutdown.
+- L2372 `_platform_connect_timeout_secs(self)` (method) — Return the per-platform connect timeout used during startup/retry.
+- L2387 `_connect_adapter_with_timeout(self, adapter, platform)` (method) — Connect an adapter without allowing one platform to block others.
+- L2400 `should_exit_cleanly(self)` (method)
+- L2404 `should_exit_with_failure(self)` (method)
+- L2408 `exit_reason(self)` (method)
+- L2412 `exit_code(self)` (method)
+- L2415 `_session_key_for_source(self, source: SessionSource)` (method) — Resolve the current session key for a source, honoring gateway config when available.
+- L2431 `_telegram_topic_mode_enabled(self, source: SessionSource)` (method) — Return whether Telegram DM topic mode is active for this chat.
+- L2456 `_is_telegram_topic_root_lobby(self, source: SessionSource)` (method) — True for the main Telegram DM (or General topic) when topic mode has made it a lobby.
+- L2465 `_is_telegram_topic_lane(self, source: SessionSource)` (method) — True for a user-created Telegram private-chat topic lane.
+- L2478 `_should_send_telegram_lobby_reminder(self, source: SessionSource)` (method) — Rate-limit root-DM lobby reminders to one message per cooldown window.
+- L2498 `_telegram_topic_root_lobby_message(self)` (method)
+- L2507 `_telegram_topic_root_new_message(self)` (method)
+- L2516 `_telegram_topic_new_header(self, source: SessionSource)` (method)
+- L2526 `_record_telegram_topic_binding(self, source: SessionSource, session_entry)` (method) — Persist the Telegram topic -> Hermes session binding for topic lanes.
+- L2543 `_sync_telegram_topic_binding(self, source: SessionSource, session_entry, *, reason: str)` (method) — Update the topic binding to point at ``session_entry.session_id``.
+- L2569 `_recover_telegram_topic_thread_id(self, source: SessionSource)` (method) — Pin DM-topic routing to the user's last-active topic.
+- L2621 `_resolve_session_agent_runtime(self, *, source: Optional[SessionSource]=None, session_key: Optional[str]=None, user_config: Optional[dict]=None)` (method) — Resolve model/runtime for a session, honoring session-scoped /model overrides.
+- L2730 `_resolve_turn_agent_config(self, user_message: str, model: str, runtime_kwargs: dict)` (method) — Build the effective model/runtime config for a single turn.
+- L2775 `_handle_adapter_fatal_error(self, adapter: BasePlatformAdapter)` (method) — React to an adapter failure after startup.
+- L2842 `_request_clean_exit(self, reason: str)` (method)
+- L2847 `_running_agent_count(self)` (method)
+- L2850 `_status_action_label(self)` (method)
+- L2853 `_status_action_gerund(self)` (method)
+- L2856 `_queue_during_drain_enabled(self)` (method)
+- L2873 `_enqueue_fifo(self, session_key: str, queued_event: 'MessageEvent', adapter: Any)` (method) — Append a /queue event to the FIFO chain for a session.
+- L2889 `_promote_queued_event(self, session_key: str, adapter: Any, pending_event: Optional['MessageEvent'])` (method) — Promote the next overflow item after the slot was drained.
+- L2924 `_queue_depth(self, session_key: str, *, adapter: Any=None)` (method) — Total pending /queue items for a session — slot + overflow.
+- L2933 `_is_goal_continuation_event(event_or_text: Any)` (method) — Return True for synthetic /goal continuation turns.
+- L2943 `_clear_goal_pending_continuations(self, session_key: str, adapter: Any)` (method) — Remove queued synthetic /goal continuations for one session.
+- L2974 `_goal_still_active_for_session(self, session_id: str)` (method) — Best-effort fresh DB check before running a queued continuation.
+- L2985 `_update_runtime_status(self, gateway_state: Optional[str]=None, exit_reason: Optional[str]=None)` (method)
+- L2997 `_update_platform_runtime_status(self, platform: str, *, platform_state: Optional[str]=None, error_code: Optional[str]=None, error_message: Optional[str]=None)` (method)
+- L3021 `_pause_failed_platform(self, platform, *, reason: str='')` (method) — Mark a queued platform as paused — keep it in ``_failed_platforms``
+- L3059 `_resume_paused_platform(self, platform)` (method) — Unpause a platform — reset its attempt counter and schedule an
+- L3086 `_load_prefill_messages()` (method) — Load ephemeral prefill messages from config or env var.
+- L3120 `_load_ephemeral_system_prompt()` (method) — Load ephemeral system prompt from config or env var.
+- L3133 `_load_reasoning_config()` (method) — Load reasoning effort from config.yaml.
+- L3149 `_parse_reasoning_command_args(raw_args: str)` (method) — Parse `/reasoning` args into `(value, persist_global)`.
+- L3174 `_resolve_session_reasoning_config(self, *, source: Optional[SessionSource]=None, session_key: Optional[str]=None)` (method) — Resolve reasoning effort for a session, honoring session overrides.
+- L3193 `_set_session_reasoning_override(self, session_key: str, reasoning_config: Optional[dict])` (method) — Set or clear the session-scoped reasoning override.
+- L3209 `_load_service_tier()` (method) — Load Priority Processing setting from config.yaml.
+- L3228 `_load_show_reasoning()` (method) — Load show_reasoning toggle from config.yaml display section.
+- L3237 `_load_busy_input_mode()` (method) — Load gateway drain-time busy-input behavior from config/env.
+- L3250 `_load_busy_text_mode()` (method) — Resolve normal busy TEXT follow-up behavior.
+- L3274 `_load_restart_drain_timeout()` (method) — Load graceful gateway restart/stop drain timeout in seconds.
+- L3293 `_load_background_notifications_mode()` (method) — Load background process notification mode from config or env var.
+- L3321 `_load_provider_routing()` (method) — Load OpenRouter provider routing preferences from config.yaml.
+- L3335 `_load_fallback_model()` (method) — Load fallback provider chain from config.yaml.
+- L3355 `_snapshot_running_agents(self)` (method)
+- L3363 `_agent_has_active_subagents(running_agent: Any)` (method) — Return True when *running_agent* is currently driving subagents
+- L3400 `_queue_or_replace_pending_event(self, session_key: str, event: MessageEvent)` (method)
+- L3406 `_handle_active_session_busy_message(self, event: MessageEvent, session_key: str)` (method)
+- L3655 `_drain_active_agents(self, timeout: float)` (method)
+- L3685 `_interrupt_running_agents(self, reason: str)` (method)
+- L3695 `_notify_active_sessions_of_shutdown(self)` (method) — Send shutdown/restart notifications to active chats and home channels.
+- L3868 `_finalize_shutdown_agents(self, active_agents: Dict[str, Any])` (method)
+- L3882 `_cleanup_agent_resources(self, agent: Any)` (method) — Best-effort cleanup for temporary or cached agent instances.
+- L3926 `_increment_restart_failure_counts(self, active_session_keys: set)` (method) — Increment restart-failure counters for sessions active at shutdown.
+- L3953 `_suspend_stuck_loop_sessions(self)` (method) — Suspend sessions that have been active across too many restarts.
+- L4002 `_clear_restart_failure_count(self, session_key: str)` (method) — Clear the restart-failure counter for a session that completed OK.
+- L4023 `_launch_detached_restart_command(self)` (method)
+- L4122 `_launch_systemd_restart_shortcut(self)` (method) — Best-effort helper to bypass systemd's automatic restart delay.
+- L4199 `request_restart(self, *, detached: bool=False, via_service: bool=False)` (method)
+- L4225 `_schedule_resume_pending_sessions(self, platform=None)` (method) — Auto-continue fresh restart-interrupted sessions after startup.
+- L4307 `start(self)` (method) — Start the gateway and all configured platform adapters.
+- L4855 `_handoff_watcher(self, interval: float=2.0)` (method) — Background task that processes pending CLI→gateway session handoffs.
+- L4905 `_process_handoff(self, row: Dict[str, Any])` (method) — Execute one handoff row. Raises on failure (caller marks failed).
+- L5073 `_session_expiry_watcher(self, interval: int=300)` (method) — Background task that finalizes expired sessions.
+- L5236 `_active_profile_name(self)` (method) — Return the profile name this gateway represents.
+- L5244 `_kanban_notifier_watcher(self, interval: float=5.0)` (method) — Poll ``kanban_notify_subs`` and deliver terminal events to users.
+- L5606 `_kanban_advance(self, sub: dict, cursor: int, board: Optional[str]=None)` (method) — Sync helper: advance a subscription's cursor. Runs in to_thread.
+- L5628 `_kanban_unsub(self, sub: dict, board: Optional[str]=None)` (method)
+- L5642 `_kanban_rewind(self, sub: dict, claimed_cursor: int, old_cursor: int, board: Optional[str]=None)` (method) — Sync helper: undo a claimed notification cursor after send failure.
+- L5665 `_deliver_kanban_artifacts(self, *, adapter, chat_id: str, metadata: dict, event_payload: Optional[dict], task)` (method) — Upload artifact files referenced by a completed kanban task.
+- L5774 `_kanban_dispatcher_watcher(self)` (method) — Embedded kanban dispatcher — one tick every `dispatch_interval_seconds`.
+- L6281 `_platform_reconnect_watcher(self)` (method) — Background task that periodically retries connecting failed platforms.
+- L6463 `stop(self, *, restart: bool=False, detached_restart: bool=False, service_restart: bool=False)` (method) — Stop the gateway and disconnect all adapters.
+- L6818 `wait_for_shutdown(self)` (method) — Wait for shutdown signal.
+- L6822 `_create_adapter(self, platform: Platform, config: Any)` (method) — Create the appropriate adapter for a platform.
+- L7025 `_adapter_enforces_own_access_policy(self, platform: Optional[Platform])` (method) — Whether the adapter for *platform* gates access at intake itself.
+- L7049 `_adapter_dm_policy(self, platform: Optional[Platform])` (method) — Best-effort read of an own-policy adapter's effective DM policy.
+- L7081 `_is_user_authorized(self, source: SessionSource)` (method) — Check if a user is authorized to use the bot.
+- L7336 `_get_unauthorized_dm_behavior(self, platform: Optional[Platform])` (method) — Return how unauthorized DMs should be handled for a platform.
+- L7418 `_deliver_platform_notice(self, source, content: str)` (method) — Deliver a setup/operational notice using platform-specific privacy rules.
+- L7449 `_handle_message(self, event: MessageEvent)` (method) — Handle an incoming message from any platform.
+- L8615 `_prepare_inbound_message_text(self, *, event: MessageEvent, source: SessionSource, history: List[Dict[str, Any]])` (method) — Prepare inbound event text for the agent.
+- L8853 `_consume_pending_native_image_paths(self, session_key: str)` (method)
+- L8859 `_cache_session_source(self, session_key: str, source)` (method)
+- L8880 `_get_cached_session_source(self, session_key: str)` (method)
+- L8894 `_handle_message_with_agent(self, event, source, _quick_key: str, run_generation: int)` (method) — Inner handler that runs under the _running_agents sentinel guard.
+- L10045 `_format_session_info(self)` (method) — Resolve current model config and return a formatted info block.
+- L10164 `_handle_reset_command(self, event: MessageEvent)` (method) — Handle /new or /reset command.
+- L10331 `_handle_profile_command(self, event: MessageEvent)` (method) — Handle /profile — show active profile name and home directory.
+- L10347 `_check_slash_access(self, source: SessionSource, canonical_cmd: str)` (method) — Return a denial message if ``source`` cannot run ``canonical_cmd``,
+- L10390 `_handle_whoami_command(self, event: MessageEvent)` (method) — Handle /whoami — show the user's slash command access on this scope.
+- L10442 `_handle_kanban_command(self, event: MessageEvent)` (method) — Handle /kanban — delegate to the shared kanban CLI.
+- L10540 `_handle_status_command(self, event: MessageEvent)` (method) — Handle /status command.
+- L10603 `_handle_agents_command(self, event: MessageEvent)` (method) — Handle /agents command - list active agents and running tasks.
+- L10693 `_sibling_thread_run_keys(self, source: SessionSource, own_key: str)` (method) — Find running-agent keys for OTHER participants in the same thread.
+- L10732 `_handle_stop_command(self, event: MessageEvent)` (method) — Handle /stop command - interrupt a running agent.
+- L10794 `_handle_platform_command(self, event: MessageEvent)` (method) — Handle ``/platform list|pause|resume [name]`` — surface and
+- L10887 `_handle_restart_command(self, event: MessageEvent)` (method) — Handle /restart command - drain active work, then restart the gateway.
+- L10982 `_is_stale_restart_redelivery(self, event: MessageEvent)` (method) — Return True if this /restart is a Telegram re-delivery we already handled.
+- L11032 `_handle_version_command(self, event: MessageEvent)` (method) — Handle /version — show the running Hermes Agent version.
+- L11038 `_handle_help_command(self, event: MessageEvent)` (method) — Handle /help command - list available commands.
+- L11063 `_handle_commands_command(self, event: MessageEvent)` (method)
+- L11118 `_handle_model_command(self, event: MessageEvent)` (method) — Handle /model command — switch model for this session.
+- L11530 `_handle_codex_runtime_command(self, event: MessageEvent)` (method) — Handle /codex-runtime command in the gateway.
+- L11575 `_handle_personality_command(self, event: MessageEvent)` (method) — Handle /personality command - list or set a personality.
+- L11644 `_handle_retry_command(self, event: MessageEvent)` (method) — Handle /retry command - re-send the last user message.
+- L11683 `_goal_max_turns_from_config(self)` (method) — Resolve the configured /goal turn budget for gateway sessions.
+- L11704 `_get_goal_manager_for_event(self, event: 'MessageEvent')` (method) — Return a GoalManager bound to the session for this gateway event.
+- L11726 `_handle_goal_command(self, event: 'MessageEvent')` (method) — Handle /goal for gateway platforms.
+- L11803 `_handle_subgoal_command(self, event: 'MessageEvent')` (method) — Handle /subgoal for gateway platforms (mirror of CLI handler).
+- L11854 `_send_goal_status_notice(self, source: Any, message: str)` (method) — Send a /goal judge status line back to the originating chat/thread.
+- L11873 `_defer_goal_status_notice_after_delivery(self, source: Any, message: str)` (method) — Send a /goal status line after the main response is delivered.
+- L11916 `_post_turn_goal_continuation(self, *, session_entry: Any, source: Any, final_response: str)` (method) — Run the goal judge after a gateway turn and, if still active,
+- L11985 `_handle_undo_command(self, event: MessageEvent)` (method) — Handle /undo [N] — back up N user turns (default 1), soft-deleting
+- L12034 `_handle_set_home_command(self, event: MessageEvent)` (method) — Handle /sethome command -- set the current chat as the platform's home channel.
+- L12072 `_get_guild_id(event: MessageEvent)` (method) — Extract Discord guild_id from the raw message object.
+- L12085 `_handle_voice_command(self, event: MessageEvent)` (method) — Handle /voice [on|off|tts|channel|leave|status] command.
+- L12166 `_handle_voice_channel_join(self, event: MessageEvent)` (method) — Join the user's current Discord voice channel.
+- L12217 `_handle_voice_channel_leave(self, event: MessageEvent)` (method) — Leave the Discord voice channel.
+- L12240 `_handle_voice_timeout_cleanup(self, chat_id: str)` (method) — Called by the adapter when a voice channel times out.
+- L12250 `_is_duplicate_voice_transcript(self, guild_id: int, user_id: int, transcript: str)` (method) — Suppress repeated STT outputs for the same recent utterance.
+- L12291 `_handle_voice_channel_input(self, guild_id: int, user_id: int, transcript: str)` (method) — Handle transcribed voice from a user in a voice channel.
+- L12359 `_should_send_voice_reply(self, event: MessageEvent, response: str, agent_messages: list, already_sent: bool=False)` (method) — Decide whether the runner should send a TTS voice reply.
+- L12413 `_send_voice_reply(self, event: MessageEvent, text: str)` (method) — Generate TTS audio and send as a voice message before the text reply.
+- L12488 `_deliver_media_from_response(self, response: str, event: MessageEvent, adapter)` (method) — Extract MEDIA: tags and local file paths from a response and deliver them.
+- L12609 `_handle_rollback_command(self, event: MessageEvent)` (method) — Handle /rollback command — list or restore filesystem checkpoints.
+- L12668 `_handle_background_command(self, event: MessageEvent)` (method) — Handle /background <prompt> — run a prompt in a separate background session.
+- L12705 `_run_background_task(self, prompt: str, source: 'SessionSource', task_id: str, event_message_id: Optional[str]=None, media_urls: Optional[List[str]]=None, media_types: Optional[List[str]]=None)` (method) — Execute a background agent task and deliver the result to the chat.
+- L12907 `_handle_reasoning_command(self, event: MessageEvent)` (method) — Handle /reasoning command — manage reasoning effort and display toggle.
+- L13022 `_handle_fast_command(self, event: MessageEvent)` (method) — Handle /fast — mirror the CLI Priority Processing toggle in gateway chats.
+- L13075 `_handle_yolo_command(self, event: MessageEvent)` (method) — Handle /yolo — toggle dangerous command approval bypass for this session only.
+- L13092 `_handle_verbose_command(self, event: MessageEvent)` (method) — Handle /verbose command — cycle tool progress display mode.
+- L13154 `_handle_footer_command(self, event: MessageEvent)` (method) — Handle /footer command — toggle the runtime-metadata footer.
+- L13239 `_handle_compress_command(self, event: MessageEvent)` (method) — Handle /compress command -- manually compress conversation context.
+- L13409 `_get_telegram_topic_capabilities(self, source: SessionSource)` (method) — Read Telegram private-topic capability flags via Bot API getMe.
+- L13437 `_ensure_telegram_system_topic(self, source: SessionSource)` (method) — Create/pin the managed System topic after /topic activation when possible.
+- L13478 `_send_telegram_topic_setup_image(self, source: SessionSource)` (method) — Send the bundled BotFather Threads Settings screenshot when available.
+- L13496 `_sanitize_telegram_topic_title(self, title: str)` (method) — Return a Bot API-safe forum topic name from a generated session title.
+- L13507 `_rename_telegram_topic_for_session_title(self, source: SessionSource, session_id: str, title: str)` (method) — Best-effort rename of a Telegram DM topic when Hermes auto-titles a session.
+- L13592 `_telegram_topic_auto_rename_disabled(self, source: SessionSource)` (method) — Return True when operator disabled per-topic auto-rename for this Telegram chat.
+- L13615 `_schedule_telegram_topic_title_rename(self, source: SessionSource, session_id: str, title: str)` (method) — Schedule a topic rename from the auto-title background thread.
+- L13654 `_should_send_telegram_capability_hint(self, source: SessionSource)` (method) — Rate-limit the BotFather Threads Settings screenshot.
+- L13673 `_telegram_topic_help_text(self)` (method)
+- L13695 `_disable_telegram_topic_mode_for_chat(self, source: SessionSource)` (method) — Cleanly disable topic mode for a chat via /topic off.
+- L13731 `_handle_topic_command(self, event: MessageEvent, args: str='')` (method) — Handle /topic for Telegram DM user-managed topic sessions.
+- L13820 `_telegram_topic_root_status_message(self, source: SessionSource)` (method)
+- L13866 `_restore_telegram_topic_session(self, event: MessageEvent, raw_session_id: str)` (method) — Restore an existing Telegram-owned Hermes session into this topic.
+- L13920 `_handle_title_command(self, event: MessageEvent)` (method) — Handle /title command — set or show the current session's title.
+- L13969 `_handle_resume_command(self, event: MessageEvent)` (method) — Handle /resume command — list or switch to a previous session.
+- L14075 `_handle_branch_command(self, event: MessageEvent)` (method) — Handle /branch [name] — fork the current session into a new independent copy.
+- L14172 `_handle_usage_command(self, event: MessageEvent)` (method) — Handle /usage command -- show token usage for the current session.
+- L14337 `_handle_insights_command(self, event: MessageEvent)` (method) — Handle /insights command -- show usage insights and analytics.
+- L14386 `_handle_reload_mcp_command(self, event: MessageEvent)` (method) — Handle /reload-mcp — reconnect MCP servers and rebuild the cached agent.
+- L14449 `_execute_mcp_reload(self, event: MessageEvent)` (method) — Actually disconnect, reconnect, and notify MCP tool changes.
+- L14555 `_handle_reload_skills_command(self, event: MessageEvent)` (method) — Handle /reload-skills — rescan skills dir, queue a note for next turn.
+- L14655 `_handle_bundles_command(self, event: MessageEvent)` (method) — Handle /bundles — list installed skill bundles.
+- L14706 `_maybe_confirm_destructive_slash(self, *, event: MessageEvent, command: str, title: str, detail: str, execute)` (method) — Gate a destructive session slash command (/new, /reset, /undo).
+- L14793 `_request_slash_confirm(self, *, event: MessageEvent, command: str, title: str, message: str, handler)` (method) — Ask the user to confirm an expensive slash command.
+- L14861 `_read_user_config(self)` (method) — Read the user's raw config.yaml (cached) for gate lookups.
+- L14874 `_thread_metadata_for_source(self, source, reply_to_message_id: Optional[str]=None)` (method) — Build the metadata dict platforms need for thread-aware replies.
+- L14888 `_thread_metadata_for_target(self, platform: Optional[Platform], chat_id: Optional[str], thread_id: Optional[str], *, chat_type: Optional[str]=None, reply_to_message_id: Optional[str]=None, adapter: Optional[Any]=None)` (method) — Build thread metadata for synthetic sends that only have routing state.
+- L14921 `_is_telegram_dm_topic_target(platform: Optional[Platform], chat_id: Optional[str], thread_id: Optional[str], *, chat_type: Optional[str]=None, adapter: Optional[Any]=None)` (method) — Return True when a target is a Telegram private DM topic lane.
+- L14953 `_reply_anchor_for_event(event: MessageEvent)` (method) — Return the platform-specific reply anchor for GatewayRunner sends.
+- L14964 `_handle_approve_command(self, event: MessageEvent)` (method) — Handle /approve command — unblock waiting agent thread(s).
+- L15022 `_handle_deny_command(self, event: MessageEvent)` (method) — Handle /deny command — reject pending dangerous command(s).
+- L15073 `_handle_debug_command(self, event: MessageEvent)` (method) — Handle /debug — upload debug report (summary only) and return paste URLs.
+- L15117 `_handle_update_command(self, event: MessageEvent)` (method) — Handle /update command — update Hermes Agent to the latest version.
+- L15270 `_schedule_update_notification_watch(self)` (method) — Ensure a background task is watching for update completion.
+- L15283 `_watch_update_progress(self, poll_interval: float=2.0, stream_interval: float=4.0, timeout: float=1800.0)` (method) — Watch ``hermes update --gateway``, streaming output + forwarding prompts.
+- L15507 `_send_update_notification(self)` (method) — If an update finished, notify the user.
+- L15621 `_send_restart_notification(self)` (method) — Notify the chat that initiated /restart that the gateway is back.
+- L15693 `_send_home_channel_startup_notifications(self, *, skip_targets: Optional[set[tuple[str, str, Optional[str]]]]=None)` (method) — Notify configured home channels that the gateway is back online.
+- L15761 `_set_session_env(self, context: SessionContext)` (method) — Set session context variables for the current async task.
+- L15782 `_clear_session_env(self, tokens: list)` (method) — Restore session context variables to their pre-handler values.
+- L15787 `_run_in_executor_with_context(self, func, *args)` (method) — Run blocking work in the thread pool while preserving session contextvars.
+- L15793 `_decide_image_input_mode(self)` (method) — Resolve the image-input routing for the currently active model.
+- L15816 `_enrich_message_with_vision(self, user_text: str, image_paths: List[str])` (method) — Auto-analyze user-attached images with the vision tool and prepend
+- L15885 `_enrich_message_with_transcription(self, user_text: str, audio_paths: List[str])` (method) — Auto-transcribe user voice/audio messages using the configured STT provider
+- L15979 `_build_process_event_source(self, evt: dict)` (method) — Resolve the canonical source for a synthetic background-process event.
+- L16050 `_inject_watch_notification(self, synth_text: str, evt: dict)` (method) — Inject a watch-pattern notification as a synthetic message event.
+- L16089 `_run_process_watcher(self, watcher: dict)` (method) — Periodically check a background process and push updates to the user.
+- L16287 `_empty_honcho_cache_busting_config(cls)` (method)
+- L16291 `_extract_honcho_cache_busting_config(cls)` (method) — Extract Honcho identity keys, memoized by honcho.json mtime.
+- L16321 `_extract_cache_busting_config(cls, user_config: dict | None)` (method) — Pull values that must bust the cached agent.
+- L16360 `_agent_config_signature(model: str, runtime: dict, enabled_toolsets: list, ephemeral_prompt: str, cache_keys: dict | None=None, user_id: str | None=None, user_id_alt: str | None=None)` (method) — Compute a stable string key from agent config values.
+- L16427 `_apply_session_model_override(self, session_key: str, model: str, runtime_kwargs: dict)` (method) — Apply /model session overrides if present, returning (model, runtime_kwargs).
+- L16448 `_is_intentional_model_switch(self, session_key: str, agent_model: str)` (method) — Return True if *agent_model* matches an active /model session override.
+- L16453 `_release_running_agent_state(self, session_key: str, *, run_generation: Optional[int]=None)` (method) — Pop ALL per-running-agent state entries for ``session_key``.
+- L16494 `_clear_session_boundary_security_state(self, session_key: str)` (method) — Clear per-session control state that must not survive a boundary switch.
+- L16541 `_begin_session_run_generation(self, session_key: str)` (method) — Claim a fresh run generation token for ``session_key``.
+- L16559 `_invalidate_session_run_generation(self, session_key: str, *, reason: str='')` (method) — Invalidate any in-flight run token for ``session_key``.
+- L16571 `_is_session_run_current(self, session_key: str, generation: int)` (method) — Return True when ``generation`` is still current for ``session_key``.
+- L16578 `_bind_adapter_run_generation(self, adapter: Any, session_key: str, generation: int | None)` (method) — Bind a gateway run generation to the adapter's active-session event.
+- L16594 `_interrupt_and_clear_session(self, session_key: str, source: SessionSource, *, interrupt_reason: str, invalidation_reason: str, release_running_state: bool=True)` (method) — Interrupt the current run and clear queued session state consistently.
+- L16619 `_evict_cached_agent(self, session_key: str)` (method) — Remove a cached agent for a session (called on /new, /model, etc).
+- L16627 `_init_cached_agent_for_turn(agent: Any, interrupt_depth: int)` (method) — Reset per-turn state on a cached agent before a new turn starts.
+- L16645 `_release_evicted_agent_soft(self, agent: Any)` (method) — Soft cleanup for cache-evicted agents — preserves session tool state.
+- L16667 `_enforce_agent_cache_cap(self)` (method) — Evict oldest cached agents when cache exceeds _AGENT_CACHE_MAX_SIZE.
+- L16743 `_sweep_idle_cached_agents(self)` (method) — Evict cached agents whose AIAgent has been idle > _AGENT_CACHE_IDLE_TTL_SECS.
+- L16796 `_get_proxy_url(self)` (method) — Return the proxy URL if proxy mode is configured, else None.
+- L16811 `_run_agent_via_proxy(self, message: str, context_prompt: str, history: List[Dict[str, Any]], source: 'SessionSource', session_id: str, session_key: str=None, run_generation: Optional[int]=None, event_message_id: Optional[str]=None)` (method) — Forward the message to a remote Hermes API server instead of
+- L17097 `_run_agent(self, message: str, context_prompt: str, history: List[Dict[str, Any]], source: SessionSource, session_id: str, session_key: str=None, run_generation: Optional[int]=None, _interrupt_depth: int=0, event_message_id: Optional[str]=None, channel_prompt: Optional[str]=None)` (method) — Run the agent with the given message and context.
+- L19482 `_run_planned_stop_watcher(stop_event: threading.Event, runner, loop: asyncio.AbstractEventLoop, shutdown_handler, *, poll_interval: float=0.5)` (function) — Poll for the planned-stop marker and trigger graceful shutdown.
+- L19571 `_start_cron_ticker(stop_event: threading.Event, adapters=None, loop=None, interval: int=60)` (function) — Background thread that ticks the cron scheduler at a regular interval.
+- L19666 `start_gateway(config: Optional[GatewayConfig]=None, replace: bool=False, verbosity: Optional[int]=0)` (function) — Start the gateway and run until interrupted.
+- L20088 `main()` (function) — CLI entry point for the gateway.

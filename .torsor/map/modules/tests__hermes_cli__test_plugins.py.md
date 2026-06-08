@@ -1,0 +1,112 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:42'
+updated: '2026-06-08T00:38:42'
+---
+
+# tests/hermes_cli/test_plugins.py
+
+Symbols in `tests/hermes_cli/test_plugins.py`.
+
+- L35 `_make_plugin_dir(base: Path, name: str, *, register_body: str='pass', manifest_extra: dict | None=None, auto_enable: bool=True)` (function) — Create a minimal plugin directory with plugin.yaml + __init__.py.
+- L91 `TestPluginDiscovery` (class) — Tests for plugin discovery from directories and entry points.
+- L94 `test_discover_user_plugins(self, tmp_path, monkeypatch)` (method) — Plugins in ~/.hermes/plugins/ are discovered.
+- L106 `test_plugin_can_register_and_invoke_middleware(self, tmp_path, monkeypatch)` (method)
+- L134 `test_execution_middleware_does_not_retry_downstream_failure(self, monkeypatch)` (method)
+- L152 `test_middleware_helpers_skip_no_listener_work(self, monkeypatch)` (method)
+- L173 `test_request_middleware_changed_tracks_trace_not_deep_equality(self, monkeypatch)` (method)
+- L191 `test_execution_middleware_post_next_call_error_does_not_retry(self, monkeypatch)` (method)
+- L210 `test_execution_middleware_pre_next_call_error_fails_open_to_remaining_chain(self, monkeypatch)` (method)
+- L233 `test_execution_middleware_translated_downstream_failure_is_not_masked(self, monkeypatch)` (method)
+- L254 `test_execution_middleware_downstream_base_exception_is_not_wrapped(self, monkeypatch)` (method)
+- L275 `test_execution_middleware_double_next_call_does_not_run_terminal_twice(self, monkeypatch)` (method)
+- L298 `test_request_middleware_tolerates_non_deepcopyable_payload(self, monkeypatch)` (method)
+- L323 `test_discover_project_plugins(self, tmp_path, monkeypatch)` (method) — Plugins in ./.hermes/plugins/ are discovered.
+- L338 `test_discover_project_plugins_skipped_by_default(self, tmp_path, monkeypatch)` (method) — Project plugins are not discovered unless explicitly enabled.
+- L351 `test_discover_is_idempotent(self, tmp_path, monkeypatch)` (method) — Calling discover_and_load() twice does not duplicate plugins.
+- L368 `test_discover_skips_dir_without_manifest(self, tmp_path, monkeypatch)` (method) — Directories without plugin.yaml are silently skipped.
+- L384 `test_entry_points_scanned(self, tmp_path, monkeypatch)` (method) — Entry-point based plugins are discovered (mocked).
+- L412 `TestPluginLoading` (class) — Tests for plugin module loading.
+- L415 `test_load_missing_init(self, tmp_path, monkeypatch)` (method) — Plugin dir without __init__.py records an error.
+- L438 `test_load_missing_register_fn(self, tmp_path, monkeypatch)` (method) — Plugin without register() function records an error.
+- L459 `test_load_registers_namespace_module(self, tmp_path, monkeypatch)` (method) — Directory plugins are importable under hermes_plugins.<name>.
+- L473 `test_user_memory_plugin_auto_coerced_to_exclusive(self, tmp_path, monkeypatch)` (method) — User-installed memory plugins must NOT be loaded by the general
+- L518 `test_explicit_standalone_kind_not_coerced(self, tmp_path, monkeypatch)` (method) — If a plugin explicitly declares ``kind: standalone`` in its
+- L544 `TestPluginHooks` (class) — Tests for lifecycle hook registration and invocation.
+- L547 `test_valid_hooks_include_request_scoped_api_hooks(self)` (method)
+- L556 `test_valid_hooks_include_pre_gateway_dispatch(self)` (method)
+- L559 `test_pre_gateway_dispatch_collects_action_dicts(self, tmp_path, monkeypatch)` (method) — pre_gateway_dispatch callbacks return action dicts (skip/rewrite/allow).
+- L583 `test_register_and_invoke_hook(self, tmp_path, monkeypatch)` (method) — Registered hooks are called on invoke_hook().
+- L598 `test_invoke_hook_adds_observer_schema_version(self, tmp_path, monkeypatch)` (method) — invoke_hook() supplies the observer schema version for all hooks.
+- L618 `test_hook_exception_does_not_propagate(self, tmp_path, monkeypatch)` (method) — A hook callback that raises does NOT crash the caller.
+- L633 `test_hook_return_values_collected(self, tmp_path, monkeypatch)` (method) — invoke_hook() collects non-None return values from callbacks.
+- L653 `test_hook_none_returns_excluded(self, tmp_path, monkeypatch)` (method) — invoke_hook() excludes None returns from the result list.
+- L669 `test_request_hooks_are_invokeable(self, tmp_path, monkeypatch)` (method)
+- L700 `test_transform_terminal_output_hook_can_be_registered_and_invoked(self, tmp_path, monkeypatch)` (method)
+- L724 `test_invalid_hook_name_warns(self, tmp_path, monkeypatch, caplog)` (method) — Registering an unknown hook name logs a warning.
+- L739 `TestPreToolCallBlocking` (class) — Tests for the pre_tool_call block directive helper.
+- L742 `test_block_message_returned_for_valid_directive(self, monkeypatch)` (method)
+- L749 `test_invalid_returns_are_ignored(self, monkeypatch)` (method) — Various malformed hook returns should not trigger a block.
+- L764 `test_none_when_no_hooks(self, monkeypatch)` (method)
+- L771 `test_first_valid_block_wins(self, monkeypatch)` (method)
+- L783 `TestThreadToolWhitelist` (class) — Tests for the thread-local tool whitelist used by background review forks.
+- L786 `test_allowed_tool_passes_through_to_hooks(self, monkeypatch)` (method)
+- L802 `test_disallowed_tool_blocked_with_message(self, monkeypatch)` (method)
+- L821 `test_clear_restores_unrestricted_behavior(self, monkeypatch)` (method)
+- L837 `test_whitelist_is_thread_local(self, monkeypatch)` (method) — Setting a whitelist in one thread must NOT leak into another.
+- L875 `TestPluginContext` (class) — Tests for the PluginContext facade.
+- L878 `test_register_tool_adds_to_registry(self, tmp_path, monkeypatch)` (method) — PluginContext.register_tool() puts the tool in the global registry.
+- L907 `test_register_tool_rejects_shadow_without_override(self, tmp_path, monkeypatch, caplog)` (method) — Without override=True, registering a tool name claimed by a different toolset is rejected.
+- L951 `test_register_tool_override_replaces_existing(self, tmp_path, monkeypatch, caplog)` (method) — override=True lets a plugin replace an existing built-in tool.
+- L999 `test_register_tool_override_on_new_name_is_noop_path(self, tmp_path, monkeypatch)` (method) — override=True on a brand-new name still registers cleanly (no existing entry to replace).
+- L1034 `TestPluginToolVisibility` (class) — Plugin-registered tools appear in get_tool_definitions().
+- L1037 `test_plugin_tools_in_definitions(self, tmp_path, monkeypatch)` (method) — Plugin tools are included when their toolset is in enabled_toolsets.
+- L1085 `TestPluginManagerList` (class) — Tests for PluginManager.list_plugins().
+- L1088 `test_list_empty(self)` (method) — Empty manager returns empty list.
+- L1093 `test_list_returns_sorted(self, tmp_path, monkeypatch)` (method) — list_plugins() returns results sorted by key.
+- L1109 `test_list_with_plugins(self, tmp_path, monkeypatch)` (method) — list_plugins() returns info dicts for each discovered plugin.
+- L1130 `TestPreLlmCallTargetRouting` (class) — Tests for pre_llm_call hook return format with target-aware routing.
+- L1138 `_make_pre_llm_plugin(self, plugins_dir, name, return_expr)` (method) — Create a plugin that returns a specific value from pre_llm_call.
+- L1147 `test_context_dict_returned(self, tmp_path, monkeypatch)` (method) — Plugin returning a context dict is collected by invoke_hook.
+- L1167 `test_plain_string_return(self, tmp_path, monkeypatch)` (method) — Plain string returns are collected as-is (routing treats them as user_message).
+- L1186 `test_multiple_plugins_context_collected(self, tmp_path, monkeypatch)` (method) — Multiple plugins returning context are all collected.
+- L1211 `test_routing_logic_all_to_user_message(self, tmp_path, monkeypatch)` (method) — Simulate the routing logic from run_agent.py.
+- L1258 `TestPluginCommands` (class) — Tests for plugin slash command registration via register_command().
+- L1261 `test_register_command_basic(self)` (method) — register_command() stores handler, description, and plugin name.
+- L1278 `test_register_command_with_args_hint(self)` (method) — args_hint is stored and surfaced for gateway-native UI registration.
+- L1294 `test_register_command_args_hint_whitespace_trimmed(self)` (method) — args_hint leading/trailing whitespace is stripped.
+- L1303 `test_register_command_normalizes_name(self)` (method) — Names are lowercased, stripped, and leading slashes removed.
+- L1313 `test_register_command_empty_name_rejected(self, caplog)` (method) — Empty name after normalization is rejected with a warning.
+- L1324 `test_register_command_builtin_conflict_rejected(self, caplog)` (method) — Commands that conflict with built-in names are rejected.
+- L1335 `test_register_command_default_description(self)` (method) — Missing description defaults to 'Plugin command'.
+- L1344 `test_get_plugin_command_handler_found(self)` (method) — get_plugin_command_handler() returns the handler for a registered command.
+- L1357 `test_get_plugin_command_handler_not_found(self)` (method) — get_plugin_command_handler() returns None for unregistered commands.
+- L1363 `test_get_plugin_commands_returns_dict(self)` (method) — get_plugin_commands() returns the full commands dict.
+- L1377 `test_get_plugin_command_handler_discovers_plugins_lazily(self, tmp_path, monkeypatch)` (method) — Handler lookup should work before any explicit discover_plugins() call.
+- L1394 `test_get_plugin_commands_discovers_plugins_lazily(self, tmp_path, monkeypatch)` (method) — Command listing should trigger plugin discovery on first access.
+- L1411 `test_get_plugin_context_engine_discovers_plugins_lazily(self, tmp_path, monkeypatch)` (method) — Context engine lookup should work before any explicit discover_plugins() call.
+- L1452 `test_commands_tracked_on_loaded_plugin(self, tmp_path, monkeypatch)` (method) — Commands registered during discover_and_load() are tracked on LoadedPlugin.
+- L1470 `test_commands_in_list_plugins_output(self, tmp_path, monkeypatch)` (method) — list_plugins() includes command count.
+- L1492 `test_handler_receives_raw_args(self)` (method) — The handler is called with the raw argument string.
+- L1505 `test_multiple_plugins_register_different_commands(self)` (method) — Multiple plugins can each register their own commands.
+- L1520 `TestPluginCommandResultResolution` (class)
+- L1521 `test_returns_sync_values_unchanged(self)` (method)
+- L1524 `test_awaits_async_result_without_running_loop(self)` (method)
+- L1530 `test_awaits_async_result_with_running_loop(self, monkeypatch)` (method)
+- L1540 `test_running_loop_timeout_does_not_hang_forever(self, monkeypatch)` (method) — Threaded path must abort a hung async handler instead of blocking the caller.
+- L1561 `TestPluginDispatchTool` (class) — Tests for PluginContext.dispatch_tool() — tool dispatch with agent context.
+- L1564 `test_dispatch_tool_calls_registry(self)` (method) — dispatch_tool() delegates to registry.dispatch().
+- L1580 `test_dispatch_tool_injects_parent_agent_from_cli_ref(self)` (method) — When _cli_ref has an agent, it's passed as parent_agent.
+- L1601 `test_dispatch_tool_no_parent_agent_when_no_cli_ref(self)` (method) — When _cli_ref is None (gateway mode), no parent_agent is injected.
+- L1617 `test_dispatch_tool_no_parent_agent_when_agent_is_none(self)` (method) — When cli_ref exists but agent is None (not yet initialized), skip parent_agent.
+- L1636 `test_dispatch_tool_respects_explicit_parent_agent(self)` (method) — Explicit parent_agent kwarg is not overwritten by _cli_ref.agent.
+- L1658 `test_dispatch_tool_forwards_extra_kwargs(self)` (method) — Extra kwargs are forwarded to registry.dispatch().
+- L1674 `test_dispatch_tool_returns_json_string(self)` (method) — dispatch_tool() returns the raw JSON string from the registry.
+- L1690 `TestPluginDebugLogging` (class) — HERMES_PLUGINS_DEBUG opt-in stderr handler for plugin developers.
+- L1693 `test_debug_handler_not_installed_when_env_var_absent(self, monkeypatch)` (method) — Without the env var, no stderr handler is attached.
+- L1714 `test_debug_handler_installed_when_env_var_set(self, monkeypatch)` (method) — With HERMES_PLUGINS_DEBUG=1, a DEBUG-level stderr handler is attached.
+- L1741 `test_debug_handler_idempotent(self, monkeypatch)` (method) — Calling install twice (without force) does not double-attach.

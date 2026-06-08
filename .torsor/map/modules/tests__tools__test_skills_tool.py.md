@@ -1,0 +1,112 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:44'
+updated: '2026-06-08T00:38:44'
+---
+
+# tests/tools/test_skills_tool.py
+
+Symbols in `tests/tools/test_skills_tool.py`.
+
+- L24 `_make_skill(skills_dir, name, frontmatter_extra='', body='Step 1: Do the thing.', category=None)` (function) — Helper to create a minimal skill directory.
+- L47 `_symlink_category(skills_dir: Path, linked_root: Path, category: str)` (function) — Create a category symlink under skills_dir pointing outside the tree.
+- L64 `TestParseFrontmatter` (class)
+- L65 `test_valid_frontmatter(self)` (method)
+- L72 `test_no_frontmatter(self)` (method)
+- L78 `test_empty_frontmatter(self)` (method)
+- L83 `test_nested_yaml(self)` (method)
+- L90 `test_malformed_yaml_fallback(self)` (method) — Malformed YAML falls back to simple key:value parsing.
+- L103 `TestParseTags` (class)
+- L104 `test_list_input(self)` (method)
+- L107 `test_comma_separated_string(self)` (method)
+- L110 `test_bracket_wrapped_string(self)` (method)
+- L113 `test_empty_input(self)` (method)
+- L118 `test_strips_quotes(self)` (method)
+- L123 `test_filters_empty_items(self)` (method)
+- L127 `TestRequiredEnvironmentVariablesNormalization` (class)
+- L128 `test_parses_new_required_environment_variables_metadata(self)` (method)
+- L151 `test_normalizes_legacy_prerequisites_env_vars(self)` (method)
+- L163 `test_empty_env_file_value_is_treated_as_missing(self, monkeypatch)` (method)
+- L182 `TestGetCategoryFromPath` (class)
+- L183 `test_categorized_skill(self, tmp_path)` (method)
+- L190 `test_uncategorized_skill(self, tmp_path)` (method)
+- L197 `test_outside_skills_dir(self, tmp_path)` (method)
+- L208 `TestFindAllSkills` (class)
+- L209 `test_finds_skills(self, tmp_path)` (method)
+- L219 `test_empty_directory(self, tmp_path)` (method)
+- L224 `test_nonexistent_directory(self, tmp_path)` (method)
+- L229 `test_categorized_skills(self, tmp_path)` (method)
+- L236 `test_description_from_body_when_missing(self, tmp_path)` (method) — If no description in frontmatter, first non-header line is used.
+- L247 `test_long_description_truncated(self, tmp_path)` (method)
+- L258 `test_skips_git_directories(self, tmp_path)` (method)
+- L270 `test_skips_nested_virtualenv_dependency_skills(self, tmp_path)` (method)
+- L296 `test_finds_skills_in_symlinked_category_dir(self, tmp_path)` (method)
+- L316 `TestSkillsList` (class)
+- L317 `test_empty_creates_directory(self, tmp_path)` (method)
+- L326 `test_lists_skills(self, tmp_path)` (method)
+- L334 `test_category_filter(self, tmp_path)` (method)
+- L343 `test_category_filter_finds_symlinked_category(self, tmp_path)` (method)
+- L366 `TestSkillView` (class)
+- L367 `test_view_existing_skill(self, tmp_path)` (method)
+- L376 `test_skill_view_applies_template_vars(self, tmp_path)` (method)
+- L396 `test_skill_view_applies_inline_shell_when_enabled(self, tmp_path)` (method)
+- L420 `test_skill_view_leaves_inline_shell_literal_when_disabled(self, tmp_path)` (method)
+- L440 `test_view_nonexistent_skill(self, tmp_path)` (method)
+- L449 `test_view_reference_file(self, tmp_path)` (method)
+- L460 `test_view_nonexistent_file(self, tmp_path)` (method)
+- L467 `test_view_shows_linked_files(self, tmp_path)` (method)
+- L478 `test_view_tags_from_metadata(self, tmp_path)` (method)
+- L490 `test_view_nonexistent_skills_dir(self, tmp_path)` (method)
+- L496 `test_view_disabled_skill_blocked(self, tmp_path)` (method) — Disabled skills should not be viewable via skill_view.
+- L511 `test_view_enabled_skill_allowed(self, tmp_path)` (method) — Non-disabled skills should be viewable normally.
+- L525 `test_view_finds_skill_in_symlinked_category_dir(self, tmp_path)` (method)
+- L540 `test_not_found_hint_uses_same_order_as_skills_list(self, tmp_path)` (method)
+- L555 `TestSkillViewSecureSetupOnLoad` (class)
+- L556 `test_requests_missing_required_env_and_continues(self, tmp_path, monkeypatch)` (method)
+- L614 `test_allows_skipping_secure_setup_and_still_loads(self, tmp_path, monkeypatch)` (method)
+- L654 `TestSkillMatchesPlatform` (class) — Tests for the platforms frontmatter field filtering.
+- L657 `test_no_platforms_field_matches_everything(self)` (method) — Skills without a platforms field should load on any OS.
+- L662 `test_empty_platforms_matches_everything(self)` (method) — Empty platforms list should load on any OS.
+- L667 `test_macos_on_darwin(self)` (method)
+- L672 `test_macos_on_linux(self)` (method)
+- L677 `test_linux_on_linux(self)` (method)
+- L682 `test_linux_on_darwin(self)` (method)
+- L687 `test_windows_on_win32(self)` (method)
+- L692 `test_windows_on_linux(self)` (method)
+- L697 `test_multi_platform_match(self)` (method) — Skills listing multiple platforms should match any of them.
+- L707 `test_string_instead_of_list(self)` (method) — A single string value should be treated as a one-element list.
+- L715 `test_case_insensitive(self)` (method)
+- L721 `test_unknown_platform_no_match(self)` (method)
+- L732 `TestFindAllSkillsPlatformFiltering` (class) — Test that _find_all_skills respects the platforms field.
+- L735 `test_excludes_incompatible_platform(self, tmp_path)` (method)
+- L748 `test_includes_matching_platform(self, tmp_path)` (method)
+- L759 `test_no_platforms_always_included(self, tmp_path)` (method) — Skills without platforms field should appear on any platform.
+- L771 `test_multi_platform_skill(self, tmp_path)` (method)
+- L795 `TestFindAllSkillsSecureSetup` (class)
+- L796 `test_skills_with_missing_env_vars_remain_listed(self, tmp_path, monkeypatch)` (method)
+- L810 `test_skills_with_met_prereqs_have_same_listing_shape(self, tmp_path, monkeypatch)` (method)
+- L825 `test_skills_without_prereqs_have_same_listing_shape(self, tmp_path)` (method)
+- L833 `test_skill_listing_does_not_probe_backend_for_env_vars(self, tmp_path, monkeypatch)` (method)
+- L855 `TestSkillViewPrerequisites` (class)
+- L856 `test_legacy_prerequisites_expose_required_env_setup_metadata(self, tmp_path, monkeypatch)` (method)
+- L878 `test_no_setup_needed_when_legacy_prereqs_are_met(self, tmp_path, monkeypatch)` (method)
+- L892 `test_remote_backend_treats_persisted_env_as_available(self, tmp_path, monkeypatch)` (method)
+- L915 `test_no_setup_metadata_when_no_required_envs(self, tmp_path)` (method)
+- L924 `test_skill_view_treats_backend_only_env_as_setup_needed(self, tmp_path, monkeypatch)` (method)
+- L941 `test_local_env_missing_keeps_setup_needed(self, tmp_path, monkeypatch)` (method)
+- L963 `test_remote_backend_becomes_available_after_local_secret_capture(self, tmp_path, monkeypatch, backend)` (method)
+- L1007 `test_skill_view_surfaces_skill_read_errors(self, tmp_path, monkeypatch)` (method)
+- L1027 `test_legacy_flat_md_skill_preserves_frontmatter_metadata(self, tmp_path)` (method)
+- L1061 `test_successful_secret_capture_reloads_empty_env_placeholder(self, tmp_path, monkeypatch)` (method)
+- L1107 `TestSkillViewCollisionDetection` (class) — Regression tests for skill_view name collision handling.
+- L1124 `_patch_dirs(self, local_dir, external_dirs)` (method) — Patch SKILLS_DIR (module-level) and get_external_skills_dirs at source.
+- L1134 `test_nested_local_collides_with_top_level_external(self, tmp_path)` (method) — The original bug scenario: nested local + top-level external,
+- L1164 `test_top_level_local_collides_with_external(self, tmp_path)` (method) — Top-level local + top-level external with the same name also
+- L1184 `test_collision_resolvable_via_categorized_path(self, tmp_path)` (method) — User can recover from a collision by passing the full
+- L1208 `test_external_skill_resolves_when_no_collision(self, tmp_path)` (method) — External-only skills still resolve normally when there's no
+- L1226 `test_two_externals_same_name_also_refuse(self, tmp_path)` (method) — Collision detection is symmetric — two external dirs with
+- L1248 `test_local_only_skill_loads_normally(self, tmp_path)` (method) — Sanity: a single local skill (no external collision) loads

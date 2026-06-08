@@ -1,0 +1,174 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:40'
+updated: '2026-06-08T00:38:40'
+---
+
+# gateway/platforms/base.py
+
+Symbols in `gateway/platforms/base.py`.
+
+- L38 `_platform_name(platform)` (function) — Normalize a Platform enum / raw string into a lowercase name.
+- L44 `_float_env(name: str, default: float)` (function)
+- L54 `_thread_metadata_for_source(source, reply_to_message_id: str | None=None)` (function) — Build platform-aware thread metadata for adapter sends.
+- L79 `_reply_anchor_for_event(event)` (function) — Return reply_to id for platforms that need reply semantics.
+- L102 `should_send_media_as_audio(platform, ext: str, is_voice: bool=False)` (function) — Return True when a media file should use the platform's audio sender.
+- L125 `utf16_len(s: str)` (function) — Count UTF-16 code units in *s*.
+- L140 `_prefix_within_utf16_limit(s: str, limit: int)` (function) — Return the longest prefix of *s* whose UTF-16 length ≤ *limit*.
+- L159 `_custom_unit_to_cp(s: str, budget: int, len_fn)` (function) — Return the largest codepoint offset *n* such that ``len_fn(s[:n]) <= budget``.
+- L178 `is_network_accessible(host: str)` (function) — Return True if *host* would expose the server beyond loopback.
+- L213 `_detect_macos_system_proxy()` (function) — Read the macOS system HTTP(S) proxy via ``scutil --proxy``.
+- L249 `_split_host_port(value: str)` (function)
+- L269 `_no_proxy_entries()` (function)
+- L277 `_no_proxy_entry_matches(entry: str, host: str, port: int | None=None)` (function)
+- L318 `should_bypass_proxy(target_hosts: str | list[str] | tuple[str, ...] | set[str] | None)` (function) — Return True when NO_PROXY/no_proxy matches at least one target host.
+- L340 `resolve_proxy_url(platform_env_var: str | None=None, *, target_hosts: str | list[str] | tuple[str, ...] | set[str] | None=None)` (function) — Return a proxy URL from env vars, or macOS system proxy.
+- L374 `proxy_kwargs_for_bot(proxy_url: str | None)` (function) — Build kwargs for ``commands.Bot()`` / ``discord.Client()`` with proxy.
+- L404 `proxy_kwargs_for_aiohttp(proxy_url: str | None)` (function) — Build kwargs for standalone ``aiohttp.ClientSession`` with proxy.
+- L442 `is_host_excluded_by_no_proxy(hostname: str, no_proxy_value: str | None=None)` (function) — Return True when ``hostname`` matches a ``NO_PROXY`` entry.
+- L496 `safe_url_for_log(url: str, max_len: int=80)` (function) — Return a URL string safe for logs (no query/fragment/userinfo).
+- L533 `_ssrf_redirect_guard(response)` (function) — Re-validate each redirect target to prevent redirect-based SSRF.
+- L563 `get_image_cache_dir()` (function) — Return the image cache directory, creating it if it doesn't exist.
+- L569 `_looks_like_image(data: bytes)` (function) — Return True if *data* starts with a known image magic-byte sequence.
+- L586 `cache_image_from_bytes(data: bytes, ext: str='.jpg')` (function) — Save raw image bytes to the cache and return the absolute file path.
+- L614 `cache_image_from_url(url: str, ext: str='.jpg', retries: int=2)` (function) — Download an image from a URL and save it to the local cache.
+- L673 `cleanup_image_cache(max_age_hours: int=24)` (function) — Delete cached images older than *max_age_hours*.
+- L704 `get_audio_cache_dir()` (function) — Return the audio cache directory, creating it if it doesn't exist.
+- L710 `cache_audio_from_bytes(data: bytes, ext: str='.ogg')` (function) — Save raw audio bytes to the cache and return the absolute file path.
+- L728 `cache_audio_from_url(url: str, ext: str='.ogg', retries: int=2)` (function) — Download an audio file from a URL and save it to the local cache.
+- L805 `get_video_cache_dir()` (function) — Return the video cache directory, creating it if it doesn't exist.
+- L811 `cache_video_from_bytes(data: bytes, ext: str='.mp4')` (function) — Save raw video bytes to the cache and return the absolute file path.
+- L904 `_media_delivery_allowed_roots()` (function) — Return roots from which model-emitted local media may be delivered.
+- L919 `_media_delivery_recency_seconds()` (function) — Return the recency window for trusting freshly-produced files.
+- L937 `_media_delivery_strict_mode()` (function) — Return True when path validation should require allowlist/recency match.
+- L952 `_media_delivery_denied_paths()` (function) — Return absolute denylist paths under which delivery is never allowed.
+- L969 `_path_under_denied_prefix(resolved: Path)` (function) — Return True if ``resolved`` lives under a deny-listed system path.
+- L1002 `_file_is_recently_produced(resolved: Path, window_seconds: float)` (function) — Return True if the file's mtime is within ``window_seconds`` of now.
+- L1019 `_path_is_within(path: Path, root: Path)` (function)
+- L1027 `validate_media_delivery_path(path: str)` (function) — Return a safe absolute file path for native media delivery, else None.
+- L1111 `_log_safe_path(path: str)` (function) — Return a single-line, length-bounded path for log output.
+- L1230 `get_document_cache_dir()` (function) — Return the document cache directory, creating it if it doesn't exist.
+- L1236 `cache_document_from_bytes(data: bytes, filename: str)` (function) — Save raw document bytes to the cache and return the absolute file path.
+- L1268 `cleanup_document_cache(max_age_hours: int=24)` (function) — Delete cached documents older than *max_age_hours*.
+- L1301 `CachedMedia` (class) — Result of caching one attachment's bytes.
+- L1309 `context_note(self)` (method) — One-line transcript annotation pointing the agent at the file.
+- L1314 `_resolve_media_ext(filename: str, mime_type: str)` (function) — Best-effort file extension from filename, then MIME fallback.
+- L1334 `cache_media_bytes(data: bytes, *, filename: str='', mime_type: str='', default_kind: Optional[str]=None)` (function) — Classify and cache raw attachment bytes; return a CachedMedia or None.
+- L1390 `MessageType` (class) — Types of incoming messages.
+- L1403 `ProcessingOutcome` (class) — Result classification for message-processing lifecycle hooks.
+- L1412 `MessageEvent` (class) — Incoming message from a platform.
+- L1468 `is_command(self)` (method) — Check if this is a command message (e.g., /new, /reset).
+- L1472 `get_command(self)` (method) — Extract command name if this is a command message.
+- L1486 `get_command_args(self)` (method) — Get the arguments after a command.
+- L1498 `TextDebounceState` (class)
+- L1512 `coerce_plaintext_gateway_command(event: 'MessageEvent')` (function) — Rewrite a tiny set of DM plaintext admin phrases into slash commands.
+- L1541 `SendResult` (class) — Result of sending a message.
+- L1557 `EphemeralReply` (class) — System-notice reply that auto-deletes after a TTL.
+- L1580 `__new__(cls, text: str, ttl_seconds: Optional[int]=None)` (method)
+- L1586 `text(self)` (method) — Return the underlying text.
+- L1596 `merge_pending_message_event(pending_messages: Dict[str, MessageEvent], session_key: str, event: MessageEvent, *, merge_text: bool=False)` (function) — Store or merge a pending event for a session.
+- L1684 `resolve_channel_prompt(config_extra: dict, channel_id: str, parent_id: str | None=None)` (function) — Resolve a per-channel ephemeral prompt from platform config.
+- L1714 `resolve_channel_skills(config_extra: dict, channel_id: str, parent_id: str | None=None)` (function) — Resolve auto-loaded skill(s) for a channel/thread from platform config.
+- L1769 `_strip_media_directives(text: str)` (function) — Strip internal delivery directives ([[audio_as_voice]], [[as_document]],
+- L1785 `BasePlatformAdapter` (class) — Base class for platform adapters.
+- L1796 `__init__(self, config: PlatformConfig, platform: Platform)` (method)
+- L1868 `message_len_fn(self)` (method) — Return the length function for measuring message size on this platform.
+- L1877 `enforces_own_access_policy(self)` (method) — Whether this adapter gates inbound access before dispatch.
+- L1899 `supports_draft_streaming(self, chat_type: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Whether this adapter supports native streaming-draft updates.
+- L1918 `send_draft(self, chat_id: str, draft_id: int, content: str, metadata: Optional[Dict[str, Any]]=None)` (method) — Send or update an animated streaming-draft preview.
+- L1960 `render_message_event(self, event: Any, sink: Any)` (method) — Render a MessageChunk / MessageStop / Commentary onto the sink.
+- L1981 `format_tool_event(self, event: Any, *, mode: str='all', preview_max_len: int=40)` (method) — Return the rendered chrome for a ToolCallChunk, or None to eat it.
+- L2024 `has_fatal_error(self)` (method)
+- L2028 `fatal_error_message(self)` (method)
+- L2032 `fatal_error_code(self)` (method)
+- L2036 `fatal_error_retryable(self)` (method)
+- L2039 `_should_auto_tts_for_chat(self, chat_id: str)` (method) — Whether auto-TTS on voice input should fire for ``chat_id``.
+- L2054 `set_fatal_error_handler(self, handler: Callable[['BasePlatformAdapter'], Awaitable[None] | None])` (method)
+- L2057 `_mark_connected(self)` (method)
+- L2064 `_mark_disconnected(self)` (method)
+- L2070 `_set_fatal_error(self, code: str, message: str, *, retryable: bool)` (method)
+- L2077 `_write_runtime_status_safe(self, context: str, **kwargs)` (method) — Write runtime status; log first failure per context at warning, rest at debug.
+- L2109 `_notify_fatal_error(self)` (method)
+- L2117 `_acquire_platform_lock(self, scope: str, identity: str, resource_desc: str)` (method) — Acquire a scoped lock for this adapter. Returns True on success.
+- L2137 `_release_platform_lock(self)` (method) — Release the scoped lock acquired by _acquire_platform_lock.
+- L2147 `name(self)` (method) — Human-readable name for this adapter.
+- L2152 `is_connected(self)` (method) — Check if adapter is currently connected.
+- L2156 `set_message_handler(self, handler: MessageHandler)` (method) — Set the handler for incoming messages.
+- L2165 `set_topic_recovery_fn(self, fn: Optional[Callable[[Any], Optional[str]]])` (method) — Install a thread_id-recovery hook (Telegram DM topic mode).
+- L2179 `_apply_topic_recovery(self, event: MessageEvent)` (method) — Rewrite ``event.source.thread_id`` in place if the hook returns one.
+- L2199 `set_busy_session_handler(self, handler: Optional[Callable[[MessageEvent, str], Awaitable[bool]]])` (method) — Set an optional handler for messages arriving during active sessions.
+- L2203 `set_session_store(self, session_store: Any)` (method) — Set the session store for checking active sessions.
+- L2214 `connect(self)` (method) — Connect to the platform and start receiving messages.
+- L2223 `disconnect(self)` (method) — Disconnect from the platform.
+- L2228 `send(self, chat_id: str, content: str, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a message to a chat.
+- L2257 `create_handoff_thread(self, parent_chat_id: str, name: str)` (method) — Create a fresh thread under ``parent_chat_id`` for a session handoff.
+- L2284 `edit_message(self, chat_id: str, message_id: str, content: str, *, finalize: bool=False)` (method) — Edit a previously sent message. Optional — platforms that don't
+- L2313 `delete_message(self, chat_id: str, message_id: str)` (method) — Delete a previously sent message.  Optional — platforms that don't
+- L2334 `_get_ephemeral_system_ttl_default(self)` (method) — Read ``display.ephemeral_system_ttl`` from config.
+- L2358 `_schedule_ephemeral_delete(self, chat_id: str, message_id: str, ttl_seconds: int)` (method) — Spawn a detached task that deletes ``message_id`` after ``ttl_seconds``.
+- L2392 `send_slash_confirm(self, chat_id: str, title: str, message: str, session_key: str, confirm_id: str, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a three-option slash-command confirmation prompt.
+- L2427 `send_clarify(self, chat_id: str, question: str, choices: Optional[list], clarify_id: str, session_key: str, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a clarify prompt to the user.
+- L2484 `send_private_notice(self, chat_id: str, user_id: Optional[str], content: str, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send a notice privately when the platform supports it.
+- L2504 `send_typing(self, chat_id: str, metadata=None)` (method) — Send a typing indicator.
+- L2513 `stop_typing(self, chat_id: str)` (method) — Stop a persistent typing indicator (if the platform uses one).
+- L2521 `send_multiple_images(self, chat_id: str, images: List[Tuple[str, str]], metadata: Optional[Dict[str, Any]]=None, human_delay: float=0.0)` (method) — Send a batch of images.
+- L2578 `send_image(self, chat_id: str, image_url: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send an image natively via the platform API.
+- L2597 `send_animation(self, chat_id: str, animation_url: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None)` (method) — Send an animated GIF natively via the platform API.
+- L2615 `_is_animation_url(url: str)` (method) — Check if a URL points to an animated GIF (vs a static image).
+- L2621 `extract_images(content: str)` (method) — Extract image URLs from markdown and HTML image tags in a response.
+- L2668 `send_voice(self, chat_id: str, audio_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send an audio file as a native voice message via the platform API.
+- L2689 `prepare_tts_text(self, text: str)` (method) — Prepare text for TTS. Override to filter tool output, code, etc.
+- L2696 `play_tts(self, chat_id: str, audio_path: str, **kwargs)` (method) — Play auto-TTS audio for voice replies.
+- L2710 `send_video(self, chat_id: str, video_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send a video natively via the platform API.
+- L2730 `send_document(self, chat_id: str, file_path: str, caption: Optional[str]=None, file_name: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send a document/file natively via the platform API.
+- L2751 `send_image_file(self, chat_id: str, image_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, **kwargs)` (method) — Send a local image file natively via the platform API.
+- L2773 `validate_media_delivery_path(path: str)` (method) — Return a resolved path if it is safe for native attachment upload.
+- L2778 `filter_media_delivery_paths(media_files)` (method) — Drop unsafe MEDIA paths and normalize accepted paths.
+- L2791 `filter_local_delivery_paths(file_paths)` (method) — Drop unsafe bare local file paths and normalize accepted paths.
+- L2805 `_mask_protected_spans(content: str)` (method) — Replace content inside fenced code blocks, inline code spans,
+- L2846 `_mask_json_string_media(content: str)` (method) — Blank out ``MEDIA:<bare-path>`` occurrences that sit inside a JSON
+- L2886 `extract_media(content: str)` (method) — Extract MEDIA:<path> tags and [[audio_as_voice]] directives from response text.
+- L2970 `extract_local_files(content: str)` (method) — Detect bare local file paths in response text for native delivery.
+- L3054 `_keep_typing(self, chat_id: str, interval: float=2.0, metadata=None, stop_event: asyncio.Event | None=None)` (method) — Continuously send typing indicator until cancelled.
+- L3136 `pause_typing_for_chat(self, chat_id: str)` (method) — Pause typing indicator for a chat (e.g. during approval waits).
+- L3144 `resume_typing_for_chat(self, chat_id: str)` (method) — Resume typing indicator for a chat after approval resolves.
+- L3148 `interrupt_session_activity(self, session_key: str, chat_id: str)` (method) — Signal the active session loop to stop and clear typing immediately.
+- L3159 `register_post_delivery_callback(self, session_key: str, callback: Callable, *, generation: int | None=None)` (method) — Register a deferred callback to fire after the main response.
+- L3221 `pop_post_delivery_callback(self, session_key: str, *, generation: int | None=None)` (method) — Pop a deferred callback, optionally requiring generation ownership.
+- L3248 `on_processing_start(self, event: MessageEvent)` (method) — Hook called when background processing begins.
+- L3251 `on_processing_complete(self, event: MessageEvent, outcome: ProcessingOutcome)` (method) — Hook called when background processing completes.
+- L3254 `_run_processing_hook(self, hook_name: str, *args: Any, **kwargs: Any)` (method) — Run a lifecycle hook without letting failures break message flow.
+- L3265 `_is_retryable_error(error: Optional[str])` (method) — Return True if the error string looks like a transient network failure.
+- L3273 `_is_timeout_error(error: Optional[str])` (method) — Return True if the error string indicates a read/write timeout.
+- L3284 `_unwrap_ephemeral(self, response: Any)` (method) — Unwrap a handler response into (text, ttl_seconds).
+- L3306 `_send_with_retry(self, chat_id: str, content: str, reply_to: Optional[str]=None, metadata: Any=None, max_retries: int=2, base_delay: float=2.0)` (method) — Send a message with automatic retry for transient network errors.
+- L3389 `_merge_caption(existing_text: Optional[str], new_text: str)` (method) — Merge a new caption into existing text, avoiding duplicates.
+- L3404 `_text_debounce_store(self)` (method)
+- L3411 `_is_queue_text_debounce_candidate(self, event: MessageEvent)` (method) — Return True for normal text eligible for queue-mode debounce.
+- L3429 `_can_merge_text_debounce_events(self, existing: MessageEvent, event: MessageEvent)` (method) — Return True when two text debounce events came from the same sender.
+- L3448 `_text_debounce_delay(self, session_key: str)` (method) — Return bounded busy-text debounce delay for ``session_key``.
+- L3458 `_queue_text_debounce(self, session_key: str, event: MessageEvent)` (method) — Buffer normal queue-mode busy text and schedule a bounded flush.
+- L3510 `_flush_text_debounce(self, session_key: str, delay: float)` (method) — Timer task that flushes the debounced text buffer.
+- L3523 `_flush_text_debounce_now(self, session_key: str)` (method) — Force-flush one debounced busy-text burst into the pending slot.
+- L3553 `_discard_text_debounce(self, session_key: str)` (method) — Cancel and drop pending text debounce state for control commands.
+- L3567 `_release_session_guard(self, session_key: str, *, guard: Optional[asyncio.Event]=None)` (method) — Release the adapter-level guard for a session.
+- L3587 `_session_task_is_stale(self, session_key: str)` (method) — Return True if the owner task for ``session_key`` is done/cancelled.
+- L3604 `_heal_stale_session_lock(self, session_key: str)` (method) — Clear a stale session lock if the owner task is already gone.
+- L3631 `_start_session_processing(self, event: MessageEvent, session_key: str, *, interrupt_event: Optional[asyncio.Event]=None)` (method) — Spawn a background processing task under the given session guard.
+- L3663 `cancel_session_processing(self, session_key: str, *, release_guard: bool=True, discard_pending: bool=True)` (method) — Cancel in-flight processing for a single session.
+- L3714 `_drain_pending_after_session_command(self, session_key: str, command_guard: asyncio.Event)` (method) — Resume the latest queued follow-up once a session command completes.
+- L3732 `_dispatch_active_session_command(self, event: MessageEvent, session_key: str, cmd: str)` (method) — Dispatch a reset-like bypass command while preserving guard ordering.
+- L3809 `handle_message(self, event: MessageEvent)` (method) — Process an incoming message.
+- L4002 `_get_human_delay()` (method) — Return a random delay in seconds for human-like response pacing.
+- L4028 `_process_message_background(self, event: MessageEvent, session_key: str)` (method) — Background task that actually processes the message.
+- L4566 `cancel_background_tasks(self)` (method) — Cancel any in-flight background message-processing tasks.
+- L4621 `has_pending_interrupt(self, session_key: str)` (method) — Check if there's a pending interrupt for a session.
+- L4625 `get_pending_message(self, session_key: str)` (method) — Get and clear any pending message for a session.
+- L4629 `build_source(self, chat_id: str, chat_name: Optional[str]=None, chat_type: str='dm', user_id: Optional[str]=None, user_name: Optional[str]=None, thread_id: Optional[str]=None, chat_topic: Optional[str]=None, user_id_alt: Optional[str]=None, chat_id_alt: Optional[str]=None, is_bot: bool=False, guild_id: Optional[str]=None, parent_chat_id: Optional[str]=None, message_id: Optional[str]=None)` (method) — Helper to build a SessionSource for this platform.
+- L4667 `get_chat_info(self, chat_id: str)` (method) — Get information about a chat/channel.
+- L4677 `format_message(self, content: str)` (method) — Format a message for this platform.
+- L4689 `truncate_message(content: str, max_length: int=4096, len_fn: Optional['Callable[[str], int]']=None)` (method) — Split a long message into chunks, preserving code block boundaries.

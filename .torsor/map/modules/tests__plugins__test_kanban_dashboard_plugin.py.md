@@ -1,0 +1,114 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/plugins/test_kanban_dashboard_plugin.py
+
+Symbols in `tests/plugins/test_kanban_dashboard_plugin.py`.
+
+- L28 `_load_plugin_router()` (function) — Dynamically load plugins/kanban/dashboard/plugin_api.py and return its router.
+- L45 `kanban_home(tmp_path, monkeypatch)` (function) — Isolated HERMES_HOME with an empty kanban DB.
+- L56 `client(kanban_home)` (function)
+- L67 `test_board_empty(client)` (function)
+- L87 `test_create_task_appears_on_board(client)` (function)
+- L117 `test_scheduled_tasks_have_their_own_column_not_todo(client)` (function) — Scheduled/time-delay tasks must not be silently bucketed into todo.
+- L142 `test_tenant_filter(client)` (function)
+- L156 `test_board_query_param_default_overrides_current_board_pointer(client)` (function) — Dashboard ``?board=default`` must win even if the CLI's current-board
+- L194 `test_dashboard_select_filters_use_sdk_value_change_handler()` (function) — Tenant/assignee filters must work with the dashboard SDK Select API.
+- L214 `test_dashboard_client_side_filtering_includes_tenant_filter()` (function) — The rendered board must also filter by tenant.
+- L231 `test_dashboard_initial_board_uses_backend_current_when_unpinned()` (function) — Fresh browsers should open the backend current board, not default.
+- L255 `test_task_detail_includes_links_and_events(client)` (function)
+- L280 `test_task_detail_404_on_unknown(client)` (function)
+- L290 `test_patch_status_complete(client)` (function)
+- L307 `test_patch_block_then_unblock(client)` (function)
+- L324 `test_patch_schedule_then_unblock(client)` (function)
+- L346 `test_patch_drag_drop_move_todo_to_ready(client)` (function) — Direct status write: the drag-drop path for statuses without a
+- L390 `test_reopening_parent_demotes_ready_child(client)` (function) — Reopening a completed parent must invalidate ready children immediately.
+- L427 `test_patch_reassign(client)` (function)
+- L440 `test_patch_priority_and_edit(client)` (function)
+- L452 `test_patch_invalid_status(client)` (function)
+- L461 `test_patch_status_running_rejected(client)` (function) — Dashboard PATCH cannot transition a task directly to 'running'.
+- L492 `test_delete_task(client)` (function)
+- L509 `test_delete_task_not_found(client)` (function)
+- L520 `test_add_comment(client)` (function)
+- L535 `test_add_comment_empty_rejected(client)` (function)
+- L544 `test_add_link_and_delete_link(client)` (function)
+- L565 `test_add_link_cycle_rejected(client)` (function)
+- L584 `test_dispatch_dry_run(client)` (function)
+- L601 `test_create_triage_lands_in_triage_column(client)` (function)
+- L616 `test_triage_task_not_promoted_to_ready(client)` (function) — Triage tasks must stay in triage even when they have no parents.
+- L631 `test_patch_status_triage_works(client)` (function) — A user (or specifier) can push a task back into triage, and out of it.
+- L656 `test_board_progress_rollup(client)` (function)
+- L713 `test_board_auto_initializes_missing_db(tmp_path, monkeypatch)` (function) — If kanban.db doesn't exist yet, GET /board must create it, not 500.
+- L737 `test_ws_events_rejects_when_token_required(tmp_path, monkeypatch)` (function) — Loopback mode: a missing or wrong ?token= must be rejected with
+- L788 `test_ws_events_accepts_gated_ticket(tmp_path, monkeypatch)` (function) — Gated OAuth mode: the WS must accept a single-use ?ticket= (and reject
+- L833 `test_ws_events_board_query_param_default_overrides_current_board_pointer(tmp_path, monkeypatch)` (function) — The event stream must honor ``board=default`` even when the global
+- L886 `test_ws_events_swallows_cancellation_on_shutdown(tmp_path, monkeypatch)` (function) — ``asyncio.CancelledError`` while sleeping in the poll loop is the
+- L950 `test_bulk_status_ready(client)` (function)
+- L971 `test_bulk_status_done_forwards_completion_summary(client)` (function)
+- L1001 `test_bulk_status_running_rejected(client)` (function) — Bulk updates must match single-task PATCH: direct 'running' is invalid.
+- L1026 `test_dashboard_done_actions_prompt_for_completion_summary()` (function)
+- L1039 `test_dashboard_surfaces_ready_blocked_error_inline()` (function) — Regression for #26744: failed status transitions must be surfaced
+- L1067 `test_dashboard_dependency_selects_use_value_change_handler()` (function) — Regression for the dependency selects in the task drawer: the
+- L1093 `test_bulk_archive(client)` (function)
+- L1107 `test_bulk_reassign(client)` (function)
+- L1120 `test_bulk_unassign_via_empty_string(client)` (function)
+- L1130 `test_bulk_partial_failure_doesnt_abort_siblings(client)` (function) — One bad id in the middle of a batch must not prevent others from
+- L1150 `test_bulk_empty_ids_400(client)` (function)
+- L1160 `test_config_returns_defaults_when_section_missing(client)` (function)
+- L1171 `test_config_reads_dashboard_kanban_section(tmp_path, monkeypatch, client)` (function)
+- L1194 `test_task_detail_includes_runs(client)` (function) — GET /tasks/:id carries a runs[] array with the attempt history.
+- L1227 `test_task_detail_runs_empty_before_claim(client)` (function) — A task that's never been claimed has an empty runs[] list, not
+- L1235 `test_patch_status_done_with_summary_and_metadata(client)` (function) — PATCH /tasks/:id with status=done + summary + metadata must
+- L1269 `test_patch_status_done_without_summary_still_works(client)` (function) — Back-compat: PATCH without the new fields still completes.
+- L1293 `test_patch_status_archive_closes_running_run(client)` (function) — PATCH to archived while running must close the in-flight run.
+- L1320 `test_event_dict_includes_run_id(client)` (function) — GET /tasks/:id returns events with run_id populated.
+- L1349 `test_create_task_with_skills_roundtrips(client)` (function) — POST /tasks accepts `skills: [...]`, GET /tasks/:id returns it.
+- L1368 `test_create_task_without_skills_defaults_to_empty_list(client)` (function) — _task_dict serializes Task.skills=None as [] so the drawer can
+- L1383 `test_create_task_with_toolset_name_in_skills_is_rejected(client)` (function) — POST /tasks fails fast when callers confuse toolsets with skills.
+- L1402 `test_create_task_includes_warning_when_no_dispatcher(client, monkeypatch)` (function) — ready+assigned task + no gateway -> response has `warning` field
+- L1420 `test_create_task_no_warning_when_dispatcher_up(client, monkeypatch)` (function) — Dispatcher running -> no `warning` field in the response.
+- L1434 `test_create_task_no_warning_on_triage(client, monkeypatch)` (function) — Triage tasks never get the warning (they can't be dispatched
+- L1472 `test_board_endpoint_survives_task_age_exception(client, monkeypatch)` (function) — If task_age raises for any reason, GET /board must NOT 500.
+- L1508 `test_single_task_endpoint_survives_task_age_exception(client, monkeypatch)` (function) — GET /tasks/:id also calls _task_dict — same fallback should kick in.
+- L1530 `test_create_task_probe_error_does_not_break_create(client, monkeypatch)` (function) — Probe failure must never break task creation.
+- L1557 `with_home_channels(monkeypatch)` (function) — Simulate a user with home channels set on telegram and discord.
+- L1570 `test_home_channels_lists_only_platforms_with_home(client, with_home_channels)` (function) — GET /home-channels returns entries only for platforms where the
+- L1583 `test_home_channels_no_task_id_all_unsubscribed(client, with_home_channels)` (function) — Without task_id, every entry's subscribed=false (UI "no task" state).
+- L1590 `test_home_subscribe_creates_notify_sub_row(client, with_home_channels)` (function) — POST .../home-subscribe/telegram writes a kanban_notify_subs row
+- L1612 `test_home_subscribe_flips_subscribed_flag_in_subsequent_get(client, with_home_channels)` (function) — After subscribe, the GET endpoint reports subscribed=true for that
+- L1623 `test_home_subscribe_is_idempotent(client, with_home_channels)` (function) — Re-subscribing keeps a single row at the DB layer.
+- L1637 `test_home_subscribe_backfills_owner_on_legacy_row(client, with_home_channels)` (function) — Re-subscribing should backfill notifier ownership on ownerless rows.
+- L1667 `test_home_subscribe_unknown_platform_returns_404(client, with_home_channels)` (function) — Platforms without a home configured (slack in the fixture) return 404.
+- L1675 `test_home_subscribe_unknown_task_returns_404(client, with_home_channels)` (function)
+- L1680 `test_home_unsubscribe_removes_notify_sub_row(client, with_home_channels)` (function) — DELETE .../home-subscribe/telegram removes the matching row.
+- L1695 `test_home_subscribe_multiple_platforms_independent(client, with_home_channels)` (function) — Subscribing on telegram does not affect discord and vice versa.
+- L1720 `test_home_channels_empty_when_no_homes_configured(client, monkeypatch)` (function) — Zero platforms with a home -> empty list (UI hides the section).
+- L1738 `test_board_surfaces_warnings_field_for_hallucinated_completions(client)` (function) — Tasks with a pending completion_blocked_hallucination event surface
+- L1777 `test_board_warnings_cleared_after_clean_completion(client)` (function) — A completed or edited event after a hallucination event clears
+- L1812 `test_reclaim_endpoint_releases_running_claim(client)` (function) — POST /tasks/<id>/reclaim drops the claim, returns ok, and emits
+- L1858 `test_reclaim_endpoint_409_for_non_running_task(client)` (function) — Reclaiming a task that's already ready returns 409.
+- L1873 `test_reassign_endpoint_switches_profile(client)` (function) — POST /tasks/<id>/reassign changes the assignee field.
+- L1898 `test_reassign_endpoint_409_on_running_without_reclaim(client)` (function) — Reassigning a running task without reclaim_first returns 409.
+- L1919 `test_reassign_endpoint_with_reclaim_first_succeeds_on_running(client)` (function) — With reclaim_first=true, a running task is reclaimed+reassigned in
+- L1965 `test_diagnostics_endpoint_empty_for_clean_board(client)` (function)
+- L1973 `test_diagnostics_endpoint_surfaces_blocked_hallucination(client)` (function)
+- L1998 `test_diagnostics_endpoint_severity_filter(client)` (function) — Severity filter is at-or-above: warning includes warning+error+critical,
+- L2034 `test_board_exposes_diagnostics_list_and_summary(client)` (function) — /board should attach both the full diagnostics list AND the
+- L2067 `_patch_specifier_response(monkeypatch, *, content, model='test-model')` (function) — Helper: install a fake auxiliary client so the specifier endpoint
+- L2084 `test_specify_happy_path(client, monkeypatch)` (function)
+- L2118 `test_specify_non_triage_returns_ok_false_not_http_error(client, monkeypatch)` (function) — The endpoint intentionally returns ``{ok: false, reason: ...}`` for
+- L2137 `test_specify_no_aux_client_surfaces_reason(client, monkeypatch)` (function)
+- L2163 `test_board_endpoint_accepts_explicit_board_default_param(client)` (function) — GET /board?board=default must not fall through to env/current-file resolution.
+- L2193 `test_dashboard_requests_default_board_explicitly()` (function) — Dashboard REST calls must include board=default instead of relying on server current board.
+- L2203 `test_dashboard_search_includes_body_and_result()` (function) — Client-side search must match body, result, latest_summary, and summary
+- L2214 `test_dashboard_bulk_actions_include_reclaim_first()` (function) — Bulk action bar must expose reclaim_first checkbox and expanded status buttons.
+- L2226 `test_dashboard_shift_click_range_selection_exists()` (function) — Shift-click must trigger range selection via toggleRange.
+- L2236 `test_dashboard_multi_move_bulk_exists()` (function) — Dragging a selected card with other selections must use /tasks/bulk.
+- L2246 `test_dashboard_failed_card_highlight_class_exists()` (function) — Partial bulk failures must highlight failing cards.

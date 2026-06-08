@@ -1,0 +1,251 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:40'
+updated: '2026-06-08T00:38:40'
+---
+
+# gateway/platforms/yuanbao.py
+
+Symbols in `gateway/platforms/yuanbao.py`.
+
+- L161 `MarkdownProcessor` (class) — Encapsulates all Markdown-related utilities for the Yuanbao platform.
+- L176 `has_unclosed_fence(text: str)` (method) — Detect whether the text has unclosed code block fences.
+- L198 `ends_with_table_row(text: str)` (method) — Detect whether the text ends with a table row (last non-empty line starts and ends with |).
+- L217 `split_at_paragraph_boundary(text: str, max_chars: int, len_fn: Optional[Callable[[str], int]]=None)` (method) — Find the nearest paragraph boundary split point within max_chars, return (head, tail).
+- L283 `is_fence_atom(text: str)` (method) — Determine whether an atomic block is a code block (starts with ```).
+- L288 `is_table_atom(text: str)` (method) — Determine whether an atomic block is a table (first line starts with |).
+- L294 `split_into_atoms(text: str)` (method) — Split text into a list of "atomic blocks", each being an indivisible logical unit:
+- L355 `chunk_markdown_text(cls, text: str, max_chars: int=4000, len_fn: Optional[Callable[[str], int]]=None)` (method) — Split Markdown text into multiple chunks by max_chars.
+- L467 `infer_block_separator(cls, prev_chunk: str, next_chunk: str)` (method) — Infer the separator to use between two split chunks.
+- L501 `merge_block_streaming_fences(cls, chunks: list[str])` (method) — Stream-aware fence-conscious chunk merging.
+- L539 `strip_outer_markdown_fence(text: str)` (method) — Strip outer Markdown fence.
+- L577 `sanitize_markdown_table(text: str)` (method) — Table output sanitization.
+- L624 `markdown_hint_system_prompt()` (method) — Markdown rendering hint (appended to system prompt).
+- L641 `SignManager` (class) — Encapsulates all sign-token related logic for the Yuanbao platform.
+- L677 `get_refresh_lock(cls, app_key: str)` (method) — Return (creating if needed) the per-app_key refresh lock.
+- L687 `compute_signature(nonce: str, timestamp: str, app_key: str, app_secret: str)` (method) — Compute HMAC-SHA256 signature (aligned with TypeScript original).
+- L697 `build_timestamp()` (method) — Build Beijing-time ISO-8601 timestamp (no milliseconds).
+- L706 `is_cache_valid(cls, entry: dict[str, Any])` (method) — Determine whether the cache entry is valid (not expired with margin).
+- L711 `clear_locks(cls)` (method) — Clear all per-app_key refresh locks (called on disconnect).
+- L716 `purge_expired(cls)` (method) — Remove all expired entries from the token cache.
+- L735 `fetch(cls, app_key: str, app_secret: str, api_domain: str, route_env: str='')` (method) — Send sign-ticket HTTP request with auto-retry (up to MAX_RETRIES times).
+- L811 `get_token(cls, app_key: str, app_secret: str, api_domain: str, route_env: str='')` (method) — Get WS auth token (with cache).
+- L856 `force_refresh(cls, app_key: str, app_secret: str, api_domain: str, route_env: str='')` (method) — Force refresh token (clear cache and re-sign).
+- L887 `InboundContext` (class) — Mutable context flowing through the inbound middleware pipeline.
+- L944 `InboundMiddleware` (class) — Abstract base class for all inbound pipeline middlewares.
+- L960 `handle(self, ctx: InboundContext, next_fn: Callable)` (method) — Process *ctx* and optionally call *next_fn* to continue the pipeline.
+- L963 `__call__(self, ctx: InboundContext, next_fn: Callable)` (method) — Allow middleware instances to be called directly (duck-typing compat).
+- L967 `__repr__(self)` (method)
+- L971 `InboundPipeline` (class) — Onion-model middleware pipeline engine for inbound message processing.
+- L983 `__init__(self)` (method)
+- L989 `_normalize(name_or_mw, handler=None)` (method) — Normalize (name, handler) or (InboundMiddleware,) into (name, callable).
+- L998 `use(self, name_or_mw, handler=None, when=None)` (method) — Append a middleware to the end of the pipeline.
+- L1009 `use_before(self, target: str, name_or_mw, handler=None, when=None)` (method) — Insert a middleware before *target* (by name).  Appends if not found.
+- L1020 `use_after(self, target: str, name_or_mw, handler=None, when=None)` (method) — Insert a middleware after *target* (by name).  Appends if not found.
+- L1031 `remove(self, name: str)` (method) — Remove a middleware by name.
+- L1037 `middleware_names(self)` (method) — Return ordered list of registered middleware names (for testing).
+- L1043 `execute(self, ctx: InboundContext)` (method) — Run all middlewares in order.  Each middleware receives ``(ctx, next_fn)``.
+- L1065 `DecodeMiddleware` (class) — Decode raw inbound frames from JSON or Protobuf into ctx.push.
+- L1077 `convert_json_msg_body(raw_body: list)` (method) — Normalize raw JSON msg_body array to [{"msg_type": str, "msg_content": dict}].
+- L1098 `parse_json_push(raw_json: dict)` (method) — Convert JSON-format push to a dict with the same structure as
+- L1149 `_decode_single(self, adapter, data: bytes)` (method) — Decode a single raw frame into (push_dict, decoded_via) or (None, '').
+- L1170 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1225 `ExtractFieldsMiddleware` (class) — Extract common fields from ctx.push into ctx attributes.
+- L1230 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1242 `DedupMiddleware` (class) — Inbound message deduplication.
+- L1247 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1254 `RecallGuardMiddleware` (class) — Intercept Group.CallbackAfterRecallMsg / C2C.CallbackAfterMsgWithDraw.
+- L1270 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1278 `_build_source(adapter, group_code: str, from_account: str)` (method)
+- L1286 `_handle_recall(self, ctx: InboundContext, cmd: str)` (method)
+- L1319 `_find_processing_session(adapter, recalled_id: str)` (method)
+- L1326 `_interrupt_for_recall(cls, adapter, session_key: str, recalled_id: str, group_code: str, from_account: str)` (method)
+- L1364 `_schedule_content_redact(cls, adapter, session_key: str, recalled_text: str, group_code: str, from_account: str)` (method)
+- L1402 `_patch_transcript(cls, adapter, recalled_id: str, group_code: str, from_account: str, recalled_content: Optional[str]=None)` (method)
+- L1463 `SkipSelfMiddleware` (class) — Filter out bot's own messages.
+- L1469 `_is_self_reference(from_account: str, bot_id: Optional[str])` (method) — Detect whether the message is from the bot itself.
+- L1475 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1482 `ChatRoutingMiddleware` (class) — Determine chat_id, chat_type, chat_name from push fields.
+- L1487 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1499 `AccessPolicy` (class) — Platform-level DM / Group access control policy.
+- L1507 `__init__(self, dm_policy: str, dm_allow_from: list[str], group_policy: str, group_allow_from: list[str])` (method)
+- L1519 `is_dm_allowed(self, sender_id: str)` (method) — Platform-level DM inbound filter (open / allowlist / disabled).
+- L1527 `is_group_allowed(self, group_code: str)` (method) — Platform-level group chat inbound filter (open / allowlist / disabled).
+- L1536 `dm_policy(self)` (method)
+- L1540 `group_policy(self)` (method)
+- L1544 `AccessGuardMiddleware` (class) — Platform-level DM/Group access control filter.
+- L1549 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1569 `AutoSetHomeMiddleware` (class) — Auto-designate the first inbound conversation as Yuanbao home channel.
+- L1579 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1614 `ExtractContentMiddleware` (class) — Extract raw text and media refs from msg_body.
+- L1622 `_format_shared_link(custom: dict)` (method) — Format elem_type 1010 (share card) into bracket-placeholder text.
+- L1640 `_format_link_understanding(custom: dict)` (method) — Format elem_type 1007 (link understanding card) into bracket-placeholder text.
+- L1655 `_parse_resource_id(url: str)` (method) — Extract resourceId from Yuanbao resource URL query parameters.
+- L1674 `_extract_text(cls, msg_body: list)` (method) — Extract plain text content from MsgBody.
+- L1768 `_rewrite_slash_command(text: str)` (method) — Normalize input text: strip whitespace and convert full-width slash
+- L1778 `_extract_inbound_media_refs(msg_body: list)` (method) — Extract inbound image/file references from TIM msg_body.
+- L1823 `_extract_link_urls(msg_body: list)` (method) — Extract link URLs from share-card (1010) and link-understanding (1007) custom elems.
+- L1855 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1861 `PlaceholderFilterMiddleware` (class) — Skip pure placeholder messages (e.g. '[image]' with no media).
+- L1872 `is_skippable_placeholder(cls, text: str, media_count: int=0)` (method) — Detect whether the message is a pure placeholder (should be skipped).
+- L1879 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1886 `OwnerCommandMiddleware` (class) — Detect bot-owner slash commands in group chat.
+- L1903 `_rewrite_slash_command(text: str)` (method) — Normalize full-width slash to ASCII slash and strip whitespace.
+- L1911 `_detect_owner_command(cls, *, push: dict, msg_body: list, chat_type: str, from_account: str)` (method) — Identify allowlisted slash commands and determine sender identity.
+- L1953 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L1983 `BuildSourceMiddleware` (class) — Build SessionSource from context fields.
+- L1988 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L2001 `GroupAtGuardMiddleware` (class) — In group chat, observe non-@bot messages; only reply on @Bot.
+- L2010 `_is_at_bot(msg_body: list, bot_id: Optional[str])` (method) — Detect whether the message @Bot.
+- L2034 `_extract_bot_mention_text(msg_body: list, bot_id: Optional[str])` (method) — Extract the display text used to @-mention this bot (e.g. ``@yuanbao-bot``).
+- L2055 `_build_group_channel_prompt(msg_body: list, bot_id: Optional[str])` (method) — Build a per-turn group-chat prompt that highlights which message to respond to.
+- L2069 `_observe_group_message(adapter, source, sender_display: str, text: str, *, msg_id: Optional[str]=None)` (method) — Write a group message into the session transcript without triggering the agent.
+- L2102 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L2117 `GroupAttributionMiddleware` (class) — Tag group @bot messages with [nickname|user_id] attribution and channel_prompt.
+- L2132 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L2148 `ClassifyMessageTypeMiddleware` (class) — Determine MessageType from text content and msg_body elements.
+- L2154 `_classify(text: str, msg_body: list)` (method) — Classify message type based on text and msg_body.
+- L2170 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L2175 `QuoteContextMiddleware` (class) — Extract quote/reply context from cloud_custom_data.
+- L2181 `_extract_quote_context(cloud_custom_data: str)` (method) — Extract quote context, mapping to MessageEvent.reply_to_*.
+- L2222 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L2228 `MediaResolveMiddleware` (class) — Resolve inbound media references to downloadable URLs.
+- L2243 `_get_cached_resource(cls, resource_id: str)` (method) — Return cached ``(local_path, mime)`` if still valid and file exists, else None.
+- L2261 `_put_cached_resource(cls, resource_id: str, local_path: str, mime: str)` (method) — Store download result in cache. Evicts oldest entries when over capacity.
+- L2273 `_guess_image_ext_from_url(url: str)` (method) — Guess image extension from URL path.
+- L2282 `_fetch_resource_url(adapter, resource_id: str)` (method) — Low-level helper: exchange a ``resourceId`` for a direct download URL.
+- L2341 `_resolve_download_url(adapter, url: str)` (method) — Resolve Yuanbao resource placeholder to a directly fetchable real URL.
+- L2366 `_download_and_cache(cls, adapter, *, fetch_url: str, kind: str, file_name: Optional[str]=None, log_tag: str='', resource_id: str='')` (method) — Download a Yuanbao resource and cache locally. Returns ``(local_path, mime)`` or ``None``.
+- L2430 `_resolve_by_resource_id(cls, adapter, resource_id: str)` (method) — Exchange a Yuanbao ``resourceId`` for a short-lived direct download URL. Raises on failure.
+- L2435 `_resolve_media_urls(cls, adapter, media_refs: List[Dict[str, str]])` (method) — Resolve inbound media refs: download to local cache, return (local_paths, mime_types).
+- L2481 `_collect_observed_media(cls, adapter, source)` (method) — Resolve recent observed image/file anchors from transcript into ``(local_paths, mimes)``.
+- L2552 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L2562 `DispatchMiddleware` (class) — Build MessageEvent and dispatch to AI handler.
+- L2567 `handle(self, ctx: InboundContext, next_fn)` (method)
+- L2736 `_consume_group_queue(adapter: 'YuanbaoAdapter', session_key: str)` (method) — Drain the group queue one dispatch at a time, waiting for each to finish.
+- L2762 `InboundPipelineBuilder` (class) — Factory for building InboundPipeline instances.
+- L2792 `build(cls)` (method) — Build the default inbound message processing pipeline.
+- L2799 `ConnectionManager` (class) — Manages the WebSocket connection lifecycle for YuanbaoAdapter.
+- L2810 `__init__(self, adapter: 'YuanbaoAdapter')` (method)
+- L2828 `ws(self)` (method)
+- L2832 `connect_id(self)` (method)
+- L2836 `reconnect_attempts(self)` (method)
+- L2840 `is_connected(self)` (method)
+- L2855 `open(self)` (method) — Open WebSocket connection: sign-token → WS connect → AUTH_BIND → start loops.
+- L2953 `close(self)` (method) — Cancel background tasks, fail pending futures, and close the WebSocket.
+- L2986 `_authenticate(self, token_data: dict)` (method) — Send AUTH_BIND and read frames until BIND_ACK is received.
+- L3055 `_extract_connect_id(self, decoded_msg: dict)` (method) — Extract connectId from decoded BIND_ACK message.
+- L3078 `_heartbeat_loop(self)` (method) — Send HEARTBEAT (ping) every 30s; trigger reconnect after threshold misses.
+- L3119 `_receive_loop(self)` (method) — Read WS frames and dispatch by cmd_type.
+- L3147 `_handle_frame(self, raw: bytes)` (method) — Handle a single WebSocket frame.
+- L3237 `_extract_sender_key(self, raw_data: bytes)` (method) — Lightweight decode to extract sender key for debounce grouping.
+- L3268 `_push_to_inbound(self, raw_data: bytes)` (method) — Debounced inbound dispatch.
+- L3302 `_flush_inbound_buffer(self, key: str)` (method) — Flush the debounce buffer for a given key — execute the pipeline.
+- L3324 `send_biz_request(self, encoded_conn_msg: bytes, req_id: str, timeout: float=DEFAULT_SEND_TIMEOUT)` (method) — Send a business-layer request and wait for the response.
+- L3356 `schedule_reconnect(self)` (method) — Schedule a reconnect only if running and not already reconnecting.
+- L3361 `_reconnect_with_backoff(self)` (method) — Reconnect with exponential backoff (1s, 2s, 4s, … up to 60s).
+- L3372 `_do_reconnect(self)` (method) — Internal reconnect loop, called under the _reconnecting guard.
+- L3447 `_cleanup_ws(self)` (method) — Close and clear the WebSocket connection.
+- L3457 `MediaSendHandler` (class) — Abstract base class for media send strategies.
+- L3469 `acquire_file(self, adapter: 'YuanbaoAdapter', **kwargs: Any)` (method) — Return (file_bytes, filename, content_type).
+- L3479 `build_msg_body(self, upload_result: dict, **kwargs: Any)` (method) — Build platform-specific MsgBody list from COS upload result.
+- L3482 `needs_cos_upload(self)` (method) — Override to return False for non-COS media (e.g. sticker).
+- L3486 `handle(self, adapter: 'YuanbaoAdapter', chat_id: str, reply_to: Optional[str]=None, caption: Optional[str]=None, **kwargs: Any)` (method) — Template method: shared media send flow.
+- L3586 `ImageUrlHandler` (class) — Strategy: send image from a URL (download → COS → TIMImageElem).
+- L3589 `acquire_file(self, adapter, **kwargs)` (method)
+- L3601 `build_msg_body(self, upload_result, **kwargs)` (method)
+- L3613 `ImageFileHandler` (class) — Strategy: send image from a local file path (read → COS → TIMImageElem).
+- L3616 `acquire_file(self, adapter, **kwargs)` (method)
+- L3627 `build_msg_body(self, upload_result, **kwargs)` (method)
+- L3639 `FileUrlHandler` (class) — Strategy: send file from a URL (download → COS → TIMFileElem).
+- L3642 `acquire_file(self, adapter, **kwargs)` (method)
+- L3656 `build_msg_body(self, upload_result, **kwargs)` (method)
+- L3665 `DocumentHandler` (class) — Strategy: send local file/document (read → COS → TIMFileElem).
+- L3668 `acquire_file(self, adapter, **kwargs)` (method)
+- L3679 `build_msg_body(self, upload_result, **kwargs)` (method)
+- L3688 `StickerHandler` (class) — Strategy: send sticker/emoji (TIMFaceElem, no COS upload needed).
+- L3691 `needs_cos_upload(self)` (method)
+- L3694 `acquire_file(self, adapter, **kwargs)` (method)
+- L3698 `build_msg_body(self, upload_result, **kwargs)` (method)
+- L3719 `GroupQueryService` (class) — Encapsulates all group query operations (both low-level WS calls and
+- L3729 `__init__(self, adapter: 'YuanbaoAdapter')` (method)
+- L3736 `query_group_info_raw(self, group_code: str)` (method) — Query group info via WS (group name, owner, member count, etc.).
+- L3767 `get_group_member_list_raw(self, group_code: str, offset: int=0, limit: int=200)` (method) — Query group member list via WS.
+- L3808 `query_group_info(self, chat_id: str)` (method) — AI tool: Query current group info.
+- L3822 `query_session_members(self, chat_id: str, action: str='list_all', name: Optional[str]=None)` (method) — AI tool: Query group member list.
+- L3871 `HeartbeatManager` (class) — Manages reply heartbeat (RUNNING / FINISH) lifecycle.
+- L3880 `__init__(self, adapter: 'YuanbaoAdapter')` (method)
+- L3885 `send_heartbeat_once(self, chat_id: str, heartbeat_val: int)` (method) — Send a single heartbeat (RUNNING or FINISH), best effort.
+- L3915 `start(self, chat_id: str)` (method) — Start or renew the Reply Heartbeat periodic sender (RUNNING, every 2s).
+- L3935 `_worker(self, chat_id: str)` (method) — Background coroutine: send RUNNING heartbeat every 2s.
+- L3970 `stop(self, chat_id: str, send_finish: bool=True)` (method) — Stop Reply Heartbeat and optionally send FINISH.
+- L3985 `close(self)` (method) — Cancel all reply heartbeat tasks.
+- L3994 `SlowResponseNotifier` (class) — Manages delayed 'please wait' notifications for slow agent responses.
+- L4001 `__init__(self, adapter: 'YuanbaoAdapter', sender: 'MessageSender')` (method)
+- L4006 `start(self, chat_id: str)` (method) — Start a delayed task that notifies the user when the agent is slow.
+- L4015 `_notifier(self, chat_id: str)` (method) — Wait SLOW_RESPONSE_TIMEOUT_S, then push a 'please wait' message.
+- L4029 `cancel(self, chat_id: str)` (method) — Cancel the pending slow-response notifier for *chat_id*, if any.
+- L4035 `close(self)` (method) — Cancel all slow-response tasks.
+- L4043 `MessageSender` (class) — Core message sending dispatcher for YuanbaoAdapter.
+- L4057 `__init__(self, adapter: 'YuanbaoAdapter')` (method)
+- L4076 `register_handler(self, name: str, handler: MediaSendHandler)` (method) — Register (or replace) a named media send handler.
+- L4082 `get_chat_lock(self, chat_id: str)` (method) — Return (or create) a per-chat-id lock with safe LRU eviction.
+- L4101 `send_text(self, chat_id: str, content: str, reply_to: Optional[str]=None, group_code: str='')` (method) — Send text message with auto-chunking and per-chat-id ordering guarantee.
+- L4140 `send_media(self, chat_id: str, handler_name: str, reply_to: Optional[str]=None, caption: Optional[str]=None, **kwargs: Any)` (method) — Dispatch media send to the named handler strategy.
+- L4162 `send_direct(self, chat_id: str, message: str, media_files: Optional[List[Tuple[str, bool]]]=None)` (method) — Send text + media via Yuanbao (used by the ``send_message`` tool).
+- L4205 `dispatch_msg_body(self, chat_id: str, msg_body: list, reply_to: Optional[str]=None, group_code: str='')` (method) — Lock + dispatch an arbitrary MsgBody to C2C or group.
+- L4226 `send_text_chunk(self, chat_id: str, text: str, reply_to: Optional[str]=None, retry: int=3, group_code: str='')` (method) — Send a single text chunk with retry (exponential backoff: 1s, 2s, 4s).
+- L4272 `send_c2c_message(self, to_account: str, text: str, group_code: str='')` (method) — Send C2C text message, return {success: bool, msg_key: str}.
+- L4277 `send_group_message(self, group_code: str, text: str, reply_to: Optional[str]=None)` (method) — Send group text message, auto-converting @nickname to TIMCustomElem.
+- L4290 `_build_msg_body_with_mentions(self, text: str, group_code: str)` (method) — Parse @nickname patterns and build mixed TIMTextElem + TIMCustomElem msg_body.
+- L4342 `send_c2c_msg_body(self, to_account: str, msg_body: list, group_code: str='')` (method) — Send C2C message with arbitrary MsgBody.
+- L4355 `send_group_msg_body(self, group_code: str, msg_body: list, reply_to: Optional[str]=None)` (method) — Send group message with arbitrary MsgBody.
+- L4376 `_dispatch_encoded(adapter: 'YuanbaoAdapter', encoded: bytes, req_id: str)` (method) — Send pre-encoded bytes via WS and return a normalised result dict.
+- L4391 `validate_media(file_bytes: Optional[bytes], filename: str, max_size_mb: int=20)` (method) — Media pre-validation: check file validity before sending/uploading.
+- L4410 `truncate_message(content: str, max_length: int=4000, len_fn: Optional[Callable[[str], int]]=None)` (method) — Split a long message into chunks with table-awareness.
+- L4441 `strip_cron_wrapper(content: str)` (method) — Strip scheduler cron header/footer wrapper for cleaner Yuanbao output.
+- L4463 `close(self)` (method) — Release chat locks (no-op for now; placeholder for future cleanup).
+- L4468 `OutboundManager` (class) — Outbound coordinator that orchestrates sending, heartbeat and slow-response.
+- L4483 `__init__(self, adapter: 'YuanbaoAdapter')` (method)
+- L4495 `_handle_send_start(self, chat_id: str)` (method) — Called by MessageSender before sending: cancel slow-response notifier.
+- L4499 `_handle_send_finish(self, chat_id: str)` (method) — Called by MessageSender after sending: send FINISH heartbeat.
+- L4505 `send_text(self, chat_id: str, content: str, reply_to: Optional[str]=None, group_code: str='')` (method) — Send text message with auto-chunking.
+- L4512 `send_media(self, chat_id: str, handler_name: str, **kwargs: Any)` (method) — Dispatch media send to the named handler strategy.
+- L4518 `send_direct(self, chat_id: str, message: str, media_files: Optional[List[Tuple[str, bool]]]=None)` (method) — Send text + media (used by send_message tool).
+- L4525 `start_typing(self, chat_id: str)` (method) — Start reply heartbeat (RUNNING).
+- L4529 `stop_typing(self, chat_id: str, send_finish: bool=False)` (method) — Stop reply heartbeat.
+- L4533 `start_slow_notifier(self, chat_id: str)` (method) — Start slow-response notifier.
+- L4537 `cancel_slow_notifier(self, chat_id: str)` (method) — Cancel slow-response notifier.
+- L4541 `get_chat_lock(self, chat_id: str)` (method) — Proxy to MessageSender.get_chat_lock for backward compatibility.
+- L4546 `_chat_locks(self)` (method) — Proxy to MessageSender._chat_locks for backward compatibility.
+- L4551 `validate_media(file_bytes: Optional[bytes], filename: str, max_size_mb: int=20)` (method) — Proxy to MessageSender.validate_media.
+- L4557 `close(self)` (method) — Shut down all sub-managers.
+- L4564 `YuanbaoAdapter` (class) — Yuanbao AI Bot adapter backed by a persistent WebSocket connection.
+- L4577 `get_active(cls)` (method) — Return the currently connected YuanbaoAdapter, or None.
+- L4582 `set_active(cls, adapter: Optional['YuanbaoAdapter'])` (method) — Register (or clear) the active adapter instance.
+- L4586 `__init__(self, config: PlatformConfig, **kwargs: Any)` (method)
+- L4684 `_track_task(self, task: asyncio.Task)` (method) — Register a fire-and-forget task so it won't be GC'd prematurely.
+- L4695 `enforces_own_access_policy(self)` (method) — Yuanbao gates DM/group access at intake via dm_policy/group_policy.
+- L4699 `connect(self)` (method) — Connect to Yuanbao WS gateway and authenticate.
+- L4706 `disconnect(self)` (method) — Cancel background tasks and close the WebSocket connection.
+- L4729 `send(self, chat_id: str, content: str, reply_to: Optional[str]=None, metadata: Optional[Dict[str, Any]]=None, group_code: str='')` (method) — Send text message with auto-chunking. Delegates to OutboundManager.
+- L4740 `get_chat_info(self, chat_id: str)` (method) — Return basic chat metadata derived from the chat_id prefix.
+- L4753 `send_typing(self, chat_id: str, metadata: Optional[dict]=None)` (method) — Send "typing" status heartbeat (RUNNING). Delegates to OutboundManager.
+- L4760 `stop_typing(self, chat_id: str)` (method) — Stop the RUNNING heartbeat loop without sending FINISH immediately.
+- L4771 `_process_message_background(self, event, session_key: str)` (method) — Wrap base class processing with a slow-response notifier.
+- L4784 `query_group_info(self, group_code: str)` (method) — Query group info (delegates to GroupQueryService).
+- L4788 `get_group_member_list(self, group_code: str, offset: int=0, limit: int=200)` (method) — Query group member list (delegates to GroupQueryService).
+- L4800 `send_dm(self, user_id: str, text: str, group_code: str='')` (method) — Actively send C2C private chat message.
+- L4823 `send_image(self, chat_id: str, image_url: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[dict]=None, **kwargs: Any)` (method) — Send image message (URL). Delegates to OutboundManager via ImageUrlHandler.
+- L4839 `send_image_file(self, chat_id: str, image_path: str, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[dict]=None, **kwargs: Any)` (method) — Send local image file. Delegates to OutboundManager via ImageFileHandler.
+- L4855 `send_file(self, chat_id: str, file_url: str, filename: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[dict]=None, **kwargs: Any)` (method) — Send file message (URL). Delegates to OutboundManager via FileUrlHandler.
+- L4871 `send_sticker(self, chat_id: str, sticker_name: Optional[str]=None, face_index: Optional[int]=None, reply_to: Optional[str]=None, **kwargs: Any)` (method) — Send sticker/emoji. Delegates to OutboundManager via StickerHandler.
+- L4887 `send_document(self, chat_id: str, file_path: str, filename: Optional[str]=None, caption: Optional[str]=None, reply_to: Optional[str]=None, metadata: Optional[dict]=None, **kwargs: Any)` (method) — Send local file (document). Delegates to OutboundManager via DocumentHandler.
+- L4905 `_get_cached_token(self)` (method) — Get the current valid sign token (using module-level cache).
+- L4912 `get_status(self)` (method) — Return a snapshot of the current connection status.
+- L4929 `get_active_adapter()` (function) — Delegate to ``YuanbaoAdapter.get_active()``.
+- L4934 `send_yuanbao_direct(adapter: 'YuanbaoAdapter', chat_id: str, message: str, media_files: Optional[List[Tuple[str, bool]]]=None)` (function) — Delegate to ``OutboundManager.send_direct``.

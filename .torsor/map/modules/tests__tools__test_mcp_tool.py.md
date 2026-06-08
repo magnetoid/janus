@@ -1,0 +1,270 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/tools/test_mcp_tool.py
+
+Symbols in `tests/tools/test_mcp_tool.py`.
+
+- L20 `_make_mcp_tool(name='read_file', description='Read a file', input_schema=None)` (function) — Create a fake MCP Tool object matching the SDK interface.
+- L35 `_make_call_result(text='file contents here', is_error=False)` (function) — Create a fake MCP CallToolResult.
+- L41 `_make_mock_server(name, session=None, tools=None)` (function) — Create an MCPServerTask with mock attributes for testing.
+- L54 `TestLoadMCPConfig` (class)
+- L55 `test_no_config_returns_empty(self)` (method) — No mcp_servers key in config -> empty dict.
+- L62 `test_valid_config_parsed(self)` (method) — Valid mcp_servers config is returned as-is.
+- L77 `test_mcp_servers_not_dict_returns_empty(self)` (method) — mcp_servers set to non-dict value -> empty dict.
+- L89 `TestSchemaConversion` (class)
+- L90 `test_converts_mcp_tool_to_hermes_schema(self)` (method)
+- L100 `test_empty_input_schema_gets_default(self)` (method)
+- L110 `test_object_schema_without_properties_gets_normalized(self)` (method)
+- L122 `test_definitions_refs_are_rewritten_to_defs(self)` (method)
+- L152 `test_nested_definition_refs_are_rewritten_recursively(self)` (method)
+- L188 `test_missing_type_on_object_is_coerced(self)` (method) — Schemas that describe an object but omit ``type`` get type='object'.
+- L201 `test_null_type_on_object_is_coerced(self)` (method) — type: None should be treated like missing type (common MCP server bug).
+- L212 `test_required_pruned_when_property_missing(self)` (method) — Gemini 400s on required names that don't exist in properties.
+- L224 `test_required_removed_when_all_names_dangle(self)` (method)
+- L235 `test_required_pruning_applies_recursively_inside_nested_objects(self)` (method) — Nested object schemas also get required pruning.
+- L252 `test_object_in_array_items_gets_properties_filled(self)` (method) — Array-item object schemas without properties get an empty dict.
+- L268 `test_optional_nullable_field_is_collapsed_to_non_null_schema(self)` (method) — Anthropic rejects MCP/Pydantic anyOf-null optional parameter schemas.
+- L293 `test_nested_nullable_array_items_are_collapsed(self)` (method)
+- L320 `test_convert_mcp_schema_survives_missing_inputschema_attribute(self)` (method) — A Tool object without .inputSchema must not crash registration.
+- L332 `test_convert_mcp_schema_with_none_inputschema(self)` (method) — Tool with inputSchema=None produces a valid empty object schema.
+- L345 `test_tool_name_prefix_format(self)` (method)
+- L353 `test_hyphens_sanitized_to_underscores(self)` (method) — Hyphens in tool/server names are replaced with underscores for LLM compat.
+- L368 `TestCheckFunction` (class)
+- L369 `test_disconnected_returns_false(self)` (method)
+- L376 `test_connected_returns_true(self)` (method)
+- L387 `test_session_none_returns_false(self)` (method)
+- L403 `TestRunOnMcpLoop` (class)
+- L404 `test_scheduler_failure_closes_factory_coroutine(self)` (method) — If run_coroutine_threadsafe raises, the factory's coroutine is closed.
+- L443 `test_dead_loop_closes_passed_coroutine(self)` (method) — If loop is None, a passed coroutine (not factory) is closed.
+- L474 `TestToolHandler` (class) — Tool handlers are sync functions that schedule work on the MCP loop.
+- L477 `_patch_mcp_loop(self, coro_side_effect=None)` (method) — Return a patch for _run_on_mcp_loop that runs the coroutine directly.
+- L486 `test_successful_call(self)` (method)
+- L505 `test_mcp_error_result(self)` (method)
+- L524 `test_disconnected_server(self)` (method)
+- L533 `test_exception_during_call(self)` (method)
+- L550 `test_interrupted_call_returns_interrupted_error(self)` (method)
+- L573 `TestRunOnMCPLoopInterrupts` (class)
+- L574 `test_interrupt_cancels_waiting_mcp_call(self)` (method)
+- L622 `test_timeout_reports_elapsed_and_configured_timeout(self)` (method)
+- L664 `TestDiscoverAndRegister` (class)
+- L665 `test_tools_registered_in_registry(self)` (method) — _discover_and_register_server registers tools with correct names.
+- L696 `test_toolset_resolves_live_from_registry(self)` (method) — MCP toolsets resolve through the live registry without TOOLSETS mutation.
+- L725 `test_schema_format_correct(self)` (method) — Registered schemas have the correct format.
+- L760 `TestMCPServerTask` (class) — Test the MCPServerTask lifecycle with mocked MCP SDK.
+- L763 `_mock_stdio_and_session(self, session)` (method) — Return patches for stdio_client and ClientSession as async CMs.
+- L781 `test_start_connects_and_discovers_tools(self)` (method) — start() creates a Task that connects, discovers tools, and waits.
+- L809 `test_no_command_raises(self)` (method) — Missing 'command' in config raises ValueError.
+- L820 `test_refresh_tools_deregisters_removed_tools(self)` (method) — Dynamic refresh removes stale registry entries for deleted tools.
+- L864 `test_schedule_tools_refresh_keeps_task_until_done(self)` (method) — Background refresh tasks are strongly referenced and then discarded.
+- L892 `test_shutdown_cancels_pending_refresh_tasks(self)` (method) — shutdown() cancels in-flight background refresh tasks.
+- L920 `test_empty_env_gets_safe_defaults(self)` (method) — Empty env dict gets safe default env vars (PATH, HOME, etc.).
+- L951 `test_shutdown_signals_task_exit(self)` (method) — shutdown() signals the event and waits for task completion.
+- L983 `TestToolsetInjection` (class)
+- L984 `test_mcp_tools_resolve_through_server_aliases(self)` (method) — Discovered MCP tools resolve through raw server-name aliases.
+- L1018 `test_server_toolset_skips_builtin_collision(self)` (method) — MCP raw aliases never overwrite a built-in toolset name.
+- L1056 `test_server_connection_failure_skipped(self)` (method) — If one server fails to connect, others still proceed.
+- L1096 `test_partial_failure_retry_on_second_call(self)` (method) — Failed servers are retried on subsequent discover_mcp_tools() calls.
+- L1154 `TestGracefulFallback` (class)
+- L1155 `test_mcp_unavailable_returns_empty(self)` (method) — When _MCP_AVAILABLE is False, discover_mcp_tools is a no-op.
+- L1162 `test_no_servers_returns_empty(self)` (method) — No MCP servers configured -> empty list.
+- L1176 `TestShutdown` (class)
+- L1177 `test_no_servers_safe(self)` (method) — shutdown_mcp_servers with no servers does nothing.
+- L1184 `test_shutdown_clears_servers(self)` (method) — shutdown_mcp_servers calls shutdown() on each server and clears dict.
+- L1205 `test_shutdown_deregisters_registered_tools(self)` (method) — shutdown_mcp_servers removes MCP tools and their raw alias.
+- L1241 `test_shutdown_handles_errors(self)` (method) — shutdown_mcp_servers handles errors during close gracefully.
+- L1261 `test_shutdown_is_parallel(self)` (method) — Multiple servers are shut down in parallel via asyncio.gather.
+- L1296 `TestBuildSafeEnv` (class) — Tests for _build_safe_env() environment filtering.
+- L1299 `test_only_safe_vars_passed(self)` (method) — Only safe baseline vars and XDG_* from os.environ are included.
+- L1329 `test_user_env_merged(self)` (method) — User-specified env vars are merged into the safe env.
+- L1339 `test_user_env_overrides_safe(self)` (method) — User env can override safe defaults.
+- L1348 `test_none_user_env(self)` (method) — None user_env still returns safe vars from os.environ.
+- L1359 `test_secret_vars_excluded(self)` (method) — Sensitive env vars from os.environ are NOT passed through.
+- L1386 `TestSanitizeError` (class) — Tests for _sanitize_error() credential stripping.
+- L1389 `test_strips_github_pat(self)` (method)
+- L1394 `test_strips_openai_key(self)` (method)
+- L1399 `test_strips_bearer_token(self)` (method)
+- L1404 `test_strips_token_param(self)` (method)
+- L1409 `test_no_credentials_unchanged(self)` (method)
+- L1414 `test_multiple_credentials(self)` (method)
+- L1427 `TestHTTPConfig` (class) — Tests for HTTP transport detection and handling.
+- L1430 `test_is_http_with_url(self)` (method)
+- L1436 `test_is_stdio_with_command(self)` (method)
+- L1442 `test_conflicting_url_and_command_warns(self)` (method) — Config with both url and command logs a warning and uses HTTP.
+- L1451 `test_http_unavailable_raises(self)` (method)
+- L1464 `test_stdio_unavailable_raises_importerror_not_nameerror(self)` (method) — Regression test for #30904.
+- L1485 `test_http_seeds_initial_protocol_header(self)` (method)
+- L1576 `TestReconnection` (class) — Tests for automatic reconnection behavior in MCPServerTask.run().
+- L1579 `test_reconnect_on_disconnect(self)` (method) — After initial success, a connection drop triggers reconnection.
+- L1618 `test_no_reconnect_on_shutdown(self)` (method) — If shutdown is requested, don't attempt reconnection.
+- L1652 `test_no_reconnect_on_initial_failure(self)` (method) — First connection failure retries up to _MAX_INITIAL_CONNECT_RETRIES times.
+- L1688 `test_initial_oauth_failure_does_not_retry(self)` (method) — Initial OAuth failures stop immediately to avoid repeated browser prompts.
+- L1722 `test_preflight_probe_runs_on_initial_http_connect(self)` (method) — The content-type preflight probe fires on the first HTTP connect.
+- L1756 `test_preflight_probe_skipped_when_already_ready(self)` (method) — The probe must NOT re-run on reconnect (_ready already set).
+- L1801 `TestConfigurableTimeouts` (class) — Tests for configurable per-server timeouts.
+- L1804 `test_default_timeout(self)` (method) — Server with no timeout config gets _DEFAULT_TOOL_TIMEOUT.
+- L1812 `test_custom_timeout(self)` (method) — Server with timeout=180 in config gets 180.
+- L1844 `test_timeout_passed_to_handler(self)` (method) — The tool handler uses the server's configured timeout.
+- L1878 `TestUtilitySchemas` (class) — Tests for _build_utility_schemas() and the schema format of utility tools.
+- L1881 `test_builds_four_utility_schemas(self)` (method)
+- L1892 `test_hyphens_sanitized_in_utility_names(self)` (method)
+- L1901 `test_list_resources_schema_no_required_params(self)` (method)
+- L1911 `test_read_resource_schema_requires_uri(self)` (method)
+- L1921 `test_list_prompts_schema_no_required_params(self)` (method)
+- L1931 `test_get_prompt_schema_requires_name(self)` (method)
+- L1943 `test_schemas_have_descriptions(self)` (method)
+- L1957 `TestUtilityHandlers` (class) — Tests for the MCP Resources & Prompts handler functions.
+- L1960 `_patch_mcp_loop(self)` (method) — Return a patch for _run_on_mcp_loop that runs the coroutine directly.
+- L1969 `test_list_resources_success(self)` (method)
+- L1994 `test_list_resources_empty(self)` (method)
+- L2012 `test_list_resources_disconnected(self)` (method)
+- L2022 `test_read_resource_success(self)` (method)
+- L2042 `test_read_resource_missing_uri(self)` (method)
+- L2056 `test_read_resource_disconnected(self)` (method)
+- L2066 `test_list_prompts_success(self)` (method)
+- L2093 `test_list_prompts_empty(self)` (method)
+- L2111 `test_list_prompts_disconnected(self)` (method)
+- L2121 `test_get_prompt_success(self)` (method)
+- L2149 `test_get_prompt_missing_name(self)` (method)
+- L2163 `test_get_prompt_disconnected(self)` (method)
+- L2171 `test_get_prompt_default_arguments(self)` (method)
+- L2197 `TestUtilityToolRegistration` (class) — Verify utility tools are registered alongside regular MCP tools.
+- L2200 `test_utility_tools_registered(self)` (method) — _discover_and_register_server registers all 4 utility tools.
+- L2236 `test_utility_tools_in_same_toolset(self)` (method) — Utility tools belong to the same mcp-{server} toolset.
+- L2265 `test_utility_tools_have_check_fn(self)` (method) — Utility tools have a working check_fn.
+- L2302 `_CompatType` (class)
+- L2303 `__init__(self, **kwargs)` (method)
+- L2348 `_make_sampling_params(messages=None, max_tokens=100, system_prompt=None, model_preferences=None, temperature=None, stop_sequences=None, tools=None, tool_choice=None)` (function) — Create a fake CreateMessageRequestParams using SimpleNamespace.
+- L2382 `_make_llm_response(content='LLM response', model='test-model', finish_reason='stop', tool_calls=None)` (function) — Create a fake OpenAI chat completion response (text).
+- L2398 `_make_llm_tool_response(tool_calls_data=None, model='test-model')` (function) — Create a fake response with tool_calls.
+- L2425 `TestSafeNumeric` (class)
+- L2426 `test_int_passthrough(self)` (method)
+- L2429 `test_string_coercion(self)` (method)
+- L2432 `test_none_returns_default(self)` (method)
+- L2435 `test_inf_returns_default(self)` (method)
+- L2438 `test_nan_returns_default(self)` (method)
+- L2441 `test_below_minimum_clamps(self)` (method)
+- L2444 `test_minimum_zero_allowed(self)` (method)
+- L2447 `test_non_numeric_string_returns_default(self)` (method)
+- L2450 `test_float_coercion(self)` (method)
+- L2458 `TestSamplingHandlerInit` (class)
+- L2459 `test_defaults(self)` (method)
+- L2470 `test_custom_config(self)` (method)
+- L2488 `test_string_numeric_config_values(self)` (method) — YAML sometimes delivers numeric values as strings.
+- L2501 `TestRateLimit` (class)
+- L2502 `setup_method(self)` (method)
+- L2505 `test_allows_under_limit(self)` (method)
+- L2510 `test_rejects_over_limit(self)` (method)
+- L2515 `test_window_expiry(self)` (method) — Old timestamps should be purged from the sliding window.
+- L2528 `TestResolveModel` (class)
+- L2529 `setup_method(self)` (method)
+- L2532 `test_no_preference_no_override(self)` (method)
+- L2535 `test_config_override_wins(self)` (method)
+- L2540 `test_hint_used_when_no_override(self)` (method)
+- L2544 `test_empty_hints(self)` (method)
+- L2548 `test_hint_without_name(self)` (method)
+- L2557 `TestConvertMessages` (class)
+- L2558 `setup_method(self)` (method)
+- L2561 `test_single_text_message(self)` (method)
+- L2569 `test_image_message(self)` (method)
+- L2586 `test_tool_result_message(self)` (method)
+- L2601 `test_tool_use_message(self)` (method)
+- L2618 `test_mixed_text_and_tool_use(self)` (method) — Assistant message with both text and tool_calls.
+- L2635 `test_fallback_without_content_as_list(self)` (method) — When content_as_list is absent, falls back to content.
+- L2649 `TestSamplingCallbackText` (class)
+- L2650 `setup_method(self)` (method)
+- L2653 `test_text_response(self)` (method) — Full flow: text response returns CreateMessageResult.
+- L2674 `test_system_prompt_prepended(self)` (method) — System prompt is inserted as the first message.
+- L2690 `test_server_tools_with_object_schema_are_normalized(self)` (method) — Server-provided tools should gain empty properties for object schemas.
+- L2717 `test_length_stop_reason(self)` (method) — finish_reason='length' maps to stopReason='maxTokens'.
+- L2739 `TestSamplingCallbackToolUse` (class)
+- L2740 `setup_method(self)` (method)
+- L2743 `test_tool_use_response(self)` (method) — LLM tool_calls response returns CreateMessageResultWithTools.
+- L2765 `test_multiple_tool_calls(self)` (method) — Multiple tool_calls in a single response.
+- L2791 `TestToolLoopGovernance` (class)
+- L2792 `test_max_tool_rounds_enforcement(self)` (method) — After max_tool_rounds consecutive tool responses, an error is returned.
+- L2813 `test_text_response_resets_counter(self)` (method) — A text response resets the tool loop counter.
+- L2839 `test_max_tool_rounds_zero_disables(self)` (method) — max_tool_rounds=0 means tool loops are disabled entirely.
+- L2858 `TestSamplingErrors` (class)
+- L2859 `test_rate_limit_error(self)` (method)
+- L2877 `test_timeout_error(self)` (method)
+- L2895 `test_no_provider_error(self)` (method)
+- L2906 `test_empty_choices_returns_error(self)` (method) — LLM returning choices=[] is handled gracefully, not IndexError.
+- L2926 `test_none_choices_returns_error(self)` (method) — LLM returning choices=None is handled gracefully, not TypeError.
+- L2946 `test_missing_choices_attr_returns_error(self)` (method) — LLM response without choices attribute is handled gracefully.
+- L2970 `TestModelWhitelist` (class)
+- L2971 `test_allowed_model_passes(self)` (method)
+- L2983 `test_disallowed_model_rejected(self)` (method)
+- L2996 `test_empty_whitelist_allows_all(self)` (method)
+- L3013 `TestMalformedToolCallArgs` (class)
+- L3014 `test_invalid_json_wrapped_as_raw(self)` (method) — Malformed JSON arguments get wrapped in {"_raw": ...}.
+- L3033 `test_dict_args_pass_through(self)` (method) — When arguments are already a dict, they pass through directly.
+- L3064 `TestMetricsTracking` (class)
+- L3065 `test_request_and_token_metrics(self)` (method)
+- L3080 `test_tool_use_count_metric(self)` (method)
+- L3094 `test_error_metric_incremented(self)` (method)
+- L3111 `TestSessionKwargs` (class)
+- L3112 `test_returns_correct_keys(self)` (method)
+- L3119 `test_sampling_capabilities_type(self)` (method)
+- L3131 `TestMCPServerTaskSamplingIntegration` (class)
+- L3132 `test_sampling_handler_created_when_enabled(self)` (method) — MCPServerTask.run() creates a SamplingHandler when sampling is enabled.
+- L3156 `test_sampling_handler_none_when_disabled(self)` (method) — MCPServerTask._sampling is None when sampling is disabled.
+- L3174 `test_session_kwargs_used_in_stdio(self)` (method) — When sampling is set, session_kwargs() are passed to ClientSession.
+- L3189 `TestDiscoveryFailedCount` (class) — Verify discover_mcp_tools() correctly tracks failed server connections.
+- L3192 `test_failed_server_increments_failed_count(self)` (method) — When _discover_and_register_server raises, failed_count increments.
+- L3236 `test_all_servers_fail_still_prints_summary(self)` (method) — When all servers fail, a summary with failure count is still printed.
+- L3266 `test_ok_servers_excludes_failures(self)` (method) — ok_servers count correctly excludes failed servers.
+- L3309 `TestMCPSelectiveToolLoading` (class) — Tests for per-server MCP filtering and utility tool policies.
+- L3312 `_make_server(self, name, tool_names, session=None)` (method)
+- L3320 `_run_discover(self, name, tool_names, config, session=None)` (method)
+- L3342 `test_include_takes_precedence_over_exclude(self)` (method)
+- L3358 `test_exclude_filter_registers_all_except_listed_tools(self)` (method)
+- L3374 `test_include_filter_skips_utility_tools_without_capabilities(self)` (method)
+- L3388 `test_no_filter_registers_all_server_tools_when_no_utilities_supported(self)` (method)
+- L3401 `test_resources_and_prompts_can_be_disabled_explicitly(self)` (method)
+- L3423 `test_registers_only_utility_tools_supported_by_server_capabilities(self)` (method)
+- L3440 `test_existing_tool_names_reflect_registered_subset(self)` (method)
+- L3472 `test_no_toolset_created_when_everything_is_filtered_out(self)` (method)
+- L3507 `test_enabled_false_skips_connection_attempt(self)` (method)
+- L3541 `TestRegistryCollisionWarning` (class) — registry.register() warns when a tool name is overwritten by a different toolset.
+- L3544 `test_overwrite_different_toolset_logs_warning(self, caplog)` (method) — Overwriting a tool from a different toolset is REJECTED with an error.
+- L3563 `test_overwrite_same_toolset_no_warning(self, caplog)` (method) — Re-registering within the same toolset is silent (e.g. reconnect).
+- L3580 `TestMCPBuiltinCollisionGuard` (class) — MCP tools that collide with built-in tool names are skipped.
+- L3583 `test_mcp_tool_skipped_when_builtin_exists(self)` (method) — An MCP tool whose prefixed name collides with a built-in is skipped.
+- L3623 `test_mcp_tool_registered_when_no_builtin_collision(self)` (method) — MCP tools register normally when there's no collision.
+- L3649 `test_mcp_tool_allowed_when_collision_is_another_mcp(self)` (method) — Collision between two MCP toolsets is allowed (last wins).
+- L3694 `TestSanitizeMcpNameComponent` (class) — Verify sanitize_mcp_name_component handles all edge cases.
+- L3697 `test_hyphens_replaced(self)` (method)
+- L3701 `test_dots_replaced(self)` (method)
+- L3705 `test_slashes_replaced(self)` (method)
+- L3709 `test_mixed_special_characters(self)` (method)
+- L3713 `test_alphanumeric_and_underscores_preserved(self)` (method)
+- L3717 `test_empty_string(self)` (method)
+- L3721 `test_none_returns_empty(self)` (method)
+- L3725 `test_slash_in_convert_mcp_schema(self)` (method) — Server names with slashes produce valid tool names via _convert_mcp_schema.
+- L3736 `test_slash_in_build_utility_schemas(self)` (method) — Server names with slashes produce valid utility tool names.
+- L3746 `test_slash_in_server_alias_resolution(self)` (method) — Server names with slashes resolve through their live MCP alias.
+- L3770 `TestRegisterMcpServers` (class) — Verify the new register_mcp_servers() public API.
+- L3773 `test_empty_servers_returns_empty(self)` (method)
+- L3780 `test_mcp_not_available_returns_empty(self)` (method)
+- L3787 `test_skips_already_connected_servers(self)` (method)
+- L3801 `test_skips_disabled_servers(self)` (method)
+- L3812 `test_connects_new_servers(self)` (method)
+- L3832 `test_logs_summary_on_success(self)` (method)
+- L3863 `TestMcpParallelToolCalls` (class) — Tests for the supports_parallel_tool_calls config option.
+- L3866 `test_is_mcp_tool_parallel_safe_non_mcp_tool(self)` (method) — Non-MCP tool names always return False.
+- L3874 `test_is_mcp_tool_parallel_safe_no_servers(self)` (method) — MCP tool from unknown server returns False.
+- L3885 `test_is_mcp_tool_parallel_safe_with_flag(self)` (method) — MCP tool from a parallel-safe server returns True.
+- L3908 `test_is_mcp_tool_parallel_safe_server_with_underscores(self)` (method) — Server names containing underscores are correctly matched.
+- L3924 `test_is_mcp_tool_parallel_safe_uses_exact_registered_server(self)` (method) — Ambiguous MCP names must not match a shorter parallel-safe prefix.
+- L3943 `test_registered_tool_provenance_prevents_prefix_collision(self)` (method) — Registration records exact server ownership for ambiguous names.
+- L3974 `test_is_mcp_tool_parallel_safe_no_tool_suffix(self)` (method) — Tool name that is just 'mcp_{server}' without a tool part returns False.
+- L3993 `test_register_mcp_servers_tracks_parallel_flag(self)` (method) — register_mcp_servers populates _parallel_safe_servers from config.
+- L4026 `test_register_mcp_servers_removes_parallel_flag_on_toggle(self)` (method) — Toggling supports_parallel_tool_calls to false removes server from the set.

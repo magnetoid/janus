@@ -1,0 +1,183 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:42'
+updated: '2026-06-08T00:38:42'
+---
+
+# tests/hermes_cli/test_api_key_providers.py
+
+Symbols in `tests/hermes_cli/test_api_key_providers.py`.
+
+- L28 `TestProviderRegistry` (class) — Test that new providers are correctly registered.
+- L45 `test_provider_registered(self, provider_id, name, auth_type)` (method)
+- L52 `test_zai_env_vars(self)` (method)
+- L57 `test_xai_env_vars(self)` (method)
+- L63 `test_nvidia_env_vars(self)` (method)
+- L69 `test_copilot_env_vars(self)` (method)
+- L74 `test_kimi_env_vars(self)` (method)
+- L83 `test_minimax_env_vars(self)` (method)
+- L88 `test_stepfun_env_vars(self)` (method)
+- L93 `test_minimax_cn_env_vars(self)` (method)
+- L98 `test_kilocode_env_vars(self)` (method)
+- L103 `test_gmi_env_vars(self)` (method)
+- L108 `test_huggingface_env_vars(self)` (method)
+- L113 `test_base_urls(self)` (method)
+- L125 `test_oauth_providers_unchanged(self)` (method) — Ensure we didn't break the existing OAuth providers.
+- L154 `_clear_provider_env(monkeypatch)` (function)
+- L160 `TestResolveProvider` (class) — Test resolve_provider() with new providers.
+- L163 `test_explicit_zai(self)` (method)
+- L166 `test_explicit_kimi_coding(self)` (method)
+- L169 `test_explicit_stepfun(self)` (method)
+- L172 `test_explicit_minimax(self)` (method)
+- L175 `test_explicit_minimax_cn(self)` (method)
+- L178 `test_explicit_gmi(self)` (method)
+- L181 `test_alias_glm(self)` (method)
+- L184 `test_alias_z_ai(self)` (method)
+- L187 `test_alias_zhipu(self)` (method)
+- L190 `test_alias_kimi(self)` (method)
+- L193 `test_alias_moonshot(self)` (method)
+- L196 `test_alias_step(self)` (method)
+- L199 `test_alias_minimax_underscore(self)` (method)
+- L202 `test_alias_gmi_cloud(self)` (method)
+- L205 `test_explicit_kilocode(self)` (method)
+- L208 `test_alias_kilo(self)` (method)
+- L211 `test_alias_kilo_code(self)` (method)
+- L214 `test_alias_kilo_gateway(self)` (method)
+- L217 `test_alias_case_insensitive(self)` (method)
+- L222 `test_alias_github_copilot(self)` (method)
+- L225 `test_alias_github_models(self)` (method)
+- L228 `test_alias_github_copilot_acp(self)` (method)
+- L232 `test_explicit_huggingface(self)` (method)
+- L235 `test_alias_hf(self)` (method)
+- L238 `test_alias_hugging_face(self)` (method)
+- L241 `test_alias_huggingface_hub(self)` (method)
+- L244 `test_unknown_provider_raises(self)` (method)
+- L248 `test_auto_detects_glm_key(self, monkeypatch)` (method)
+- L252 `test_auto_detects_zai_key(self, monkeypatch)` (method)
+- L256 `test_auto_detects_z_ai_key(self, monkeypatch)` (method)
+- L260 `test_auto_detects_kimi_key(self, monkeypatch)` (method)
+- L264 `test_auto_detects_stepfun_key(self, monkeypatch)` (method)
+- L268 `test_auto_detects_minimax_key(self, monkeypatch)` (method)
+- L272 `test_auto_detects_minimax_cn_key(self, monkeypatch)` (method)
+- L276 `test_auto_detects_gmi_key(self, monkeypatch)` (method)
+- L280 `test_auto_detects_kilocode_key(self, monkeypatch)` (method)
+- L284 `test_auto_detects_hf_token(self, monkeypatch)` (method)
+- L288 `test_openrouter_takes_priority_over_glm(self, monkeypatch)` (method) — OpenRouter API key should win over GLM in auto-detection.
+- L294 `test_auto_does_not_select_copilot_from_github_token(self, monkeypatch)` (method)
+- L314 `TestApiKeyProviderStatus` (class)
+- L316 `test_unconfigured_provider(self)` (method)
+- L321 `test_configured_provider(self, monkeypatch)` (method)
+- L329 `test_fallback_env_var(self, monkeypatch)` (method) — ZAI_API_KEY should work when GLM_API_KEY is not set.
+- L336 `test_custom_base_url(self, monkeypatch)` (method)
+- L342 `test_stepfun_status_uses_configured_base_url(self, monkeypatch)` (method)
+- L349 `test_copilot_status_uses_gh_cli_token(self, monkeypatch)` (method)
+- L357 `test_get_auth_status_dispatches_to_api_key(self, monkeypatch)` (method)
+- L363 `test_copilot_acp_status_detects_local_cli(self, monkeypatch)` (method)
+- L376 `test_get_auth_status_dispatches_to_external_process(self, monkeypatch)` (method)
+- L384 `test_non_api_key_provider(self)` (method)
+- L393 `TestResolveApiKeyProviderCredentials` (class)
+- L395 `test_resolve_zai_with_key(self, monkeypatch)` (method)
+- L404 `test_resolve_copilot_with_github_token(self, monkeypatch)` (method)
+- L412 `test_resolve_copilot_with_gh_cli_fallback(self, monkeypatch)` (method)
+- L420 `test_resolve_lmstudio_uses_token_and_base_url_from_env(self, monkeypatch)` (method)
+- L430 `test_resolve_lmstudio_no_api_key_substitutes_placeholder(self, monkeypatch)` (method)
+- L443 `test_try_gh_cli_token_uses_homebrew_path_when_not_on_path(self, monkeypatch)` (method)
+- L469 `test_resolve_copilot_acp_with_local_cli(self, monkeypatch)` (method)
+- L482 `test_resolve_kimi_with_key(self, monkeypatch)` (method)
+- L489 `test_resolve_stepfun_with_key(self, monkeypatch)` (method)
+- L496 `test_resolve_stepfun_custom_base_url(self, monkeypatch)` (method)
+- L502 `test_resolve_minimax_with_key(self, monkeypatch)` (method)
+- L509 `test_resolve_minimax_cn_with_key(self, monkeypatch)` (method)
+- L516 `test_resolve_kilocode_with_key(self, monkeypatch)` (method)
+- L523 `test_resolve_gmi_with_key(self, monkeypatch)` (method)
+- L530 `test_resolve_gmi_custom_base_url(self, monkeypatch)` (method)
+- L536 `test_resolve_kilocode_custom_base_url(self, monkeypatch)` (method)
+- L542 `test_resolve_with_custom_base_url(self, monkeypatch)` (method)
+- L548 `test_resolve_without_key_returns_empty(self)` (method)
+- L553 `test_resolve_invalid_provider_raises(self)` (method)
+- L557 `test_glm_key_priority(self, monkeypatch)` (method) — GLM_API_KEY takes priority over ZAI_API_KEY.
+- L566 `test_zai_key_fallback(self, monkeypatch)` (method) — ZAI_API_KEY used when GLM_API_KEY not set.
+- L579 `TestRuntimeProviderResolution` (class)
+- L581 `test_runtime_zai(self, monkeypatch)` (method)
+- L590 `test_runtime_kimi(self, monkeypatch)` (method)
+- L598 `test_runtime_stepfun(self, monkeypatch)` (method)
+- L608 `test_runtime_minimax(self, monkeypatch)` (method)
+- L615 `test_runtime_kilocode(self, monkeypatch)` (method)
+- L624 `test_runtime_gmi(self, monkeypatch)` (method)
+- L633 `test_runtime_auto_detects_api_key_provider(self, monkeypatch)` (method)
+- L640 `test_runtime_copilot_uses_gh_cli_token(self, monkeypatch)` (method)
+- L649 `test_runtime_copilot_uses_responses_for_gpt_5_4(self, monkeypatch)` (method)
+- L672 `test_runtime_copilot_acp_uses_process_runtime(self, monkeypatch)` (method)
+- L692 `TestHasAnyProviderConfigured` (class)
+- L694 `test_glm_key_counts(self, monkeypatch, tmp_path)` (method)
+- L704 `test_minimax_key_counts(self, monkeypatch, tmp_path)` (method)
+- L714 `test_gh_cli_token_counts(self, monkeypatch, tmp_path)` (method)
+- L724 `test_claude_code_creds_ignored_on_fresh_install(self, monkeypatch, tmp_path)` (method) — Claude Code credentials should NOT skip the wizard when Hermes is unconfigured.
+- L755 `test_config_provider_counts(self, monkeypatch, tmp_path)` (method) — config.yaml with model.provider set should count as configured.
+- L775 `test_config_base_url_counts(self, monkeypatch, tmp_path)` (method) — config.yaml with model.base_url set (custom endpoint) should count.
+- L794 `test_config_api_key_counts(self, monkeypatch, tmp_path)` (method) — config.yaml with model.api_key set should count.
+- L813 `test_config_dict_no_provider_no_creds_still_false(self, monkeypatch, tmp_path)` (method) — config.yaml model dict with empty default and no creds stays false.
+- L840 `test_claude_code_creds_counted_when_hermes_configured(self, monkeypatch, tmp_path)` (method) — Claude Code credentials should count when Hermes has been explicitly configured.
+- L876 `TestResolveKimiBaseUrl` (class) — Test _resolve_kimi_base_url() helper for key-prefix auto-detection.
+- L879 `test_sk_kimi_prefix_routes_to_kimi_code(self)` (method)
+- L883 `test_legacy_key_uses_default(self)` (method)
+- L887 `test_empty_key_uses_default(self)` (method)
+- L891 `test_env_override_wins_over_sk_kimi(self)` (method) — KIMI_BASE_URL env var should always take priority.
+- L897 `test_env_override_wins_over_legacy(self)` (method)
+- L903 `TestKimiCodeStatusAutoDetect` (class) — Test that get_api_key_provider_status auto-detects sk-kimi- keys.
+- L906 `test_sk_kimi_key_gets_kimi_code_url(self, monkeypatch)` (method)
+- L912 `test_legacy_key_gets_moonshot_url(self, monkeypatch)` (method)
+- L918 `test_env_override_wins(self, monkeypatch)` (method)
+- L925 `TestKimiCodeCredentialAutoDetect` (class) — Test that resolve_api_key_provider_credentials auto-detects sk-kimi- keys.
+- L928 `test_sk_kimi_key_gets_kimi_code_url(self, monkeypatch)` (method)
+- L934 `test_legacy_key_gets_moonshot_url(self, monkeypatch)` (method)
+- L940 `test_env_override_wins(self, monkeypatch)` (method)
+- L946 `test_non_kimi_providers_unaffected(self, monkeypatch)` (method) — Ensure the auto-detect logic doesn't leak to other providers.
+- L954 `TestZaiEndpointAutoDetect` (class) — Test that resolve_api_key_provider_credentials auto-detects Z.AI endpoints.
+- L957 `test_probe_success_returns_detected_url(self, monkeypatch)` (method)
+- L971 `test_probe_failure_falls_back_to_default(self, monkeypatch)` (method)
+- L977 `test_env_override_skips_probe(self, monkeypatch)` (method) — GLM_BASE_URL should always win without probing.
+- L993 `test_no_key_skips_probe(self, monkeypatch)` (method) — Without an API key, no probe should occur.
+- L1004 `TestKimiMoonshotModelListIsolation` (class) — Moonshot (legacy) users must not see Coding Plan-only models.
+- L1007 `test_moonshot_list_excludes_coding_plan_only_models(self)` (method)
+- L1014 `test_moonshot_list_non_empty(self)` (method)
+- L1018 `test_coding_plan_list_non_empty(self)` (method)
+- L1027 `TestHuggingFaceModels` (class) — Verify Hugging Face model lists are consistent across all locations.
+- L1030 `test_main_provider_models_has_huggingface(self)` (method)
+- L1035 `test_models_py_has_huggingface(self)` (method)
+- L1040 `test_model_lists_match(self)` (method) — Model lists in main.py and models.py should be identical.
+- L1046 `test_model_metadata_has_context_lengths(self)` (method) — Every HF model should have a context length entry.
+- L1057 `test_models_use_org_name_format(self)` (method) — HF models should use org/name format (e.g. Qwen/Qwen3-235B).
+- L1063 `test_provider_aliases_in_models_py(self)` (method)
+- L1068 `test_provider_label(self)` (method)
+- L1078 `TestNovitaProvider` (class) — Tests for NovitaAI — an OpenAI-compatible multi-model aggregator.
+- L1081 `test_novita_profile_loads(self)` (method)
+- L1090 `test_novita_aliases(self)` (method)
+- L1096 `test_novita_alias_resolves(self)` (method)
+- L1100 `test_novita_in_provider_registry(self)` (method) — Auto-registration from ProviderProfile should expose Novita.
+- L1110 `test_novita_aliases_in_registry(self)` (method)
+- L1114 `test_main_provider_models_has_novita(self)` (method)
+- L1119 `test_models_py_has_novita(self)` (method)
+- L1124 `test_novita_model_lists_match(self)` (method) — Model lists in main.py and models.py should be identical.
+- L1130 `test_novita_models_use_org_name_format(self)` (method) — Novita models should use org/name format.
+- L1136 `test_novita_aliases_in_models_py(self)` (method)
+- L1141 `test_novita_label(self)` (method)
+- L1146 `test_novita_in_provider_prefixes(self)` (method)
+- L1150 `test_novita_url_to_provider(self)` (method)
+- L1154 `test_context_size_in_context_length_keys(self)` (method) — Novita /v1/models uses 'context_size' as the context length key.
+- L1159 `test_novita_pricing_unit_conversion(self)` (method) — Novita returns prices in 0.0001 USD per Mtok; divide by 10_000 * 1_000_000.
+- L1175 `test_novita_pricing_cache(self, monkeypatch)` (method) — _fetch_novita_pricing should cache results in _pricing_cache.
+- L1231 `TestMinimaxOAuthProvider` (class) — Tests for the minimax-oauth OAuth provider.
+- L1234 `test_minimax_oauth_in_provider_registry(self)` (method)
+- L1240 `test_minimax_oauth_has_correct_endpoints(self)` (method)
+- L1253 `test_minimax_oauth_alias_resolves_portal(self)` (method)
+- L1257 `test_minimax_oauth_alias_resolves_global(self)` (method)
+- L1261 `test_minimax_oauth_alias_resolves_underscore(self)` (method)
+- L1265 `test_minimax_oauth_listed_in_canonical_providers(self)` (method)
+- L1270 `test_minimax_oauth_models_alias_in_models_py(self)` (method)
+- L1276 `test_minimax_oauth_has_models(self)` (method)
+- L1281 `test_minimax_oauth_aux_model_registered(self)` (method)

@@ -1,0 +1,250 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:43'
+updated: '2026-06-08T00:38:43'
+---
+
+# tests/test_tui_gateway_server.py
+
+Symbols in `tests/test_tui_gateway_server.py`.
+
+- L14 `test_session_context_uses_session_cwd(monkeypatch, tmp_path)` (function) — Desktop/TUI sessions must pin the agent cwd per session.
+- L42 `test_session_context_explicit_cwd_for_ephemeral_task(monkeypatch, tmp_path)` (function) — Background/preview tasks use ephemeral ids absent from `_sessions`, so the
+- L63 `test_terminal_task_cwd_local_backend_uses_session_cwd(monkeypatch, tmp_path)` (function) — A local terminal backend must keep host-validated session cwd behaviour.
+- L73 `test_terminal_task_cwd_ssh_uses_remote_path_unvalidated(monkeypatch)` (function) — SSH (non-local) backend: the configured remote cwd is used verbatim even
+- L86 `test_terminal_task_cwd_ssh_falls_back_to_config(monkeypatch)` (function) — When TERMINAL_CWD is unset, the SSH path reads terminal.cwd from config.
+- L96 `test_terminal_task_cwd_ssh_sentinel_cwd_falls_back_to_session(monkeypatch)` (function) — Sentinel/auto cwd values are not real remote paths, so the SSH branch
+- L106 `_ChunkyStdout` (class)
+- L107 `__init__(self)` (method)
+- L110 `write(self, text: str)` (method)
+- L116 `flush(self)` (method)
+- L120 `_BrokenStdout` (class)
+- L121 `write(self, text: str)` (method)
+- L124 `flush(self)` (method)
+- L128 `test_write_json_serializes_concurrent_writes(monkeypatch)` (function)
+- L149 `test_write_json_returns_false_on_broken_pipe(monkeypatch)` (function)
+- L155 `test_tui_verbose_tool_details_fail_closed_when_redaction_fails(monkeypatch)` (function)
+- L169 `test_tui_verbose_tool_details_are_capped_before_emit(monkeypatch)` (function)
+- L180 `test_tui_verbose_default_cap_stays_small(monkeypatch)` (function)
+- L194 `test_tui_verbose_tool_events_omit_details_when_redaction_fails(monkeypatch)` (function)
+- L222 `test_dispatch_rejects_non_object_request()` (function)
+- L232 `test_dispatch_rejects_non_object_params()` (function)
+- L242 `test_voice_toggle_returns_configured_record_key(monkeypatch)` (function)
+- L273 `test_voice_toggle_handles_non_dict_voice_cfg(monkeypatch)` (function) — Round-3 Copilot review regression on #19835.
+- L325 `test_voice_record_start_handles_non_dict_voice_cfg(monkeypatch)` (function) — Round-7 Copilot review regression on #19835.
+- L399 `test_voice_record_stop_forces_transcription(monkeypatch)` (function)
+- L426 `test_voice_record_stop_updates_event_session_id(monkeypatch)` (function)
+- L449 `test_voice_record_start_reports_busy_when_stop_is_in_progress(monkeypatch)` (function)
+- L472 `test_voice_toggle_tts_branch_also_carries_record_key(monkeypatch)` (function) — Round-2 Copilot review regression on #19835.
+- L504 `test_load_enabled_toolsets_prefers_tui_env(monkeypatch)` (function)
+- L510 `test_load_enabled_toolsets_filters_invalid_tui_env(monkeypatch, capsys)` (function)
+- L522 `test_load_enabled_toolsets_accepts_plugin_env_after_discovery(monkeypatch)` (function)
+- L545 `test_load_enabled_toolsets_rejects_disabled_mcp_env(monkeypatch, capsys)` (function)
+- L574 `test_load_enabled_toolsets_falls_back_when_tui_env_invalid(monkeypatch, capsys)` (function)
+- L592 `test_load_enabled_toolsets_warns_when_config_fallback_fails(monkeypatch, capsys)` (function)
+- L610 `test_load_enabled_toolsets_honors_builtin_env_if_config_fails(monkeypatch)` (function)
+- L622 `test_load_enabled_toolsets_all_env_means_all(monkeypatch)` (function)
+- L628 `test_load_enabled_toolsets_all_env_warns_about_ignored_extra_entries(monkeypatch, capsys)` (function)
+- L637 `test_load_enabled_toolsets_reports_disabled_mcp_separately(monkeypatch, capsys)` (function)
+- L660 `test_history_to_messages_preserves_tool_calls_for_resume_display()` (function)
+- L689 `test_history_to_messages_renders_multimodal_content()` (function)
+- L711 `test_session_resume_uses_parent_lineage_for_display(monkeypatch)` (function)
+- L761 `test_status_callback_emits_kind_and_text()` (function)
+- L773 `test_status_callback_accepts_single_message_argument()` (function)
+- L785 `test_resolve_model_uses_inference_model_env(monkeypatch)` (function)
+- L792 `test_resolve_model_strips_config_model(monkeypatch)` (function)
+- L802 `test_startup_runtime_uses_tui_provider_env(monkeypatch)` (function)
+- L810 `test_startup_runtime_does_not_treat_inference_provider_as_explicit(monkeypatch)` (function)
+- L822 `test_startup_runtime_detects_provider_for_model_env(monkeypatch)` (function)
+- L843 `test_startup_runtime_resolves_short_alias_without_network(monkeypatch)` (function)
+- L861 `test_startup_runtime_does_not_call_network_detector(monkeypatch)` (function)
+- L879 `_session(agent=None, **extra)` (function)
+- L897 `test_session_close_commits_memory_and_fires_finalize_hook(monkeypatch)` (function)
+- L922 `test_ws_orphan_reap_closes_worker_when_session_stays_detached(monkeypatch)` (function) — A detached WS session past its grace window has its slash_worker closed.
+- L952 `test_ws_orphan_reap_spares_reattached_session(monkeypatch)` (function) — A session that rebinds a live transport is NOT considered orphaned.
+- L972 `test_ws_orphan_reap_disabled_when_grace_zero(monkeypatch)` (function) — Grace=0 disables the reaper entirely (pre-fix park-forever behaviour).
+- L989 `test_init_session_fires_reset_hook(monkeypatch)` (function)
+- L1027 `test_session_title_queues_when_db_row_not_ready(monkeypatch)` (function)
+- L1061 `test_notification_event_routing_by_session_key(monkeypatch)` (function) — Background-process events surface only in the session that owns them.
+- L1078 `test_session_create_does_not_persist_empty_row(monkeypatch)` (function) — session.create must NOT eagerly write a DB row.
+- L1110 `test_ensure_session_db_row_persists_explicit_cwd(monkeypatch, tmp_path)` (function) — An explicitly chosen workspace is persisted as the session cwd.
+- L1128 `test_ensure_session_db_row_defaults_to_no_workspace(monkeypatch, tmp_path)` (function) — Without an explicit workspace, cwd is left null so the session groups
+- L1145 `test_session_title_clears_pending_after_persist(monkeypatch)` (function)
+- L1179 `test_session_title_does_not_queue_noop_when_row_exists(monkeypatch)` (function)
+- L1212 `test_session_title_get_falls_back_to_pending_when_db_read_throws(monkeypatch)` (function)
+- L1228 `test_session_title_get_retries_persist_for_pending_title(monkeypatch)` (function)
+- L1256 `test_session_title_get_retries_pending_even_when_db_has_title(monkeypatch)` (function)
+- L1284 `test_session_title_rejects_empty_title_with_specific_error_code(monkeypatch)` (function)
+- L1305 `test_session_title_set_maps_valueerror_to_user_error(monkeypatch)` (function)
+- L1333 `test_session_title_set_errors_when_row_lookup_fails_after_noop(monkeypatch)` (function)
+- L1361 `test_session_create_drops_pending_title_on_valueerror(monkeypatch)` (function) — When set_session_title raises ValueError during post-message title flush,
+- L1428 `test_config_set_yolo_toggles_session_scope()` (function)
+- L1457 `test_config_set_fast_updates_live_agent_and_config(monkeypatch)` (function)
+- L1509 `test_config_set_fast_status_is_non_mutating(monkeypatch)` (function)
+- L1535 `test_config_set_fast_rejects_unsupported_model(monkeypatch)` (function)
+- L1569 `test_config_set_fast_rejects_missing_model(monkeypatch)` (function)
+- L1599 `test_config_busy_get_and_set(monkeypatch)` (function)
+- L1627 `test_config_set_yolo_process_scope_treats_false_like_env_as_disabled(monkeypatch)` (function)
+- L1642 `test_config_get_statusbar_survives_non_dict_display(monkeypatch)` (function)
+- L1652 `test_config_get_busy_survives_non_dict_display(monkeypatch)` (function)
+- L1662 `test_config_set_statusbar_survives_non_dict_display(tmp_path, monkeypatch)` (function)
+- L1682 `test_config_set_details_mode_pins_all_sections(tmp_path, monkeypatch)` (function)
+- L1712 `test_config_set_section_writes_per_section_override(tmp_path, monkeypatch)` (function)
+- L1731 `test_config_set_section_clears_override_on_empty_value(tmp_path, monkeypatch)` (function)
+- L1755 `test_config_set_section_rejects_unknown_section_or_mode(tmp_path, monkeypatch)` (function)
+- L1777 `test_config_mouse_uses_documented_key_with_legacy_fallback(monkeypatch)` (function)
+- L1814 `test_config_mouse_accepts_preset_strings_and_aliases(monkeypatch)` (function)
+- L1856 `test_enable_gateway_prompts_sets_gateway_env(monkeypatch)` (function)
+- L1868 `test_setup_status_reports_provider_config(monkeypatch)` (function)
+- L1876 `test_setup_runtime_check_rejects_empty_runtime_key(monkeypatch)` (function)
+- L1893 `test_setup_runtime_check_allows_no_key_custom_runtime(monkeypatch)` (function)
+- L1910 `test_setup_runtime_check_rejects_implicit_bedrock_when_unconfigured(monkeypatch)` (function)
+- L1927 `test_complete_slash_drops_removed_provider_alias()` (function)
+- L1944 `test_complete_slash_returns_plain_string_fields()` (function)
+- L1964 `test_complete_slash_includes_tui_details_command()` (function)
+- L1972 `test_complete_slash_includes_tui_mouse_command()` (function)
+- L1980 `test_complete_slash_details_args()` (function)
+- L2001 `test_config_set_reasoning_updates_live_session_and_agent(tmp_path, monkeypatch)` (function)
+- L2039 `test_config_set_verbose_updates_session_mode_and_agent(tmp_path, monkeypatch)` (function)
+- L2058 `test_config_set_model_waits_for_lazy_agent_before_switch(monkeypatch)` (function) — A model switch against a lazy-created live session must apply to the
+- L2099 `test_config_set_model_uses_live_switch_path(monkeypatch)` (function)
+- L2121 `test_config_set_model_global_persists(monkeypatch)` (function)
+- L2172 `test_config_set_model_does_not_leak_inference_provider_env(monkeypatch)` (function) — A /model switch must NOT mutate process-global env vars. The desktop /
+- L2233 `test_config_set_model_records_per_session_override_not_env(monkeypatch)` (function) — Regression for #16857 via the per-session override (not env vars):
+- L2300 `test_config_set_model_switches_agent_without_touching_env(monkeypatch)` (function) — A /model switch mutates the target session's agent in place and records
+- L2368 `test_config_set_personality_rejects_unknown_name(monkeypatch)` (function)
+- L2386 `test_config_set_personality_preserves_history_and_returns_info(monkeypatch)` (function)
+- L2432 `test_session_compress_uses_compress_helper(monkeypatch)` (function)
+- L2456 `test_session_compress_syncs_session_key_after_rotation(monkeypatch)` (function) — When AIAgent._compress_context rotates session_id (compression split),
+- L2496 `test_prompt_submit_sets_approval_session_key(monkeypatch)` (function)
+- L2536 `test_prompt_submit_expands_context_refs(monkeypatch)` (function)
+- L2592 `test_image_attach_appends_local_image(monkeypatch)` (function)
+- L2619 `test_image_attach_accepts_unquoted_screenshot_path_with_spaces(monkeypatch)` (function)
+- L2651 `test_commands_catalog_surfaces_quick_commands(monkeypatch)` (function)
+- L2687 `test_commands_catalog_includes_tui_mouse_command()` (function)
+- L2700 `test_commands_catalog_filters_gateway_only_commands_and_keeps_status_visible()` (function)
+- L2725 `test_session_status_reads_live_gateway_agent(monkeypatch)` (function)
+- L2759 `test_skills_reload_runs_in_gateway_process(monkeypatch)` (function)
+- L2783 `test_snapshot_restore_is_blocked_from_tui_worker()` (function)
+- L2817 `test_command_dispatch_exec_nonzero_surfaces_error(monkeypatch)` (function)
+- L2839 `test_plugins_list_surfaces_loader_error(monkeypatch)` (function)
+- L2849 `test_complete_slash_surfaces_completer_error(monkeypatch)` (function)
+- L2862 `test_input_detect_drop_attaches_image(monkeypatch)` (function)
+- L2886 `test_input_detect_drop_path_with_spaces(tmp_path)` (function) — input.detect_drop correctly handles image paths containing spaces.
+- L2911 `test_input_detect_drop_path_with_spaces_and_remainder(tmp_path)` (function) — input.detect_drop splits remainder when path contains spaces.
+- L2935 `test_rollback_restore_resolves_number_and_file_path()` (function)
+- L2967 `test_session_steer_calls_agent_steer_when_agent_supports_it()` (function) — The TUI RPC method must call agent.steer(text) and return a
+- L3000 `test_session_steer_rejects_empty_text()` (function)
+- L3019 `test_session_steer_errors_when_agent_has_no_steer_method()` (function)
+- L3036 `test_session_info_includes_mcp_servers(monkeypatch)` (function)
+- L3059 `test_session_undo_rejects_while_running()` (function) — Fix for TUI silent-drop #1: /undo must not mutate history
+- L3083 `test_session_undo_allowed_when_idle()` (function) — Regression guard: when not running, /undo still works.
+- L3103 `test_session_compress_rejects_while_running(monkeypatch)` (function)
+- L3115 `test_rollback_restore_rejects_full_history_while_running(monkeypatch)` (function) — Full-history rollback must reject; file-scoped rollback still allowed.
+- L3132 `test_prompt_submit_history_version_mismatch_surfaces_warning(monkeypatch)` (function) — Fix for TUI silent-drop #2: the defensive backstop at prompt.submit
+- L3200 `test_prompt_submit_history_version_match_persists_normally(monkeypatch)` (function) — Regression guard: the backstop does not affect the happy path.
+- L3251 `test_prompt_submit_can_truncate_before_user_ordinal(monkeypatch)` (function) — Desktop user-message edits should restart the turn from the edited user.
+- L3337 `test_interrupt_only_clears_own_session_pending()` (function) — session.interrupt on session A must NOT release pending prompts
+- L3388 `test_interrupt_clears_multiple_own_pending()` (function) — When a single session has multiple pending prompts (uncommon but
+- L3415 `test_clear_pending_without_sid_clears_all()` (function) — _clear_pending(None) is the shutdown path — must still release
+- L3431 `test_respond_unpacks_sid_tuple_correctly()` (function) — After the (sid, Event) tuple change, _respond must still work.
+- L3461 `test_config_set_model_rejects_while_running(monkeypatch)` (function) — /model via config.set must reject during an in-flight turn.
+- L3495 `test_config_set_model_allowed_when_idle(monkeypatch)` (function) — Regression guard: idle sessions can still switch models.
+- L3521 `test_mirror_slash_side_effects_rejects_mutating_commands_while_running(monkeypatch)` (function) — Slash worker passthrough (e.g. /model, /personality, /prompt,
+- L3561 `test_mirror_slash_side_effects_allowed_when_idle(monkeypatch)` (function) — Regression guard: idle session still runs the side effects.
+- L3582 `test_mirror_slash_compress_does_not_prelock_history(monkeypatch)` (function) — Regression guard: /compress side effect must not hold history_lock
+- L3621 `test_session_create_close_race_does_not_orphan_worker(monkeypatch)` (function) — Regression guard: if session.close runs while session.create's
+- L3747 `test_session_create_no_race_keeps_worker_alive(monkeypatch)` (function) — Regression guard: when session.close does NOT race, the build
+- L3819 `test_get_db_degrades_cleanly_when_sessiondb_init_fails(monkeypatch)` (function)
+- L3835 `test_session_create_continues_when_state_db_is_unavailable(monkeypatch)` (function)
+- L3879 `test_session_create_lazy_info_reports_desktop_contract(monkeypatch)` (function) — The lazy session.create info payload must carry desktop_contract, else
+- L3906 `test_session_list_returns_clean_error_when_state_db_is_unavailable(monkeypatch)` (function)
+- L3921 `test_session_delete_requires_session_id(monkeypatch)` (function) — Empty / missing session_id is a 4006 client error (no DB call).
+- L3938 `test_session_delete_returns_db_unavailable_when_no_db(monkeypatch)` (function)
+- L3951 `test_session_delete_refuses_active_session(monkeypatch)` (function) — Cannot delete a session currently bound to a live TUI session.
+- L3979 `test_session_delete_fails_closed_when_active_snapshot_raises(monkeypatch)` (function) — Concurrent ``_sessions`` mutation from another RPC thread can raise
+- L4005 `test_session_delete_returns_4007_when_missing(monkeypatch)` (function)
+- L4020 `test_session_delete_propagates_db_exception(monkeypatch)` (function)
+- L4036 `test_session_delete_success_returns_deleted_id(monkeypatch)` (function) — Happy path — DB delete succeeds, response carries the deleted id
+- L4070 `test_model_options_does_not_overwrite_curated_models(monkeypatch)` (function) — The TUI model.options handler must surface the same curated model
+- L4123 `test_model_options_propagates_list_exception(monkeypatch)` (function) — If list_authenticated_providers itself raises, surface as an RPC
+- L4146 `_ImmediateThread` (class) — Runs the target callable synchronously so assertions can follow.
+- L4149 `__init__(self, target=None, daemon=None)` (method)
+- L4152 `start(self)` (method)
+- L4156 `test_prompt_submit_auto_titles_session_on_complete(monkeypatch)` (function) — maybe_auto_title is called after a successful (complete) prompt.
+- L4194 `test_prompt_submit_skips_auto_title_when_interrupted(monkeypatch)` (function) — maybe_auto_title must NOT be called when the agent was interrupted.
+- L4226 `test_prompt_submit_skips_auto_title_when_response_empty(monkeypatch)` (function) — maybe_auto_title must NOT be called when the agent returns an empty reply.
+- L4257 `test_prompt_submit_surfaces_backend_error_as_visible_text(monkeypatch)` (function) — When the backend fails with no visible response (e.g. invalid model slug
+- L4304 `test_prompt_submit_preserves_empty_response_without_error(monkeypatch)` (function) — An empty final_response with NO backend error must stay empty — do not
+- L4354 `test_session_active_list_reports_live_sessions(monkeypatch)` (function)
+- L4411 `test_session_activate_returns_inflight_stream_before_completion(monkeypatch)` (function) — Switching into a still-running live session must hydrate partial output.
+- L4499 `test_session_activate_switches_live_session_without_closing_siblings(monkeypatch)` (function)
+- L4539 `test_session_most_recent_returns_first_non_denied(monkeypatch)` (function) — Drops `tool` rows like session.list does, returns the first hit.
+- L4560 `test_session_most_recent_returns_null_when_only_tool_rows(monkeypatch)` (function)
+- L4574 `test_session_most_recent_folds_db_exception_into_null_result(monkeypatch)` (function) — Per contract, errors are folded into the null-result shape so
+- L4593 `test_session_most_recent_handles_db_unavailable(monkeypatch)` (function)
+- L4606 `_stub_urlopen(monkeypatch, *, ok: bool)` (function) — Patch urllib.request.urlopen used by browser.manage to short-circuit probes.
+- L4628 `_stub_urlopen_capture(monkeypatch, *, ok: bool)` (function)
+- L4652 `test_browser_manage_status_reads_env_var(monkeypatch)` (function) — Status returns the env var verbatim (no network I/O).
+- L4664 `test_browser_manage_status_falls_back_to_config_cdp_url(monkeypatch)` (function) — When env is unset, status surfaces ``browser.cdp_url`` from
+- L4680 `test_browser_manage_status_does_not_call_get_cdp_override(monkeypatch)` (function) — Regression guard for Copilot's "status must not block" review:
+- L4699 `test_browser_manage_connect_sets_env_and_cleans_twice(monkeypatch)` (function) — `/browser connect` must reach the live process: set env, reap browser
+- L4732 `test_browser_manage_connect_defaults_to_loopback(monkeypatch)` (function)
+- L4750 `test_browser_manage_connect_default_local_reports_launch_hint(monkeypatch)` (function)
+- L4803 `test_browser_manage_connect_no_session_skips_progress_events(monkeypatch)` (function) — Without a session_id the TUI prints messages from the response;
+- L4842 `test_browser_manage_connect_handles_null_url(monkeypatch)` (function) — Explicit ``{"url": null}`` (or empty string) must fall back to the
+- L4865 `test_browser_manage_connect_rejects_non_string_url(monkeypatch)` (function)
+- L4880 `test_browser_manage_connect_default_local_retries_after_launch(monkeypatch)` (function)
+- L4925 `test_browser_manage_connect_rejects_unreachable_endpoint(monkeypatch)` (function) — An unreachable endpoint must NOT mutate the env or reap sessions.
+- L4951 `test_browser_manage_connect_normalizes_bare_host_port(monkeypatch)` (function) — Persist a parsed `scheme://host:port` URL so `_get_cdp_override`
+- L4976 `test_browser_manage_connect_strips_discovery_path(monkeypatch)` (function) — User-supplied discovery paths like `/json` or `/json/version`
+- L5001 `test_browser_manage_connect_preserves_devtools_browser_endpoint(monkeypatch)` (function) — Concrete devtools websocket endpoints (e.g. Browserbase) must
+- L5039 `test_browser_manage_connect_local_devtools_ws_preserves_path(monkeypatch)` (function) — Regression: ``ws://127.0.0.1:9222/devtools/browser/<id>`` is a real
+- L5072 `test_browser_manage_connect_rejects_invalid_port(monkeypatch)` (function)
+- L5087 `test_browser_manage_connect_rejects_missing_host(monkeypatch)` (function)
+- L5102 `test_browser_manage_connect_concrete_ws_skips_http_probe(monkeypatch)` (function) — Regression for round-2 Copilot review: a hosted CDP endpoint
+- L5146 `test_browser_manage_connect_concrete_ws_tcp_unreachable(monkeypatch)` (function) — If the TCP reachability check fails for a concrete ws endpoint,
+- L5171 `test_browser_manage_disconnect_drops_env_and_cleans(monkeypatch)` (function)
+- L5194 `test_config_get_indicator_returns_known_value_verbatim(monkeypatch)` (function)
+- L5204 `test_config_get_indicator_normalizes_casing_and_whitespace(monkeypatch)` (function) — Hand-edited config.yaml stays consistent with what the TUI shows.
+- L5219 `test_config_get_indicator_falls_back_to_default_for_unknown(monkeypatch)` (function) — An unknown value in config.yaml falls back to the same default
+- L5231 `test_config_get_indicator_falls_back_when_unset(monkeypatch)` (function)
+- L5242 `test_config_set_indicator_accepts_known_value(monkeypatch)` (function)
+- L5260 `test_config_set_indicator_falsy_non_string_surfaces_in_error(monkeypatch)` (function) — `0` / `False` / `[]` are not valid styles, but the error message
+- L5283 `test_config_set_indicator_none_keeps_blank_repr(monkeypatch)` (function) — `None` is the genuine 'no value' case — empty raw is acceptable.
+- L5300 `test_reload_env_rpc_calls_hermes_cli_reload_env(monkeypatch)` (function) — reload.env mirrors classic CLI's `/reload` — re-reads ~/.hermes/.env
+- L5317 `test_reload_env_rpc_surfaces_errors(monkeypatch)` (function)
+- L5332 `_setup_make_agent_mocks(monkeypatch, cfg)` (function)
+- L5357 `test_make_agent_reads_nested_max_turns(monkeypatch)` (function)
+- L5366 `test_make_agent_nested_max_turns_takes_priority(monkeypatch)` (function)
+- L5377 `test_make_agent_defaults_to_90(monkeypatch)` (function)
+- L5386 `test_make_agent_handles_null_agent_config(monkeypatch)` (function)
+- L5395 `_FakeAgentForBackground` (class)
+- L5417 `test_background_agent_kwargs_reads_nested_max_turns(monkeypatch)` (function)
+- L5425 `test_background_agent_kwargs_falls_back_to_root_max_turns(monkeypatch)` (function)
+- L5433 `test_background_agent_kwargs_defaults_to_25(monkeypatch)` (function)
+- L5441 `test_background_agent_kwargs_handles_null_agent_config(monkeypatch)` (function)
+- L5449 `test_config_show_displays_nested_max_turns(monkeypatch)` (function)
+- L5466 `test_notification_poller_delivers_completion(monkeypatch)` (function) — Poller picks up completion events and triggers agent turns.
+- L5529 `test_notification_poller_skips_consumed(monkeypatch)` (function) — Already-consumed completions are not dispatched by the poller.
+- L5578 `test_notification_poller_requeues_when_busy(monkeypatch)` (function) — When the agent is busy, the poller requeues the event.
+- L5628 `test_session_save_writes_under_hermes_home_with_system_prompt(monkeypatch, tmp_path)` (function) — TUI /save (session.save RPC) must snapshot under the Hermes profile
+- L5687 `test_notification_event_dedup_key_preserves_distinct_watch_matches()` (function) — Watch-match identity includes match content, not just session/type.
+- L5708 `test_notification_poller_emits_distinct_watch_matches_once(monkeypatch)` (function) — Distinct watch matches from one process emit; exact replay is deduped.
+- L5757 `test_notification_event_dedup_key_keeps_completions_one_shot()` (function) — Completion identity remains process-session scoped to avoid floods.
+- L5788 `_attach_bytes_cli(monkeypatch)` (function)
+- L5794 `test_image_attach_bytes_writes_to_gateway_dir(monkeypatch, tmp_path)` (function) — Remote client uploads base64 bytes; gateway writes them to its own disk.
+- L5822 `test_image_attach_bytes_accepts_data_url_prefix(monkeypatch, tmp_path)` (function)
+- L5840 `test_image_attach_bytes_data_alias_and_magic_sniff(monkeypatch, tmp_path)` (function) — Older desktop builds send `data` (not content_base64); ext sniffed from bytes.
+- L5858 `test_image_attach_bytes_rejects_invalid_base64(monkeypatch, tmp_path)` (function)
+- L5874 `test_image_attach_bytes_rejects_oversize(monkeypatch, tmp_path)` (function)
+- L5894 `test_image_attach_bytes_rejects_unsupported_extension(monkeypatch, tmp_path)` (function)
+- L5915 `test_pdf_attach_requires_poppler(monkeypatch, tmp_path)` (function) — Without pdftoppm on PATH, pdf.attach returns a clear 5028.
+- L5933 `test_pdf_attach_rejects_non_pdf_bytes(monkeypatch, tmp_path)` (function)
+- L5953 `test_pdf_attach_requires_path_or_bytes(monkeypatch, tmp_path)` (function)
+- L5966 `test_decode_attach_base64_helper()` (function)
+- L5980 `test_sniff_image_ext_magic_and_filename()` (function)

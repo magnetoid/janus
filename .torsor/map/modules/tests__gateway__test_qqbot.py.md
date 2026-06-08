@@ -1,0 +1,240 @@
+---
+type: map
+status: derived
+tags:
+- map
+links: []
+created: '2026-06-08T00:38:42'
+updated: '2026-06-08T00:38:42'
+---
+
+# tests/gateway/test_qqbot.py
+
+Symbols in `tests/gateway/test_qqbot.py`.
+
+- L17 `_make_config(**extra)` (function) — Build a PlatformConfig(enabled=True, extra=extra) for testing.
+- L26 `TestQQRequirements` (class)
+- L27 `test_returns_bool(self)` (method)
+- L37 `TestQQAdapterInit` (class)
+- L38 `_make(self, **extra)` (method)
+- L42 `test_basic_attributes(self)` (method)
+- L47 `test_env_fallback(self)` (method)
+- L53 `test_env_fallback_extra_wins(self)` (method)
+- L58 `test_dm_policy_default(self)` (method)
+- L62 `test_dm_policy_explicit(self)` (method)
+- L66 `test_group_policy_default(self)` (method)
+- L70 `test_allow_from_parsing_string(self)` (method)
+- L74 `test_allow_from_parsing_list(self)` (method)
+- L78 `test_allow_from_default_empty(self)` (method)
+- L82 `test_group_allow_from(self)` (method)
+- L86 `test_markdown_support_default(self)` (method)
+- L90 `test_markdown_support_false(self)` (method)
+- L94 `test_name_property(self)` (method)
+- L103 `TestCoerceList` (class)
+- L104 `_fn(self, value)` (method)
+- L108 `test_none(self)` (method)
+- L111 `test_string(self)` (method)
+- L114 `test_list(self)` (method)
+- L117 `test_empty_string(self)` (method)
+- L120 `test_tuple(self)` (method)
+- L123 `test_single_item_string(self)` (method)
+- L131 `TestIsVoiceContentType` (class)
+- L132 `_fn(self, content_type, filename)` (method)
+- L136 `test_voice_content_type(self)` (method)
+- L139 `test_audio_content_type(self)` (method)
+- L142 `test_voice_extension(self)` (method)
+- L145 `test_non_voice(self)` (method)
+- L148 `test_audio_extension_amr(self)` (method)
+- L156 `TestVoiceAttachmentSSRFProtection` (class)
+- L157 `_make_adapter(self, **extra)` (method)
+- L161 `test_stt_blocks_unsafe_download_url(self)` (method)
+- L177 `test_connect_uses_redirect_guard_hook(self)` (method)
+- L198 `TestQQWebSocketProxy` (class)
+- L200 `test_open_ws_honors_proxy_env(self, monkeypatch)` (method)
+- L241 `TestStripAtMention` (class)
+- L242 `_fn(self, content)` (method)
+- L246 `test_removes_mention(self)` (method)
+- L250 `test_no_mention(self)` (method)
+- L254 `test_empty_string(self)` (method)
+- L257 `test_only_mention(self)` (method)
+- L265 `TestDmAllowed` (class)
+- L266 `_make_adapter(self, **extra)` (method)
+- L270 `test_open_policy(self)` (method)
+- L274 `test_disabled_policy(self)` (method)
+- L278 `test_allowlist_match(self)` (method)
+- L282 `test_allowlist_no_match(self)` (method)
+- L286 `test_allowlist_wildcard(self)` (method)
+- L295 `TestGroupAllowed` (class)
+- L296 `_make_adapter(self, **extra)` (method)
+- L300 `test_open_policy(self)` (method)
+- L304 `test_allowlist_match(self)` (method)
+- L308 `test_allowlist_no_match(self)` (method)
+- L317 `TestResolveSTTConfig` (class)
+- L318 `_make_adapter(self, **extra)` (method)
+- L322 `test_no_config(self)` (method)
+- L327 `test_env_config(self)` (method)
+- L340 `test_extra_config(self)` (method)
+- L359 `TestDetectMessageType` (class)
+- L360 `_fn(self, media_urls, media_types)` (method)
+- L364 `test_no_media(self)` (method)
+- L368 `test_image(self)` (method)
+- L372 `test_voice(self)` (method)
+- L376 `test_video(self)` (method)
+- L385 `TestQQCloseError` (class)
+- L386 `test_attributes(self)` (method)
+- L392 `test_code_none(self)` (method)
+- L397 `test_string_to_int(self)` (method)
+- L403 `test_message_format(self)` (method)
+- L414 `TestDispatchPayload` (class)
+- L415 `_make_adapter(self, **extra)` (method)
+- L420 `test_unknown_op(self)` (method)
+- L427 `test_op10_updates_heartbeat_interval(self)` (method)
+- L433 `test_op11_heartbeat_ack(self)` (method)
+- L438 `test_seq_tracking(self)` (method)
+- L443 `test_seq_increments(self)` (method)
+- L454 `TestReadyHandling` (class)
+- L455 `_make_adapter(self, **extra)` (method)
+- L459 `test_ready_stores_session(self)` (method)
+- L468 `test_resumed_preserves_session(self)` (method)
+- L484 `TestParseJson` (class)
+- L485 `_fn(self, raw)` (method)
+- L489 `test_valid_json(self)` (method)
+- L493 `test_invalid_json(self)` (method)
+- L497 `test_none_input(self)` (method)
+- L501 `test_non_dict_json(self)` (method)
+- L505 `test_empty_dict(self)` (method)
+- L514 `TestBuildTextBody` (class)
+- L515 `_make_adapter(self, **extra)` (method)
+- L519 `test_plain_text(self)` (method)
+- L525 `test_markdown_text(self)` (method)
+- L531 `test_truncation(self)` (method)
+- L537 `test_empty_string(self)` (method)
+- L542 `test_reply_to(self)` (method)
+- L552 `TestWaitForReconnection` (class) — Test that send() waits for reconnection instead of silently dropping.
+- L555 `_make_adapter(self, **extra)` (method)
+- L560 `test_send_waits_and_succeeds_on_reconnect(self)` (method) — send() should wait for reconnection and then deliver the message.
+- L589 `test_send_returns_retryable_after_timeout(self)` (method) — send() should return retryable=True if reconnection takes too long.
+- L602 `test_send_succeeds_immediately_when_connected(self)` (method) — send() should not wait when already connected.
+- L619 `test_send_media_waits_for_reconnect(self)` (method) — _send_media should also wait for reconnection.
+- L636 `TestChunkedUploadFormatSize` (class)
+- L637 `test_bytes(self)` (method)
+- L641 `test_kilobytes(self)` (method)
+- L645 `test_megabytes(self)` (method)
+- L649 `test_gigabytes(self)` (method)
+- L654 `TestChunkedUploadErrors` (class)
+- L655 `test_daily_limit_has_human_size(self)` (method)
+- L663 `test_too_large_includes_limit(self)` (method)
+- L671 `test_too_large_unknown_limit(self)` (method)
+- L677 `TestChunkedUploadHelpers` (class)
+- L678 `test_read_chunk_exact_bytes(self, tmp_path)` (method)
+- L684 `test_read_chunk_short_read_raises(self, tmp_path)` (method)
+- L691 `test_compute_hashes_small_file(self, tmp_path)` (method)
+- L701 `test_compute_hashes_large_file_has_distinct_md5_10m(self, tmp_path)` (method)
+- L713 `test_parse_prepare_response_wrapped_in_data(self)` (method)
+- L736 `test_parse_prepare_response_missing_upload_id_raises(self)` (method)
+- L741 `test_parse_prepare_response_missing_parts_raises(self)` (method)
+- L747 `TestChunkedUploaderFlow` (class) — End-to-end prepare / PUT / part_finish / complete flow with mocked HTTP.
+- L754 `test_full_upload_two_parts_success(self, tmp_path)` (method)
+- L820 `test_group_paths(self, tmp_path)` (method) — Group uploads hit /v2/groups/... instead of /v2/users/...
+- L861 `test_daily_limit_raises_structured_error(self, tmp_path)` (method)
+- L888 `test_part_finish_retries_on_40093001_then_succeeds(self, tmp_path)` (method) — biz_code 40093001 is retryable — finish-with-retry must keep trying.
+- L938 `test_put_retries_transient_failure(self, tmp_path)` (method) — COS PUT failures retry up to _PART_UPLOAD_MAX_RETRIES times.
+- L985 `TestApprovalButtonData` (class)
+- L986 `test_parse_allow_once(self)` (method)
+- L991 `test_parse_allow_always(self)` (method)
+- L995 `test_parse_deny(self)` (method)
+- L999 `test_parse_invalid_prefix_returns_none(self)` (method)
+- L1003 `test_parse_unknown_decision_returns_none(self)` (method)
+- L1007 `test_parse_empty_returns_none(self)` (method)
+- L1013 `TestUpdatePromptButtonData` (class)
+- L1014 `test_parse_yes(self)` (method)
+- L1018 `test_parse_no(self)` (method)
+- L1022 `test_parse_unknown_returns_none(self)` (method)
+- L1026 `test_parse_wrong_prefix(self)` (method)
+- L1031 `TestBuildApprovalKeyboard` (class)
+- L1032 `test_three_buttons_in_single_row(self)` (method)
+- L1038 `test_button_data_embeds_session_key(self)` (method)
+- L1046 `test_buttons_share_group_id_for_mutual_exclusion(self)` (method)
+- L1052 `test_to_dict_has_expected_shape(self)` (method)
+- L1066 `test_round_trip_parse_matches_build(self)` (method) — Every button built by build_approval_keyboard is parseable.
+- L1080 `TestBuildUpdatePromptKeyboard` (class)
+- L1081 `test_two_buttons(self)` (method)
+- L1086 `test_button_data_shape(self)` (method)
+- L1093 `TestBuildApprovalText` (class)
+- L1094 `test_exec_approval_includes_command_preview(self)` (method)
+- L1111 `test_plugin_approval_uses_severity_icon(self)` (method)
+- L1129 `test_truncates_long_commands(self)` (method)
+- L1148 `TestInteractionEventParsing` (class)
+- L1149 `test_parse_c2c_interaction(self)` (method)
+- L1172 `test_parse_group_interaction(self)` (method)
+- L1193 `test_parse_missing_data_gracefully(self)` (method)
+- L1203 `TestAdapterInteractionDispatch` (class) — End-to-end verification of _on_interaction including ACK + callback.
+- L1206 `_make_adapter(self)` (method)
+- L1211 `test_callback_invoked_with_parsed_event(self)` (method)
+- L1245 `test_missing_id_skips_ack(self)` (method)
+- L1270 `test_callback_exception_does_not_propagate(self)` (method)
+- L1291 `test_explicit_no_callback_is_harmless(self)` (method)
+- L1313 `TestProcessQuotedContext` (class) — Verify the quoted-message pipeline: text + voice STT + images + files.
+- L1316 `_make_adapter(self)` (method)
+- L1321 `test_non_quote_message_returns_empty(self)` (method)
+- L1328 `test_quote_type_but_no_elements_returns_empty(self)` (method)
+- L1335 `test_quote_with_text_only(self)` (method)
+- L1355 `test_quote_with_voice_attachment_runs_stt(self)` (method)
+- L1392 `test_quote_with_file_preserves_filename(self)` (method) — Quoted file attachments must surface the original filename, not the CDN hash.
+- L1427 `test_quote_with_image_returns_cached_paths(self)` (method)
+- L1453 `test_quote_with_image_only_no_text(self)` (method) — Images-only quote still surfaces a marker so the LLM has context.
+- L1479 `test_multiple_elements_concatenated(self)` (method)
+- L1503 `test_invalid_message_type_string_returns_empty(self)` (method)
+- L1511 `TestMergeQuoteInto` (class)
+- L1512 `test_empty_quote_returns_original(self)` (method)
+- L1516 `test_empty_text_returns_only_quote(self)` (method)
+- L1520 `test_both_present_joined_with_blank_line(self)` (method)
+- L1530 `TestDefaultInteractionDispatch` (class) — Verify the adapter's default INTERACTION_CREATE router.
+- L1533 `_make_adapter(self)` (method)
+- L1537 `test_default_callback_installed_on_init(self)` (method) — Fresh adapter has a working default interaction callback.
+- L1543 `test_send_exec_approval_is_a_class_method(self)` (method) — gateway/run.py uses ``type(adapter).send_exec_approval`` to detect support.
+- L1550 `test_approval_click_once_maps_to_once(self)` (method) — 'allow-once' button → resolve_gateway_approval(session, 'once').
+- L1580 `test_approval_click_always_maps_to_always(self)` (method)
+- L1604 `test_approval_click_deny_maps_to_deny(self)` (method)
+- L1629 `test_approval_click_rejects_unauthorized_operator(self)` (method)
+- L1655 `test_update_prompt_click_writes_response_file(self, tmp_path, monkeypatch)` (method) — update_prompt:y click writes 'y' to ~/.hermes/.update_response.
+- L1677 `test_update_prompt_click_no_writes_n(self, tmp_path, monkeypatch)` (method)
+- L1695 `test_unknown_button_data_is_harmless(self)` (method) — Unrecognised button_data is logged and dropped — no exception.
+- L1708 `test_empty_button_data_is_harmless(self)` (method)
+- L1714 `test_resolve_exception_is_swallowed(self)` (method) — If resolve_gateway_approval raises, we log but don't propagate.
+- L1736 `TestSendExecApproval` (class) — Verify the gateway contract: QQAdapter.send_exec_approval(...).
+- L1739 `_make_adapter(self)` (method)
+- L1744 `test_delegates_to_send_approval_request(self)` (method)
+- L1773 `test_accepts_metadata_arg(self)` (method) — Gateway always passes metadata=…; the adapter must accept + ignore it.
+- L1790 `TestSendUpdatePrompt` (class) — Verify the cross-adapter send_update_prompt signature + behaviour.
+- L1793 `_make_adapter(self)` (method)
+- L1798 `test_delegates_to_send_with_keyboard(self)` (method)
+- L1828 `test_empty_default_has_no_hint(self)` (method)
+- L1844 `TestIdentifyIntents` (class) — Verify the WebSocket identify payload includes the INTERACTION intent bit.
+- L1847 `_make_adapter(self)` (method)
+- L1852 `test_intents_include_interaction_bit(self)` (method)
+- L1884 `TestProcessAttachmentsPathExposure` (class) — Verify that video and file attachments include the cached local path.
+- L1887 `_make_adapter(self)` (method)
+- L1892 `test_video_attachment_includes_path(self)` (method)
+- L1918 `test_file_attachment_includes_path(self)` (method)
+- L1941 `test_video_without_filename_falls_back_to_content_type(self)` (method)
+- L1963 `test_download_failure_produces_no_attachment_info(self)` (method)
+- L1982 `test_quoted_video_includes_path_in_quote_block(self)` (method) — Quoted video attachments should surface the cached path in the quote block.
+- L2013 `test_quoted_file_includes_path_in_quote_block(self)` (method) — Quoted file attachments should surface the cached path in the quote block.
+- L2047 `TestOp7ServerReconnect` (class) — Verify op 7 triggers WS close (which triggers reconnect in outer loop).
+- L2050 `_make_adapter(self)` (method)
+- L2054 `test_op7_closes_websocket(self)` (method)
+- L2078 `test_op7_close_task_executes(self)` (method)
+- L2099 `TestOp9InvalidSession` (class) — Verify op 9 handles resumable vs non-resumable sessions.
+- L2102 `_make_adapter(self)` (method)
+- L2106 `test_op9_not_resumable_clears_session(self)` (method)
+- L2123 `test_op9_resumable_preserves_session(self)` (method)
+- L2142 `test_op9_non_resumable_triggers_ws_close(self)` (method)
+- L2166 `TestCloseCodeClassification` (class) — Verify fatal close codes stop reconnecting and 4009 preserves session.
+- L2169 `_make_adapter(self)` (method)
+- L2173 `test_4009_preserves_session(self)` (method) — 4009 (connection timeout) should NOT clear the session.
+- L2189 `test_fatal_codes_include_intent_errors(self)` (method) — 4013 (invalid intent) and 4014 (not authorized) should be fatal.
+- L2201 `TestReadEventsClosedWsGuard` (class) — Regression: a closed-but-non-None ws must raise on entry, not return
+- L2206 `_make_adapter(self, **extra)` (method)
+- L2210 `test_read_events_raises_when_ws_closed_on_entry(self)` (method)
+- L2217 `test_read_events_raises_when_ws_none(self)` (method)
