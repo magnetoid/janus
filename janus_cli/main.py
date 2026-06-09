@@ -14794,6 +14794,14 @@ Examples:
         "--session", default=None,
         help="Session id to mine (default: most recent CLI session)",
     )
+    _reconcile_parser = memory_sub.add_parser(
+        "reconcile",
+        help="Retire outdated/contradicted memory entries (keeps the journal history)",
+    )
+    _reconcile_parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be dropped without changing anything")
+    _reconcile_parser.add_argument(
+        "--target", choices=["memory", "user"], default="memory")
 
     def cmd_memory(args):
         sub = getattr(args, "memory_command", None)
@@ -14900,6 +14908,28 @@ Examples:
                 f"  ✓ Added {added['user']} user + {added['memory']} memory "
                 f"fact(s); skipped {summary['skipped_duplicates']} duplicate(s).\n"
             )
+        elif sub == "reconcile":
+            from tools.memory_tool import MemoryStore
+            from agent.memory_gardener import reconcile
+
+            target = getattr(args, "target", "memory")
+            dry = getattr(args, "dry_run", False)
+            store = MemoryStore()
+            store.load_from_disk()
+            print(f"\n  Reconciling {target} memory{' (dry run)' if dry else ''}…")
+            res = reconcile(store, target=target, apply=not dry)
+            if res.get("error"):
+                print(f"  ⚠ Reconcile failed: {res['error']}\n")
+                return
+            removed = res.get("removed", [])
+            if not removed:
+                print("  ✓ Nothing to reconcile — memory is consistent.\n")
+                return
+            verb = "Would retire" if dry else "Retired"
+            print(f"  ✓ {verb} {len(removed)} outdated/contradicted entr(y/ies):")
+            for t in removed:
+                print(f"    − {t[:80]}")
+            print("  (full history is preserved in the daily journal)\n")
         else:
             from janus_cli.memory_setup import memory_command
 
