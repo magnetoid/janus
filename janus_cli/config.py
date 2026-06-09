@@ -1739,6 +1739,10 @@ DEFAULT_CONFIG = {
     # Each path is expanded (~, ${VAR}) and resolved.  Read-only — skill creation
     # always goes to ~/.janus/skills/.
     "skills": {
+        # Auto-draft skills from a finished session (procedure mining) when it
+        # ends. Opt-in (off): spends tokens + writes draft skills to
+        # skills/.drafts/ for review. Run on demand with `janus skills mine`.
+        "session_mining": False,
         "external_dirs": [],   # e.g. ["~/.agents/skills", "/shared/team-skills"]
         # Substitute ${JANUS_SKILL_DIR} and ${JANUS_SESSION_ID} in SKILL.md
         # content with the absolute skill directory and the active session id

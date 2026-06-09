@@ -6726,6 +6726,13 @@ class JanusCLI:
         if self.agent and self.conversation_history:
             # Trigger memory extraction on the old session before session_id rotates.
             self.agent.commit_memory_session(self.conversation_history)
+            # Opt-in auto-mining: distill the finished session into memory facts
+            # / draft skills (background thread, off by default, best-effort).
+            try:
+                from agent.auto_mine import maybe_automine
+                maybe_automine(self.conversation_history)
+            except Exception:
+                pass
             self._notify_session_boundary("on_session_finalize")
         elif self.agent:
             # First session or empty history — still finalize the old session
