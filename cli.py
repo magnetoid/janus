@@ -6058,6 +6058,43 @@ class JanusCLI:
                 f"If this repeats, run /new or restart this tab.{_RST}"
             )
 
+    def _handle_proactive_command(self, canonical: str, cmd_original: str) -> None:
+        """Slash handlers for /aspire, /interest, /memory (shared with the gateway)."""
+        parts = cmd_original.strip().split(None, 1)
+        rest = parts[1].strip() if len(parts) > 1 else ""
+        # /memory mine should mine the LIVE session (needs the running agent).
+        if canonical == "memory" and rest.lower().startswith("mine"):
+            self._mine_live_session()
+            return
+        from janus_cli.proactive_commands import (
+            handle_aspire, handle_interest, handle_memory,
+        )
+        fn = {"aspire": handle_aspire, "interest": handle_interest, "memory": handle_memory}[canonical]
+        try:
+            print("\n" + fn(rest) + "\n")
+        except Exception as exc:
+            print(f"\n  ⚠ {exc}\n")
+
+    def _mine_live_session(self) -> None:
+        """/memory mine — distill the current live conversation into memory."""
+        from agent.memory_miner import mine_session_memory
+
+        if not self.agent or not getattr(self.agent, "_memory_store", None):
+            print("\n  Memory isn't available in this session.\n")
+            return
+        msgs = self.conversation_history or []
+        if not msgs:
+            print("\n  Nothing to mine yet — have a conversation first.\n")
+            return
+        print("\n  Mining this session for durable memory…")
+        summary = mine_session_memory(msgs, self.agent._memory_store)
+        if summary.get("error"):
+            print(f"  ⚠ Mining failed: {summary['error']}\n")
+            return
+        a = summary["added"]
+        print(f"  ✓ Added {a['user']} user + {a['memory']} memory fact(s); "
+              f"skipped {summary['skipped_duplicates']} duplicate(s).\n")
+
     def _handle_copy_command(self, cmd_original: str) -> None:
         """Handle /copy [number] — copy assistant output to clipboard."""
         parts = cmd_original.split(maxsplit=1)
@@ -9068,6 +9105,8 @@ class JanusCLI:
             self._show_usage()
         elif canonical == "insights":
             self._show_insights(cmd_original)
+        elif canonical in ("aspire", "interest", "memory"):
+            self._handle_proactive_command(canonical, cmd_original)
         elif canonical == "copy":
             self._handle_copy_command(cmd_original)
         elif canonical == "debug":

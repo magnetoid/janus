@@ -8322,6 +8322,19 @@ class GatewayRunner:
         if canonical == "insights":
             return await self._handle_insights_command(event)
 
+        if canonical in ("aspire", "interest", "memory"):
+            raw = (event.text or "").strip()
+            _parts = raw.split(None, 1)
+            rest = _parts[1].strip() if len(_parts) > 1 else ""
+            from janus_cli.proactive_commands import (
+                handle_aspire, handle_interest, handle_memory,
+            )
+            _fn = {"aspire": handle_aspire, "interest": handle_interest, "memory": handle_memory}[canonical]
+            try:
+                return _fn(rest)
+            except Exception as exc:
+                return f"⚠ {exc}"
+
         if canonical == "reload-mcp":
             return await self._handle_reload_mcp_command(event)
 
