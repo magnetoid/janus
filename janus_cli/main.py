@@ -15092,6 +15092,96 @@ Examples:
     models_parser.set_defaults(func=cmd_models)
 
     # =========================================================================
+    # interest command — interest-driven self-learning (keep up with your field)
+    # =========================================================================
+    interest_parser = subparsers.add_parser(
+        "interest",
+        help="Track a field Janus keeps up with and proactively researches",
+        description=(
+            "Tell Janus a field you care about (e.g. \"graphic design\"). A\n"
+            "recurring discovery job researches the latest trends/news/tools in\n"
+            "it, then proposes what it found and asks if you'd like it to learn\n"
+            "more — only absorbing into memory/skills with your agreement."
+        ),
+    )
+    interest_sub = interest_parser.add_subparsers(dest="interest_command")
+    _i_add = interest_sub.add_parser("add", help="Track a field (schedules periodic discovery)")
+    _i_add.add_argument("field", nargs="+")
+    _i_add.add_argument("--no-discovery", action="store_true", help="Don't schedule the discovery job")
+    interest_sub.add_parser("list", help="List tracked interests")
+    _i_rm = interest_sub.add_parser("remove", help="Stop tracking an interest")
+    _i_rm.add_argument("id")
+    _i_disc = interest_sub.add_parser("discover", help="Research the latest now and surface findings")
+    _i_disc.add_argument("id", nargs="?", default=None)
+
+    def _ensure_discovery_cron():
+        try:
+            from janus_constants import get_janus_home
+            from agent import interests as it
+            import cron.jobs as cj
+
+            scripts_dir = get_janus_home() / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / it.DISCOVERY_SCRIPT_NAME).write_text(
+                it.discovery_script_source(), encoding="utf-8"
+            )
+            for j in cj.list_jobs(include_disabled=True):
+                if j.get("name") == it.DISCOVERY_JOB_NAME:
+                    return False
+            cj.create_job(
+                prompt=it.DISCOVERY_PROMPT,
+                schedule="0 9 * * 3",  # Wednesdays 9am
+                name=it.DISCOVERY_JOB_NAME,
+                script=it.DISCOVERY_SCRIPT_NAME,
+            )
+            return True
+        except Exception:
+            return False
+
+    def cmd_interest(args):
+        from agent import interests as it
+
+        sub = getattr(args, "interest_command", None)
+        if sub == "add":
+            field = " ".join(args.field).strip()
+            rec = it.add(field)
+            print(f"\n  ✓ Now tracking: {rec['field']}  [{rec['id']}]")
+            if not getattr(args, "no_discovery", False) and _ensure_discovery_cron():
+                print("  Scheduled periodic discovery (see 'janus cron list').")
+            print()
+        elif sub == "remove":
+            print("\n  ✓ Stopped tracking.\n" if it.remove(args.id)
+                  else f"\n  No interest '{args.id}'.\n")
+        elif sub == "discover":
+            targets = [it.get(args.id)] if args.id else it.list_active()
+            targets = [t for t in targets if t]
+            if not targets:
+                print('\n  No interests to research. Add one: janus interest add "<field>"\n')
+                return
+            for t in targets:
+                print(f"\n  Researching the latest in '{t['field']}'…")
+                res = it.research_interest(t["field"])
+                if res.get("error"):
+                    print(f"  ⚠ Research failed: {res['error']}")
+                    continue
+                msg = it.format_discovery(t["field"], res["findings"])
+                print("\n" + (msg or "  Nothing notable surfaced right now."))
+                it.mark_researched(t["id"])
+            print()
+        else:  # list (default)
+            items = it.load()
+            if not items:
+                print('\n  No interests yet. Add one: janus interest add "<field>"\n')
+                return
+            print()
+            for a in items:
+                flag = "•" if a.get("status") == "active" else "·"
+                print(f"  {flag} [{a['id']}] {a['field']}  ({a.get('status')})")
+            print()
+
+    interest_parser.set_defaults(func=cmd_interest)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(
