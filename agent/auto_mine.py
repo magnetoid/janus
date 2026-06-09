@@ -64,7 +64,16 @@ def maybe_automine(
                     )
                     verdict = classify_session(snapshot)
                     if verdict is not None:  # skip UNCLEAR sessions
-                        record_outcome(session_id, verdict, skills=skills_used_in(snapshot))
+                        # Cheap topic (first user turn) so failures can be clustered
+                        # into knowledge gaps later — no extra model call.
+                        topic = next(
+                            (str(m.get("content", "")).strip()[:120]
+                             for m in snapshot
+                             if m.get("role") == "user" and str(m.get("content", "")).strip()),
+                            "",
+                        )
+                        record_outcome(session_id, verdict,
+                                       skills=skills_used_in(snapshot), note=topic)
                 except Exception as exc:
                     logger.debug("auto outcome tracking failed: %s", exc)
             if mine_memory:

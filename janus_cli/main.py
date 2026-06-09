@@ -15265,6 +15265,10 @@ Examples:
     _l_rec = learning_sub.add_parser("record", help="Record the last session's outcome")
     _l_rec.add_argument("outcome", choices=["success", "failure"])
     _l_rec.add_argument("--session", default=None)
+    _l_gaps = learning_sub.add_parser(
+        "gaps", help="Identify knowledge gaps from repeated failures")
+    _l_gaps.add_argument(
+        "--adopt", action="store_true", help="Track each gap as an interest (researched by the discovery cron)")
 
     def cmd_learning(args):
         from agent import outcome_tracker as ot
@@ -15289,6 +15293,27 @@ Examples:
             ot.record_outcome(sid, args.outcome == "success", skills=skills)
             print(f"\n  ✓ Recorded {args.outcome} for session {sid or '(unknown)'}"
                   f" (skills: {', '.join(skills) or 'none'}).\n")
+            return
+        if sub == "gaps":
+            from agent.gap_seeker import identify_gaps, adopt_gap_as_interest
+            res = identify_gaps()
+            if res.get("error"):
+                print(f"\n  ⚠ {res['error']}\n")
+                return
+            gaps = res.get("gaps", [])
+            if not gaps:
+                print(f"\n  No recurring knowledge gaps found "
+                      f"({res.get('considered', 0)} failures considered).\n")
+                return
+            print("\n  Recurring knowledge gaps (from repeated failures):")
+            for g in gaps:
+                why = f" — {g['why']}" if g.get("why") else ""
+                print(f"    • {g['topic']}{why}")
+                if getattr(args, "adopt", False):
+                    adopt_gap_as_interest(g["topic"])
+            if getattr(args, "adopt", False):
+                print("  ✓ Tracking these as interests; the discovery cron will research them.")
+            print()
             return
         # stats (default)
         o = ot.overall_stats()
