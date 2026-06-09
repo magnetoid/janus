@@ -15222,6 +15222,64 @@ Examples:
     workflow_parser.set_defaults(func=cmd_workflow)
 
     # =========================================================================
+    # learning command — self-learning reinforcement metrics
+    # =========================================================================
+    learning_parser = subparsers.add_parser(
+        "learning",
+        help="Self-learning metrics: success rate, which skills actually help",
+    )
+    learning_sub = learning_parser.add_subparsers(dest="learning_command")
+    learning_sub.add_parser("stats", help="Show learning metrics")
+    _l_rec = learning_sub.add_parser("record", help="Record the last session's outcome")
+    _l_rec.add_argument("outcome", choices=["success", "failure"])
+    _l_rec.add_argument("--session", default=None)
+
+    def cmd_learning(args):
+        from agent import outcome_tracker as ot
+
+        def _pct(x):
+            return f"{x*100:.0f}%" if isinstance(x, (int, float)) else "—"
+
+        sub = getattr(args, "learning_command", None)
+        if sub == "record":
+            sid = getattr(args, "session", None) or _resolve_last_session("cli") or ""
+            skills = []
+            if sid:
+                try:
+                    from janus_state import SessionDB
+                    db = SessionDB()
+                    try:
+                        skills = ot.skills_used_in(db.get_messages_as_conversation(sid))
+                    finally:
+                        db.close()
+                except Exception:
+                    pass
+            ot.record_outcome(sid, args.outcome == "success", skills=skills)
+            print(f"\n  ✓ Recorded {args.outcome} for session {sid or '(unknown)'}"
+                  f" (skills: {', '.join(skills) or 'none'}).\n")
+            return
+        # stats (default)
+        o = ot.overall_stats()
+        if not o["sessions"]:
+            print("\n  No outcomes recorded yet. Turn on learning.track_outcomes in "
+                  "config, or use 'janus learning record success|failure'.\n")
+            return
+        print(f"\n  Sessions tracked:      {o['sessions']}")
+        print(f"  Overall success rate:  {_pct(o['success_rate'])}")
+        print(f"  Recent (last 20):      {_pct(ot.recent_success_rate(20))}")
+        stats = ot.skill_stats()
+        if stats:
+            ranked = sorted(stats.items(),
+                            key=lambda kv: (kv[1]["success_rate"] or 0, kv[1]["uses"]),
+                            reverse=True)
+            print("\n  Skills by success rate (the reinforcement signal):")
+            for name, s in ranked[:10]:
+                print(f"    {_pct(s['success_rate']):>4}  {name}  ({s['successes']}/{s['uses']})")
+        print()
+
+    learning_parser.set_defaults(func=cmd_learning)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(

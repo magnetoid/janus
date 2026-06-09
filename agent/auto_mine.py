@@ -48,11 +48,25 @@ def maybe_automine(
             return None
         mine_memory = _flag("memory", "session_mining")
         mine_skills = _flag("skills", "session_mining")
-        if not (mine_memory or mine_skills):
+        track_outcomes = _flag("learning", "track_outcomes")
+        if not (mine_memory or mine_skills or track_outcomes):
             return None
         snapshot = list(messages)
+        session_id = next(
+            (str(m["session_id"]) for m in reversed(snapshot) if m.get("session_id")), ""
+        )
 
         def _work():
+            if track_outcomes:
+                try:
+                    from agent.outcome_tracker import (
+                        classify_session, record_outcome, skills_used_in,
+                    )
+                    verdict = classify_session(snapshot)
+                    if verdict is not None:  # skip UNCLEAR sessions
+                        record_outcome(session_id, verdict, skills=skills_used_in(snapshot))
+                except Exception as exc:
+                    logger.debug("auto outcome tracking failed: %s", exc)
             if mine_memory:
                 try:
                     from tools.memory_tool import MemoryStore

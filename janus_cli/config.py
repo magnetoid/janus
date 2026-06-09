@@ -1670,6 +1670,14 @@ DEFAULT_CONFIG = {
         "provider": "",
     },
 
+    # Self-learning reinforcement. When track_outcomes is on, each ended
+    # session is classified success/failure (cheap aux model) and attributed to
+    # the skills it used — the reward signal the curator/learning loop uses to
+    # promote what works. Opt-in (off): spends a small aux call per session.
+    "learning": {
+        "track_outcomes": False,
+    },
+
     # Subagent delegation — override the provider:model used by delegate_task
     # so child agents can run on a different (cheaper/faster) provider and model.
     # Uses the same runtime provider resolution as CLI/gateway startup, so all
