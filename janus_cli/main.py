@@ -14802,6 +14802,10 @@ Examples:
         "--dry-run", action="store_true", help="Show what would be dropped without changing anything")
     _reconcile_parser.add_argument(
         "--target", choices=["memory", "user"], default="memory")
+    _recall_parser = memory_sub.add_parser(
+        "recall", help="Surface the memory most relevant to a query (incl. journal history)")
+    _recall_parser.add_argument("query", nargs="+")
+    _recall_parser.add_argument("-n", type=int, default=5, help="How many results (default 5)")
 
     def cmd_memory(args):
         sub = getattr(args, "memory_command", None)
@@ -14930,6 +14934,18 @@ Examples:
             for t in removed:
                 print(f"    − {t[:80]}")
             print("  (full history is preserved in the daily journal)\n")
+        elif sub == "recall":
+            from agent.memory_recall import recall
+
+            query = " ".join(args.query)
+            hits = recall(query, n=getattr(args, "n", 5))
+            if not hits:
+                print(f"\n  Nothing relevant to '{query}' in memory yet.\n")
+                return
+            print(f"\n  Most relevant to '{query}':")
+            for h in hits:
+                print(f"    [{h['score']:.2f}] ({h['source']}) {h['text'][:90]}")
+            print()
         else:
             from janus_cli.memory_setup import memory_command
 
