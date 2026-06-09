@@ -379,6 +379,14 @@ CURATOR_REVIEW_PROMPT = (
     "counters are new and often mostly zero. Judge overlap on CONTENT, "
     "not on use_count. 'use=0' is not evidence a skill is valuable; it's "
     "absence of evidence either way.\n"
+    "4b. The 'success=' column is the OUTCOME signal — the success rate of "
+    "sessions that used the skill. It is stronger than use_count. When a "
+    "skill has a MEANINGFUL sample (success uses >= 3) AND a LOW success rate "
+    "(<= 40%), treat it as actively unhelpful: prefer ARCHIVING it (or "
+    "fixing it via a patch if the failure cause is obvious). A HIGH success "
+    "rate (>= 80%, uses >= 3) is positive evidence the skill works — keep it "
+    "even if not recently used, and do not archive it for staleness. "
+    "'success=n/a' means no outcome data yet — ignore it, don't penalize.\n"
     "5. DO NOT reject consolidation on the grounds that 'each skill has "
     "a distinct trigger'. Pairwise distinctness is the wrong bar. The "
     "right bar is: 'would a human maintainer write this as N separate "
@@ -1393,18 +1401,33 @@ def _render_report_markdown(p: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 def _render_candidate_list() -> str:
-    """Human/agent-readable list of agent-created skills with usage stats."""
+    """Human/agent-readable list of agent-created skills with usage + outcome stats."""
     rows = skill_usage.agent_created_report()
     if not rows:
         return "No agent-created skills to review."
+    # Outcome-based reinforcement signal: success rate of sessions that used each
+    # skill (see agent/outcome_tracker.py). This is stronger than use_count — a
+    # skill used often but correlated with FAILURE should be archived, not kept.
+    try:
+        from agent.outcome_tracker import skill_stats as _outcome_stats
+        outcomes = _outcome_stats()
+    except Exception:
+        outcomes = {}
     lines = [f"Agent-created skills ({len(rows)}):\n"]
     for r in rows:
+        o = outcomes.get(r["name"], {})
+        sr = o.get("success_rate")
+        outcome_col = (
+            f"success={int(sr * 100)}%({o.get('successes', 0)}/{o.get('uses', 0)})"
+            if sr is not None else "success=n/a"
+        )
         lines.append(
             f"- {r['name']}  "
             f"state={r['state']}  "
             f"pinned={'yes' if r.get('pinned') else 'no'}  "
             f"activity={r.get('activity_count', 0)}  "
             f"use={r.get('use_count', 0)}  "
+            f"{outcome_col}  "
             f"view={r.get('view_count', 0)}  "
             f"patches={r.get('patch_count', 0)}  "
             f"last_activity={r.get('last_activity_at') or 'never'}"
