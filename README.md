@@ -87,6 +87,24 @@ janus doctor       # Diagnose any issues
 
 ---
 
+## Self-Learning & Proactive Agency
+
+Janus doesn't just respond — it *learns* and *initiates*. These are unique to Janus:
+
+| Capability | What it does | Try it |
+| --- | --- | --- |
+| **Daily memory journal** | Every saved memory is mirrored into an append-only, dated, git/Obsidian-readable `memories/daily/*.md` log. | `janus memory log` · `/memory log` |
+| **Memory mining** | Re-reads a finished session and distills durable facts the agent didn't explicitly save. | `janus memory mine` · `/memory mine` |
+| **Procedure mining** | Drafts reusable **skills** (`SKILL.md` + script) from multi-step work that succeeded — for your review. | `janus skills mine` |
+| **Aspirations** | A long-term north-star Janus holds across sessions: drafts a roadmap and **checks in weekly** on your progress. | `janus aspire set "<goal>"` · `/aspire` |
+| **Interest discovery** | Track a field (e.g. design); a weekly job researches the latest and **asks before** folding it into memory/skills. | `janus interest add "<field>"` · `/interest` |
+| **Model-strengths routing** | Learns (via web research) which models lead per task, then feeds **Mixture-of-Agents** the best models for that task. | `janus models research <task>` |
+| **Auto-mining** | Opt-in: on session end, memory/procedure mining fire automatically. | `memory.session_mining: true` in config |
+
+The slash variants (`/memory`, `/aspire`, `/interest`) work from the messaging gateway (Telegram, Discord, …) and the TUI too.
+
+---
+
 ## Skip the API-key collection — Nous Portal
 
 Janus works with whatever provider you want — that's not changing. But if you'd rather not collect five separate API keys for the model, web search, image generation, TTS, and a cloud browser, **[Nous Portal](https://portal.nousresearch.com)** covers all of them under one subscription:
