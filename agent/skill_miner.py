@@ -191,11 +191,16 @@ def mine_session_skills(
             if p["name"].lower() not in existing
         ][:max_skills]
         result["proposals"] = proposals
+        result["flagged"] = []  # drafts that failed the verification gate
         if write_drafts:
+            from agent.skill_verifier import verify_skill_dir
             for p in proposals:
                 try:
                     path = write_skill_draft(p, drafts_dir=drafts_dir)
                     result["written"].append(str(path))
+                    verdict = verify_skill_dir(path)
+                    if not verdict["ok"]:
+                        result["flagged"].append({"path": str(path), "issues": verdict["issues"]})
                 except Exception as exc:
                     logger.debug("draft write failed for %s: %s", p.get("name"), exc)
     except Exception as exc:  # mining must never break a session

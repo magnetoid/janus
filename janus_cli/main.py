@@ -14540,6 +14540,8 @@ Examples:
         print(f"  ✓ Drafted {len(written)} skill(s) under {display_janus_home()}/skills/.drafts/:")
         for w in written:
             print(f"    • {w}")
+        for f in res.get("flagged", []):
+            print(f"    ⚠ {f['path']} — failed verification: {'; '.join(f['issues'])}")
         print("  Review them, then move out of .drafts/ to activate.\n")
 
     def cmd_skills(args):
