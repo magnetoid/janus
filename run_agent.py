@@ -2929,6 +2929,15 @@ class AIAgent:
                 )
             except Exception:
                 pass
+        # Opt-in auto-mining of the rotated-out session into memory facts /
+        # draft skills (off by default, background thread, best-effort). Single
+        # cross-surface hook: CLI /new, TUI session end, and context compression
+        # all route through commit_memory_session.
+        try:
+            from agent.auto_mine import maybe_automine
+            maybe_automine(messages or [])
+        except Exception:
+            pass
 
     def _sync_external_memory_for_turn(
         self,
