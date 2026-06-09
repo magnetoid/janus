@@ -15043,6 +15043,55 @@ Examples:
     aspire_parser.set_defaults(func=cmd_aspire)
 
     # =========================================================================
+    # models command — model-strengths intelligence (best model per task)
+    # =========================================================================
+    models_parser = subparsers.add_parser(
+        "models",
+        help="Learn and rank which models are best for which task",
+    )
+    models_sub = models_parser.add_subparsers(dest="models_command")
+    _m_rank = models_sub.add_parser("rank", help="Show ranked models for a task category")
+    _m_rank.add_argument("task")
+    _m_research = models_sub.add_parser("research", help="Web-research the best models for a task")
+    _m_research.add_argument("task")
+    models_sub.add_parser("tasks", help="List task categories with recorded rankings")
+
+    def cmd_models(args):
+        from agent import model_strengths as ms
+
+        sub = getattr(args, "models_command", None)
+        if sub == "rank":
+            ranked = ms.best_models_for(args.task, n=10)
+            if not ranked:
+                print(f"\n  No rankings for '{args.task}' yet. Try: janus models research {args.task}\n")
+                return
+            print(f"\n  Best models for '{args.task}':")
+            for i, m in enumerate(ranked, 1):
+                print(f"    {i}. {m}")
+            print()
+        elif sub == "research":
+            print(f"\n  Researching the best models for '{args.task}'…")
+            res = ms.research(args.task)
+            if res.get("error"):
+                print(f"  ⚠ Research failed: {res['error']}\n")
+                return
+            ranked = res.get("ranked", [])
+            if not ranked:
+                print("  No models extracted from the research.\n")
+                return
+            print(f"  ✓ Recorded {len(ranked)} model(s) for '{args.task}':")
+            for r in ranked:
+                print(f"    • {r['model']}" + (f" — {r['note']}" if r.get("note") else ""))
+            print()
+        elif sub == "tasks":
+            tasks = ms.known_tasks()
+            print("\n  " + (", ".join(tasks) if tasks else "(no rankings recorded yet)") + "\n")
+        else:
+            print("\n  Usage: janus models rank <task> | research <task> | tasks\n")
+
+    models_parser.set_defaults(func=cmd_models)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(
