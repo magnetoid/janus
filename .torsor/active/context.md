@@ -4,14 +4,14 @@ status: active
 tags:
 - active
 links: []
-created: '2026-06-08T21:57:40'
-updated: '2026-06-08T21:57:40'
+created: '2026-06-09T02:40:42'
+updated: '2026-06-09T02:40:42'
 ---
 
 # Active Context
 
 ## Current focus
-Best-of-both #5 shipped: directory-bound workspace profiles (cd41e82).
+Published to github.com/magnetoid/janus (public, main); repo URLs repointed + LICENSE MIT-compliant.
 
 ## Open questions
-Remaining: auto-fire memory mining (after user test); Gmail watch (heavy); deferred Nous removal; URL repointing (needs Imba Labs domain).
+Upstream still: hermes-agent.nousresearch.com docs/install URLs (24 in README) — need docs domain or switch README to source-install. Pending: /memory slash cmd (parked), auto-mining hook, Nous removal.

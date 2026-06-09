@@ -3,7 +3,7 @@
   "updated_at": "2026-06-04T23:57:51Z",
   "metadata": {
     "source": "hermes-agent repo",
-    "docs": "https://hermes-agent.nousresearch.com/docs/reference/model-catalog"
+    "docs": "https://github.com/magnetoid/janus"
   },
   "providers": {
     "openrouter": {

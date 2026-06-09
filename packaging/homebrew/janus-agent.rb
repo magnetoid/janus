@@ -2,7 +2,7 @@ class JanusAgent < Formula
   include Language::Python::Virtualenv
 
   desc "Self-improving AI agent that creates skills from experience"
-  homepage "https://hermes-agent.nousresearch.com"
+  homepage "https://github.com/magnetoid/janus"
   # Stable source should point at the semver-named sdist asset attached by
   # scripts/release.py, not the CalVer tag tarball.
   url "https://github.com/magnetoid/janus/releases/download/v2026.3.30/janus_agent-0.6.0.tar.gz"

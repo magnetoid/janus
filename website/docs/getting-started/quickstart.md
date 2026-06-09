@@ -48,21 +48,21 @@ Pick the row that matches your goal:
 
 ## 1. Install Janus Agent
 ### With the Janus Desktop installer on macOS or Windows (recommended)
-To easily install the command-line and desktop applications, [download the Janus Desktop installer](https://hermes-agent.nousresearch.com/desktop) from our website and run it.
+To easily install the command-line and desktop applications, [download the Janus Desktop installer](https://github.com/magnetoid/janus) from our website and run it.
 
 ### Without Janus Desktop:
 For a command-line only install without Janus Desktop, run:
 
 #### Linux / macOS / WSL2 / Android (Termux)
 ```bash
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://github.com/magnetoid/janus | bash
 ```
 
 #### Windows (native)
 
 Run in powershell:
 ```powershell
-iex (irm https://hermes-agent.nousresearch.com/install.ps1) 
+iex (irm https://github.com/magnetoid/janus) 
 ```
 
 :::tip Android / Termux

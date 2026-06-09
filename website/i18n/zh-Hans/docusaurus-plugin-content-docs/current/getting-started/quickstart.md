@@ -61,7 +61,7 @@ PyPI 发布版本跟踪带标签的版本（主/次版本发布），而非 `mai
 
 ```bash
 # Linux / macOS / WSL2 / Android (Termux)
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://github.com/magnetoid/janus | bash
 ```
 
 :::tip Android / Termux

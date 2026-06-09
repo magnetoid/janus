@@ -46,7 +46,7 @@ That does not stop Janus from working well as a phone-native CLI agent — it ju
 Janus now ships a Termux-aware installer path:
 
 ```bash
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://github.com/magnetoid/janus | bash
 ```
 
 On Termux, the installer automatically:

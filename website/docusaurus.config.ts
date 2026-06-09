@@ -7,7 +7,7 @@ const config: Config = {
   tagline: 'The self-improving AI agent',
   favicon: 'img/favicon.ico',
 
-  url: 'https://hermes-agent.nousresearch.com',
+  url: 'https://github.com/magnetoid/janus',
   baseUrl: '/docs/',
 
   organizationName: 'NousResearch',
@@ -114,7 +114,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://hermes-agent.nousresearch.com/desktop',
+          href: 'https://github.com/magnetoid/janus',
           label: 'Download',
           position: 'left',
         },
@@ -123,7 +123,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://hermes-agent.nousresearch.com',
+          href: 'https://github.com/magnetoid/janus',
           label: 'Home',
           position: 'right',
         },
@@ -162,7 +162,7 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            { label: 'Desktop Download', href: 'https://hermes-agent.nousresearch.com/desktop' },
+            { label: 'Desktop Download', href: 'https://github.com/magnetoid/janus' },
             { label: 'GitHub', href: 'https://github.com/magnetoid/janus' },
             { label: 'Imba Labs', href: 'https://nousresearch.com' },
           ],

@@ -17,12 +17,12 @@ If you prefer a real POSIX environment (for the dashboard's embedded terminal, `
 
 ## Quick install
 
-[Download the Janus Desktop installer](https://hermes-agent.nousresearch.com/desktop) from our website and run it.
+[Download the Janus Desktop installer](https://github.com/magnetoid/janus) from our website and run it.
 
 Or, for a command-line only install, open **PowerShell** (or Windows Terminal) and run:
 
 ```powershell
-iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+iex (irm https://github.com/magnetoid/janus)
 ```
 
 No admin rights required. The installer goes to `%LOCALAPPDATA%\janus\` and adds `janus` to your **User PATH** — open a new terminal after it finishes.
@@ -30,7 +30,7 @@ No admin rights required. The installer goes to `%LOCALAPPDATA%\janus\` and adds
 **Installer options** (requires the scriptblock form to pass parameters):
 
 ```powershell
-& ([scriptblock]::Create((irm https://hermes-agent.nousresearch.com/install.ps1))) -NoVenv -SkipSetup -Branch main
+& ([scriptblock]::Create((irm https://github.com/magnetoid/janus))) -NoVenv -SkipSetup -Branch main
 ```
 
 | Parameter     | Default                              | Purpose                                                    |

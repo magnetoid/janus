@@ -5,14 +5,14 @@
 # Janus Agent ☤
 
 <p align="center">
-  <a href="https://hermes-agent.nousresearch.com/docs/"><img src="https://img.shields.io/badge/Docs-hermes--agent.nousresearch.com-FFD700?style=for-the-badge" alt="Documentation"></a>
+  <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Docs-GitHub-FFD700?style=for-the-badge" alt="Documentation"></a>
   <a href="https://discord.gg/NousResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/magnetoid/janus/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://nousresearch.com"><img src="https://img.shields.io/badge/Built%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Built by Imba Labs"></a>
+  <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Built%20by-Imba%20Labs-blueviolet?style=for-the-badge" alt="Built by Imba Labs"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/Lang-中文-red?style=for-the-badge" alt="中文"></a>
 </p>
 
-**The self-improving AI agent built by [Imba Labs](https://nousresearch.com).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
+**The self-improving AI agent built by [Imba Labs](https://github.com/magnetoid/janus).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
 
 Use any model you want — [Nous Portal](https://portal.nousresearch.com), [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai) (AI-native cloud for Model API, Agent Sandbox, and GPU Cloud), [NVIDIA NIM](https://build.nvidia.com) (Nemotron), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch with `janus model` — no code changes, no lock-in.
 
@@ -30,29 +30,35 @@ Use any model you want — [Nous Portal](https://portal.nousresearch.com), [Open
 
 ## Quick Install
 
+Janus installs from source. (Hosted one-line installers will follow once Imba Labs has install hosting.)
+
 ### Linux, macOS, WSL2, Termux
 
 ```bash
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+git clone https://github.com/magnetoid/janus.git
+cd janus
+./setup-janus.sh     # installs uv, creates the venv, installs .[all], symlinks ~/.local/bin/janus
+```
+
+On Termux, install the curated `.[termux]` extra instead of `.[all]` (the full extra pulls Android-incompatible voice dependencies):
+
+```bash
+git clone https://github.com/magnetoid/janus.git && cd janus
+uv venv .venv --python 3.11 && source .venv/bin/activate
+uv pip install -e ".[termux]"
 ```
 
 ### Windows (native, PowerShell)
 
-> **Heads up:** Native Windows runs Janus without WSL — CLI, gateway, TUI, and tools all work natively. If you'd rather use WSL2, the Linux/macOS one-liner above works there too. Found a bug? Please [file issues](https://github.com/magnetoid/janus/issues).
-
-Run this in PowerShell:
+Native Windows runs Janus without WSL — CLI, gateway, TUI, and tools all work natively. Clone the repo and run the setup from Git Bash:
 
 ```powershell
-iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+git clone https://github.com/magnetoid/janus.git
+cd janus
+bash setup-janus.sh
 ```
 
-The installer handles everything: uv, Python 3.11, Node.js, ripgrep, ffmpeg, **and a portable Git Bash** (MinGit, unpacked to `%LOCALAPPDATA%\janus\git` — no admin required, completely isolated from any system Git install). Janus uses this bundled Git Bash to run shell commands.
-
-If you already have Git installed, the installer detects it and uses that instead. Otherwise a ~45MB MinGit download is all you need — it won't touch or interfere with any system Git.
-
-> **Android / Termux:** The tested manual path is documented in the [Termux guide](https://hermes-agent.nousresearch.com/docs/getting-started/termux). On Termux, Janus installs a curated `.[termux]` extra because the full `.[all]` extra currently pulls Android-incompatible voice dependencies.
->
-> **Windows:** Native Windows is fully supported — the PowerShell one-liner above installs everything. If you'd rather use WSL2, the Linux command works there too. Native Windows install lives under `%LOCALAPPDATA%\janus`; WSL2 installs under `~/.janus` as on Linux. The only Janus feature that currently needs WSL2 specifically is the browser-based dashboard chat pane (it uses a POSIX PTY — classic CLI and gateway both run natively).
+Native Windows install lives under `%LOCALAPPDATA%\janus`; WSL2 installs under `~/.janus` as on Linux. The only Janus feature that currently needs WSL2 specifically is the browser-based dashboard chat pane (it uses a POSIX PTY — classic CLI and gateway both run natively). Found a bug? Please [file issues](https://github.com/magnetoid/janus/issues).
 
 After installation:
 
@@ -77,7 +83,7 @@ janus update       # Update to the latest version
 janus doctor       # Diagnose any issues
 ```
 
-📖 **[Full documentation →](https://hermes-agent.nousresearch.com/docs/)**
+📖 **[Full documentation →](https://github.com/magnetoid/janus)**
 
 ---
 
@@ -94,7 +100,7 @@ One command from a fresh install:
 janus setup --portal
 ```
 
-That logs you in via OAuth, sets Nous as your provider, and turns on the Tool Gateway. Check what's wired up any time with `janus portal info`. Full details on the [Tool Gateway docs page](https://hermes-agent.nousresearch.com/docs/user-guide/features/tool-gateway).
+That logs you in via OAuth, sets Nous as your provider, and turns on the Tool Gateway. Check what's wired up any time with `janus portal info`. Full details on the [Tool Gateway docs page](https://github.com/magnetoid/janus).
 
 You can still bring your own keys per-tool whenever you want — the gateway is per-backend, not all-or-nothing.
 
@@ -116,31 +122,31 @@ Janus has two entry points: start the terminal UI with `janus`, or run the gatew
 | Interrupt current work         | `Ctrl+C` or send a new message                | `/stop` or send a new message                                                    |
 | Platform-specific status       | `/platforms`                                  | `/status`, `/sethome`                                                            |
 
-For the full command lists, see the [CLI guide](https://hermes-agent.nousresearch.com/docs/user-guide/cli) and the [Messaging Gateway guide](https://hermes-agent.nousresearch.com/docs/user-guide/messaging).
+For the full command lists, see the [CLI guide](https://github.com/magnetoid/janus) and the [Messaging Gateway guide](https://github.com/magnetoid/janus).
 
 ---
 
 ## Documentation
 
-All documentation lives at **[hermes-agent.nousresearch.com/docs](https://hermes-agent.nousresearch.com/docs/)**:
+All documentation lives at **[hermes-agent.nousresearch.com/docs](https://github.com/magnetoid/janus)**:
 
 | Section                                                                                             | What's Covered                                             |
 | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| [Quickstart](https://hermes-agent.nousresearch.com/docs/getting-started/quickstart)                 | Install → setup → first conversation in 2 minutes          |
-| [CLI Usage](https://hermes-agent.nousresearch.com/docs/user-guide/cli)                              | Commands, keybindings, personalities, sessions             |
-| [Configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration)                | Config file, providers, models, all options                |
-| [Messaging Gateway](https://hermes-agent.nousresearch.com/docs/user-guide/messaging)                | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
-| [Security](https://hermes-agent.nousresearch.com/docs/user-guide/security)                          | Command approval, DM pairing, container isolation          |
-| [Tools & Toolsets](https://hermes-agent.nousresearch.com/docs/user-guide/features/tools)            | 40+ tools, toolset system, terminal backends               |
-| [Skills System](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills)              | Procedural memory, Skills Hub, creating skills             |
-| [Memory](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory)                     | Persistent memory, user profiles, best practices           |
-| [MCP Integration](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp)               | Connect any MCP server for extended capabilities           |
-| [Cron Scheduling](https://hermes-agent.nousresearch.com/docs/user-guide/features/cron)              | Scheduled tasks with platform delivery                     |
-| [Context Files](https://hermes-agent.nousresearch.com/docs/user-guide/features/context-files)       | Project context that shapes every conversation             |
-| [Architecture](https://hermes-agent.nousresearch.com/docs/developer-guide/architecture)             | Project structure, agent loop, key classes                 |
-| [Contributing](https://hermes-agent.nousresearch.com/docs/developer-guide/contributing)             | Development setup, PR process, code style                  |
-| [CLI Reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands)                  | All commands and flags                                     |
-| [Environment Variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables) | Complete env var reference                                 |
+| [Quickstart](https://github.com/magnetoid/janus)                 | Install → setup → first conversation in 2 minutes          |
+| [CLI Usage](https://github.com/magnetoid/janus)                              | Commands, keybindings, personalities, sessions             |
+| [Configuration](https://github.com/magnetoid/janus)                | Config file, providers, models, all options                |
+| [Messaging Gateway](https://github.com/magnetoid/janus)                | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
+| [Security](https://github.com/magnetoid/janus)                          | Command approval, DM pairing, container isolation          |
+| [Tools & Toolsets](https://github.com/magnetoid/janus)            | 40+ tools, toolset system, terminal backends               |
+| [Skills System](https://github.com/magnetoid/janus)              | Procedural memory, Skills Hub, creating skills             |
+| [Memory](https://github.com/magnetoid/janus)                     | Persistent memory, user profiles, best practices           |
+| [MCP Integration](https://github.com/magnetoid/janus)               | Connect any MCP server for extended capabilities           |
+| [Cron Scheduling](https://github.com/magnetoid/janus)              | Scheduled tasks with platform delivery                     |
+| [Context Files](https://github.com/magnetoid/janus)       | Project context that shapes every conversation             |
+| [Architecture](https://github.com/magnetoid/janus)             | Project structure, agent loop, key classes                 |
+| [Contributing](https://github.com/magnetoid/janus)             | Development setup, PR process, code style                  |
+| [CLI Reference](https://github.com/magnetoid/janus)                  | All commands and flags                                     |
+| [Environment Variables](https://github.com/magnetoid/janus) | Complete env var reference                                 |
 
 ---
 
@@ -176,7 +182,7 @@ See `janus claw migrate --help` for all options, or use the `openclaw-migration`
 
 ## Contributing
 
-We welcome contributions! See the [Contributing Guide](https://hermes-agent.nousresearch.com/docs/developer-guide/contributing) for development setup, code style, and PR process.
+We welcome contributions! See the [Contributing Guide](https://github.com/magnetoid/janus) for development setup, code style, and PR process.
 
 Quick start for contributors — clone and go with `setup-janus.sh`:
 

@@ -15,7 +15,7 @@
 
 [Unit]
 Description=Janus Kanban dispatcher (DEPRECATED standalone daemon — prefer gateway-embedded dispatch)
-Documentation=https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban
+Documentation=https://github.com/magnetoid/janus
 After=network.target
 
 [Service]
