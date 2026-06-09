@@ -81,7 +81,7 @@ python $JANUS_HOME/skills/devops/watchers/scripts/watch_rss.py \
 
 ```bash
 python $JANUS_HOME/skills/devops/watchers/scripts/watch_github.py \
-  --name janus-issues --repo NousResearch/hermes-agent --scope issues
+  --name janus-issues --repo magnetoid/janus --scope issues
 ```
 
 轮询任意 JSON API：

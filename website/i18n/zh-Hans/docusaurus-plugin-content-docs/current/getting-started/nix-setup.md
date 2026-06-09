@@ -35,11 +35,11 @@ Janus Agent 提供了一个 Nix flake，支持三个层级的集成：
 
 ```bash
 # 直接运行（首次使用时构建，之后使用缓存）
-nix run github:NousResearch/hermes-agent -- setup
-nix run github:NousResearch/hermes-agent -- chat
+nix run github:magnetoid/janus -- setup
+nix run github:magnetoid/janus -- chat
 
 # 或持久化安装
-nix profile install github:NousResearch/hermes-agent
+nix profile install github:magnetoid/janus
 janus setup
 janus chat
 ```
@@ -50,7 +50,7 @@ janus chat
 <summary><strong>从本地克隆构建</strong></summary>
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/magnetoid/janus.git
 cd janus-agent
 nix build
 ./result/bin/janus setup
@@ -75,7 +75,7 @@ nix build
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    janus-agent.url = "github:NousResearch/hermes-agent";
+    janus-agent.url = "github:magnetoid/janus";
   };
 
   outputs = { nixpkgs, janus-agent, ... }: {
@@ -685,7 +685,7 @@ services.janus-agent = {
 
 ```nix
 {
-  inputs.janus-agent.url = "github:NousResearch/hermes-agent";
+  inputs.janus-agent.url = "github:magnetoid/janus";
   outputs = { janus-agent, nixpkgs, ... }: {
     nixpkgs.overlays = [ janus-agent.overlays.default ];
     # 然后：

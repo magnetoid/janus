@@ -140,7 +140,7 @@ tail -f ~/.janus/logs/update.log
 janus version
 ```
 
-与 [GitHub releases 页面](https://github.com/NousResearch/hermes-agent/releases) 上的最新版本进行比较。
+与 [GitHub releases 页面](https://github.com/magnetoid/janus/releases) 上的最新版本进行比较。
 
 ### 从消息平台更新
 

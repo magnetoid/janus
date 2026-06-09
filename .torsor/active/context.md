@@ -4,14 +4,14 @@ status: active
 tags:
 - active
 links: []
-created: '2026-06-08T03:18:20'
-updated: '2026-06-08T03:18:20'
+created: '2026-06-08T21:57:40'
+updated: '2026-06-08T21:57:40'
 ---
 
 # Active Context
 
 ## Current focus
-Goal delivered: all-in rebrand (94477fd) + daily memory snapshots feature (73581a3) committed.
+Best-of-both #5 shipped: directory-bound workspace profiles (cd41e82).
 
 ## Open questions
-Pending: regen uv.lock, full suite when disk allows, repoint URLs when Imba Labs infra exists, next OpenClaw concept (workspace profiles/cron/Gmail).
+Remaining: auto-fire memory mining (after user test); Gmail watch (heavy); deferred Nous removal; URL repointing (needs Imba Labs domain).

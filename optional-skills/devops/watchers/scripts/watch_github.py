@@ -6,7 +6,7 @@ Usage (via cron with --no-agent):
     janus cron create janus-issues \\
       --schedule "*/5 * * * *" --no-agent \\
       --script "$JANUS_HOME/skills/devops/watchers/scripts/watch_github.py" \\
-      --script-args "--name janus-issues --repo NousResearch/hermes-agent --scope issues"
+      --script-args "--name janus-issues --repo magnetoid/janus --scope issues"
 
 Set GITHUB_TOKEN (or GH_TOKEN) in ~/.janus/.env to avoid the 60 req/hr
 anonymous rate limit.

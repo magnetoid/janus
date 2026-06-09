@@ -15,19 +15,19 @@ Janus isn't just a CLI tool. You can import `AIAgent` directly and use it progra
 Install Janus directly from the repository:
 
 ```bash
-pip install git+https://github.com/NousResearch/hermes-agent.git
+pip install git+https://github.com/magnetoid/janus.git
 ```
 
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv pip install git+https://github.com/NousResearch/hermes-agent.git
+uv pip install git+https://github.com/magnetoid/janus.git
 ```
 
 You can also pin it in your `requirements.txt`:
 
 ```text
-janus-agent @ git+https://github.com/NousResearch/hermes-agent.git
+janus-agent @ git+https://github.com/magnetoid/janus.git
 ```
 
 :::tip

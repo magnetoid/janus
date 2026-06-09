@@ -81,7 +81,7 @@ Watch a GitHub repo (set `GITHUB_TOKEN` in `~/.janus/.env` to avoid the 60 req/h
 
 ```bash
 python $JANUS_HOME/skills/devops/watchers/scripts/watch_github.py \
-  --name janus-issues --repo NousResearch/hermes-agent --scope issues
+  --name janus-issues --repo magnetoid/janus --scope issues
 ```
 
 Poll an arbitrary JSON API:

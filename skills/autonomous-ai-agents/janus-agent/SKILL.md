@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   janus:
     tags: [janus, setup, configuration, multi-agent, spawning, cli, gateway, development]
-    homepage: https://github.com/NousResearch/hermes-agent
+    homepage: https://github.com/magnetoid/janus
     related_skills: [claude-code, codex, opencode]
 ---
 

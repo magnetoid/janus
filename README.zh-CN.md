@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://hermes-agent.nousresearch.com/docs/"><img src="https://img.shields.io/badge/Docs-hermes--agent.nousresearch.com-FFD700?style=for-the-badge" alt="Documentation"></a>
   <a href="https://discord.gg/NousResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/NousResearch/hermes-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
+  <a href="https://github.com/magnetoid/janus/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://nousresearch.com"><img src="https://img.shields.io/badge/Built%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Built by Imba Labs"></a>
   <a href="README.md"><img src="https://img.shields.io/badge/Lang-English-lightgrey?style=for-the-badge" alt="English"></a>
 </p>
@@ -166,7 +166,7 @@ janus claw migrate --overwrite  # 覆盖已有冲突
 贡献者快速开始——克隆并使用 `setup-janus.sh`：
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/magnetoid/janus.git
 cd janus-agent
 ./setup-janus.sh     # 安装 uv、创建 venv、安装 .[all]、创建符号链接 ~/.local/bin/janus
 ./janus              # 自动检测 venv，无需先 source
@@ -188,8 +188,8 @@ python -m pytest tests/ -q
 
 - 💬 [Discord](https://discord.gg/NousResearch)
 - 📚 [技能中心](https://agentskills.io)
-- 🐛 [问题反馈](https://github.com/NousResearch/hermes-agent/issues)
-- 💡 [讨论区](https://github.com/NousResearch/hermes-agent/discussions)
+- 🐛 [问题反馈](https://github.com/magnetoid/janus/issues)
+- 💡 [讨论区](https://github.com/magnetoid/janus/discussions)
 - 🔌 [JanusClaw](https://github.com/AaronWong1999/janusclaw) — 社区微信桥接：在同一微信账号上运行 Janus Agent 和 OpenClaw。
 
 ---

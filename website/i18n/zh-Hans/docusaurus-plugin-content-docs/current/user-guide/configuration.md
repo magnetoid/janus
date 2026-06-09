@@ -79,7 +79,7 @@ delegation:
 
 还可以设置 `providers.<id>.stale_timeout_seconds` 用于非流式陈旧调用检测器，以及 `providers.<id>.models.<model>.stale_timeout_seconds` 作为特定模型的覆盖值。此值优先于旧版 `JANUS_API_CALL_STALE_TIMEOUT` 环境变量。
 
-不设置这些值将保持旧版默认值（`JANUS_API_TIMEOUT=1800`s、`JANUS_API_CALL_STALE_TIMEOUT=300`s、原生 Anthropic 900s）。目前不适用于 AWS Bedrock（`bedrock_converse` 和 AnthropicBedrock SDK 路径均使用 boto3 及其自身的超时配置）。请参阅 [`cli-config.yaml.example`](https://github.com/NousResearch/hermes-agent/blob/main/cli-config.yaml.example) 中的注释示例。
+不设置这些值将保持旧版默认值（`JANUS_API_TIMEOUT=1800`s、`JANUS_API_CALL_STALE_TIMEOUT=300`s、原生 Anthropic 900s）。目前不适用于 AWS Bedrock（`bedrock_converse` 和 AnthropicBedrock SDK 路径均使用 boto3 及其自身的超时配置）。请参阅 [`cli-config.yaml.example`](https://github.com/magnetoid/janus/blob/main/cli-config.yaml.example) 中的注释示例。
 
 ## 终端后端配置
 

@@ -35,11 +35,11 @@ No clone needed. Nix fetches, builds, and runs everything:
 
 ```bash
 # Run directly (builds on first use, cached after)
-nix run github:NousResearch/hermes-agent -- setup
-nix run github:NousResearch/hermes-agent -- chat
+nix run github:magnetoid/janus -- setup
+nix run github:magnetoid/janus -- chat
 
 # Or install persistently
-nix profile install github:NousResearch/hermes-agent
+nix profile install github:magnetoid/janus
 janus setup
 janus chat
 ```
@@ -50,13 +50,13 @@ After `nix profile install`, `janus`, `janus-agent`, and `janus-acp` are on your
 The default package doesn't include messaging platform libraries — they were moved to on-demand installation, which can't work in Nix's read-only environment. If you plan to connect the agent to Discord, Telegram, or Slack, install the `messaging` variant:
 
 ```bash
-nix profile install github:NousResearch/hermes-agent#messaging
+nix profile install github:magnetoid/janus#messaging
 ```
 
 For all optional extras (voice, all providers, all platforms):
 
 ```bash
-nix profile install github:NousResearch/hermes-agent#full
+nix profile install github:magnetoid/janus#full
 ```
 
 The `full` variant adds ~700 MB to the closure. If you only need messaging platforms, `#messaging` adds just ~33 MB.
@@ -66,7 +66,7 @@ The `full` variant adds ~700 MB to the closure. If you only need messaging platf
 <summary><strong>Building from a local clone</strong></summary>
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/magnetoid/janus.git
 cd janus-agent
 nix build
 ./result/bin/janus setup
@@ -91,7 +91,7 @@ This module requires NixOS. For non-NixOS systems (macOS, other Linux distros), 
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    janus-agent.url = "github:NousResearch/hermes-agent";
+    janus-agent.url = "github:magnetoid/janus";
   };
 
   outputs = { nixpkgs, janus-agent, ... }: {
@@ -730,7 +730,7 @@ External flakes can override the package directly:
 
 ```nix
 {
-  inputs.janus-agent.url = "github:NousResearch/hermes-agent";
+  inputs.janus-agent.url = "github:magnetoid/janus";
   outputs = { janus-agent, nixpkgs, ... }: {
     nixpkgs.overlays = [ janus-agent.overlays.default ];
     # Then:

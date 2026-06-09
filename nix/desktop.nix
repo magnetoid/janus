@@ -101,7 +101,7 @@ stdenv.mkDerivation {
 
   meta = with lib; {
     description = "Native Electron desktop shell for Janus Agent";
-    homepage = "https://github.com/NousResearch/hermes-agent";
+    homepage = "https://github.com/magnetoid/janus";
     license = licenses.mit;
     platforms = platforms.unix;
     mainProgram = "janus-desktop";

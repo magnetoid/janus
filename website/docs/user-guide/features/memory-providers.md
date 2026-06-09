@@ -68,7 +68,7 @@ janus memory setup        # select "honcho" — runs the Honcho-specific post-se
 
 The legacy `janus honcho setup` command still works (it now redirects to `janus memory setup`), but is only registered after Honcho is selected as the active memory provider.
 
-**Config:** `$JANUS_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$JANUS_HOME/honcho.json` > `~/.janus/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/janus).
+**Config:** `$JANUS_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$JANUS_HOME/honcho.json` > `~/.janus/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/magnetoid/janus/blob/main/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/janus).
 
 <details>
 <summary>Full config reference</summary>
@@ -255,7 +255,7 @@ See the [Honcho page](./honcho.md#observation-directional-vs-unified) for the fu
 
 </details>
 
-See the [config reference](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/janus).
+See the [config reference](https://github.com/magnetoid/janus/blob/main/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/janus).
 
 
 ---
@@ -366,7 +366,7 @@ The setup wizard installs dependencies automatically and only installs what's ne
 | `retain_assistant_prefix` | `Assistant` | Label used before assistant turns in auto-retained transcripts |
 | `recall_tags` | — | Tags to filter on recall |
 
-See [plugin README](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/hindsight/README.md) for the full configuration reference.
+See [plugin README](https://github.com/magnetoid/janus/blob/main/plugins/memory/hindsight/README.md) for the full configuration reference.
 
 ---
 

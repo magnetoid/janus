@@ -80,7 +80,7 @@ Why these packages?
 ### 2. Clone Janus
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/magnetoid/janus.git
 cd janus-agent
 ```
 

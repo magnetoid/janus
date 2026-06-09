@@ -41,7 +41,7 @@ description: "如何为 Janus Agent 做贡献 — 开发环境配置、代码风
 ### 克隆与安装
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/magnetoid/janus.git
 cd janus-agent
 
 # 使用 Python 3.11 创建虚拟环境
@@ -90,7 +90,7 @@ pytest tests/ -v
 - **注释**：仅在解释非显而易见的意图、权衡取舍或 API 特殊行为时添加
 - **错误处理**：捕获具体异常。对于意外错误，使用 `logger.warning()`/`logger.error()` 并设置 `exc_info=True`
 - **跨平台**：不得假设 Unix 环境（见下文）
-- **Profile 安全路径**：不得硬编码 `~/.janus` — 代码路径使用 `janus_constants` 中的 `get_janus_home()`，面向用户的消息使用 `display_janus_home()`。完整规则参见 [AGENTS.md](https://github.com/NousResearch/hermes-agent/blob/main/AGENTS.md#profiles-multi-instance-support)。
+- **Profile 安全路径**：不得硬编码 `~/.janus` — 代码路径使用 `janus_constants` 中的 `get_janus_home()`，面向用户的消息使用 `display_janus_home()`。完整规则参见 [AGENTS.md](https://github.com/magnetoid/janus/blob/main/AGENTS.md#profiles-multi-instance-support)。
 
 ## 跨平台兼容性
 
@@ -226,7 +226,7 @@ fix(security): prevent shell injection in sudo password piping
 
 ## 报告问题
 
-- 使用 [GitHub Issues](https://github.com/NousResearch/hermes-agent/issues)
+- 使用 [GitHub Issues](https://github.com/magnetoid/janus/issues)
 - 请包含：操作系统、Python 版本、Janus 版本（`janus version`）、完整错误堆栈
 - 包含复现步骤
 - 创建前请检查是否已有重复 issue
@@ -240,4 +240,4 @@ fix(security): prevent shell injection in sudo password piping
 
 ## 许可证
 
-提交贡献即表示您同意您的贡献将以 [MIT 许可证](https://github.com/NousResearch/hermes-agent/blob/main/LICENSE) 授权。
+提交贡献即表示您同意您的贡献将以 [MIT 许可证](https://github.com/magnetoid/janus/blob/main/LICENSE) 授权。

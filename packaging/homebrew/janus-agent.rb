@@ -5,7 +5,7 @@ class JanusAgent < Formula
   homepage "https://hermes-agent.nousresearch.com"
   # Stable source should point at the semver-named sdist asset attached by
   # scripts/release.py, not the CalVer tag tarball.
-  url "https://github.com/NousResearch/hermes-agent/releases/download/v2026.3.30/janus_agent-0.6.0.tar.gz"
+  url "https://github.com/magnetoid/janus/releases/download/v2026.3.30/janus_agent-0.6.0.tar.gz"
   sha256 "<replace-with-release-asset-sha256>"
   license "MIT"
 
