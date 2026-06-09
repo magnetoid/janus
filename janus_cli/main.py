@@ -14458,6 +14458,54 @@ Examples:
         help="Interactive skill configuration — enable/disable individual skills",
     )
 
+    skills_mine = skills_subparsers.add_parser(
+        "mine",
+        help="Draft reusable skills from a past session (review before activating)",
+    )
+    skills_mine.add_argument(
+        "--session", default=None,
+        help="Session id to mine (default: most recent CLI session)",
+    )
+
+    def _cmd_skills_mine(args):
+        from janus_state import SessionDB
+        from agent.skill_miner import mine_session_skills
+        from janus_constants import display_janus_home
+
+        session_id = getattr(args, "session", None) or _resolve_last_session("cli")
+        if not session_id:
+            print("\n  No session found to mine. Have a conversation first.\n")
+            return
+        db = SessionDB()
+        try:
+            messages = db.get_messages_as_conversation(session_id)
+        finally:
+            try:
+                db.close()
+            except Exception:
+                pass
+        if not messages:
+            print(f"\n  Session {session_id} has no messages to mine.\n")
+            return
+        try:
+            from tools.skills_tool import _find_all_skills
+            existing = [s["name"] for s in _find_all_skills()]
+        except Exception:
+            existing = []
+        print(f"\n  Mining session {session_id} for reusable procedures…")
+        res = mine_session_skills(messages, existing_skill_names=existing)
+        if res.get("error"):
+            print(f"  ⚠ Mining failed: {res['error']}\n")
+            return
+        written = res.get("written", [])
+        if not written:
+            print("  No reusable procedures found worth saving.\n")
+            return
+        print(f"  ✓ Drafted {len(written)} skill(s) under {display_janus_home()}/skills/.drafts/:")
+        for w in written:
+            print(f"    • {w}")
+        print("  Review them, then move out of .drafts/ to activate.\n")
+
     def cmd_skills(args):
         # Route 'config' action to skills_config module
         if getattr(args, "skills_action", None) == "config":
@@ -14465,6 +14513,8 @@ Examples:
             from janus_cli.skills_config import skills_command as skills_config_command
 
             skills_config_command(args)
+        elif getattr(args, "skills_action", None) == "mine":
+            _cmd_skills_mine(args)
         else:
             from janus_cli.skills_hub import skills_command
 
