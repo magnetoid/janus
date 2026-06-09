@@ -15150,6 +15150,78 @@ Examples:
     interest_parser.set_defaults(func=cmd_interest)
 
     # =========================================================================
+    # workflow command — declarative multi-step orchestration
+    # =========================================================================
+    workflow_parser = subparsers.add_parser(
+        "workflow",
+        help="Run declarative multi-step workflows",
+        description=(
+            "Run a YAML workflow of ordered steps. Each step can restrict its\n"
+            "tools/model, run conditionally (when:), or loop (for_each:), and\n"
+            "step outputs thread into later steps. Workflows live in\n"
+            "~/.janus/workflows/<name>.yaml."
+        ),
+    )
+    workflow_sub = workflow_parser.add_subparsers(dest="workflow_command")
+    workflow_sub.add_parser("list", help="List available workflows")
+    _wf_show = workflow_sub.add_parser("show", help="Show a workflow's steps")
+    _wf_show.add_argument("name")
+    _wf_run = workflow_sub.add_parser("run", help="Run a workflow")
+    _wf_run.add_argument("name")
+    _wf_run.add_argument("--var", action="append", default=[], metavar="KEY=VALUE",
+                         help="Seed a context variable (repeatable)")
+
+    def cmd_workflow(args):
+        from agent import workflow_engine as wfe
+
+        sub = getattr(args, "workflow_command", None)
+        if sub == "list":
+            wls = wfe.list_workflows()
+            print("\n  " + (", ".join(wls) if wls
+                            else "(none — add YAML files under ~/.janus/workflows/)") + "\n")
+            return
+        if sub in ("show", "run"):
+            try:
+                w = wfe.load_workflow(args.name)
+            except Exception as exc:
+                print(f"\n  ⚠ {exc}\n")
+                return
+        if sub == "show":
+            print(f"\n  {w.get('name', args.name)}: {w.get('description', '')}")
+            for i, s in enumerate(w.get("steps", []), 1):
+                bits = []
+                for key in ("when", "for_each", "toolsets", "model"):
+                    if s.get(key):
+                        bits.append(f"{key}={s[key]}")
+                meta = f"  ({', '.join(bits)})" if bits else ""
+                print(f"    {i}. {s.get('name')}{meta}")
+            print()
+        elif sub == "run":
+            context = {}
+            for kv in args.var:
+                if "=" in kv:
+                    k, v = kv.split("=", 1)
+                    context[k.strip()] = v
+            steps = w.get("steps", [])
+            print(f"\n  Running workflow '{w.get('name', args.name)}' ({len(steps)} steps)…")
+            res = wfe.run_workflow(w, step_runner=wfe.default_step_runner, context=context)
+            if res.get("error"):
+                print(f"  ⚠ Workflow failed: {res['error']}\n")
+                return
+            ran = ", ".join(res["ran"]) or "(none)"
+            tail = f"; skipped: {', '.join(res['skipped'])}" if res["skipped"] else ""
+            print(f"  ✓ Ran: {ran}{tail}")
+            if res["ran"]:
+                last = res["ran"][-1]
+                out = res["context"].get(last)
+                if out:
+                    print(f"\n--- {last} ---\n{out}\n")
+        else:
+            print("\n  Usage: janus workflow list | show <name> | run <name> [--var k=v]\n")
+
+    workflow_parser.set_defaults(func=cmd_workflow)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(
