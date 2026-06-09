@@ -14938,6 +14938,111 @@ Examples:
     workspace_parser.set_defaults(func=cmd_workspace)
 
     # =========================================================================
+    # aspire command — long-horizon goals Janus holds + proactively checks in on
+    # =========================================================================
+    aspire_parser = subparsers.add_parser(
+        "aspire",
+        help="Set a long-term goal Janus remembers and checks in on",
+        description=(
+            "An aspiration is a north-star Janus holds across sessions (unlike\n"
+            "/goal, which grinds on one task). Setting one drafts a milestone\n"
+            "roadmap and schedules a recurring check-in that asks whether it's\n"
+            "still your goal and suggests the next step."
+        ),
+    )
+    aspire_sub = aspire_parser.add_subparsers(dest="aspire_command")
+    _asp_set = aspire_sub.add_parser("set", help="Set an aspiration (drafts a roadmap + schedules check-ins)")
+    _asp_set.add_argument("goal", nargs="+", help="The goal text")
+    _asp_set.add_argument("--no-roadmap", action="store_true", help="Skip auto-drafting a roadmap")
+    _asp_set.add_argument("--no-checkin", action="store_true", help="Don't schedule the recurring check-in")
+    aspire_sub.add_parser("list", help="List your aspirations")
+    _asp_show = aspire_sub.add_parser("show", help="Show one aspiration")
+    _asp_show.add_argument("id")
+    _asp_done = aspire_sub.add_parser("done", help="Mark an aspiration achieved")
+    _asp_done.add_argument("id")
+    _asp_clear = aspire_sub.add_parser("clear", help="Remove an aspiration")
+    _asp_clear.add_argument("id")
+    aspire_sub.add_parser("checkin", help="Run a check-in now (prints active aspirations)")
+
+    def _ensure_aspiration_checkin_cron():
+        try:
+            from janus_constants import get_janus_home
+            from agent import aspirations as asp
+            import cron.jobs as cj
+
+            scripts_dir = get_janus_home() / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / asp.CHECKIN_SCRIPT_NAME).write_text(
+                asp.checkin_script_source(), encoding="utf-8"
+            )
+            for j in cj.list_jobs(include_disabled=True):
+                if j.get("name") == asp.CHECKIN_JOB_NAME:
+                    return False  # already scheduled
+            cj.create_job(
+                prompt=asp.CHECKIN_PROMPT,
+                schedule="0 9 * * 1",  # Mondays 9am (parse_schedule wants cron/interval)
+                name=asp.CHECKIN_JOB_NAME,
+                script=asp.CHECKIN_SCRIPT_NAME,
+            )
+            return True
+        except Exception:
+            return False
+
+    def cmd_aspire(args):
+        from agent import aspirations as asp
+
+        sub = getattr(args, "aspire_command", None)
+        if sub == "set":
+            title = " ".join(args.goal).strip()
+            roadmap = [] if getattr(args, "no_roadmap", False) else asp.draft_roadmap(title)
+            rec = asp.add(title, roadmap=roadmap)
+            print(f"\n  ✓ Aspiration set: {rec['title']}  [{rec['id']}]")
+            if roadmap:
+                print("  Roadmap:")
+                for i, m in enumerate(roadmap, 1):
+                    print(f"    {i}. {m}")
+            if not getattr(args, "no_checkin", False):
+                if _ensure_aspiration_checkin_cron():
+                    print("  Scheduled a weekly check-in (see 'janus cron list').")
+            print()
+        elif sub == "show":
+            a = asp.get(args.id)
+            if not a:
+                print(f"\n  No aspiration '{args.id}'.\n")
+                return
+            print(f"\n  {a['title']}  [{a['id']}] ({a['status']})")
+            for i, m in enumerate(a.get("roadmap") or [], 1):
+                print(f"    {i}. {m}")
+            if a.get("last_checkin_at"):
+                print(f"  last check-in: {a['last_checkin_at']}")
+            print()
+        elif sub == "done":
+            print("\n  ✓ Marked achieved.\n" if asp.set_status(args.id, "achieved")
+                  else f"\n  No aspiration '{args.id}'.\n")
+        elif sub == "clear":
+            print("\n  ✓ Removed.\n" if asp.remove(args.id)
+                  else f"\n  No aspiration '{args.id}'.\n")
+        elif sub == "checkin":
+            ctx = asp.format_checkin_context()
+            if not ctx:
+                print("\n  No active aspirations.\n")
+                return
+            print("\n" + ctx)
+            asp.mark_checked_in()
+        else:  # list (default)
+            items = asp.load()
+            if not items:
+                print('\n  No aspirations yet. Set one: janus aspire set "<goal>"\n')
+                return
+            print()
+            for a in items:
+                flag = {"achieved": "✓", "active": "•"}.get(a.get("status"), "·")
+                print(f"  {flag} [{a['id']}] {a['title']}  ({a.get('status')})")
+            print()
+
+    aspire_parser.set_defaults(func=cmd_aspire)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(
