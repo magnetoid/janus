@@ -233,10 +233,41 @@ async def _run_aggregator_model(
     return content
 
 
+def _select_reference_models(task: Optional[str]) -> List[str]:
+    """Pick reference models for a task from the model-strengths KB.
+
+    Falls back to the hardcoded REFERENCE_MODELS when no ``task`` is given or
+    the KB has no entries for it — so default behaviour is unchanged.
+    """
+    if task:
+        try:
+            from agent.model_strengths import best_models_for
+            picked = best_models_for(task, n=4)
+            if picked:
+                return picked
+        except Exception:
+            pass
+    return REFERENCE_MODELS
+
+
+def _select_aggregator_model(task: Optional[str]) -> str:
+    """Pick the aggregator (synthesis) model for a task, else the default."""
+    if task:
+        try:
+            from agent.model_strengths import best_models_for
+            picked = best_models_for(task, n=1)
+            if picked:
+                return picked[0]
+        except Exception:
+            pass
+    return AGGREGATOR_MODEL
+
+
 async def mixture_of_agents_tool(
     user_prompt: str,
     reference_models: Optional[List[str]] = None,
-    aggregator_model: Optional[str] = None
+    aggregator_model: Optional[str] = None,
+    task: Optional[str] = None,
 ) -> str:
     """
     Process a complex query using the Mixture-of-Agents methodology.
@@ -303,9 +334,10 @@ async def mixture_of_agents_tool(
         if not os.getenv("OPENROUTER_API_KEY"):
             raise ValueError("OPENROUTER_API_KEY environment variable not set")
         
-        # Use provided models or defaults
-        ref_models = reference_models or REFERENCE_MODELS
-        agg_model = aggregator_model or AGGREGATOR_MODEL
+        # Explicit models win; otherwise pick task-appropriate models from the
+        # model-strengths KB (falls back to the hardcoded defaults).
+        ref_models = reference_models or _select_reference_models(task)
+        agg_model = aggregator_model or _select_aggregator_model(task)
         
         logger.info("Using %s reference models in 2-layer MoA architecture", len(ref_models))
         
@@ -524,6 +556,10 @@ MOA_SCHEMA = {
             "user_prompt": {
                 "type": "string",
                 "description": "The complex query or problem to solve using multiple AI models. Should be a challenging problem that benefits from diverse perspectives and collaborative reasoning."
+            },
+            "task": {
+                "type": "string",
+                "description": "Optional task category (e.g. 'coding', 'math', 'research', 'writing'). When set, the strongest models for that task — learned via 'janus models research' — are used as the reference + aggregator models instead of the fixed defaults."
             }
         },
         "required": ["user_prompt"]
@@ -534,7 +570,7 @@ registry.register(
     name="mixture_of_agents",
     toolset="moa",
     schema=MOA_SCHEMA,
-    handler=lambda args, **kw: mixture_of_agents_tool(user_prompt=args.get("user_prompt", "")),
+    handler=lambda args, **kw: mixture_of_agents_tool(user_prompt=args.get("user_prompt", ""), task=args.get("task")),
     check_fn=check_moa_requirements,
     requires_env=["OPENROUTER_API_KEY"],
     is_async=True,
