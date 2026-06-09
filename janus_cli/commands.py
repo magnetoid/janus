@@ -55,6 +55,7 @@ class CommandDef:
     cli_only: bool = False             # only available in CLI
     gateway_only: bool = False         # only available in gateway/messaging
     gateway_config_gate: str | None = None  # config dotpath; when truthy, overrides cli_only for gateway
+    native_slash: bool = True  # show in messaging native-slash menus (Telegram/Slack). False = still works when typed + in CLI, just not in the capped menus (Slack hard-caps at 50).
 
 
 # ---------------------------------------------------------------------------
@@ -206,11 +207,14 @@ COMMAND_REGISTRY: list[CommandDef] = [
     CommandDef("insights", "Show usage insights and analytics", "Info",
                args_hint="[days]"),
     CommandDef("aspire", "Set/list long-term goals Janus checks in on", "Tools & Skills",
-               subcommands=("set", "list", "show", "done", "clear"), args_hint="[set <goal>|list]"),
+               subcommands=("set", "list", "show", "done", "clear"), args_hint="[set <goal>|list]",
+               native_slash=False),
     CommandDef("interest", "Track a field Janus proactively keeps up with", "Tools & Skills",
-               subcommands=("add", "list", "remove"), args_hint="[add <field>|list]"),
+               subcommands=("add", "list", "remove"), args_hint="[add <field>|list]",
+               native_slash=False),
     CommandDef("memory", "Browse your dated memory journal", "Info",
-               subcommands=("log", "mine"), args_hint="[log [N]|mine]"),
+               subcommands=("log", "mine"), args_hint="[log [N]|mine]",
+               native_slash=False),
     CommandDef("platforms", "Show gateway/messaging platform status", "Info",
                cli_only=True, aliases=("gateway",)),
     CommandDef("platform", "Pause, resume, or list a failing gateway platform", "Info",
@@ -502,7 +506,7 @@ def telegram_bot_commands() -> list[tuple[str, str]]:
     overrides = _resolve_config_gates()
     result: list[tuple[str, str]] = []
     for cmd in COMMAND_REGISTRY:
-        if not _is_gateway_available(cmd, overrides):
+        if not _is_gateway_available(cmd, overrides) or not cmd.native_slash:
             continue
         # Built-in arg-taking commands are included — their handlers show
         # usage text when invoked without arguments, and hiding them from
@@ -1081,13 +1085,13 @@ def slack_native_slashes() -> list[tuple[str, str, str]]:
 
     # First pass: canonical names (so they win slots if we hit the cap).
     for cmd in COMMAND_REGISTRY:
-        if not _is_gateway_available(cmd, overrides):
+        if not _is_gateway_available(cmd, overrides) or not cmd.native_slash:
             continue
         _add(cmd.name, cmd.description, cmd.args_hint or "")
 
     # Second pass: aliases.
     for cmd in COMMAND_REGISTRY:
-        if not _is_gateway_available(cmd, overrides):
+        if not _is_gateway_available(cmd, overrides) or not cmd.native_slash:
             continue
         for alias in cmd.aliases:
             # Skip aliases that only differ from canonical by case/punctuation
