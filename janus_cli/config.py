@@ -1700,6 +1700,17 @@ DEFAULT_CONFIG = {
         "track_outcomes": False,
     },
 
+    # Skill graph + verifiable-reward promotion (agent/skill_graph.py). Skills
+    # form a DAG; a skill is "promotable" only when its self-test passes AND its
+    # outcome trajectory clears the success threshold over enough uses; failing
+    # skills get flagged for refinement. The curator surfaces these in its review.
+    "graph": {
+        "enable": True,
+        "promotion_success_threshold": 0.75,
+        "refinement_failure_threshold": 0.35,
+        "min_uses_for_promotion": 3,
+    },
+
     # Subagent delegation — override the provider:model used by delegate_task
     # so child agents can run on a different (cheaper/faster) provider and model.
     # Uses the same runtime provider resolution as CLI/gateway startup, so all

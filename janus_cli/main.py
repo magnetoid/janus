@@ -14502,6 +14502,26 @@ Examples:
         "--session", default=None,
         help="Session id to mine (default: most recent CLI session)",
     )
+    skills_subparsers.add_parser(
+        "graph", help="Skill DAG: promotion tiers + verifiable-reward assessment")
+
+    def _cmd_skills_graph(args):
+        from agent import skill_graph as sg
+
+        sg.build_graph_from_skills()  # refresh nodes from current skills
+        names = sg.graph_node_keys()
+        if not names:
+            print("\n  No agent-created skills in the graph yet.\n")
+            return
+        print(f"\n  Skill graph ({len(names)} node(s)):")
+        for name in names:
+            node = sg.get_node(name) or {}
+            a = sg.assess_promotability(name)
+            mark = "▲ promotable" if a["promotable"] else ("⚠ refine" if a["refinement_needed"] else "· stable")
+            deps = sg.dependencies_of(name)
+            dep_s = f"  ← needs {', '.join(deps)}" if deps else ""
+            print(f"    L{node.get('promotion_level', 0)} {mark:14} {name}  ({a['reason']}){dep_s}")
+        print()
 
     def _cmd_skills_mine(args):
         from janus_state import SessionDB
@@ -14551,6 +14571,8 @@ Examples:
             from janus_cli.skills_config import skills_command as skills_config_command
 
             skills_config_command(args)
+        elif getattr(args, "skills_action", None) == "graph":
+            _cmd_skills_graph(args)
         elif getattr(args, "skills_action", None) == "mine":
             _cmd_skills_mine(args)
         else:

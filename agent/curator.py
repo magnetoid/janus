@@ -387,6 +387,10 @@ CURATOR_REVIEW_PROMPT = (
     "rate (>= 80%, uses >= 3) is positive evidence the skill works — keep it "
     "even if not recently used, and do not archive it for staleness. "
     "'success=n/a' means no outcome data yet — ignore it, don't penalize.\n"
+    "4c. The 'graph=' column folds the static self-test into the verdict: "
+    "'graph=refine' = the skill failed verification OR correlates with failures "
+    "(prefer archiving, or a patch if the fix is obvious); 'graph=promotable' = "
+    "verified AND high success (keep). Treat it as a stronger version of 4b.\n"
     "5. DO NOT reject consolidation on the grounds that 'each skill has "
     "a distinct trigger'. Pairwise distinctness is the wrong bar. The "
     "right bar is: 'would a human maintainer write this as N separate "
@@ -1413,6 +1417,24 @@ def _render_candidate_list() -> str:
         outcomes = _outcome_stats()
     except Exception:
         outcomes = {}
+    # Skill-graph verifiable-reward verdict (gated by config graph.enable): a
+    # skill whose self-test passes AND whose outcomes clear the success bar is
+    # 'promotable'; a failing one is flagged for 'refine'. Stronger than the raw
+    # success rate because it folds in the static self-test.
+    graph_verdicts: Dict[str, str] = {}
+    try:
+        from janus_cli.config import load_config as _lc
+        if (_lc().get("graph") or {}).get("enable", True):
+            from agent import skill_graph as _sg
+            _sg.build_graph_from_skills([r["name"] for r in rows])
+            for r in rows:
+                a = _sg.assess_promotability(r["name"])
+                graph_verdicts[r["name"]] = (
+                    "graph=promotable" if a["promotable"]
+                    else "graph=refine" if a["refinement_needed"] else "graph=stable"
+                )
+    except Exception:
+        graph_verdicts = {}
     lines = [f"Agent-created skills ({len(rows)}):\n"]
     for r in rows:
         o = outcomes.get(r["name"], {})
@@ -1421,13 +1443,14 @@ def _render_candidate_list() -> str:
             f"success={int(sr * 100)}%({o.get('successes', 0)}/{o.get('uses', 0)})"
             if sr is not None else "success=n/a"
         )
+        graph_col = (f"  {graph_verdicts[r['name']]}" if r["name"] in graph_verdicts else "")
         lines.append(
             f"- {r['name']}  "
             f"state={r['state']}  "
             f"pinned={'yes' if r.get('pinned') else 'no'}  "
             f"activity={r.get('activity_count', 0)}  "
             f"use={r.get('use_count', 0)}  "
-            f"{outcome_col}  "
+            f"{outcome_col}{graph_col}  "
             f"view={r.get('view_count', 0)}  "
             f"patches={r.get('patch_count', 0)}  "
             f"last_activity={r.get('last_activity_at') or 'never'}"
