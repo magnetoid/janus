@@ -12587,6 +12587,9 @@ _BUILTIN_SUBCOMMANDS = frozenset(
         "send", "sessions", "setup",
         "skills", "slack", "status", "tools", "uninstall", "update",
         "version", "webhook", "whatsapp", "chat", "secrets", "security",
+        # Self-learning / proactive command families (see learning stack).
+        "aspire", "interest", "learning", "models", "persona", "sleep",
+        "team", "workflow",
         # Help-ish invocations — plugin commands not being listed in
         # top-level --help is an acceptable trade-off for skipping an
         # expensive eager import of every bundled plugin module.

@@ -47,7 +47,7 @@ _JANUS_CORE_TOOLS = [
     # Text-to-speech
     "text_to_speech",
     # Planning & memory
-    "todo", "memory",
+    "todo", "memory", "recall_memory",
     # Session history search
     "session_search",
     # Clarifying questions
