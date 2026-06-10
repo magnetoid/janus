@@ -821,6 +821,67 @@ Full user-facing docs: `website/docs/user-guide/features/curator.md`.
 
 ---
 
+## Evals (`janus evals`)
+
+Behavior regression harness: YAML specs (prompt + deterministic checks
+against the final response and tool-call trace) run through a fresh
+`AIAgent`, hermetic by default (`skip_memory` / `skip_context_files`).
+
+- **Core:** `agent/evals.py` — spec loading, check evaluation
+  (`contains`, `not_contains`, `regex`, `min_length`, `max_length`,
+  `tool_called`, `tool_not_called`), runner with injectable
+  `agent_runner` for tests, JSONL results under
+  `$JANUS_HOME/evals/results/`.
+- **CLI:** `janus_cli/evals.py` wires `janus evals run|list|init|results`
+  (the curator `register_cli` pattern). `run --filter <substr>`,
+  `run --model <m>` for cross-model A/B.
+- Specs live in `$JANUS_HOME/evals/*.yaml`; `init` scaffolds a starter
+  suite including the dialectic validation pair.
+- Don't write change-detector evals (exact-match snapshots) — same rule
+  as tests (see "Don't write change-detector tests").
+
+Full user-facing docs: `website/docs/user-guide/features/evals.md`.
+
+---
+
+## Dialectic deliberation (`agent/deliberation.py`)
+
+Two-headed adversarial reasoning — advocate vs skeptic/opponent, arbiter
+rules on the stronger ARGUMENT (never the majority). Design doc:
+`plans/dialectic-learning-gate.md`.
+
+Three entry points, all with injectable `llm_caller`, all "never raises":
+
+- `deliberate(question, context)` — backs the `deliberate` tool (`moa`
+  toolset, default-off). Verdict includes `frame_dependent` — when both
+  framings are honestly valid the answer states both frames.
+- `red_team_claims(claims)` — batched admission gate for mined
+  facts/skills. **Batching invariant:** all claims in ONE advocate +
+  ONE skeptic + ONE arbiter call (3 calls per session-end mine, never
+  per-claim).
+- `quorum_classify(question, transcript)` — charitable + strict judges;
+  only agreement yields a label, disagreement is `None` (contested).
+
+Integration (gated by `learning.dialectic.*`, master switch default
+**false**): `memory_miner` (rejected facts never reach the store, kept in
+`result["red_team"]`), `skill_miner` (rejected proposals still written as
+drafts but flagged with the objection), `outcome_tracker.classify_session`
+(quorum replaces the single judge).
+
+Invariants:
+- Infrastructure errors **fail open** to single-witness behavior; a real
+  arbiter rejection is never overridden.
+- Nothing is silently destroyed — rejections carry the skeptic's
+  objection.
+- Per-stance model pinning via `auxiliary.dialectic_advocate` /
+  `dialectic_skeptic` / `dialectic_arbiter` (registered in `_AUX_TASKS`).
+- Runs post-session only — never touches the live conversation's prompt
+  cache.
+
+Full user-facing docs: `website/docs/user-guide/features/deliberation.md`.
+
+---
+
 ## Cron (scheduled jobs)
 
 `cron/jobs.py` (job store) + `cron/scheduler.py` (tick loop). Agents
@@ -913,6 +974,19 @@ Slash commands that mutate system-prompt state (skills, tools, memory, etc.)
 must be **cache-aware**: default to deferred invalidation (change takes
 effect next session), with an opt-in `--now` flag for immediate
 invalidation. See `/skills install --now` for the canonical pattern.
+
+### Untrusted External Content Must Stay Fenced
+
+Content from outside the trust envelope — extracted web pages, webhook
+payload values — is wrapped in `<untrusted-content>` fences
+(`agent/untrusted_content.py`) before it reaches the model, with embedded
+fence tags and `<memory-context>` impersonation stripped first. When adding
+a new ingress surface (platform adapter, fetch tool), fence content-shaped
+external values the same way; when rendering text for *delivery to humans*
+(deliver_only routes, delivery metadata), pass literal values — fences are
+for the model only. This is a heuristic mitigation, not a security boundary
+(see `SECURITY.md` §2.2), but it must not regress silently. Toggle:
+`security.fence_untrusted_content`.
 
 ### Background Process Notifications (Gateway)
 

@@ -197,3 +197,41 @@ class TestScaffold:
         assert specs[0].name == "example-arithmetic"
         # idempotent without force
         assert scaffold_example() == path
+
+    def test_starter_suite_all_load(self):
+        from agent.evals import STARTER_SPECS, scaffold_starters
+
+        written = scaffold_starters()
+        assert len(written) == len(STARTER_SPECS)
+        specs = load_eval_specs(evals_dir())
+        names = {s.name for s in specs}
+        assert "dialectic-frame-dependent-flags" in names
+        assert "dialectic-frame-stable-does-not-flag" in names
+        assert "instruction-following-brevity" in names
+        # every starter spec passes full validation (checks well-formed)
+        for s in specs:
+            assert s.checks
+
+    def test_starter_rerun_never_clobbers_edits(self):
+        from agent.evals import scaffold_starters
+
+        scaffold_starters()
+        edited = evals_dir() / "basics.yaml"
+        edited.write_text(
+            "name: mine\nprompt: p\nchecks: [{type: contains, value: x}]\n",
+            encoding="utf-8",
+        )
+        assert scaffold_starters() == []  # nothing rewritten
+        assert "mine" in edited.read_text(encoding="utf-8")
+
+    def test_dialectic_pair_targets_moa_toolset(self):
+        from agent.evals import scaffold_starters
+
+        scaffold_starters()
+        specs = load_eval_specs(evals_dir() / "dialectic-validation.yaml")
+        for s in specs:
+            assert s.toolsets == ["moa"]
+            assert any(
+                c["type"] == "tool_called" and c["value"] == "deliberate"
+                for c in s.checks
+            )

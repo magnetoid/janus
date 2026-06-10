@@ -315,6 +315,21 @@ that:
   §2.5). For skills, this means reading the Python and scripts,
   not just SKILL.md. Skills Guard reports and the install audit
   log are the review surface.
+- User-installed plugins are integrity-pinned: a content digest
+  recorded on first load is re-verified before every import, so
+  code that changed on disk without your knowledge is surfaced
+  (`security.plugin_integrity: warn`, the default) or refused
+  until re-trusted with `janus plugins trust <name>`
+  (`block`). Set `block` on deployments where plugins should
+  never change outside an explicit install/update.
+- Extracted web pages and webhook payload values are fenced as
+  `<untrusted-content>` before reaching the model
+  (`security.fence_untrusted_content`, default on), with embedded
+  fence tags and memory-context impersonation stripped. Per §2.2
+  this is a heuristic prompt-injection mitigation operating on
+  attacker-influenced strings — it reduces exposure; it is not
+  containment. Isolation posture still governs what a successfully
+  injected agent can do.
 - Janus Agent includes supply-chain guards for MCP server
   launches and for dependency / bundled-package changes in CI; see
   `CONTRIBUTING.md` for specifics.

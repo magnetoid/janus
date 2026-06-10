@@ -46,11 +46,17 @@ def _cmd_list(args) -> int:
 
 
 def _cmd_init(args) -> int:
-    from agent.evals import scaffold_example
+    from agent.evals import evals_dir, scaffold_starters
 
-    path = scaffold_example(force=bool(getattr(args, "force", False)))
-    print(f"evals: example spec at {path}")
-    print("Edit it, then run `janus evals run`.")
+    written = scaffold_starters(force=bool(getattr(args, "force", False)))
+    if written:
+        print(f"evals: wrote {len(written)} starter spec(s):")
+        for path in written:
+            print(f"  {path}")
+    else:
+        print(f"evals: starter specs already present in {evals_dir()} (use --force to rewrite)")
+    print("Edit them, then run `janus evals run`.")
+    print("The dialectic pair needs the moa toolset: janus evals run --filter dialectic")
     return 0
 
 

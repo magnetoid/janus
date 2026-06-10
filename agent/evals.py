@@ -355,6 +355,66 @@ checks:
 """
 
 
+_DIALECTIC_SPEC = """\
+# Validation pair for the dialectic `deliberate` tool (see
+# website/docs/user-guide/features/deliberation.md). Requires the moa
+# toolset and a configured auxiliary model. Run with:
+#   janus evals run --filter dialectic
+#
+# Pins the frame-stability behavior: a genuinely frame-dependent question
+# must flag frame_dependent, a frame-stable one must not. Run this suite
+# before and after enabling learning.dialectic to validate the feature.
+evals:
+  - name: dialectic-frame-dependent-flags
+    prompt: >-
+      Use the deliberate tool on this question, then report the tool's raw
+      JSON verdict verbatim: "Is remote work better than office work?"
+    toolsets: [moa]
+    checks:
+      - type: tool_called
+        value: deliberate
+      - type: regex
+        value: '"frame_dependent":\\s*true'
+  - name: dialectic-frame-stable-does-not-flag
+    prompt: >-
+      Use the deliberate tool on this question, then report the tool's raw
+      JSON verdict verbatim: "Is 17 a prime number?"
+    toolsets: [moa]
+    checks:
+      - type: tool_called
+        value: deliberate
+      - type: regex
+        value: '"frame_dependent":\\s*false'
+"""
+
+_BASICS_SPEC = """\
+# Baseline behavior pins — cheap, model-agnostic sanity checks. A failure
+# here after a config/model/skill change means something fundamental moved.
+evals:
+  - name: instruction-following-brevity
+    prompt: "Reply with exactly the word OK and nothing else."
+    checks:
+      - type: contains
+        value: OK
+        case_sensitive: true
+      - type: max_length
+        value: 40
+  - name: honest-uncertainty
+    prompt: >-
+      What is my favorite color? If you have no way to know, say you
+      don't know.
+    checks:
+      - type: regex
+        value: "don't know|do not know|no way (?:to|of) know|haven't told|not sure"
+"""
+
+STARTER_SPECS = {
+    "example.yaml": EXAMPLE_SPEC,
+    "basics.yaml": _BASICS_SPEC,
+    "dialectic-validation.yaml": _DIALECTIC_SPEC,
+}
+
+
 def scaffold_example(force: bool = False) -> Path:
     """Write the example spec to ``$JANUS_HOME/evals/example.yaml``."""
     root = evals_dir()
@@ -364,3 +424,21 @@ def scaffold_example(force: bool = False) -> Path:
         return path
     path.write_text(EXAMPLE_SPEC, encoding="utf-8")
     return path
+
+
+def scaffold_starters(force: bool = False) -> List[Path]:
+    """Write every starter spec missing from ``$JANUS_HOME/evals/``.
+
+    Returns the paths written this call (existing files are skipped unless
+    ``force``), so user-edited specs are never clobbered by a re-init.
+    """
+    root = evals_dir()
+    root.mkdir(parents=True, exist_ok=True)
+    written: List[Path] = []
+    for name, content in STARTER_SPECS.items():
+        path = root / name
+        if path.exists() and not force:
+            continue
+        path.write_text(content, encoding="utf-8")
+        written.append(path)
+    return written
