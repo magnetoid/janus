@@ -99,6 +99,51 @@ def _parse_facts(raw: Optional[str]) -> Dict[str, List[str]]:
     return out
 
 
+def _red_team_facts(
+    facts: Dict[str, List[str]],
+    transcript: str,
+    *,
+    llm_caller: Optional[Callable[..., Any]] = None,
+) -> tuple:
+    """Run the dialectic admission gate over candidate facts.
+
+    Returns ``(surviving_facts, summary_or_None)``. On infrastructure error
+    the original facts pass through unchanged (fail open) with summary None.
+    Rejected facts are kept in the summary with the skeptic's objection so
+    nothing is silently destroyed.
+    """
+    from agent.deliberation import apply_verdicts, red_team_claims
+
+    claims = []
+    for target in ("user", "memory"):
+        for i, content in enumerate(facts.get(target, [])):
+            claims.append({
+                "id": f"{target}-{i}", "kind": "fact",
+                "content": content, "context": f"{target} memory",
+            })
+    rt = red_team_claims(claims, transcript=transcript, llm_caller=llm_caller)
+    if rt.get("error") is not None or not claims:
+        return facts, None
+
+    split = apply_verdicts(claims, rt["verdicts"])
+    surviving: Dict[str, List[str]] = {"user": [], "memory": []}
+    for c in split["accepted"]:
+        target = str(c["id"]).rsplit("-", 1)[0]
+        surviving[target].append(c["content"])
+    rejected = [
+        {"content": c["content"], "objection": c.get("objection", "")}
+        for c in split["rejected"]
+    ]
+    for r in rejected:
+        logger.info("red-team rejected fact: %r — %s", r["content"], r["objection"])
+    summary = {
+        "accepted": len(split["accepted"]),
+        "rejected": rejected,
+        "calls": rt.get("calls", 0),
+    }
+    return surviving, summary
+
+
 def mine_session_memory(
     messages: List[Dict[str, Any]],
     memory_store: Any,
@@ -139,6 +184,17 @@ def mine_session_memory(
         )
         raw = response.choices[0].message.content
         facts = _parse_facts(raw)
+
+        # Optional dialectic admission gate (learning.dialectic.* — off by
+        # default): an advocate/skeptic/arbiter exchange rules on each
+        # candidate fact before it reaches the trusted store. Infrastructure
+        # errors fail open to today's behavior; real rejections are reported
+        # in result["red_team"], never silently dropped.
+        from agent.deliberation import dialectic_enabled
+        if dialectic_enabled("memory") and any(facts.get(t) for t in ("user", "memory")):
+            facts, red_team = _red_team_facts(facts, transcript, llm_caller=llm_caller)
+            if red_team is not None:
+                result["red_team"] = red_team
 
         existing = {
             "user": [_normalize(e) for e in getattr(memory_store, "user_entries", [])],

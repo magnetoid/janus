@@ -1698,6 +1698,17 @@ DEFAULT_CONFIG = {
     # promote what works. Opt-in (off): spends a small aux call per session.
     "learning": {
         "track_outcomes": False,
+        # Dialectic red-team gate on the learning loop (see
+        # plans/dialectic-learning-gate.md): before mined facts/skills are
+        # committed and session outcomes labeled, an advocate/skeptic/arbiter
+        # exchange rules on them. Opt-in feature to test and validate —
+        # spends 3 extra auxiliary calls per session-end mine.
+        "dialectic": {
+            "enabled": False,   # master switch
+            "memory": True,     # gate mined facts (effective when enabled)
+            "skills": True,     # flag mined skill drafts
+            "outcomes": True,   # two-judge quorum for success/failure labels
+        },
     },
 
     # Skill graph + verifiable-reward promotion (agent/skill_graph.py). Skills

@@ -2940,6 +2940,9 @@ _AUX_TASKS: list[tuple[str, str, str]] = [
     ("kanban_decomposer", "Kanban decomposer", "task decomposition"),
     ("profile_describer", "Profile describer", "auto profile descriptions"),
     ("curator", "Curator", "skill-usage review pass"),
+    ("dialectic_advocate", "Dialectic advocate", "argues for answers/artifacts"),
+    ("dialectic_skeptic", "Dialectic skeptic", "argues the opposing case"),
+    ("dialectic_arbiter", "Dialectic arbiter", "rules on dialectic exchanges"),
 ]
 
 

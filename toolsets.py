@@ -159,7 +159,7 @@ TOOLSETS = {
     
     "moa": {
         "description": "Advanced reasoning and problem-solving tools",
-        "tools": ["mixture_of_agents", "deep_reason"],
+        "tools": ["mixture_of_agents", "deep_reason", "deliberate"],
         "includes": []
     },
     

@@ -169,6 +169,22 @@ def classify_session(
         transcript = _render_transcript(messages, max_chars=8000)
         if not transcript.strip():
             return None
+
+        # Optional quorum mode (learning.dialectic.* — off by default): a
+        # charitable judge and a strict judge label the session
+        # independently; only agreement produces a label. Disagreement is
+        # honestly "unclear" (None) — the existing contract — rather than
+        # one judge's coin flip feeding skill success trajectories.
+        from agent.deliberation import dialectic_enabled, quorum_classify
+        if dialectic_enabled("outcomes"):
+            quorum = quorum_classify(
+                "Did the assistant succeed?", f"Conversation:\n{transcript}",
+                llm_caller=llm_caller,
+            )
+            if quorum.get("error") is None:
+                return quorum["label"]
+            # infrastructure error → fall through to the single judge
+
         if llm_caller is None:
             from agent.auxiliary_client import call_llm as llm_caller
         response = llm_caller(
