@@ -1,0 +1,264 @@
+import { useCallback, useEffect, useState } from "react";
+import { Brain, Pause, Play, Sparkles, Target, Trash2 } from "lucide-react";
+import { Card, CardContent } from "@nous-research/ui/ui/components/card";
+import { Button } from "@nous-research/ui/ui/components/button";
+import { Input } from "@nous-research/ui/ui/components/input";
+import { Badge } from "@nous-research/ui/ui/components/badge";
+import { Spinner } from "@nous-research/ui/ui/components/spinner";
+import { H2 } from "@nous-research/ui/ui/components/typography/h2";
+import { fetchJSON } from "@/lib/api";
+
+interface SkillStat {
+  name: string;
+  uses: number;
+  successes: number;
+  success_rate: number | null;
+}
+interface LearningStats {
+  overall: { sessions: number; successes: number; success_rate: number | null };
+  recent_success_rate: number | null;
+  skills: SkillStat[];
+  personas: Record<string, { uses: number; successes: number; success_rate: number | null }>;
+}
+interface Aspiration {
+  id: string;
+  title: string;
+  status: string;
+  roadmap?: string[];
+}
+interface Interest {
+  id: string;
+  field: string;
+  status: string;
+}
+interface GraphNode {
+  name: string;
+  promotion_level: number;
+  verdict: string;
+  success_rate: number | null;
+  uses: number | null;
+  dependencies: string[];
+}
+interface SleepStatus {
+  paused: boolean;
+  last_run: string | null;
+  last_report: Record<string, unknown> | null;
+}
+
+const pct = (x: number | null | undefined): string =>
+  typeof x === "number" ? `${Math.round(x * 100)}%` : "—";
+
+const VERDICT_COLOR: Record<string, string> = {
+  promotable: "text-emerald-500",
+  refine: "text-amber-500",
+  stable: "text-muted-foreground",
+};
+
+export default function LearningPage() {
+  const [stats, setStats] = useState<LearningStats | null>(null);
+  const [aspirations, setAspirations] = useState<Aspiration[]>([]);
+  const [interests, setInterests] = useState<Interest[]>([]);
+  const [graph, setGraph] = useState<GraphNode[]>([]);
+  const [sleep, setSleep] = useState<SleepStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [newGoal, setNewGoal] = useState("");
+  const [newField, setNewField] = useState("");
+
+  const refresh = useCallback(async () => {
+    try {
+      const [s, a, i, g, sl] = await Promise.all([
+        fetchJSON<LearningStats>("/api/learning/stats"),
+        fetchJSON<{ aspirations: Aspiration[] }>("/api/aspirations"),
+        fetchJSON<{ interests: Interest[] }>("/api/interests"),
+        fetchJSON<{ nodes: GraphNode[] }>("/api/skills/graph"),
+        fetchJSON<SleepStatus>("/api/sleep"),
+      ]);
+      setStats(s);
+      setAspirations(a.aspirations);
+      setInterests(i.interests);
+      setGraph(g.nodes);
+      setSleep(sl);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const addAspiration = async () => {
+    const goal = newGoal.trim();
+    if (!goal) return;
+    setNewGoal("");
+    await fetchJSON("/api/aspirations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goal }),
+    });
+    void refresh();
+  };
+  const removeAspiration = async (id: string) => {
+    await fetchJSON(`/api/aspirations/${encodeURIComponent(id)}`, { method: "DELETE" });
+    void refresh();
+  };
+  const addInterest = async () => {
+    const field = newField.trim();
+    if (!field) return;
+    setNewField("");
+    await fetchJSON("/api/interests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ field }),
+    });
+    void refresh();
+  };
+  const removeInterest = async (id: string) => {
+    await fetchJSON(`/api/interests/${encodeURIComponent(id)}`, { method: "DELETE" });
+    void refresh();
+  };
+  const toggleSleep = async () => {
+    if (!sleep) return;
+    await fetchJSON("/api/sleep/paused", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paused: !sleep.paused }),
+    });
+    void refresh();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-4">
+      <H2 className="flex items-center gap-2">
+        <Brain className="h-5 w-5" /> Self-Learning
+      </H2>
+
+      {/* Outcome reinforcement metrics */}
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <div className="text-sm font-medium text-muted-foreground">Outcome reinforcement</div>
+          <div className="flex gap-6 text-sm">
+            <div>Sessions: <strong>{stats?.overall.sessions ?? 0}</strong></div>
+            <div>Success: <strong>{pct(stats?.overall.success_rate)}</strong></div>
+            <div>Recent (20): <strong>{pct(stats?.recent_success_rate)}</strong></div>
+          </div>
+          {stats && stats.skills.length > 0 && (
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Skills by success rate</div>
+              {stats.skills.slice(0, 10).map((s) => (
+                <div key={s.name} className="flex justify-between text-sm">
+                  <span>{s.name}</span>
+                  <span className="text-muted-foreground">
+                    {pct(s.success_rate)} ({s.successes}/{s.uses})
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Aspirations */}
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Target className="h-4 w-4" /> Aspirations
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="A long-term goal Janus should hold…"
+              value={newGoal}
+              onChange={(e) => setNewGoal(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addAspiration()}
+            />
+            <Button onClick={addAspiration}>Add</Button>
+          </div>
+          {aspirations.map((a) => (
+            <div key={a.id} className="flex items-center justify-between text-sm">
+              <span>
+                {a.title} <Badge variant="secondary">{a.status}</Badge>
+              </span>
+              <Button variant="ghost" size="icon" onClick={() => removeAspiration(a.id)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Interests */}
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Sparkles className="h-4 w-4" /> Interests (proactively researched)
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="A field to keep up with (e.g. graphic design)…"
+              value={newField}
+              onChange={(e) => setNewField(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addInterest()}
+            />
+            <Button onClick={addInterest}>Add</Button>
+          </div>
+          {interests.map((i) => (
+            <div key={i.id} className="flex items-center justify-between text-sm">
+              <span>{i.field}</span>
+              <Button variant="ghost" size="icon" onClick={() => removeInterest(i.id)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Skill graph */}
+      <Card>
+        <CardContent className="space-y-2 p-4">
+          <div className="text-sm font-medium">Skill graph (verifiable-reward promotion)</div>
+          {graph.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No agent-created skills yet.</div>
+          ) : (
+            graph.map((n) => (
+              <div key={n.name} className="flex justify-between text-sm">
+                <span>
+                  L{n.promotion_level} · {n.name}
+                  {n.dependencies.length > 0 && (
+                    <span className="text-muted-foreground"> ← {n.dependencies.join(", ")}</span>
+                  )}
+                </span>
+                <span className={VERDICT_COLOR[n.verdict] ?? ""}>
+                  {n.verdict} · {pct(n.success_rate)}
+                </span>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Sleep */}
+      <Card>
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="text-sm">
+            <span className="font-medium">Sleep consolidation</span>
+            <span className="ml-2 text-muted-foreground">
+              {sleep?.paused ? "paused" : "active"} · last run: {sleep?.last_run ?? "never"}
+            </span>
+          </div>
+          <Button variant="outline" size="sm" onClick={toggleSleep}>
+            {sleep?.paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            <span className="ml-1">{sleep?.paused ? "Resume" : "Pause"}</span>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
