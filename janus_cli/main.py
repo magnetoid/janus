@@ -12580,7 +12580,7 @@ _BUILTIN_SUBCOMMANDS = frozenset(
         "acp", "auth", "backup", "bundles", "checkpoints", "claw", "completion",
         "computer-use",
         "config", "cron", "curator", "dashboard", "debug", "doctor",
-        "dump", "fallback", "gateway", "hooks", "import", "insights",
+        "dump", "evals", "fallback", "gateway", "hooks", "import", "insights",
         "gui", "desktop", "kanban", "login", "logout", "logs", "lsp", "mcp", "memory", "migrate",
         "model", "pairing", "plugins", "portal", "postinstall", "profile", "proxy",
         "prompt-size",
@@ -14757,6 +14757,26 @@ Examples:
         _register_curator_cli(curator_parser)
     except Exception as _exc:
         logging.getLogger(__name__).debug("curator CLI wiring failed: %s", _exc)
+
+    # =========================================================================
+    # evals command — agent behavior regression checks
+    # =========================================================================
+    evals_parser = subparsers.add_parser(
+        "evals",
+        help="Run agent behavior evals — replayable prompt + checks suites",
+        description=(
+            "Evals are YAML specs (prompt + deterministic checks against the "
+            "response and tool usage) stored in $JANUS_HOME/evals/. Run the "
+            "suite before and after a skill, memory, or config change to "
+            "verify the agent's behavior didn't regress."
+        ),
+    )
+    try:
+        from janus_cli.evals import register_cli as _register_evals_cli
+
+        _register_evals_cli(evals_parser)
+    except Exception as _exc:
+        logging.getLogger(__name__).debug("evals CLI wiring failed: %s", _exc)
 
     # =========================================================================
     # memory command

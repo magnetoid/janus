@@ -1,0 +1,179 @@
+"""CLI subcommand: `janus evals <subcommand>`.
+
+Thin shell around agent/evals.py. Lists specs, scaffolds an example,
+runs the suite, and shows the latest results.
+
+This module intentionally has no side effects at import time — main.py wires
+the argparse subparsers on demand.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Optional
+
+
+def _resolve_path(args) -> Optional[Path]:
+    raw = getattr(args, "path", None)
+    return Path(raw) if raw else None
+
+
+def _cmd_list(args) -> int:
+    from agent.evals import evals_dir, load_eval_specs
+
+    try:
+        specs = load_eval_specs(_resolve_path(args))
+    except FileNotFoundError:
+        print(
+            f"evals: no specs found (looked in {_resolve_path(args) or evals_dir()}).\n"
+            "Create one with `janus evals init`."
+        )
+        return 1
+    except ValueError as exc:
+        print(f"evals: bad spec — {exc}", file=sys.stderr)
+        return 2
+
+    if not specs:
+        print("evals: no specs found. Create one with `janus evals init`.")
+        return 1
+    print(f"{len(specs)} eval(s):")
+    for spec in specs:
+        print(f"  {spec.name:40s} checks={len(spec.checks)}  ({spec.source_file})")
+    return 0
+
+
+def _cmd_init(args) -> int:
+    from agent.evals import scaffold_example
+
+    path = scaffold_example(force=bool(getattr(args, "force", False)))
+    print(f"evals: example spec at {path}")
+    print("Edit it, then run `janus evals run`.")
+    return 0
+
+
+def _cmd_run(args) -> int:
+    from agent.evals import load_eval_specs, run_evals
+
+    try:
+        specs = load_eval_specs(_resolve_path(args))
+    except FileNotFoundError:
+        print("evals: no specs found. Create one with `janus evals init`.")
+        return 1
+    except ValueError as exc:
+        print(f"evals: bad spec — {exc}", file=sys.stderr)
+        return 2
+
+    name_filter = getattr(args, "filter", None)
+    if name_filter:
+        specs = [s for s in specs if name_filter in s.name]
+        if not specs:
+            print(f"evals: no spec matches filter {name_filter!r}")
+            return 1
+
+    model = getattr(args, "model", None)
+    if model:
+        for spec in specs:
+            spec.model = model
+
+    print(f"running {len(specs)} eval(s)...")
+    summary = run_evals(specs, on_progress=print)
+
+    print(f"\n{summary['passed']}/{summary['total']} passed")
+    for r in summary["results"]:
+        if r["passed"]:
+            continue
+        print(f"\nFAIL {r['name']}" + (f" — error: {r['error']}" if r["error"] else ""))
+        for c in r["checks"]:
+            if not c["passed"]:
+                print(f"  ✗ {c['type']}: {c['detail']}")
+    if summary.get("results_path"):
+        print(f"\nresults saved: {summary['results_path']}")
+    return 0 if summary["failed"] == 0 else 1
+
+
+def _cmd_results(args) -> int:
+    from agent.evals import results_dir
+
+    out_dir = results_dir()
+    files = sorted(out_dir.glob("*.jsonl")) if out_dir.exists() else []
+    if not files:
+        print("evals: no saved results yet — run `janus evals run` first")
+        return 1
+    latest = files[-1]
+    print(f"latest results ({latest.name}):")
+    passed = failed = 0
+    for line in latest.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        r = json.loads(line)
+        ok = r.get("passed")
+        passed += 1 if ok else 0
+        failed += 0 if ok else 1
+        print(f"  {'PASS' if ok else 'FAIL'}  {r.get('name')}  ({r.get('duration_s')}s)")
+    print(f"\n{passed} passed, {failed} failed")
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# argparse wiring (called from janus_cli.main)
+# ---------------------------------------------------------------------------
+
+def register_cli(parent: argparse.ArgumentParser) -> None:
+    """Attach `evals` subcommands to *parent*.
+
+    main.py calls this with the ArgumentParser returned by
+    ``subparsers.add_parser("evals", ...)``.
+    """
+    parent.set_defaults(func=lambda a: (parent.print_help(), 0)[1])
+    subs = parent.add_subparsers(dest="evals_command")
+
+    p_run = subs.add_parser("run", help="Run eval specs and report pass/fail")
+    p_run.add_argument(
+        "path", nargs="?", default=None,
+        help="Spec file or directory (default: $JANUS_HOME/evals/)",
+    )
+    p_run.add_argument(
+        "--filter", default=None,
+        help="Only run evals whose name contains this substring",
+    )
+    p_run.add_argument(
+        "--model", default=None,
+        help="Override the model for every eval in this run",
+    )
+    p_run.set_defaults(func=_cmd_run)
+
+    p_list = subs.add_parser("list", help="List discovered eval specs")
+    p_list.add_argument(
+        "path", nargs="?", default=None,
+        help="Spec file or directory (default: $JANUS_HOME/evals/)",
+    )
+    p_list.set_defaults(func=_cmd_list)
+
+    p_init = subs.add_parser("init", help="Scaffold an example eval spec")
+    p_init.add_argument(
+        "--force", action="store_true",
+        help="Overwrite the example spec if it already exists",
+    )
+    p_init.set_defaults(func=_cmd_init)
+
+    p_results = subs.add_parser("results", help="Show the most recent saved results")
+    p_results.set_defaults(func=_cmd_results)
+
+
+def cli_main(argv=None) -> int:
+    """Standalone entry (also usable by janus_cli.main fallthrough)."""
+    parser = argparse.ArgumentParser(prog="janus evals")
+    register_cli(parser)
+    args = parser.parse_args(argv)
+    fn = getattr(args, "func", None)
+    if fn is None:
+        parser.print_help()
+        return 0
+    return int(fn(args) or 0)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(cli_main())
