@@ -5270,6 +5270,9 @@ class JanusCLI:
             # Store reference for atexit memory provider shutdown
             global _active_agent_ref
             _active_agent_ref = self.agent
+            # Carry the active persona onto the agent so session-end outcome
+            # recording can attribute success/failure to it (persona optimizer).
+            self.agent._active_persona = getattr(self, "_active_persona", None)
             # Route agent status output through prompt_toolkit so ANSI escape
             # sequences aren't garbled by patch_stdout's StdoutProxy (#2262).
             self.agent._print_fn = _cprint
@@ -8449,6 +8452,7 @@ class JanusCLI:
                 print("  No personality overlay — using base agent behavior.")
             elif personality_name in self.personalities:
                 self.system_prompt = self._resolve_personality_prompt(self.personalities[personality_name])
+                self._active_persona = personality_name  # for outcome attribution
                 self.agent = None  # Force re-init
                 if save_config_value("agent.system_prompt", self.system_prompt):
                     print(f"(^_^)b Personality set to '{personality_name}' (saved to config)")

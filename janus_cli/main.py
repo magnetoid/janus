@@ -15453,6 +15453,50 @@ Examples:
     team_parser.set_defaults(func=cmd_team)
 
     # =========================================================================
+    # persona command — A/B telemetry + recommender over agent.personalities
+    # =========================================================================
+    persona_parser = subparsers.add_parser(
+        "persona",
+        help="Which persona works best — success-rate telemetry + recommendation",
+    )
+    persona_sub = persona_parser.add_subparsers(dest="persona_command")
+    persona_sub.add_parser("list", help="List configured personas")
+    persona_sub.add_parser("stats", help="Per-persona success rates")
+    persona_sub.add_parser("recommend", help="Recommend the best-performing persona")
+
+    def cmd_persona(args):
+        from agent import persona_optimizer as po
+
+        def _pct(x):
+            return f"{x*100:.0f}%" if isinstance(x, (int, float)) else "—"
+
+        sub = getattr(args, "persona_command", None)
+        if sub == "list":
+            print("\n  Configured personas: " + ", ".join(po.list_personas()) + "\n")
+            return
+        if sub == "recommend":
+            rec = po.recommend_persona()
+            if rec["recommended"]:
+                print(f"\n  ★ Recommended persona: {rec['recommended']}  ({rec['reason']})\n")
+            else:
+                print(f"\n  No recommendation yet — {rec['reason']}.\n")
+            return
+        # stats (default)
+        stats = po.persona_stats()
+        if not stats:
+            print("\n  No persona outcomes recorded yet "
+                  "(enable learning.track_outcomes and use /personality).\n")
+            return
+        ranked = sorted(stats.items(),
+                        key=lambda kv: (kv[1]["success_rate"] or 0, kv[1]["uses"]), reverse=True)
+        print("\n  Persona success rates:")
+        for name, s in ranked:
+            print(f"    {_pct(s['success_rate']):>4}  {name}  ({s['successes']}/{s['uses']})")
+        print()
+
+    persona_parser.set_defaults(func=cmd_persona)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(

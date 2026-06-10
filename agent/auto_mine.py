@@ -36,7 +36,8 @@ def _flag(section: str, key: str) -> bool:
 
 
 def maybe_automine(
-    messages: List[Dict[str, Any]], *, run_in_thread: bool = True
+    messages: List[Dict[str, Any]], *, run_in_thread: bool = True,
+    active_persona: Optional[str] = None,
 ) -> Optional[threading.Thread]:
     """Mine the just-ended session for memory/skills if opted in.
 
@@ -73,7 +74,8 @@ def maybe_automine(
                             "",
                         )
                         record_outcome(session_id, verdict,
-                                       skills=skills_used_in(snapshot), note=topic)
+                                       skills=skills_used_in(snapshot), note=topic,
+                                       active_persona=active_persona)
                 except Exception as exc:
                     logger.debug("auto outcome tracking failed: %s", exc)
             if mine_memory:

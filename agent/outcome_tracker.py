@@ -53,20 +53,35 @@ def _save(records: List[Dict[str, Any]]) -> None:
 
 
 def record_outcome(
-    session_id: str, success: bool, *, skills: Optional[List[str]] = None, note: str = ""
+    session_id: str, success: bool, *, skills: Optional[List[str]] = None,
+    note: str = "", active_persona: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Record a session's outcome attributed to the skills it used."""
+    """Record a session's outcome attributed to the skills it used.
+
+    ``active_persona`` (when given) attributes the outcome to the persona that
+    was active — the signal the persona optimizer learns from.
+    """
     rec = {
         "session_id": session_id or "",
         "success": bool(success),
         "skills": sorted({s for s in (skills or []) if s}),
         "note": note,
+        "persona": active_persona or "",
         "ts": _now_iso(),
     }
     records = load()
     records.append(rec)
     _save(records)
     return rec
+
+
+def skill_success_trajectory(skill_name: str, window: int = 20) -> List[bool]:
+    """Recent success/failure outcomes (oldest→newest) for sessions that used ``skill_name``.
+
+    The per-skill reward trajectory the skill graph uses for verifiable promotion.
+    """
+    out = [bool(r.get("success")) for r in load() if skill_name in r.get("skills", [])]
+    return out[-window:]
 
 
 _SKILL_VIEW = re.compile(r"skill_view\s*\(\s*name\s*=\s*['\"]([\w./-]+)['\"]", re.I)
