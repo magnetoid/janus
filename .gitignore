@@ -6,3 +6,5 @@ node_modules/
 .torsor/index/
 .DS_Store
 .venv/
+.pytest-cache/
+.pytest_cache/

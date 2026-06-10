@@ -457,10 +457,13 @@ class WebhookAdapter(BasePlatformAdapter):
                 {"status": "ignored", "event": event_type}
             )
 
-        # Format prompt from template
+        # Format prompt from template. Payload values are fenced as
+        # untrusted content only when the prompt feeds the agent —
+        # deliver_only routes forward the rendered text verbatim to humans.
         prompt_template = route_config.get("prompt", "")
         prompt = self._render_prompt(
-            prompt_template, payload, event_type, route_name
+            prompt_template, payload, event_type, route_name,
+            fence=not route_config.get("deliver_only"),
         )
 
         # Inject skill content if configured.
@@ -756,6 +759,7 @@ class WebhookAdapter(BasePlatformAdapter):
         payload: dict,
         event_type: str,
         route_name: str,
+        fence: bool = True,
     ) -> str:
         """Render a prompt template with the webhook payload.
 
@@ -765,19 +769,41 @@ class WebhookAdapter(BasePlatformAdapter):
         Special token ``{__raw__}`` dumps the entire payload as indented
         JSON (truncated to 4000 chars).  Useful for monitoring alerts or
         any webhook where the agent needs to see the full payload.
+
+        The template itself is operator-authored and trusted; substituted
+        payload values are external data. Every substitution is stripped of
+        fence tags, and content-shaped values (multi-line or long strings,
+        dict/list dumps, ``{__raw__}``) are additionally wrapped in an
+        ``<untrusted-content>`` fence so a crafted payload can't smuggle
+        instructions into the agent prompt.
+
+        Pass ``fence=False`` when the rendered text does NOT feed the agent
+        (deliver_only routes, delivery_extra routing metadata) — those
+        consumers need the literal payload values.
         """
+        if fence:
+            from agent.untrusted_content import fence_untrusted, sanitize_untrusted
+        else:
+            fence_untrusted = lambda text, source="": text  # noqa: E731
+            sanitize_untrusted = lambda text: text  # noqa: E731
+
+        source = f"webhook route '{route_name}'" if route_name else "webhook payload"
+
         if not template:
             truncated = json.dumps(payload, indent=2)[:4000]
+            fenced = fence_untrusted(f"```json\n{truncated}\n```", source=source)
             return (
                 f"Webhook event '{event_type}' on route "
-                f"'{route_name}':\n\n```json\n{truncated}\n```"
+                f"'{route_name}':\n\n{fenced}"
             )
 
         def _resolve(match: re.Match) -> str:
             key = match.group(1)
             # Special token: dump the entire payload as JSON
             if key == "__raw__":
-                return json.dumps(payload, indent=2)[:4000]
+                return fence_untrusted(
+                    json.dumps(payload, indent=2)[:4000], source=source
+                )
             value: Any = payload
             for part in key.split("."):
                 if isinstance(value, dict):
@@ -785,8 +811,16 @@ class WebhookAdapter(BasePlatformAdapter):
                 else:
                     return f"{{{key}}}"
             if isinstance(value, (dict, list)):
-                return json.dumps(value, indent=2)[:2000]
-            return str(value)
+                return fence_untrusted(
+                    json.dumps(value, indent=2)[:2000], source=source
+                )
+            text = str(value)
+            # Short scalar fields (titles, ids, names) stay inline — fencing
+            # every one would bloat the prompt. Content-shaped values get
+            # the full fence.
+            if "\n" in text or len(text) > 400:
+                return fence_untrusted(text, source=source)
+            return sanitize_untrusted(text)
 
         return re.sub(r"\{([a-zA-Z0-9_.]+)\}", _resolve, template)
 
@@ -797,7 +831,9 @@ class WebhookAdapter(BasePlatformAdapter):
         rendered: Dict[str, Any] = {}
         for key, value in extra.items():
             if isinstance(value, str):
-                rendered[key] = self._render_prompt(value, payload, "", "")
+                # fence=False: delivery extras are routing metadata (thread
+                # ids, repo names) consumed by delivery helpers, not the agent.
+                rendered[key] = self._render_prompt(value, payload, "", "", fence=False)
             else:
                 rendered[key] = value
         return rendered

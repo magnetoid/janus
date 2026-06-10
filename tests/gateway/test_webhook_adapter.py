@@ -862,22 +862,29 @@ class TestRawTemplateToken:
     """Tests for the {__raw__} special token in _render_prompt."""
 
     def test_raw_resolves_to_full_json_payload(self):
-        """{__raw__} in a template dumps the entire payload as JSON."""
+        """{__raw__} in a template dumps the entire payload as fenced JSON."""
         adapter = _make_adapter()
         payload = {"action": "opened", "number": 42}
         result = adapter._render_prompt(
             "Payload: {__raw__}", payload, "push", "test"
         )
         expected_json = json.dumps(payload, indent=2)
-        assert result == f"Payload: {expected_json}"
+        assert result.startswith("Payload: ")
+        assert expected_json in result
+        # Raw payload dumps feed the agent fenced as untrusted content
+        assert result.index("<untrusted-content>") < result.index(expected_json)
+        assert result.rstrip().endswith("</untrusted-content>")
 
     def test_raw_truncated_at_4000_chars(self):
-        """{__raw__} output is truncated at 4000 characters for large payloads."""
+        """{__raw__} payload JSON is truncated at 4000 chars before fencing."""
         adapter = _make_adapter()
         # Build a payload whose JSON repr exceeds 4000 chars
         payload = {"data": "x" * 5000}
         result = adapter._render_prompt("{__raw__}", payload, "push", "test")
-        assert len(result) <= 4000
+        unfenced = adapter._render_prompt("{__raw__}", payload, "push", "test", fence=False)
+        assert len(unfenced) <= 4000
+        # Fence overhead is bounded: tags + one system-note line
+        assert len(result) <= 4000 + 300
 
     def test_raw_mixed_with_other_variables(self):
         """{__raw__} can be mixed with regular template variables."""

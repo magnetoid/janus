@@ -93,6 +93,52 @@ def _parse_proposals(raw: Optional[str]) -> List[Dict[str, Any]]:
     return out
 
 
+def _red_team_proposals(
+    proposals: List[Dict[str, Any]],
+    transcript: str,
+    existing_names: List[str],
+    *,
+    llm_caller: Optional[Callable[..., Any]] = None,
+) -> tuple:
+    """Run the dialectic admission gate over skill proposals.
+
+    Returns ``(proposals, objections)`` where ``objections`` maps a proposal
+    name to the skeptic's objection for rejected ones. Rejected proposals
+    are NOT removed — drafts are the user-reviewed quarantine — they're
+    flagged by the caller instead. Revised proposals get the arbiter's
+    narrowed description. Infrastructure errors fail open (no objections).
+    """
+    from agent.deliberation import red_team_claims
+
+    claims = [
+        {
+            "id": p["name"], "kind": "skill",
+            "content": f"{p['description']} — when to use: {p['when_to_use']}; "
+                       f"steps: {'; '.join(p['steps'][:6])}",
+        }
+        for p in proposals
+    ]
+    rt = red_team_claims(
+        claims, transcript=transcript,
+        existing="\n".join(existing_names),
+        llm_caller=llm_caller,
+    )
+    if rt.get("error") is not None:
+        return proposals, {}
+
+    objections: Dict[str, str] = {}
+    for p in proposals:
+        v = rt["verdicts"].get(p["name"])
+        if v is None:
+            continue
+        if v["verdict"] == "reject":
+            objections[p["name"]] = v.get("skeptic_objection") or v.get("crux") or ""
+            logger.info("red-team flagged skill draft %r: %s", p["name"], objections[p["name"]])
+        elif v["verdict"] == "revise" and v.get("revised_content"):
+            p["description"] = v["revised_content"][:60]
+    return proposals, objections
+
+
 def render_skill_md(proposal: Dict[str, Any]) -> str:
     """Build a SKILL.md (frontmatter + body) from a proposal."""
     steps = "\n".join(f"{i}. {s}" for i, s in enumerate(proposal["steps"], 1))
@@ -190,8 +236,20 @@ def mine_session_skills(
             p for p in _parse_proposals(raw)
             if p["name"].lower() not in existing
         ][:max_skills]
-        result["proposals"] = proposals
         result["flagged"] = []  # drafts that failed the verification gate
+
+        # Optional dialectic admission gate (learning.dialectic.* — off by
+        # default). Rejected proposals are still written as drafts (drafts
+        # are the user-reviewed quarantine) but carry the skeptic's
+        # objection in result["flagged"]; revised ones get the arbiter's
+        # narrowed description. Infrastructure errors fail open.
+        from agent.deliberation import dialectic_enabled
+        red_team_objections: Dict[str, str] = {}
+        if dialectic_enabled("skills") and proposals:
+            proposals, red_team_objections = _red_team_proposals(
+                proposals, transcript, sorted(existing), llm_caller=llm_caller,
+            )
+        result["proposals"] = proposals
         if write_drafts:
             from agent.skill_verifier import verify_skill_dir
             for p in proposals:
@@ -201,6 +259,12 @@ def mine_session_skills(
                     verdict = verify_skill_dir(path)
                     if not verdict["ok"]:
                         result["flagged"].append({"path": str(path), "issues": verdict["issues"]})
+                    objection = red_team_objections.get(p["name"])
+                    if objection:
+                        result["flagged"].append({
+                            "path": str(path),
+                            "issues": [f"red-team objection: {objection}"],
+                        })
                 except Exception as exc:
                     logger.debug("draft write failed for %s: %s", p.get("name"), exc)
     except Exception as exc:  # mining must never break a session

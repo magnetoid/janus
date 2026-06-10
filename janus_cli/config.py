@@ -1698,6 +1698,17 @@ DEFAULT_CONFIG = {
     # promote what works. Opt-in (off): spends a small aux call per session.
     "learning": {
         "track_outcomes": False,
+        # Dialectic red-team gate on the learning loop (see
+        # plans/dialectic-learning-gate.md): before mined facts/skills are
+        # committed and session outcomes labeled, an advocate/skeptic/arbiter
+        # exchange rules on them. Opt-in feature to test and validate —
+        # spends 3 extra auxiliary calls per session-end mine.
+        "dialectic": {
+            "enabled": False,   # master switch
+            "memory": True,     # gate mined facts (effective when enabled)
+            "skills": True,     # flag mined skill drafts
+            "outcomes": True,   # two-judge quorum for success/failure labels
+        },
     },
 
     # Skill graph + verifiable-reward promotion (agent/skill_graph.py). Skills
@@ -2020,6 +2031,15 @@ DEFAULT_CONFIG = {
     # Pre-exec security scanning via tirith
     "security": {
         "allow_private_urls": False,  # Allow requests to private/internal IPs (for OpenWrt, proxies, VPNs)
+        # Wrap extracted web pages and webhook payload values in
+        # <untrusted-content> fences so embedded instructions reach the
+        # model as data (prompt-injection mitigation).
+        "fence_untrusted_content": True,
+        # Integrity pinning for user-installed plugins: "warn" (default)
+        # logs when a plugin's code changed on disk since it was last
+        # loaded, "block" refuses to load it until `janus plugins trust
+        # <name>`, "off" disables verification.
+        "plugin_integrity": "warn",
         "redact_secrets": True,
         "tirith_enabled": True,
         "tirith_path": "tirith",

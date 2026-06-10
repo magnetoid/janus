@@ -108,6 +108,9 @@ Janus doesn't just respond — it *learns* and *initiates*. These are unique to 
 | **Interest discovery** | Track a field (e.g. design); a weekly job researches the latest and **asks before** folding it into memory/skills. | `janus interest add "<field>"` · `/interest` |
 | **Model-strengths routing** | Learns (via web research) which models lead per task, then feeds **Mixture-of-Agents** the best models for that task. | `janus models research <task>` |
 | **Auto-mining** | Opt-in: on session end, memory/procedure mining fire automatically. | `memory.session_mining: true` in config |
+| **Dialectic deliberation** | Two-headed reasoning on demand: an advocate and an opponent argue, an arbiter rules on the stronger argument — and reports when a question is genuinely **frame-dependent** (half full *and* half empty) instead of feigning confidence. | `deliberate` tool (`moa` toolset) |
+| **Red-team learning gate** | Opt-in: mined facts/skills must survive an advocate/skeptic/arbiter exchange before being learned; session outcomes need a two-judge quorum. Bad input to the learning loop compounds — this filters it at the door. | `learning.dialectic.enabled: true` |
+| **Evals** | Replayable behavior regression checks (prompt + deterministic assertions). Run before/after a skill, memory, or model change to verify the agent actually improved. | `janus evals init` · `janus evals run` |
 
 The slash variants (`/memory`, `/aspire`, `/interest`) work from the messaging gateway (Telegram, Discord, …) and the TUI too.
 
