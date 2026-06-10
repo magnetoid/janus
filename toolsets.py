@@ -50,6 +50,8 @@ _JANUS_CORE_TOOLS = [
     "todo", "memory", "recall_memory",
     # Session history search
     "session_search",
+    # Agentic RAG over a registered corpus (gated on a corpus existing via check_fn)
+    "search_corpus",
     # Clarifying questions
     "clarify",
     # Code execution + delegation
@@ -225,6 +227,12 @@ TOOLSETS = {
     "dynamic": {
         "description": "Runtime-synthesized tools (populated by agent/tool_synthesis.py at load)",
         "tools": [],
+        "includes": []
+    },
+
+    "rag": {
+        "description": "Agentic retrieval over a registered corpus (code repo, docs, knowledge base)",
+        "tools": ["search_corpus"],
         "includes": []
     },
 

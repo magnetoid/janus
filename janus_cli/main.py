@@ -12589,7 +12589,7 @@ _BUILTIN_SUBCOMMANDS = frozenset(
         "version", "webhook", "whatsapp", "chat", "secrets", "security",
         # Self-learning / proactive command families (see learning stack).
         "aspire", "interest", "learning", "models", "persona", "sleep",
-        "team", "workflow",
+        "team", "workflow", "corpus",
         # Help-ish invocations — plugin commands not being listed in
         # top-level --help is an acceptable trade-off for skipping an
         # expensive eager import of every bundled plugin module.
@@ -15589,6 +15589,57 @@ Examples:
         print("  Run now: janus sleep --now   (preview: --dry-run)\n")
 
     sleep_parser.set_defaults(func=cmd_sleep)
+
+    # =========================================================================
+    # corpus command — agentic RAG over a registered corpus
+    # =========================================================================
+    corpus_parser = subparsers.add_parser(
+        "corpus",
+        help="Register a corpus (repo/docs) for the agent to search (RAG)",
+    )
+    corpus_sub = corpus_parser.add_subparsers(dest="corpus_command")
+    _c_add = corpus_sub.add_parser("add", help="Register a corpus directory")
+    _c_add.add_argument("name")
+    _c_add.add_argument("path")
+    corpus_sub.add_parser("list", help="List registered corpora")
+    _c_rm = corpus_sub.add_parser("remove", help="Unregister a corpus")
+    _c_rm.add_argument("name")
+    _c_search = corpus_sub.add_parser("search", help="Search a corpus")
+    _c_search.add_argument("name")
+    _c_search.add_argument("query", nargs="+")
+    _c_search.add_argument("-n", type=int, default=5)
+
+    def cmd_corpus(args):
+        from agent import corpus_rag as cr
+
+        sub = getattr(args, "corpus_command", None)
+        if sub == "add":
+            res = cr.register_corpus(args.name, args.path)
+            print(f"\n  ✓ Registered corpus '{res['name']}' -> {res['path']}\n" if res["ok"]
+                  else f"\n  ✗ {res['error']}\n")
+        elif sub == "remove":
+            print("\n  ✓ Removed.\n" if cr.remove_corpus(args.name) else f"\n  No corpus '{args.name}'.\n")
+        elif sub == "search":
+            hits = cr.search_corpus(" ".join(args.query), corpus=args.name, n=getattr(args, "n", 5))
+            if not hits:
+                print(f"\n  No matches in '{args.name}'.\n")
+                return
+            print(f"\n  Top matches in '{args.name}':")
+            for h in hits:
+                print(f"    [{h['score']:.2f}] {h['file']}:{h['line']}")
+                print(f"          {h['snippet'].splitlines()[0][:100]}")
+            print()
+        else:  # list (default)
+            corpora = cr.load_corpora()
+            if not corpora:
+                print("\n  No corpora registered. Add one: janus corpus add <name> <path>\n")
+                return
+            print("\n  Registered corpora:")
+            for name, path in corpora.items():
+                print(f"    • {name}  →  {path}")
+            print()
+
+    corpus_parser.set_defaults(func=cmd_corpus)
 
     # =========================================================================
     # tools command
