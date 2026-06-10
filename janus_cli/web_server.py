@@ -1125,6 +1125,130 @@ def _safe_call(mod, fn_name: str, default):
 
 
 # ---------------------------------------------------------------------------
+# Self-learning endpoints — outcome reinforcement metrics, aspirations,
+# interests, the skill graph, and sleep state. Read-mostly + light writes; no
+# blocking LLM calls happen in the request path (the CLI handles those).
+# ---------------------------------------------------------------------------
+
+@app.get("/api/learning/stats")
+async def get_learning_stats():
+    try:
+        from agent import outcome_tracker as ot
+        from agent import persona_optimizer as po
+
+        stats = ot.skill_stats()
+        ranked = sorted(stats.items(),
+                        key=lambda kv: (kv[1].get("success_rate") or 0, kv[1]["uses"]),
+                        reverse=True)
+        return {
+            "overall": ot.overall_stats(),
+            "recent_success_rate": ot.recent_success_rate(20),
+            "skills": [{"name": n, **s} for n, s in ranked],
+            "personas": po.persona_stats(),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"learning stats unavailable: {exc}")
+
+
+@app.get("/api/aspirations")
+async def list_aspirations():
+    from agent import aspirations as asp
+    return {"aspirations": asp.load()}
+
+
+class AspirationCreate(BaseModel):
+    goal: str
+
+
+@app.post("/api/aspirations")
+async def add_aspiration(body: AspirationCreate):
+    from agent import aspirations as asp
+    goal = (body.goal or "").strip()
+    if not goal:
+        raise HTTPException(status_code=400, detail="goal is required")
+    return {"ok": True, "aspiration": asp.add(goal)}
+
+
+@app.delete("/api/aspirations/{aspiration_id}")
+async def remove_aspiration(aspiration_id: str):
+    from agent import aspirations as asp
+    return {"ok": asp.remove(aspiration_id)}
+
+
+@app.get("/api/interests")
+async def list_interests():
+    from agent import interests as it
+    return {"interests": it.load()}
+
+
+class InterestCreate(BaseModel):
+    field: str
+
+
+@app.post("/api/interests")
+async def add_interest(body: InterestCreate):
+    from agent import interests as it
+    field = (body.field or "").strip()
+    if not field:
+        raise HTTPException(status_code=400, detail="field is required")
+    return {"ok": True, "interest": it.add(field)}
+
+
+@app.delete("/api/interests/{interest_id}")
+async def remove_interest(interest_id: str):
+    from agent import interests as it
+    return {"ok": it.remove(interest_id)}
+
+
+@app.get("/api/skills/graph")
+async def get_skill_graph():
+    try:
+        from agent import skill_graph as sg
+
+        sg.build_graph_from_skills()
+        nodes = []
+        for name in sg.graph_node_keys():
+            node = sg.get_node(name) or {}
+            a = sg.assess_promotability(name)
+            nodes.append({
+                "name": name,
+                "promotion_level": node.get("promotion_level", 0),
+                "verdict": ("promotable" if a["promotable"]
+                            else "refine" if a["refinement_needed"] else "stable"),
+                "success_rate": a.get("success_rate"),
+                "uses": a.get("uses"),
+                "dependencies": sg.dependencies_of(name),
+            })
+        return {"nodes": nodes, "edges": sg.load_graph().get("edges", [])}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"skill graph unavailable: {exc}")
+
+
+@app.get("/api/sleep")
+async def get_sleep_status():
+    from agent import sleep as sl
+    state = sl.load_sleep_state()
+    return {
+        "paused": bool(state.get("paused")),
+        "last_run": state.get("last_run"),
+        "last_report": state.get("last_report"),
+    }
+
+
+class SleepPause(BaseModel):
+    paused: bool
+
+
+@app.put("/api/sleep/paused")
+async def set_sleep_paused(body: SleepPause):
+    from agent import sleep as sl
+    state = sl.load_sleep_state()
+    state["paused"] = bool(body.paused)
+    sl.save_sleep_state(state)
+    return {"ok": True, "paused": bool(body.paused)}
+
+
+# ---------------------------------------------------------------------------
 # Portal endpoint — Nous Portal auth + Tool Gateway routing status (read-only).
 # ---------------------------------------------------------------------------
 
