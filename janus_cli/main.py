@@ -15214,6 +15214,9 @@ Examples:
     workflow_sub.add_parser("list", help="List available workflows")
     _wf_show = workflow_sub.add_parser("show", help="Show a workflow's steps")
     _wf_show.add_argument("name")
+    _wf_mine = workflow_sub.add_parser(
+        "mine", help="Draft a reusable workflow from a successful past session")
+    _wf_mine.add_argument("--session", default=None)
     _wf_run = workflow_sub.add_parser("run", help="Run a workflow")
     _wf_run.add_argument("name")
     _wf_run.add_argument("--var", action="append", default=[], metavar="KEY=VALUE",
@@ -15227,6 +15230,38 @@ Examples:
             wls = wfe.list_workflows()
             print("\n  " + (", ".join(wls) if wls
                             else "(none — add YAML files under ~/.janus/workflows/)") + "\n")
+            return
+        if sub == "mine":
+            from janus_state import SessionDB
+            from agent.workflow_memory import mine_session_workflow
+            from janus_constants import display_janus_home
+
+            session_id = getattr(args, "session", None) or _resolve_last_session("cli")
+            if not session_id:
+                print("\n  No session found to mine. Have a conversation first.\n")
+                return
+            db = SessionDB()
+            try:
+                messages = db.get_messages_as_conversation(session_id)
+            finally:
+                try:
+                    db.close()
+                except Exception:
+                    pass
+            existing = wfe.list_workflows()
+            print(f"\n  Mining session {session_id} for a reusable workflow…")
+            res = mine_session_workflow(messages, existing_workflow_names=existing)
+            if res.get("error"):
+                print(f"  ⚠ Mining failed: {res['error']}\n")
+                return
+            written = res.get("written", [])
+            if not written:
+                print("  No reusable workflow found (session not a clear multi-step success).\n")
+                return
+            print(f"  ✓ Drafted {len(written)} workflow(s) under {display_janus_home()}/workflows/.drafts/:")
+            for w in written:
+                print(f"    • {w}")
+            print("  Review, then move out of .drafts/ to use with 'janus workflow run'.\n")
             return
         if sub in ("show", "run"):
             try:
