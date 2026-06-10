@@ -69,4 +69,10 @@ def recall(query: str, *, n: int = 5, include_journal: bool = True, journal_days
         score = round(overlap / (len(et) ** 0.5), 4)
         scored.append({"text": text, "source": c["source"], "score": score})
     scored.sort(key=lambda x: x["score"], reverse=True)
-    return scored[:n]
+    # Hybrid: semantically re-rank the lexical top candidates when an embedding
+    # backend is installed; otherwise this returns the lexical top-n unchanged.
+    try:
+        from agent.embeddings import hybrid_rerank
+        return hybrid_rerank(query, scored, n, text_of=lambda h: h["text"])
+    except Exception:
+        return scored[:n]

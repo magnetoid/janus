@@ -156,7 +156,13 @@ def search_corpus(query: str, *, corpus: Optional[str] = None, n: int = 5,
             snippet = text if len(text) <= 280 else text[:280] + "…"
             scored.append({"file": rel, "line": start, "score": score, "snippet": snippet})
         scored.sort(key=lambda x: x["score"], reverse=True)
-        return scored[:n]
+        # Hybrid: lexical prefilters; embeddings (if installed) re-rank the top
+        # candidates by meaning. Falls back to the lexical top-n otherwise.
+        try:
+            from agent.embeddings import hybrid_rerank
+            return hybrid_rerank(query, scored, n, text_of=lambda h: h["snippet"])
+        except Exception:
+            return scored[:n]
     except Exception as exc:
         logger.debug("corpus search failed: %s", exc)
         return []
