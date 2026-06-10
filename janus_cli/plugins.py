@@ -1438,6 +1438,23 @@ class PluginManager:
         )
 
         try:
+            # User/project directory plugins are integrity-pinned: a digest
+            # recorded on first load is re-verified on every later load so
+            # code that changed on disk without the user's knowledge gets
+            # surfaced (warn mode) or refused (block mode). Bundled plugins
+            # ship with the repo and pip plugins are integrity-managed by
+            # pip, so neither is pinned.
+            if manifest.source in {"user", "project"} and manifest.path:
+                from janus_cli.plugin_integrity import check_before_load
+
+                allowed, _integrity_msg = check_before_load(
+                    manifest.key or manifest.name, Path(manifest.path)
+                )
+                if not allowed:
+                    loaded.error = _integrity_msg or "blocked by integrity check"
+                    self._plugins[manifest.key or manifest.name] = loaded
+                    return
+
             if manifest.source in {"user", "project", "bundled"}:
                 module = self._load_directory_module(manifest)
             else:

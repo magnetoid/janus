@@ -593,7 +593,35 @@ def cmd_remove(name: str) -> None:
         sys.exit(1)
 
     shutil.rmtree(target)
+    try:
+        from janus_cli.plugin_integrity import unpin_plugin
+
+        unpin_plugin(name)
+    except Exception:
+        pass
     _display_removed(name, plugins_dir)
+
+
+def cmd_trust(name: str) -> None:
+    """Re-pin a plugin's integrity digest after the user reviewed its changes."""
+    from rich.console import Console
+
+    from janus_cli.plugin_integrity import pin_plugin
+
+    console = Console()
+    plugins_dir = _plugins_dir()
+
+    try:
+        target = _require_installed_plugin(name, plugins_dir, console)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
+
+    digest = pin_plugin(name, target)
+    console.print(
+        f"[green]✓[/green] Trusted [bold]{name}[/bold] "
+        f"(sha256 {digest[:16]}…) — it will load without integrity warnings."
+    )
 
 
 def _get_disabled_set() -> set:
@@ -1680,6 +1708,8 @@ def plugins_command(args) -> None:
         cmd_enable(args.name)
     elif action == "disable":
         cmd_disable(args.name)
+    elif action == "trust":
+        cmd_trust(args.name)
     elif action in {"list", "ls"}:
         cmd_list(args)
     elif action is None:

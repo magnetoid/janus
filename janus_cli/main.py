@@ -14685,6 +14685,12 @@ Examples:
     )
     plugins_disable.add_argument("name", help="Plugin name to disable")
 
+    plugins_trust = plugins_subparsers.add_parser(
+        "trust",
+        help="Re-pin a plugin's integrity digest after reviewing its changes",
+    )
+    plugins_trust.add_argument("name", help="Plugin name to trust")
+
     def cmd_plugins(args):
         from janus_cli.plugins_cmd import plugins_command
 

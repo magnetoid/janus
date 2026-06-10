@@ -2024,6 +2024,11 @@ DEFAULT_CONFIG = {
         # <untrusted-content> fences so embedded instructions reach the
         # model as data (prompt-injection mitigation).
         "fence_untrusted_content": True,
+        # Integrity pinning for user-installed plugins: "warn" (default)
+        # logs when a plugin's code changed on disk since it was last
+        # loaded, "block" refuses to load it until `janus plugins trust
+        # <name>`, "off" disables verification.
+        "plugin_integrity": "warn",
         "redact_secrets": True,
         "tirith_enabled": True,
         "tirith_path": "tirith",
