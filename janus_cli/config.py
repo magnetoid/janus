@@ -1676,6 +1676,22 @@ DEFAULT_CONFIG = {
         "provider": "",
     },
 
+    # Sleep — offline memory consolidation (agent/sleep.py). When idle, a
+    # background cycle replays recent sessions, graduates episodic notes into
+    # semantic facts + skill drafts, reconciles contradictions, prunes the
+    # lowest-salience entries (kept-floor enforced; pruned items logged to the
+    # journal), and synthesizes cross-session lessons. Run on demand with
+    # `janus sleep --now`.
+    "sleep": {
+        "enabled": True,
+        "interval_hours": 168,        # at most once a week automatically
+        "min_idle_hours": 2.0,        # only when idle this long
+        "max_sessions": 50,
+        "importance_threshold": 0.3,  # prune entries scoring below this
+        "keep_min_entries": 10,       # never prune below this floor
+        "daily_lookback_days": 7,
+    },
+
     # Self-learning reinforcement. When track_outcomes is on, each ended
     # session is classified success/failure (cheap aux model) and attributed to
     # the skills it used — the reward signal the curator/learning loop uses to
