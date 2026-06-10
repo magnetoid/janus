@@ -15353,6 +15353,71 @@ Examples:
     learning_parser.set_defaults(func=cmd_learning)
 
     # =========================================================================
+    # team command — shared team memory (common knowledge across assistants)
+    # =========================================================================
+    team_parser = subparsers.add_parser(
+        "team",
+        help="Shared team memory — common facts across assistants/people",
+        description=(
+            "A shared knowledge layer: facts you add here are readable by every\n"
+            "profile (or teammate) pointed at the same directory, while each\n"
+            "assistant keeps its own private MEMORY.md. Point the dir at a synced\n"
+            "folder, network share, or git repo to share across machines."
+        ),
+    )
+    team_sub = team_parser.add_subparsers(dest="team_command")
+    _t_setdir = team_sub.add_parser("set-dir", help="Set the shared memory directory")
+    _t_setdir.add_argument("path")
+    _t_add = team_sub.add_parser("add", help="Add a shared fact")
+    _t_add.add_argument("fact", nargs="+")
+    team_sub.add_parser("list", help="List shared facts")
+    _t_rm = team_sub.add_parser("remove", help="Remove a shared fact by substring")
+    _t_rm.add_argument("substring", nargs="+")
+
+    def cmd_team(args):
+        from agent import team_memory as tm
+
+        sub = getattr(args, "team_command", None)
+        if sub == "set-dir":
+            from janus_cli.config import load_config, save_config
+            from pathlib import Path as _Path
+
+            cfg = load_config()
+            cfg.setdefault("memory", {})["team_dir"] = args.path
+            save_config(cfg)
+            print(f"\n  ✓ Shared team memory dir: {_Path(args.path).expanduser()}")
+            print("  Point other profiles/machines at the same path to share.\n")
+        elif sub == "add":
+            if not tm.is_enabled():
+                print("\n  ✗ Team memory is off. Set a dir first: janus team set-dir <path>\n")
+                return
+            author = ""
+            try:
+                from janus_cli.profiles import get_active_profile_name
+                author = get_active_profile_name() or ""
+            except Exception:
+                pass
+            ok = tm.add_team_entry(" ".join(args.fact), author=author)
+            print("\n  ✓ Added to shared memory.\n" if ok
+                  else "\n  ✗ Could not write — check the shared dir.\n")
+        elif sub == "remove":
+            ok = tm.remove_team_entry(" ".join(args.substring))
+            print("\n  ✓ Removed.\n" if ok else "\n  No matching shared entry.\n")
+        else:  # list (default)
+            if not tm.is_enabled():
+                print('\n  Team memory is off. Enable it: janus team set-dir <path>\n')
+                return
+            entries = tm.load_team_entries()
+            print(f"\n  Shared team memory ({tm.get_team_dir()}):")
+            if not entries:
+                print('    (empty — add one: janus team add "<fact>")')
+            for e in entries:
+                print(f"    • {e}")
+            print()
+
+    team_parser.set_defaults(func=cmd_team)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(

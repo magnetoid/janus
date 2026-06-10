@@ -1663,6 +1663,12 @@ DEFAULT_CONFIG = {
         # spends tokens and writes memory automatically. Run on demand any
         # time with `janus memory mine`. See agent/memory_miner.py.
         "session_mining": False,
+        # Shared team memory: a directory holding a shared TEAM.md that any
+        # profile pointed at the same path reads (merged, sanitized, into the
+        # agent's memory). Point it at a synced folder / network share / git
+        # repo to share common facts across assistants or teammates while
+        # keeping each assistant's private MEMORY.md isolated. Empty = off.
+        "team_dir": "",
         # External memory provider plugin (empty = built-in only).
         # Set to a provider name to activate: "openviking", "mem0",
         # "hindsight", "holographic", "retaindb", "byterover".

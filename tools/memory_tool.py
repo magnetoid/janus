@@ -277,9 +277,26 @@ class MemoryStore:
         sanitized_memory = self._sanitize_entries_for_snapshot(self.memory_entries, "MEMORY.md")
         sanitized_user = self._sanitize_entries_for_snapshot(self.user_entries, "USER.md")
 
+        memory_block = self._render_block("memory", sanitized_memory)
+
+        # Optional shared team memory: merge sanitized shared entries into the
+        # memory block so the agent sees common team facts. Frozen here at load
+        # time like the rest (prefix-cache safe). Untrusted — other people write
+        # it — so it goes through the SAME threat sanitization as MEMORY.md.
+        try:
+            from agent.team_memory import load_team_entries
+            team_entries = load_team_entries()
+            if team_entries:
+                sanitized_team = self._sanitize_entries_for_snapshot(team_entries, "TEAM.md")
+                team_lines = "\n".join(f"- {e}" for e in sanitized_team)
+                team_block = f"[Shared team memory]\n{team_lines}"
+                memory_block = f"{memory_block}\n\n{team_block}".strip()
+        except Exception:
+            pass
+
         # Capture frozen snapshot for system prompt injection
         self._system_prompt_snapshot = {
-            "memory": self._render_block("memory", sanitized_memory),
+            "memory": memory_block,
             "user": self._render_block("user", sanitized_user),
         }
 
