@@ -2020,6 +2020,10 @@ DEFAULT_CONFIG = {
     # Pre-exec security scanning via tirith
     "security": {
         "allow_private_urls": False,  # Allow requests to private/internal IPs (for OpenWrt, proxies, VPNs)
+        # Wrap extracted web pages and webhook payload values in
+        # <untrusted-content> fences so embedded instructions reach the
+        # model as data (prompt-injection mitigation).
+        "fence_untrusted_content": True,
         "redact_secrets": True,
         "tirith_enabled": True,
         "tirith_path": "tirith",

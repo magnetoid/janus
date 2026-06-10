@@ -870,6 +870,15 @@ def web_search_tool(query: str, limit: int = 5) -> str:
             )
             response_data = provider.search(query, limit)
 
+        # Search snippets are external text — strip fence tags so a crafted
+        # page title/description can't impersonate memory or close a fence.
+        from agent.untrusted_content import sanitize_untrusted
+        for entry in response_data.get("data", {}).get("web", []) or []:
+            for field in ("title", "description"):
+                value = entry.get(field)
+                if isinstance(value, str) and value:
+                    entry[field] = sanitize_untrusted(value)
+
         debug_call_data["results_count"] = len(response_data.get("data", {}).get("web", []))
         result_json = json.dumps(response_data, indent=2, ensure_ascii=False)
         debug_call_data["final_response_size"] = len(result_json)
@@ -1135,12 +1144,15 @@ async def web_extract_tool(
                 content_length = len(result.get('raw_content', ''))
                 logger.info("%s (%d characters)", url, content_length)
         
-        # Trim output to minimal fields per entry: title, content, error
+        # Trim output to minimal fields per entry: title, content, error.
+        # Page content is fenced as untrusted external data so embedded
+        # instructions reach the model as data, not directives.
+        from agent.untrusted_content import fence_untrusted, sanitize_untrusted
         trimmed_results = [
             {
                 "url": r.get("url", ""),
-                "title": r.get("title", ""),
-                "content": r.get("content", ""),
+                "title": sanitize_untrusted(r.get("title", "")),
+                "content": fence_untrusted(r.get("content", ""), source=r.get("url", "")),
                 "error": r.get("error"),
                 **({  "blocked_by_policy": r["blocked_by_policy"]} if "blocked_by_policy" in r else {}),
             }
