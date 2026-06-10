@@ -216,6 +216,18 @@ TOOLSETS = {
         "includes": []
     },
 
+    "tool_synthesis": {
+        "description": "Forge new tools at runtime (gated by tool_synthesis.enabled)",
+        "tools": ["synthesize_tool"],
+        "includes": []
+    },
+
+    "dynamic": {
+        "description": "Runtime-synthesized tools (populated by agent/tool_synthesis.py at load)",
+        "tools": [],
+        "includes": []
+    },
+
     "context_engine": {
         "description": "Runtime tools exposed by the active context engine",
         "tools": [],

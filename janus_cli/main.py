@@ -15607,6 +15607,11 @@ Examples:
     )
     tools_sub = tools_parser.add_subparsers(dest="tools_action")
 
+    # janus tools synth — manage runtime-synthesized dynamic tools
+    _synth_p = tools_sub.add_parser("synth", help="List/remove runtime-synthesized tools")
+    _synth_p.add_argument("synth_action", nargs="?", choices=["list", "remove"], default="list")
+    _synth_p.add_argument("name", nargs="?", default=None)
+
     # janus tools list [--platform cli]
     tools_list_p = tools_sub.add_parser(
         "list",
@@ -15674,6 +15679,30 @@ Examples:
 
     def cmd_tools(args):
         action = getattr(args, "tools_action", None)
+        if action == "synth":
+            from agent import tool_synthesis as tsyn
+            from janus_constants import display_janus_home
+
+            if getattr(args, "synth_action", "list") == "remove":
+                name = getattr(args, "name", None)
+                if not name:
+                    print("\n  Usage: janus tools synth remove <name>\n")
+                    return
+                print("\n  ✓ Removed.\n" if tsyn.remove_dynamic_tool(name)
+                      else f"\n  No dynamic tool '{name}'.\n")
+                return
+            names = tsyn.list_dynamic_tools()
+            enabled = tsyn.is_enabled()
+            print(f"\n  Runtime tool synthesis: {'ENABLED' if enabled else 'disabled'}"
+                  f" (config tool_synthesis.enabled)")
+            if not names:
+                print(f"  No synthesized tools yet (dir: {display_janus_home()}/dynamic_tools/).\n")
+                return
+            print("  Dynamic tools:")
+            for n in names:
+                print(f"    • {n}")
+            print()
+            return
         if action in {"list", "disable", "enable"}:
             from janus_cli.tools_config import tools_disable_enable_command
 
