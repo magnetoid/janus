@@ -19671,6 +19671,13 @@ def _start_cron_ticker(stop_event: threading.Event, adapters=None, loop=None, in
                 )
             except Exception as e:
                 logger.debug("Curator tick error: %s", e)
+            # Sleep — offline memory consolidation, same gated/best-effort pattern.
+            # Internally no-ops unless due (config sleep.*).
+            try:
+                from agent.sleep import maybe_run_sleep
+                maybe_run_sleep(idle_for_seconds=float("inf"))
+            except Exception as e:
+                logger.debug("Sleep tick error: %s", e)
 
         stop_event.wait(timeout=interval)
     logger.info("Cron ticker stopped")

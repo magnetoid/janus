@@ -13331,6 +13331,18 @@ class JanusCLI:
             )
         except Exception:
             pass
+        # Sleep — offline memory consolidation, same idle/interval-gated, best-effort
+        # background pattern as the curator. Runs in a daemon thread so it never
+        # blocks startup; internally no-ops unless due (config sleep.*).
+        try:
+            import threading as _threading
+            from agent.sleep import maybe_run_sleep
+            _threading.Thread(
+                target=lambda: maybe_run_sleep(idle_for_seconds=float("inf")),
+                daemon=True, name="sleep-consolidation",
+            ).start()
+        except Exception:
+            pass
         if self.preloaded_skills and not self._startup_skills_line_shown:
             skills_label = ", ".join(self.preloaded_skills)
             self._console_print(

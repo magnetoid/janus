@@ -15497,6 +15497,75 @@ Examples:
     persona_parser.set_defaults(func=cmd_persona)
 
     # =========================================================================
+    # sleep command — offline memory consolidation
+    # =========================================================================
+    sleep_parser = subparsers.add_parser(
+        "sleep",
+        help="Offline memory consolidation (consolidate/forget/synthesize)",
+    )
+    sleep_parser.add_argument("--now", action="store_true", help="Run a consolidation cycle now")
+    sleep_parser.add_argument("--dry-run", action="store_true", help="Show what a cycle would do, change nothing")
+    sleep_sub = sleep_parser.add_subparsers(dest="sleep_command")
+    sleep_sub.add_parser("status", help="Show last run + schedule")
+    sleep_sub.add_parser("pause", help="Pause automatic sleep")
+    sleep_sub.add_parser("unpause", help="Resume automatic sleep")
+
+    def cmd_sleep(args):
+        from agent import sleep as sl
+
+        sub = getattr(args, "sleep_command", None)
+        if sub == "pause":
+            st = sl.load_sleep_state(); st["paused"] = True; sl.save_sleep_state(st)
+            print("\n  ✓ Automatic sleep paused.\n")
+            return
+        if sub == "unpause":
+            st = sl.load_sleep_state(); st["paused"] = False; sl.save_sleep_state(st)
+            print("\n  ✓ Automatic sleep resumed.\n")
+            return
+        if getattr(args, "now", False) or getattr(args, "dry_run", False):
+            from tools.memory_tool import MemoryStore
+            from agent.memory_miner import _render_transcript
+
+            store = MemoryStore(); store.load_from_disk()
+            sessions, summaries = [], []
+            try:
+                from janus_state import SessionDB
+                db = SessionDB()
+                try:
+                    for s in db.search_sessions(source="cli", limit=10):
+                        msgs = db.get_messages_as_conversation(s["id"])
+                        if msgs:
+                            sessions.append(msgs)
+                            summaries.append(_render_transcript(msgs, max_chars=2000))
+                finally:
+                    db.close()
+            except Exception:
+                pass
+            dry = getattr(args, "dry_run", False)
+            print(f"\n  {'Dry-run — ' if dry else ''}consolidating over {len(sessions)} recent session(s)…")
+            rep = sl.run_sleep_cycle(store, sessions=sessions, session_summaries=summaries, dry_run=dry)
+            if rep.get("error"):
+                print(f"  ⚠ {rep['error']}\n")
+                return
+            print(f"  graduated:   {rep['graduated_facts']} fact(s), {rep['graduated_skills']} skill draft(s)")
+            print(f"  reconciled:  {len(rep['reconciled'])} contradiction(s) retired")
+            print(f"  pruned:      {len(rep['pruned'])} low-salience entr(y/ies)")
+            print(f"  synthesized: {len(rep['lessons'])} cross-session lesson(s)")
+            for lesson in rep["lessons"]:
+                print(f"    • {lesson}")
+            print()
+            return
+        # status (default)
+        st = sl.load_sleep_state()
+        print(f"\n  Sleep: {'PAUSED' if st.get('paused') else 'active'}")
+        print(f"  Last consolidation: {st.get('last_run') or 'never'}")
+        if st.get("last_report"):
+            print(f"  Last cycle: {st['last_report']}")
+        print("  Run now: janus sleep --now   (preview: --dry-run)\n")
+
+    sleep_parser.set_defaults(func=cmd_sleep)
+
+    # =========================================================================
     # tools command
     # =========================================================================
     tools_parser = subparsers.add_parser(
