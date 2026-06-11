@@ -242,9 +242,18 @@ async def test_sethome_preserves_thread_target_for_same_process_restart(tmp_path
 # ── home-channel startup notifications ─────────────────────────────────────
 
 
+def _mark_welcome_seen(platform: str = "telegram") -> None:
+    """Latch the one-time welcome so a test exercises the restart-note path."""
+    from agent.onboarding import mark_seen
+    from janus_constants import get_janus_home
+
+    mark_seen(get_janus_home() / "config.yaml", f"gateway_welcome_{platform}")
+
+
 @pytest.mark.asyncio
 async def test_send_home_channel_startup_notification_to_configured_home(tmp_path, monkeypatch):
     monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+    _mark_welcome_seen()
 
     runner, adapter = make_restart_runner()
     runner.config.platforms[Platform.TELEGRAM].home_channel = HomeChannel(
@@ -264,10 +273,61 @@ async def test_send_home_channel_startup_notification_to_configured_home(tmp_pat
 
 
 @pytest.mark.asyncio
+async def test_first_startup_sends_welcome_then_latches_to_restart_note(
+    tmp_path, monkeypatch
+):
+    """The first-ever startup greets the user; later startups send the short note."""
+    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+
+    runner, adapter = make_restart_runner()
+    runner.config.platforms[Platform.TELEGRAM].home_channel = HomeChannel(
+        platform=Platform.TELEGRAM,
+        chat_id="home-42",
+        name="Ops Home",
+    )
+    adapter.send = AsyncMock(return_value=SendResult(success=True, message_id="m1"))
+
+    delivered = await runner._send_home_channel_startup_notifications()
+    assert delivered == {("telegram", "home-42", None)}
+    first_text = adapter.send.call_args[0][1]
+    assert "I'm Janus" in first_text
+    assert "/help" in first_text
+
+    # Welcome latched — the next startup sends the terse restart note.
+    adapter.send.reset_mock()
+    adapter.send = AsyncMock(return_value=SendResult(success=True, message_id="m2"))
+    await runner._send_home_channel_startup_notifications()
+    second_text = adapter.send.call_args[0][1]
+    assert second_text == "♻️ Gateway online — Janus is back and ready."
+
+
+@pytest.mark.asyncio
+async def test_failed_welcome_send_does_not_latch(tmp_path, monkeypatch):
+    """A welcome that never reached the user must fire again next startup."""
+    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+
+    runner, adapter = make_restart_runner()
+    runner.config.platforms[Platform.TELEGRAM].home_channel = HomeChannel(
+        platform=Platform.TELEGRAM,
+        chat_id="home-42",
+        name="Ops Home",
+    )
+    adapter.send = AsyncMock(return_value=SendResult(success=False, error="boom"))
+
+    await runner._send_home_channel_startup_notifications()
+
+    adapter.send = AsyncMock(return_value=SendResult(success=True, message_id="m1"))
+    await runner._send_home_channel_startup_notifications()
+    retry_text = adapter.send.call_args[0][1]
+    assert "I'm Janus" in retry_text
+
+
+@pytest.mark.asyncio
 async def test_send_home_channel_startup_notification_preserves_thread_metadata(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+    _mark_welcome_seen()
 
     runner, adapter = make_restart_runner()
     runner.config.platforms[Platform.TELEGRAM].home_channel = HomeChannel(
