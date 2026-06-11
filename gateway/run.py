@@ -15718,6 +15718,29 @@ class GatewayRunner:
         skipped = skip_targets or set()
         message = "♻️ Gateway online — Janus is back and ready."
 
+        # First-ever startup per platform sends a real introduction instead
+        # of the terse restart note, latched under onboarding.seen so it
+        # fires exactly once per install. First contact being *inbound* —
+        # the agent greets the user — is the end of the onboarding path.
+        welcome_message = (
+            "👋 Hi — I'm Janus, connected and listening.\n\n"
+            "Try me:\n"
+            "• \"What can you do?\"\n"
+            "• Give me a real task — \"research X and summarize the top 3 options\"\n"
+            "• /help for commands · /status to see what I'm working on\n\n"
+            "Scheduled jobs and notifications will arrive in this chat. "
+            "(One-time hello — future restarts just send a short note.)"
+        )
+        try:
+            from agent.onboarding import is_seen, mark_seen
+            from janus_cli.config import read_raw_config
+            from janus_constants import get_janus_home
+            _onboarding_cfg = read_raw_config()
+            _config_path = get_janus_home() / "config.yaml"
+        except Exception:  # latch helpers are best-effort
+            is_seen = mark_seen = None  # type: ignore[assignment]
+            _onboarding_cfg, _config_path = {}, None
+
         for platform, adapter in self.adapters.items():
             home = self.config.get_home_channel(platform)
             if not home or not home.chat_id:
@@ -15735,6 +15758,14 @@ class GatewayRunner:
             if target in skipped or target in delivered:
                 continue
 
+            welcome_flag = f"gateway_welcome_{platform.value}"
+            first_contact = bool(
+                is_seen is not None
+                and _config_path is not None
+                and not is_seen(_onboarding_cfg, welcome_flag)
+            )
+            outgoing = welcome_message if first_contact else message
+
             try:
                 metadata = self._thread_metadata_for_target(
                     platform,
@@ -15743,9 +15774,9 @@ class GatewayRunner:
                     adapter=adapter,
                 )
                 if metadata:
-                    result = await adapter.send(str(home.chat_id), message, metadata=metadata)
+                    result = await adapter.send(str(home.chat_id), outgoing, metadata=metadata)
                 else:
-                    result = await adapter.send(str(home.chat_id), message)
+                    result = await adapter.send(str(home.chat_id), outgoing)
                 if result is not None and getattr(result, "success", True) is False:
                     logger.warning(
                         "Home-channel startup notification failed for %s:%s: %s",
@@ -15756,8 +15787,11 @@ class GatewayRunner:
                     continue
 
                 delivered.add(target)
+                if first_contact and mark_seen is not None:
+                    mark_seen(_config_path, welcome_flag)
                 logger.info(
-                    "Sent home-channel startup notification to %s:%s",
+                    "Sent home-channel %s to %s:%s",
+                    "welcome introduction" if first_contact else "startup notification",
                     platform.value,
                     home.chat_id,
                 )
