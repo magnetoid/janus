@@ -20,19 +20,21 @@ logger = logging.getLogger(__name__)
 _MIN_MESSAGES = 6  # don't mine trivial sessions
 
 
-def _flag(section: str, key: str) -> bool:
+def _flag(section: str, key: str, *, default: bool = False) -> bool:
     try:
         import yaml
         from janus_constants import get_janus_home
 
         cfg_path = get_janus_home() / "config.yaml"
         if not cfg_path.is_file():
-            return False
+            return default
         cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
         sec = cfg.get(section, {})
-        return bool(isinstance(sec, dict) and sec.get(key))
+        if not isinstance(sec, dict) or key not in sec:
+            return default
+        return bool(sec.get(key))
     except Exception:
-        return False
+        return default
 
 
 def maybe_automine(
@@ -76,6 +78,18 @@ def maybe_automine(
                         record_outcome(session_id, verdict,
                                        skills=skills_used_in(snapshot), note=topic,
                                        active_persona=active_persona)
+                        # Reflexion write-back: a failed session becomes a
+                        # retrievable "do X instead" lesson keyed to the task
+                        # type, so the next similar attempt starts smarter.
+                        if verdict is False and _flag("learning", "reflexion", default=True):
+                            try:
+                                from agent.lessons import reflect_on_failure, record_lesson
+                                r = reflect_on_failure(snapshot)
+                                if r:
+                                    record_lesson(r["lesson"], task_type=r.get("task_type", ""),
+                                                  session_id=session_id)
+                            except Exception as exc:
+                                logger.debug("reflexion write-back failed: %s", exc)
                 except Exception as exc:
                     logger.debug("auto outcome tracking failed: %s", exc)
             if mine_memory:

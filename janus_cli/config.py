@@ -1698,6 +1698,13 @@ DEFAULT_CONFIG = {
     # promote what works. Opt-in (off): spends a small aux call per session.
     "learning": {
         "track_outcomes": False,
+        # Reflexion write-back: when a tracked session is classified a FAILURE,
+        # distill one transferable "do X instead" lesson (one extra aux call, on
+        # failures only) and store it keyed to the task type. The agent pulls it
+        # back via the recall_lessons tool next time a similar task comes up, so
+        # mistakes compound into improvement. Effective only when track_outcomes
+        # is on (it needs the success/failure signal); on by default once it is.
+        "reflexion": True,
         # Dialectic red-team gate on the learning loop (see
         # plans/dialectic-learning-gate.md): before mined facts/skills are
         # committed and session outcomes labeled, an advocate/skeptic/arbiter

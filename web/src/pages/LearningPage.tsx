@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Brain, Pause, Play, Sparkles, Target, Trash2 } from "lucide-react";
+import { AlertTriangle, Brain, Pause, Play, Sparkles, Target, Trash2, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@nous-research/ui/ui/components/card";
 import { Button } from "@nous-research/ui/ui/components/button";
 import { Input } from "@nous-research/ui/ui/components/input";
@@ -14,11 +14,23 @@ interface SkillStat {
   successes: number;
   success_rate: number | null;
 }
+interface LearningMetrics {
+  sessions: number;
+  forward_transfer: number | null;
+  backward_transfer: number | null;
+  forgetting: number | null;
+  skill_diversity: number | null;
+  diversity_trend: number | null;
+  warnings: string[];
+  summary: string;
+}
 interface LearningStats {
   overall: { sessions: number; successes: number; success_rate: number | null };
   recent_success_rate: number | null;
   skills: SkillStat[];
   personas: Record<string, { uses: number; successes: number; success_rate: number | null }>;
+  metrics?: LearningMetrics;
+  lessons?: { total: number; by_task_type: Record<string, number> };
 }
 interface Aspiration {
   id: string;
@@ -47,6 +59,13 @@ interface SleepStatus {
 
 const pct = (x: number | null | undefined): string =>
   typeof x === "number" ? `${Math.round(x * 100)}%` : "—";
+
+// signed delta (e.g. forward/backward transfer): +12% / −8% / —
+const signed = (x: number | null | undefined): string =>
+  typeof x === "number" ? `${x >= 0 ? "+" : "−"}${Math.round(Math.abs(x) * 100)}%` : "—";
+
+const deltaColor = (x: number | null | undefined): string =>
+  typeof x !== "number" ? "text-muted-foreground" : x > 0.02 ? "text-emerald-500" : x < -0.02 ? "text-rose-500" : "text-muted-foreground";
 
 const VERDICT_COLOR: Record<string, string> = {
   promotable: "text-emerald-500",
@@ -165,6 +184,56 @@ export default function LearningPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Continual-learning health */}
+      {stats?.metrics && (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <TrendingUp className="h-4 w-4" /> Continual-learning health
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
+              <div>
+                Forward transfer:{" "}
+                <strong className={deltaColor(stats.metrics.forward_transfer)}>
+                  {signed(stats.metrics.forward_transfer)}
+                </strong>
+              </div>
+              <div>
+                Backward transfer:{" "}
+                <strong className={deltaColor(stats.metrics.backward_transfer)}>
+                  {signed(stats.metrics.backward_transfer)}
+                </strong>
+              </div>
+              <div>
+                Forgetting:{" "}
+                <strong className={deltaColor(stats.metrics.forgetting != null ? -stats.metrics.forgetting : null)}>
+                  {pct(stats.metrics.forgetting)}
+                </strong>
+              </div>
+              <div>
+                Skill diversity:{" "}
+                <strong>{pct(stats.metrics.skill_diversity)}</strong>
+                <span className={`ml-1 text-xs ${deltaColor(stats.metrics.diversity_trend)}`}>
+                  ({signed(stats.metrics.diversity_trend)})
+                </span>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">{stats.metrics.summary}</div>
+            {stats.metrics.warnings.map((w) => (
+              <div key={w} className="flex items-center gap-1.5 text-xs text-amber-500">
+                <AlertTriangle className="h-3.5 w-3.5" /> {w}
+              </div>
+            ))}
+            {stats.lessons != null && stats.lessons.total > 0 && (
+              <div className="text-xs text-muted-foreground">
+                {stats.lessons.total} lesson{stats.lessons.total === 1 ? "" : "s"} learned from past
+                failures (recalled via the <code>recall_lessons</code> tool).
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Aspirations */}
       <Card>
