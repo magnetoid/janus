@@ -10,7 +10,7 @@
 <strong>The self-improving AI agent · by Imba Labs</strong>
 </div>
 
-# Janus Agent ☤
+# Janus Agent 
 
 <p align="center">
   <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Docs-GitHub-FFD700?style=for-the-badge" alt="Documentation"></a>
