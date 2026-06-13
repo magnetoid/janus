@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **`AGENTS.md` (root) is the exhaustive, authoritative development guide — read it.** It covers every subsystem (CLI, TUI, gateway, plugins, skills, toolsets, delegation, curator, cron, kanban, profiles) plus the full catalog of known pitfalls. This file is the fast orientation; AGENTS.md is the depth. `CONTRIBUTING.md` covers cross-platform (Windows) footguns in detail.
 
-This is **Janus Agent** by Imba Labs — a self-improving AI agent with a learning loop. The directory name (`Janus`) is incidental; the package is `janus-agent`. Note: **this checkout is not a git repository.**
+This is **Janus Agent** by Imba Labs — a self-improving AI agent with a learning loop. The directory name (`Janus`) is incidental; the package is `janus-agent`.
 
 ## Commands
 
