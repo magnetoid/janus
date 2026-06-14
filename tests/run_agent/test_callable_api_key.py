@@ -307,8 +307,12 @@ class TestInlinedDisplayMasks:
                / "agent" / "agent_init.py").read_text()
         assert src.count("is_token_provider(") >= 2, (
             "agent/agent_init.py must guard BOTH masked-banner paths "
-            "(chat_completions and anthropic_messages) with "
-            "is_token_provider()."
+            "(OpenAI and Anthropic) with is_token_provider to avoid crashing "
+            "on callable Entra ID tokens."
+        )
+        assert src.count("Using API credentials from env") >= 2, (
+            "agent/agent_init.py must output the generic credentials message "
+            "rather than printing token fragments."
         )
         assert src.count('"🔑 Using credentials: Microsoft Entra ID"') >= 2, (
             "agent/agent_init.py banner blocks should print a static "

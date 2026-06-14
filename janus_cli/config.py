@@ -359,7 +359,7 @@ def detect_install_method(project_root: Optional[Path] = None) -> str:
     container detection here:
       - the curl installer (scripts/install.sh, the README/website install
         command) git-clones the repo and stamps ``git``;
-      - the published ``nousresearch/janus-agent`` image stamps ``docker``
+      - the published ``imbalabs/janus-agent`` image stamps ``docker``
         at boot via ``docker/stage2-hook.sh``.
     An unsupported manual install dropped into a container (no stamp) was
     wrongly classified as the published image by bare container detection,
@@ -429,7 +429,7 @@ def recommended_update_command_for_method(method: str) -> str:
     if method == "homebrew":
         return "brew upgrade janus-agent"
     if method == "docker":
-        return "docker pull nousresearch/janus-agent:latest"
+        return "docker pull imbalabs/janus-agent:latest"
     if method == "pip":
         if is_uv_tool_install():
             return "uv tool upgrade janus-agent"
@@ -467,23 +467,23 @@ def recommended_update_command() -> str:
 _DOCKER_UPDATE_MESSAGE = """\
 ✗ ``janus update`` doesn't apply inside the Docker container.
 
-Janus Agent runs as a published image (nousresearch/janus-agent), not a
+Janus Agent runs as a published image (imbalabs/janus-agent), not a
 git checkout — the container has no working tree to pull into.  Update by
 pulling a fresh image and restarting your container instead:
 
-  docker pull nousresearch/janus-agent:latest
+  docker pull imbalabs/janus-agent:latest
   # then restart whatever started the container, e.g.:
   docker compose up -d --force-recreate janus-agent
   # or, for ad-hoc runs, exit the current container and `docker run` again
 
 Verify the new version after restart:
-  docker run --rm nousresearch/janus-agent:latest --version
+  docker run --rm imbalabs/janus-agent:latest --version
 
 Notes:
   • If you pinned a specific tag (e.g. ``:v0.14.0``) the ``:latest`` tag
     won't move your container — pull the newer tag you actually want, or
     switch to ``:latest`` / ``:main`` for rolling updates.  See available
-    tags at https://hub.docker.com/r/nousresearch/janus-agent/tags
+    tags at https://hub.docker.com/r/imbalabs/janus-agent/tags
   • Your config and session history live under ``$JANUS_HOME`` (``/opt/data``
     in the container, typically bind-mounted from the host) and persist
     across image upgrades — re-pulling doesn't lose any state.
@@ -1119,6 +1119,26 @@ DEFAULT_CONFIG = {
     "compression": {
         "enabled": True,
         "threshold": 0.50,            # compress when context usage exceeds this ratio
+        "auto_threshold": 0.0,        # proactive compaction trigger as a fraction
+                                      # of context_length; 0 disables the proactive
+                                      # path (existing behavior). When > 0 the
+                                      # compressor will compact on the next turn
+                                      # boundary (or before the next LLM call)
+                                      # once prompt_tokens cross this ratio even
+                                      # if the user is idle / no new user input
+                                      # is pending. Useful as:
+                                      #   * an EARLIER trigger (e.g. 0.30) when
+                                      #     you want more aggressive rolling
+                                      #     compaction than the 50% default
+                                      #   * a HARD CAP (e.g. 0.85) that
+                                      #     guarantees compaction well before
+                                      #     any provider-side limit is hit,
+                                      #     complementing the post-error
+                                      #     recovery path
+                                      # `should_compress` returns True when
+                                      # EITHER `threshold` or `auto_threshold`
+                                      # is exceeded, so the more aggressive
+                                      # value wins.
         "target_ratio": 0.20,         # fraction of threshold to preserve as recent tail
         "protect_last_n": 20,         # minimum recent messages to keep uncompressed
         "hygiene_hard_message_limit": 400,  # gateway session-hygiene force-compress threshold by message count
@@ -1476,7 +1496,7 @@ DEFAULT_CONFIG = {
         # that the numbers are a local lower-bound estimate, not billing.
         "show_token_analytics": False,
         # OAuth gate configuration (engaged when ``--host`` is set and
-        # ``--insecure`` is not). The bundled Nous Portal plugin reads
+        # ``--insecure`` is not). The bundled Janus Portal plugin reads
         # both keys at startup; they are the canonical surface for these
         # settings. Each can be overridden by an environment variable —
         # ``JANUS_DASHBOARD_OAUTH_CLIENT_ID`` and
@@ -1487,7 +1507,7 @@ DEFAULT_CONFIG = {
         # touch config.yaml. Local dev / non-Fly deploys can set either
         # surface; missing values fall through to the plugin's defaults
         # (no provider registered when ``client_id`` is empty;
-        # ``portal_url`` defaults to https://portal.nousresearch.com).
+        # ``portal_url`` defaults to https://portal.imbalabs.com).
         "oauth": {
             "client_id": "",  # agent:{instance_id} — Portal provisions this
             "portal_url": "",  # blank → use plugin default (production Portal)
@@ -1992,6 +2012,15 @@ DEFAULT_CONFIG = {
         "mode": "manual",
         "timeout": 60,
         "cron_mode": "deny",
+        # How to handle dangerous commands and execute_code when running
+        # outside an interactive TTY (is_cli=False) and outside a gateway
+        # session (is_gateway=False) — e.g. background automation, local scripts,
+        # or ACP headless servers.
+        #   "deny"            (default) - safely blocks dangerous commands
+        #   "approve"         - preserves legacy behavior (auto-approves with a warning)
+        #   "require_gateway" - pauses and routes the approval request to the operator's
+        #                       configured gateway channel (e.g. mobile Telegram)
+        "headless_mode": "deny",
         # When true, /reload-mcp asks the user to confirm before rebuilding
         # the MCP tool set for the active session.  Reloading invalidates
         # the provider prompt cache (tool schemas are baked into the system
@@ -2201,13 +2230,13 @@ DEFAULT_CONFIG = {
     },
 
     # Remotely-hosted model catalog manifest.  When enabled, the CLI fetches
-    # curated model lists for OpenRouter and Nous Portal from this URL,
+    # curated model lists for OpenRouter and Janus Portal from this URL,
     # falling back to the in-repo snapshot on network failure.  Lets us
     # update model picker lists without shipping a janus-agent release.
     # The default URL is served by the docs site GitHub Pages deploy.
     "model_catalog": {
         "enabled": True,
-        "url": "https://hermes-agent.nousresearch.com/docs/api/model-catalog.json",
+        "url": "https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json",
         # Disk cache TTL in hours.  Beyond this, the CLI refetches on the
         # next /model or `janus model` invocation; network failures
         # silently fall back to the stale cache.
@@ -2540,7 +2569,7 @@ ENV_VARS_BY_VERSION: Dict[int, List[str]] = {
 
 # Required environment variables with metadata for migration prompts.
 # LLM provider is required but handled in the setup wizard's provider
-# selection step (Nous Portal / OpenRouter / Custom endpoint), so this
+# selection step (Janus Portal / OpenRouter / Custom endpoint), so this
 # dict is intentionally empty — no single env var is universally required.
 REQUIRED_ENV_VARS = {}
 
@@ -2548,8 +2577,8 @@ REQUIRED_ENV_VARS = {}
 OPTIONAL_ENV_VARS = {
     # ── Provider (handled in provider selection, not shown in checklists) ──
     "NOUS_BASE_URL": {
-        "description": "Nous Portal base URL override",
-        "prompt": "Nous Portal base URL (leave empty for default)",
+        "description": "Janus Portal base URL override",
+        "prompt": "Janus Portal base URL (leave empty for default)",
         "url": None,
         "password": False,
         "category": "provider",
@@ -2985,7 +3014,7 @@ OPTIONAL_ENV_VARS = {
         "advanced": True,
     },
     "TOOL_GATEWAY_DOMAIN": {
-        "description": "Shared tool-gateway domain suffix for Nous Subscribers only, used to derive vendor hosts, e.g. nousresearch.com -> firecrawl-gateway.nousresearch.com",
+        "description": "Shared tool-gateway domain suffix for Nous Subscribers only, used to derive vendor hosts, e.g. imbalabs.com -> firecrawl-gateway.imbalabs.com",
         "prompt": "Tool-gateway domain suffix",
         "url": None,
         "password": False,
@@ -5319,7 +5348,7 @@ _FALLBACK_COMMENT = """
 # Supported providers:
 #   openrouter   (OPENROUTER_API_KEY)  — routes to any model
 #   openai-codex (OAuth — janus auth) — OpenAI Codex
-#   nous         (OAuth — janus auth) — Nous Portal
+#   nous         (OAuth — janus auth) — Janus Portal
 #   zai          (ZAI_API_KEY)         — Z.AI / GLM
 #   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
 #   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
@@ -5351,7 +5380,7 @@ _COMMENTED_SECTIONS = """
 # Supported providers:
 #   openrouter   (OPENROUTER_API_KEY)  — routes to any model
 #   openai-codex (OAuth — janus auth) — OpenAI Codex
-#   nous         (OAuth — janus auth) — Nous Portal
+#   nous         (OAuth — janus auth) — Janus Portal
 #   zai          (ZAI_API_KEY)         — Z.AI / GLM
 #   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
 #   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)

@@ -38,6 +38,94 @@ class TestShouldCompress:
         assert compressor.should_compress(prompt_tokens=50000) is False
 
 
+class TestAutoThreshold:
+    """NF11: optional proactive compaction trigger.
+
+    ``auto_threshold_percent`` is an additional preflight that ORs against
+    the legacy ``threshold_percent`` so operators can configure compaction
+    to fire earlier (e.g. 0.30) or as a hard cap (e.g. 0.85).  Default 0
+    keeps the legacy behavior.
+    """
+
+    def _make(self, auto_threshold_percent: float) -> ContextCompressor:
+        with patch("agent.context_compressor.get_model_context_length", return_value=100_000):
+            return ContextCompressor(
+                model="test/model",
+                threshold_percent=0.50,
+                protect_first_n=2,
+                protect_last_n=2,
+                quiet_mode=True,
+                auto_threshold_percent=auto_threshold_percent,
+            )
+
+    def test_default_zero_disables_proactive_path(self):
+        c = self._make(auto_threshold_percent=0.0)
+        assert c.auto_threshold_percent == 0.0
+        assert c.auto_threshold_tokens == 0
+        # Legacy behavior preserved: fires only at the 50% threshold.
+        # Note: threshold_tokens is floored at MINIMUM_CONTEXT_LENGTH (64K) so
+        # 60K is below the legacy floor — we use 70K to clear the floor.
+        c.last_prompt_tokens = 60_000
+        assert c.should_compress() is False
+        c.last_prompt_tokens = 70_000
+        assert c.should_compress() is True
+
+    def test_proactive_earlier_trigger_fires_below_legacy(self):
+        """30% proactive trigger must fire before the 50% legacy trigger."""
+        c = self._make(auto_threshold_percent=0.30)
+        # 30% of 100K = 30K
+        assert c.auto_threshold_tokens == 30_000
+        # 50% of 100K = 50K (legacy floor 64K from MINIMUM_CONTEXT_LENGTH)
+        assert c.threshold_tokens >= 50_000
+        # Below both: no fire.
+        c.last_prompt_tokens = 20_000
+        assert c.should_compress() is False
+        # Above 30% but below legacy: proactive fires.
+        c.last_prompt_tokens = 40_000
+        assert c.should_compress() is True
+
+    def test_proactive_hard_cap_fires_after_legacy(self):
+        """85% proactive cap must fire whenever context is dangerously high,
+        even if the legacy preflight missed (e.g. a slow-streaming API)."""
+        c = self._make(auto_threshold_percent=0.85)
+        # 85% of 100K = 85K; legacy is 50% (floor 64K) so auto is much later.
+        assert c.auto_threshold_tokens == 85_000
+        # Above the legacy floor (64K) and below the proactive cap.
+        c.last_prompt_tokens = 70_000
+        # Legacy fires.
+        assert c.should_compress() is True
+        c.last_prompt_tokens = 90_000
+        # Both fire.
+        assert c.should_compress() is True
+
+    def test_proactive_explicit_tokens_uses_min(self):
+        c = self._make(auto_threshold_percent=0.30)
+        # 25K: below both legacy (50K) and proactive (30K) — no fire.
+        assert c.should_compress(prompt_tokens=25_000) is False
+        # 35K: above proactive, below legacy — proactive wins (OR).
+        assert c.should_compress(prompt_tokens=35_000) is True
+        # 80K: above both — fires.
+        assert c.should_compress(prompt_tokens=80_000) is True
+
+    def test_anti_thrashing_protection_preserved(self):
+        """Proactive path must respect the existing anti-thrashing guard."""
+        c = self._make(auto_threshold_percent=0.30)
+        c.last_prompt_tokens = 40_000
+        c._ineffective_compression_count = 2
+        # Even though tokens cross the proactive trigger, anti-thrashing
+        # must short-circuit and refuse to compress again.
+        assert c.should_compress() is False
+
+    def test_clamps_out_of_range_values(self):
+        """Malformed config values must not break the compressor."""
+        c = self._make(auto_threshold_percent=1.5)
+        # Clamped to 1.0.
+        assert c.auto_threshold_percent == 1.0
+        c2 = self._make(auto_threshold_percent=-0.5)
+        # Clamped to 0.0 — proactive disabled.
+        assert c2.auto_threshold_percent == 0.0
+        assert c2.auto_threshold_tokens == 0
+
 
 class TestUpdateFromResponse:
     def test_updates_fields(self, compressor):

@@ -940,6 +940,21 @@ def _get_cron_approval_mode() -> str:
         return "deny"
 
 
+def _get_headless_approval_mode() -> str:
+    """Read the headless approval mode from config. Returns 'deny', 'approve', or 'require_gateway'."""
+    try:
+        from janus_cli.config import load_config
+        config = load_config()
+        mode = str(cfg_get(config, "approvals", "headless_mode", default="deny")).lower().strip()
+        if mode in {"approve", "allow", "yes"}:
+            return "approve"
+        if mode in {"require_gateway", "ask"}:
+            return "require_gateway"
+        return "deny"
+    except Exception:
+        return "deny"
+
+
 def _smart_approve(command: str, description: str) -> str:
     """Use the auxiliary LLM to assess risk and decide approval.
 
@@ -1045,14 +1060,36 @@ def check_dangerous_command(command: str, env_type: str,
                         "approvals.cron_mode: approve in config.yaml."
                     ),
                 }
-        logger.warning(
-            "AUTO-APPROVED dangerous command in non-interactive non-gateway context "
-            "(pattern: %s): %s — set JANUS_INTERACTIVE or JANUS_GATEWAY_SESSION to require approval.",
-            description, command[:200],
-        )
-        return {"approved": True, "message": None}
+            logger.warning(
+                "AUTO-APPROVED dangerous command in cron context "
+                "(pattern: %s): %s", description, command[:200]
+            )
+            return {"approved": True, "message": None}
 
-    if is_gateway or env_var_enabled("JANUS_EXEC_ASK"):
+        # Headless contexts (non-interactive, non-gateway, non-cron):
+        # Respect headless_mode config.
+        headless_mode = _get_headless_approval_mode()
+        if headless_mode == "deny":
+            return {
+                "approved": False,
+                "message": (
+                    f"BLOCKED: Command flagged as dangerous ({description}) "
+                    "but the agent is running in a headless context without an "
+                    "operator present to approve it. "
+                    "To allow dangerous commands headlessly, set "
+                    "approvals.headless_mode: approve in config.yaml."
+                ),
+            }
+        elif headless_mode == "approve":
+            logger.warning(
+                "AUTO-APPROVED dangerous command in headless context "
+                "(pattern: %s): %s — set approvals.headless_mode: deny to block.",
+                description, command[:200],
+            )
+            return {"approved": True, "message": None}
+        # "require_gateway" falls through to the gateway/ask queue below.
+
+    if is_gateway or env_var_enabled("JANUS_EXEC_ASK") or (not is_cli and _get_headless_approval_mode() == "require_gateway"):
         submit_pending(session_key, {
             "command": command,
             "pattern_key": pattern_key,
@@ -1554,6 +1591,7 @@ def check_execute_code_guard(code: str, env_type: str) -> dict:
 
     is_gateway = _is_gateway_approval_context()
     is_ask = env_var_enabled("JANUS_EXEC_ASK")
+    is_cli = env_var_enabled("JANUS_INTERACTIVE")
 
     # Cron: no user is present to approve arbitrary code.
     if env_var_enabled("JANUS_CRON_SESSION"):
@@ -1575,12 +1613,35 @@ def check_execute_code_guard(code: str, env_type: str) -> dict:
             }
         return {"approved": True, "message": None}
 
-    # Only gateway/ask contexts get the one-shot whole-script approval.
+    # Headless contexts (non-interactive, non-gateway, non-ask, non-cron):
+    if not is_gateway and not is_ask and not is_cli:
+        headless_mode = _get_headless_approval_mode()
+        if headless_mode == "deny":
+            return {
+                "approved": False,
+                "message": (
+                    "BLOCKED: execute_code runs arbitrary local Python "
+                    "and the agent is running in a headless context without an "
+                    "operator present to approve it. "
+                    "To allow execute_code headlessly, set "
+                    "approvals.headless_mode: approve in config.yaml."
+                ),
+                "pattern_key": pattern_key,
+                "description": description,
+                "outcome": "blocked",
+                "user_consent": False,
+            }
+        elif headless_mode == "approve":
+            logger.warning("AUTO-APPROVED execute_code in headless context "
+                           "— set approvals.headless_mode: deny to block.")
+            return {"approved": True, "message": None}
+        # "require_gateway" falls through to the gateway/ask queue below.
+
+    # Only gateway/ask/require_gateway contexts get the one-shot whole-script approval.
     #   * CLI interactive: the script's terminal() calls are guarded per-call
     #     (context now propagates into the RPC thread, #33057); a whole-script
     #     prompt would fire on every execute_code call.
-    #   * Local non-interactive non-gateway: documented limitation above.
-    if not is_gateway and not is_ask:
+    if is_cli and not is_gateway and not is_ask:
         return {"approved": True, "message": None}
 
     session_key = get_current_session_key()

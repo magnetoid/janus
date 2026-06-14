@@ -786,7 +786,7 @@ class TestWebServerEndpoints:
         assert data["name"] == "janus-update"
         assert data["pid"] is None
         assert data["error"] == "docker_update_unsupported"
-        assert "docker pull nousresearch/janus-agent:latest" in data["message"]
+        assert "docker pull imbalabs/janus-agent:latest" in data["message"]
         assert spawned is False
 
         status = self.client.get("/api/actions/janus-update/status")
@@ -795,7 +795,7 @@ class TestWebServerEndpoints:
         assert status_data["running"] is False
         assert status_data["exit_code"] == 1
         assert status_data["pid"] is None
-        assert any("docker pull nousresearch/janus-agent:latest" in line for line in status_data["lines"])
+        assert any("docker pull imbalabs/janus-agent:latest" in line for line in status_data["lines"])
 
     def test_update_janus_spawns_on_non_docker_install(self, monkeypatch):
         import janus_cli.web_server as web_server
@@ -4370,13 +4370,13 @@ def _fake_httpx_client(*, status: int | None = None, raise_exc: bool = False):
         def __init__(self, *a, **k):
             pass
 
-        def __enter__(self):
+        async def __aenter__(self):
             return self
 
-        def __exit__(self, *a):
+        async def __aexit__(self, *a):
             return False
 
-        def get(self, *a, **k):
+        async def get(self, *a, **k):
             if raise_exc:
                 raise RuntimeError("connection refused")
             return _Resp(status)
@@ -4403,22 +4403,22 @@ class TestValidateProviderCredential:
         return self.client.post("/api/providers/validate", json={"key": key, "value": value})
 
     def test_rejected_key_blocks(self, monkeypatch):
-        monkeypatch.setattr("httpx.Client", _fake_httpx_client(status=401))
+        monkeypatch.setattr("httpx.AsyncClient", _fake_httpx_client(status=401))
         data = self._post("OPENROUTER_API_KEY", "sk-bogus").json()
         assert data["ok"] is False and data["reachable"] is True
 
     def test_valid_key_passes(self, monkeypatch):
-        monkeypatch.setattr("httpx.Client", _fake_httpx_client(status=200))
+        monkeypatch.setattr("httpx.AsyncClient", _fake_httpx_client(status=200))
         data = self._post("OPENAI_API_KEY", "sk-real").json()
         assert data["ok"] is True and data["reachable"] is True
 
     def test_rate_limited_counts_as_valid(self, monkeypatch):
-        monkeypatch.setattr("httpx.Client", _fake_httpx_client(status=429))
+        monkeypatch.setattr("httpx.AsyncClient", _fake_httpx_client(status=429))
         data = self._post("XAI_API_KEY", "xai-real").json()
         assert data["ok"] is True
 
     def test_network_error_is_unreachable_not_blocking(self, monkeypatch):
-        monkeypatch.setattr("httpx.Client", _fake_httpx_client(raise_exc=True))
+        monkeypatch.setattr("httpx.AsyncClient", _fake_httpx_client(raise_exc=True))
         data = self._post("OPENROUTER_API_KEY", "sk-real").json()
         assert data["ok"] is False and data["reachable"] is False
 

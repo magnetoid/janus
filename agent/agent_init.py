@@ -690,7 +690,7 @@ def init_agent(
                 if is_token_provider(effective_key):
                     print("🔑 Using credentials: Microsoft Entra ID")
                 elif isinstance(effective_key, str) and len(effective_key) > 12:
-                    print(f"🔑 Using token: {effective_key[:8]}...{effective_key[-4:]}")
+                    print("🔑 Using API credentials from env")
     elif agent.api_mode == "bedrock_converse":
         # AWS Bedrock — uses boto3 directly, no OpenAI client needed.
         # Region is extracted from the base_url or defaults to us-east-1.
@@ -911,7 +911,7 @@ def init_agent(
                 if is_token_provider(key_used):
                     print("🔑 Using credentials: Microsoft Entra ID")
                 elif isinstance(key_used, str) and key_used and key_used != "dummy-key" and len(key_used) > 12:
-                    print(f"🔑 Using API key: {key_used[:8]}...{key_used[-4:]}")
+                    print("🔑 Using API credentials from env")
                 else:
                     print("⚠️  Warning: API key appears invalid or missing")
         except Exception as e:
@@ -1194,7 +1194,7 @@ def init_agent(
     # same tools via ctx.register_tool(), which lands in agent.tools
     # through _ra().get_tool_definitions()).  Duplicate function names cause
     # 400 errors on providers that enforce unique names (e.g. Xiaomi
-    # MiMo via Nous Portal).
+    # MiMo via Janus Portal).
     #
     # Respect the platform's enabled_toolsets configuration (#5544):
     #   enabled_toolsets is None        → no filter, inject (backward compat)
@@ -1266,6 +1266,17 @@ def init_agent(
     if not isinstance(_compression_cfg, dict):
         _compression_cfg = {}
     compression_threshold = float(_compression_cfg.get("threshold", 0.50))
+    # NF11: optional proactive compaction trigger.  0.0 (default) keeps the
+    # legacy behavior — the compressor only fires on the next preflight or
+    # the post-error recovery path.  > 0 enables an additional preflight
+    # that fires when prompt tokens cross ``auto_threshold * context_length``,
+    # which is the recommended way to guarantee compaction well before any
+    # provider-side limit is hit and to keep idle sessions from growing
+    # unboundedly.  Clamp to [0.0, 1.0] so a typo doesn't make the proactive
+    # trigger fire on every turn.
+    compression_auto_threshold = max(
+        0.0, min(float(_compression_cfg.get("auto_threshold", 0.0)), 1.0)
+    )
     # Per-model/route compaction-threshold override. Codex gpt-5.5 raises to
     # 85% (the Codex backend caps the window at 272K, so the default 50% would
     # compact at ~136K — half the usable context). Gated by an opt-out config
@@ -1535,6 +1546,7 @@ def init_agent(
             provider=agent.provider,
             api_mode=agent.api_mode,
             abort_on_summary_failure=compression_abort_on_summary_failure,
+            auto_threshold_percent=compression_auto_threshold,
         )
     agent.compression_enabled = compression_enabled
 
@@ -1674,7 +1686,17 @@ def init_agent(
 
     if not agent.quiet_mode:
         if compression_enabled:
-            print(f"📊 Context limit: {agent.context_compressor.context_length:,} tokens (compress at {int(compression_threshold*100)}% = {agent.context_compressor.threshold_tokens:,})")
+            _auto_part = ""
+            if compression_auto_threshold > 0.0:
+                _auto_part = (
+                    f", auto at {int(compression_auto_threshold*100)}% "
+                    f"= {agent.context_compressor.auto_threshold_tokens:,}"
+                )
+            print(
+                f"📊 Context limit: {agent.context_compressor.context_length:,} tokens "
+                f"(compress at {int(compression_threshold*100)}% "
+                f"= {agent.context_compressor.threshold_tokens:,}{_auto_part})"
+            )
         else:
             print(f"📊 Context limit: {agent.context_compressor.context_length:,} tokens (auto-compression disabled)")
         # One-time notice when the Codex gpt-5.5 autoraise kicked in, with the

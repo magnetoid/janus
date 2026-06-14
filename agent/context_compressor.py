@@ -596,6 +596,7 @@ class ContextCompressor(ContextEngine):
         provider: str = "",
         api_mode: str = "",
         abort_on_summary_failure: bool = False,
+        auto_threshold_percent: float = 0.0,
     ):
         self.model = model
         self.base_url = base_url
@@ -603,6 +604,14 @@ class ContextCompressor(ContextEngine):
         self.provider = provider
         self.api_mode = api_mode
         self.threshold_percent = threshold_percent
+        # Proactive compaction trigger (NF11). 0.0 disables the proactive
+        # path; values > 0 enable an additional preflight that fires when
+        # prompt tokens cross ``auto_threshold_percent * context_length``.
+        # See ``should_compress`` for the OR-semantics with ``threshold``.
+        # Clamp to [0.0, 1.0] so a malformed config (e.g. 1.5) cannot make
+        # ``auto_threshold_tokens`` exceed the model window and trigger on
+        # every turn, which would thrash the compressor.
+        self.auto_threshold_percent = max(0.0, min(float(auto_threshold_percent), 1.0))
         self.protect_first_n = protect_first_n
         self.protect_last_n = protect_last_n
         self.summary_target_ratio = max(0.10, min(summary_target_ratio, 0.80))
@@ -625,6 +634,15 @@ class ContextCompressor(ContextEngine):
         self.threshold_tokens = max(
             int(self.context_length * threshold_percent),
             MINIMUM_CONTEXT_LENGTH,
+        )
+        # Proactive trigger (0 = disabled).  When > 0, ``should_compress``
+        # ORs this against ``threshold_tokens``; the more aggressive (lower)
+        # of the two wins.  No floor here — operators may legitimately want
+        # a proactive cap at, say, 0.85 of a 1M-token window.
+        self.auto_threshold_tokens = (
+            int(self.context_length * self.auto_threshold_percent)
+            if self.auto_threshold_percent > 0.0
+            else 0
         )
         self.compression_count = 0
 
@@ -728,12 +746,28 @@ class ContextCompressor(ContextEngine):
     def should_compress(self, prompt_tokens: int = None) -> bool:
         """Check if context exceeds the compression threshold.
 
-        Includes anti-thrashing protection: if the last two compressions
-        each saved less than 10%, skip compression to avoid infinite loops
-        where each pass removes only 1-2 messages.
+        Triggers on EITHER:
+          * the legacy ``threshold_percent`` (default 50% of context_length),
+            a preflight that fires before the next LLM call
+          * the new ``auto_threshold_percent`` (NF11, default 0 = disabled),
+            a proactive trigger that can fire earlier (e.g. 30%) to keep
+            the working set small, or later (e.g. 85%) as a hard cap that
+            guarantees compaction well before any provider-side limit
+
+        The more aggressive (lower) of the two wins.  Anti-thrashing
+        protection is preserved: if the last two compressions each saved
+        less than 10%, skip compression to avoid infinite loops where
+        each pass removes only 1-2 messages.
         """
         tokens = prompt_tokens if prompt_tokens is not None else self.last_prompt_tokens
-        if tokens < self.threshold_tokens:
+        # Active thresholds: a list of (label, token_count) pairs that
+        # ``should_compress`` will OR.  We always include the legacy
+        # ``threshold_tokens``; the proactive trigger is only included
+        # when it is enabled (``auto_threshold_tokens > 0``).
+        active_thresholds = [("threshold", self.threshold_tokens)]
+        if self.auto_threshold_tokens > 0:
+            active_thresholds.append(("auto_threshold", self.auto_threshold_tokens))
+        if not any(tokens >= count for _, count in active_thresholds):
             return False
         # Anti-thrashing: back off if recent compressions were ineffective
         if self._ineffective_compression_count >= 2:

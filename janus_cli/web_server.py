@@ -1256,7 +1256,7 @@ async def set_sleep_paused(body: SleepPause):
 
 
 # ---------------------------------------------------------------------------
-# Portal endpoint — Nous Portal auth + Tool Gateway routing status (read-only).
+# Portal endpoint — Janus Portal auth + Tool Gateway routing status (read-only).
 # ---------------------------------------------------------------------------
 
 
@@ -1279,7 +1279,7 @@ async def get_portal_status():
         if feats is not None:
             for feat in feats.items():
                 if getattr(feat, "managed_by_nous", False):
-                    state = "via Nous Portal"
+                    state = "via Janus Portal"
                 elif getattr(feat, "active", False) and getattr(feat, "current_provider", None):
                     state = feat.current_provider
                 elif getattr(feat, "active", False):
@@ -1296,7 +1296,7 @@ async def get_portal_status():
         "portal_url": auth.get("portal_base_url"),
         "inference_url": auth.get("inference_base_url"),
         "provider": str((model_cfg or {}).get("provider") or ""),
-        "subscription_url": "https://portal.nousresearch.com/manage-subscription",
+        "subscription_url": "https://portal.imbalabs.com/manage-subscription",
         "features": features,
     }
 
@@ -2806,8 +2806,8 @@ async def validate_provider_credential(body: EnvVarUpdate, request: Request):
     if key == "OPENAI_BASE_URL":
         url = value.rstrip("/") + "/models"
         try:
-            with httpx.Client(timeout=httpx.Timeout(8.0)) as client:
-                resp = client.get(url)
+            async with httpx.AsyncClient(timeout=httpx.Timeout(8.0)) as client:
+                resp = await client.get(url)
             return {"ok": True, "reachable": True, "message": "", "models": _parse_model_ids(resp)}
         except Exception:
             return {"ok": False, "reachable": False, "message": f"Could not reach {url}."}
@@ -2826,8 +2826,8 @@ async def validate_provider_credential(body: EnvVarUpdate, request: Request):
         params["key"] = value
 
     try:
-        with httpx.Client(timeout=httpx.Timeout(10.0)) as client:
-            resp = client.get(url, headers=headers, params=params)
+        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
+            resp = await client.get(url, headers=headers, params=params)
     except Exception:
         return {"ok": False, "reachable": False, "message": "Could not reach the provider to verify the key."}
 
@@ -3515,7 +3515,7 @@ def _write_platform_enabled(platform_id: str, enabled: bool) -> None:
     save_config(config)
 
 
-_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.hermes-agent.nousresearch.com"
+_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.github.com/magnetoid/janus"
 _TELEGRAM_USER_ID_RE = re.compile(r"^\d+$")
 
 
@@ -4075,10 +4075,10 @@ def _claude_code_only_status() -> Dict[str, Any]:
 _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
     {
         "id": "nous",
-        "name": "Nous Portal",
+        "name": "Janus Portal",
         "flow": "device_code",
         "cli_command": "janus auth add nous",
-        "docs_url": "https://portal.nousresearch.com",
+        "docs_url": "https://portal.imbalabs.com",
         "status_fn": None,  # dispatched via auth.get_nous_auth_status
     },
     {
@@ -4157,7 +4157,7 @@ def _resolve_provider_status(provider_id: str, status_fn) -> Dict[str, Any]:
             return {
                 "logged_in": bool(raw.get("logged_in")),
                 "source": "nous_portal",
-                "source_label": raw.get("portal_base_url") or "Nous Portal",
+                "source_label": raw.get("portal_base_url") or "Janus Portal",
                 "token_preview": _truncate_token(raw.get("access_token")),
                 "expires_at": raw.get("access_expires_at"),
                 "has_refresh_token": bool(raw.get("has_refresh_token")),
@@ -6981,27 +6981,32 @@ async def list_checkpoints():
     # actual prune is a spawned action so confirmation/pruning logic stays
     # in one place (the CLI).
     cp_dir = get_janus_home() / "checkpoints"
-    sessions = []
-    total_bytes = 0
-    if cp_dir.is_dir():
-        for child in sorted(cp_dir.iterdir()):
-            if not child.is_dir():
-                continue
-            size = 0
-            count = 0
-            for f in child.rglob("*"):
-                if f.is_file():
-                    try:
-                        size += f.stat().st_size
-                        count += 1
-                    except OSError:
-                        pass
-            total_bytes += size
-            sessions.append({
-                "session": child.name,
-                "files": count,
-                "bytes": size,
-            })
+
+    def _scan_checkpoints() -> tuple[list, int]:
+        sessions = []
+        total_bytes = 0
+        if cp_dir.is_dir():
+            for child in sorted(cp_dir.iterdir()):
+                if not child.is_dir():
+                    continue
+                size = 0
+                count = 0
+                for f in child.rglob("*"):
+                    if f.is_file():
+                        try:
+                            size += f.stat().st_size
+                            count += 1
+                        except OSError:
+                            pass
+                total_bytes += size
+                sessions.append({
+                    "session": child.name,
+                    "files": count,
+                    "bytes": size,
+                })
+        return sessions, total_bytes
+
+    sessions, total_bytes = await asyncio.to_thread(_scan_checkpoints)
     return {"sessions": sessions, "total_bytes": total_bytes}
 
 
