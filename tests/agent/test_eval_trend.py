@@ -37,3 +37,26 @@ def test_run_trend_partial():
 def test_run_trend_no_specs_is_best_effort():
     rec = et.run_trend(agent_runner=_runner(set()))
     assert rec.get("error")
+
+
+def test_learning_curve_detects_flips():
+    s = _specs()
+    et.run_trend(specs=s, agent_runner=_runner({"a"}))       # b fails
+    et.run_trend(specs=s, agent_runner=_runner({"a", "b"}))  # b now passes
+    curve = et.learning_curve()
+    assert len(curve["points"]) == 2
+    assert curve["learned"] == ["b"]
+    assert curve["regressed"] == []
+
+
+def test_learning_curve_detects_regression():
+    s = _specs()
+    et.run_trend(specs=s, agent_runner=_runner({"a", "b"}))
+    et.run_trend(specs=s, agent_runner=_runner({"a"}))
+    curve = et.learning_curve()
+    assert curve["regressed"] == ["b"]
+    assert curve["learned"] == []
+
+
+def test_learning_curve_empty():
+    assert et.learning_curve()["points"] == []
