@@ -3392,9 +3392,14 @@ def check_for_skill_updates(
 # Janus centralized index source
 # ---------------------------------------------------------------------------
 
-# Skills index service (protected real domain — the rebrand must not rewrite
-# this to a repo URL; github.com does not serve an /api/ index endpoint).
-JANUS_INDEX_URL = "https://hermes-agent.nousresearch.com/docs/api/skills-index.json"
+# Cloud Industry curated skills index (see torsor ADR: Cloud Industry service
+# domains). This is the brand's OWN featured catalog — optional: the hub also
+# pulls from skills.sh (~20k community skills), any GitHub repo, and direct
+# SKILL.md URLs, so an unreachable index degrades gracefully. Override with
+# the JANUS_SKILLS_INDEX_URL env var. Must stay a SERVICE host, never a repo URL.
+JANUS_INDEX_URL = os.environ.get(
+    "JANUS_SKILLS_INDEX_URL", "https://skills.cloud-industry.com/index.json"
+)
 JANUS_INDEX_CACHE_FILE = INDEX_CACHE_DIR / "janus-index.json"
 JANUS_INDEX_TTL = 6 * 3600  # 6 hours
 

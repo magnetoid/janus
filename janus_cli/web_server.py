@@ -1882,7 +1882,7 @@ def _write_platform_enabled(platform_id: str, enabled: bool) -> None:
     save_config(config)
 
 
-_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.hermes-agent.nousresearch.com"
+_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.cloud-industry.com"
 _TELEGRAM_USER_ID_RE = re.compile(r"^\d+$")
 
 
