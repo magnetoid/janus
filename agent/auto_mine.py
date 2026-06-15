@@ -76,8 +76,18 @@ def maybe_automine(
                                 if r:
                                     record_lesson(r["lesson"], task_type=r.get("task_type", ""),
                                                   session_id=session_id)
+                                # Self-growing benchmark: draft a quarantined
+                                # regression-pin eval from the same failure.
+                                if _flag("evals", "autopin", default=False):
+                                    from agent.eval_miner import (
+                                        draft_eval_from_failure, write_eval_draft,
+                                    )
+                                    spec = draft_eval_from_failure(
+                                        snapshot, lesson=(r or {}).get("lesson", ""))
+                                    if spec:
+                                        write_eval_draft(spec)
                             except Exception as exc:
-                                logger.debug("reflexion write-back failed: %s", exc)
+                                logger.debug("reflexion/autopin write-back failed: %s", exc)
                 except Exception as exc:
                     logger.debug("auto outcome tracking failed: %s", exc)
             if mine_memory:

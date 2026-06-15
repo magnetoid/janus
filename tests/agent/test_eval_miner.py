@@ -48,3 +48,28 @@ def test_write_eval_draft_quarantines_yaml():
 
 def test_garbage_reply_returns_none():
     assert em.draft_eval_from_failure(_MSGS, llm_caller=_fake_llm("not json")) is None
+
+
+def test_autopin_writes_draft_on_failure(monkeypatch):
+    import yaml as _yaml
+    from janus_constants import get_janus_home
+    from agent import auto_mine, outcome_tracker
+
+    home = get_janus_home(); home.mkdir(parents=True, exist_ok=True)
+    (home / "config.yaml").write_text(
+        _yaml.safe_dump({"learning": {"track_outcomes": True, "reflexion": True},
+                         "evals": {"autopin": True}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(outcome_tracker, "classify_session", lambda *a, **k: False)
+    monkeypatch.setattr("agent.lessons.reflect_on_failure", lambda *a, **k: {"task_type": "t", "lesson": "Use pytest."})
+    spec = em.draft_eval_from_failure(
+        _MSGS, llm_caller=_fake_llm('{"name": "p", "prompt": "p", "checks": [{"type": "contains", "value": "pytest"}]}'))
+    monkeypatch.setattr(em, "draft_eval_from_failure", lambda *a, **k: spec)
+
+    msgs = [{"role": "user", "content": "q", "session_id": "s1"},
+            {"role": "assistant", "content": "a"}] * 3
+    auto_mine.maybe_automine(msgs, run_in_thread=False)
+
+    drafts = list((evals_dir() / ".drafts").glob("*.yaml"))
+    assert drafts, "a regression-pin draft should have been written"
