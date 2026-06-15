@@ -4003,7 +4003,6 @@ BUILTIN_CUSTOM_PROVIDER_PRESETS: List[Dict[str, Any]] = [
         "api_key": "",
         "model": "",
         "discover_models": True,
-        "third_party": True,
     },
 ]
 
