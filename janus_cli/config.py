@@ -1683,6 +1683,10 @@ DEFAULT_CONFIG = {
         # spends tokens and writes memory automatically. Run on demand any
         # time with `janus memory mine`. See agent/memory_miner.py.
         "session_mining": False,
+        # Write-time reconciliation: classify each mined fact ADD/UPDATE/DELETE/
+        # NOOP against existing memory (Mem0-style) instead of append-only, so
+        # stale facts are superseded at write time. Opt-in.
+        "write_time_reconcile": False,
         # Shared team memory: a directory holding a shared TEAM.md that any
         # profile pointed at the same path reads (merged, sanitized, into the
         # agent's memory). Point it at a synced folder / network share / git
@@ -1736,6 +1740,19 @@ DEFAULT_CONFIG = {
             "skills": True,     # flag mined skill drafts
             "outcomes": True,   # two-judge quorum for success/failure labels
         },
+    },
+
+    # Measurable self-improvement (docs/superpowers/specs/2026-06-15-...).
+    # The eval spine runs the $JANUS_HOME/evals/ suite on a schedule and records
+    # a pass-rate learning curve; autopin drafts a regression-pin eval from a
+    # failed session (quarantined in evals/.drafts/ for review). Opt-in (cost:
+    # eval runs spend model calls).
+    "evals": {
+        "trend": {
+            "enabled": False,
+            "interval_hours": 24,   # at most once a day automatically
+        },
+        "autopin": False,           # failed session -> draft regression-pin eval
     },
 
     # Skill graph + verifiable-reward promotion (agent/skill_graph.py). Skills
