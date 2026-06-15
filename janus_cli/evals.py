@@ -123,6 +123,35 @@ def _cmd_results(args) -> int:
     return 0
 
 
+def _cmd_trend(args) -> int:
+    from agent import eval_trend as et
+
+    rec = et.run_trend(path=_resolve_path(args))
+    if rec.get("error"):
+        print(f"evals: trend run failed — {rec['error']}", file=sys.stderr)
+        return 1
+    print(f"trend point: pass_rate={rec['pass_rate']} "
+          f"({rec['passed']}/{rec['total']}) suite={rec['suite_hash']}")
+    curve = et.learning_curve()
+    if curve["learned"]:
+        print(f"  learned since first run: {', '.join(curve['learned'])}")
+    if curve["regressed"]:
+        print(f"  REGRESSED since first run: {', '.join(curve['regressed'])}")
+    return 0
+
+
+def _cmd_ab(args) -> int:
+    from agent import eval_trend as et
+
+    out = et.compare_feature(args.flag, path=_resolve_path(args))
+    if out.get("error"):
+        print(f"evals: ab failed — {out['error']}", file=sys.stderr)
+        return 1
+    print(f"A/B {out['flag']}: ON={out['pass_rate_on']} OFF={out['pass_rate_off']} "
+          f"delta={out['delta']:+.4f}")
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # argparse wiring (called from janus_cli.main)
 # ---------------------------------------------------------------------------
@@ -167,6 +196,15 @@ def register_cli(parent: argparse.ArgumentParser) -> None:
 
     p_results = subs.add_parser("results", help="Show the most recent saved results")
     p_results.set_defaults(func=_cmd_results)
+
+    p_trend = subs.add_parser("trend", help="Run the suite and record a learning-curve point")
+    p_trend.add_argument("--path", help="Spec file or directory (default $JANUS_HOME/evals/)")
+    p_trend.set_defaults(func=_cmd_trend)
+
+    p_ab = subs.add_parser("ab", help="A/B a feature flag: suite pass-rate ON vs OFF")
+    p_ab.add_argument("flag", help="section.key flag, e.g. memory.write_time_reconcile")
+    p_ab.add_argument("--path", help="Spec file or directory (default $JANUS_HOME/evals/)")
+    p_ab.set_defaults(func=_cmd_ab)
 
 
 def cli_main(argv=None) -> int:
