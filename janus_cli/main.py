@@ -2607,8 +2607,10 @@ def select_provider_and_model(args=None):
                     return refs[identity]
             return ""
 
+        from janus_cli.config import custom_providers_for_picker
+
         custom_provider_map = {}
-        for entry in get_compatible_custom_providers(cfg):
+        for entry in custom_providers_for_picker(cfg):
             if not isinstance(entry, dict):
                 continue
             name = (entry.get("name") or "").strip()

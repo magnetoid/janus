@@ -3989,6 +3989,25 @@ def providers_dict_to_custom_providers(providers_dict: Any) -> List[Dict[str, An
     return custom_providers
 
 
+# Built-in custom-provider presets — OpenAI-compatible relays/aggregators that
+# need no provider backend (just a base_url + key), surfaced as named options in
+# the `janus model` / `janus setup` picker so users don't hand-type the base_url.
+# The "(third-party relay)" suffix is the user-visible note that these route
+# through an external service. The api_key is left empty so the picker prompts
+# for it on selection; models are discovered from the endpoint's /models.
+BUILTIN_CUSTOM_PROVIDER_PRESETS: List[Dict[str, Any]] = [
+    {
+        "name": "APIKEY.FUN (third-party relay)",
+        "base_url": "https://api.apikey.fun/v1",
+        "api_mode": "chat_completions",
+        "api_key": "",
+        "model": "",
+        "discover_models": True,
+        "third_party": True,
+    },
+]
+
+
 def get_compatible_custom_providers(
     config: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
@@ -3998,6 +4017,10 @@ def get_compatible_custom_providers(
     is the newer keyed schema.  Runtime and picker flows still need a single
     list-shaped view, but we should not materialise that compatibility layer
     back into config.yaml because it duplicates entries in UIs.
+
+    Built-in presets (``BUILTIN_CUSTOM_PROVIDER_PRESETS``) are appended last, so
+    a user's own entry for the same endpoint takes precedence and the preset is
+    only added when not already present.
     """
     if config is None:
         config = load_config()
@@ -4036,6 +4059,30 @@ def get_compatible_custom_providers(
     for entry in providers_dict_to_custom_providers(config.get("providers")):
         _append_if_new(entry)
 
+    return compatible
+
+
+def custom_providers_for_picker(
+    config: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Picker view: configured custom providers + built-in presets.
+
+    Presets are appended last and deduped by base_url, so a user's own entry for
+    the same endpoint wins and the preset is suppressed. This is for MENU/SETUP
+    use only — runtime resolution must use :func:`get_compatible_custom_providers`
+    so an unselected preset never affects model resolution.
+    """
+    compatible = list(get_compatible_custom_providers(config))
+    seen_base_urls = {
+        str(e.get("base_url", "") or "").strip().rstrip("/").lower() for e in compatible
+    }
+    for preset in BUILTIN_CUSTOM_PROVIDER_PRESETS:
+        burl = str(preset.get("base_url", "") or "").strip().rstrip("/").lower()
+        if burl and burl in seen_base_urls:
+            continue
+        compatible.append(_normalize_custom_provider_entry(dict(preset)))
+        if burl:
+            seen_base_urls.add(burl)
     return compatible
 
 
