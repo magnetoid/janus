@@ -94,3 +94,30 @@ def test_remove_legacy(tmp_path):
     src = _make_hermes(tmp_path)
     assert hm.remove_legacy(src) is True
     assert not src.exists()
+
+
+def test_offer_hermes_migration_first_run(tmp_path, monkeypatch):
+    """The first-run wizard hook imports a detected ~/.hermes (declining cleanup)."""
+    from janus_cli import setup as js
+    from janus_constants import get_janus_home
+
+    src = _make_hermes(tmp_path)
+    monkeypatch.setenv("HERMES_HOME", str(src))
+    # say yes to "Import…", no to "Delete the old…"
+    monkeypatch.setattr(js, "prompt_yes_no", lambda msg, default=False: "import" in msg.lower())
+
+    dst = get_janus_home()
+    ran = js._offer_hermes_migration(dst)
+    assert ran is True
+    assert (dst / "memories" / "MEMORY.md").read_text(encoding="utf-8") == "- a durable fact\n"
+    assert "JANUS_HOME=" in (dst / ".env").read_text(encoding="utf-8")
+    assert src.exists()  # cleanup declined → legacy home preserved
+
+
+def test_offer_hermes_migration_absent(tmp_path, monkeypatch):
+    """No legacy home → the hook is a no-op returning False."""
+    from janus_cli import setup as js
+    from janus_constants import get_janus_home
+
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "does-not-exist"))
+    assert js._offer_hermes_migration(get_janus_home()) is False

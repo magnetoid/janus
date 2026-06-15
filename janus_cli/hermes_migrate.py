@@ -69,14 +69,46 @@ def _rewrite_brand_tokens(text: str) -> str:
 
 
 def plan_migration(src: Path, dst: Path) -> Dict[str, Any]:
-    """Dry-run preview: classify each top-level entry in ``src`` as import or conflict."""
+    """Dry-run preview: classify each top-level entry in ``src`` as import or conflict.
+
+    Directories are always ``import`` because they're *merged* (new files copied
+    in, existing ones kept) — a pre-existing empty ``memories/`` must not block
+    the real memory files. Only a singular top-level FILE that already exists in
+    ``dst`` is a ``conflict`` (skipped unless ``--overwrite``).
+    """
     result: Dict[str, Any] = {"src": str(src), "dst": str(dst), "import": [], "conflict": []}
     if not src.is_dir():
         return result
     for entry in sorted(src.iterdir(), key=lambda p: p.name):
         target = dst / entry.name
-        (result["conflict"] if target.exists() else result["import"]).append(entry.name)
+        if entry.is_dir():
+            result["import"].append(entry.name)
+        elif target.exists():
+            result["conflict"].append(entry.name)
+        else:
+            result["import"].append(entry.name)
     return result
+
+
+def _merge_dir(src_dir: Path, dst_dir: Path, overwrite: bool) -> bool:
+    """Recursively copy ``src_dir`` into ``dst_dir``; returns True if anything copied.
+
+    Files that already exist in ``dst_dir`` are kept unless ``overwrite``.
+    """
+    copied = False
+    for root, _dirs, files in os.walk(src_dir):
+        rel = Path(root).relative_to(src_dir)
+        target_root = dst_dir / rel
+        if not target_root.exists():
+            target_root.mkdir(parents=True, exist_ok=True)
+            copied = True
+        for fname in files:
+            target = target_root / fname
+            if target.exists() and not overwrite:
+                continue
+            shutil.copy2(Path(root) / fname, target)
+            copied = True
+    return copied
 
 
 def migrate(src: Path, dst: Path, *, overwrite: bool = False, apply: bool = True) -> Dict[str, Any]:
@@ -98,7 +130,10 @@ def migrate(src: Path, dst: Path, *, overwrite: bool = False, apply: bool = True
             dst.mkdir(parents=True, exist_ok=True)
         for entry in sorted(src.iterdir(), key=lambda p: p.name):
             target = dst / entry.name
-            if target.exists() and not overwrite:
+            # A singular FILE that already exists is a conflict (skip unless
+            # overwrite); DIRECTORIES are merged so a pre-existing empty dir
+            # never blocks the real data inside.
+            if entry.is_file() and target.exists() and not overwrite:
                 result["skipped"].append(entry.name)
                 continue
             if not apply:
@@ -106,12 +141,19 @@ def migrate(src: Path, dst: Path, *, overwrite: bool = False, apply: bool = True
                 continue
             try:
                 if entry.is_dir():
-                    if target.exists() and overwrite and not target.is_dir():
-                        target.unlink()
-                    shutil.copytree(entry, target, dirs_exist_ok=True)
+                    if target.exists() and not target.is_dir():
+                        if overwrite:
+                            target.unlink()
+                        else:
+                            result["skipped"].append(entry.name)
+                            continue
+                    if _merge_dir(entry, target, overwrite):
+                        result["imported"].append(entry.name)
+                    else:
+                        result["skipped"].append(entry.name)
                 else:
                     shutil.copy2(entry, target)
-                result["imported"].append(entry.name)
+                    result["imported"].append(entry.name)
             except Exception as exc:
                 result["errors"].append(f"{entry.name}: {exc}")
         if apply:

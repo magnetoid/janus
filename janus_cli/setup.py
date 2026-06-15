@@ -2660,6 +2660,67 @@ def _print_migration_preview(report: dict):
         print()
 
 
+def _offer_hermes_migration(janus_home: Path) -> bool:
+    """Detect a legacy ~/.hermes install and offer to import it on first-run.
+
+    Janus is the new name for Hermes Agent and the on-disk layout is identical,
+    so this is a non-destructive copy (with a preview + confirmation) that offers
+    to delete the legacy home afterward. Returns True if data was imported.
+    Best-effort — never raises into the wizard.
+    """
+    try:
+        from janus_cli.hermes_migrate import (
+            legacy_hermes_home, migrate, plan_migration, remove_legacy,
+        )
+
+        src = legacy_hermes_home()
+        if not src:
+            return False
+        plan = plan_migration(src, janus_home)
+        if not plan["import"]:
+            return False  # nothing new to bring over
+
+        print()
+        print_header("Hermes Agent Installation Detected")
+        print_info(f"Found a previous Hermes install at {src}")
+        print_info("Janus is the new name for Hermes Agent — your data is compatible.")
+        print()
+        if not prompt_yes_no(
+            "Import your Hermes config, memory, skills and sessions into Janus?", default=True
+        ):
+            print_info("Skipping. You can run it later with: janus migrate hermes")
+            return False
+
+        print_info("Will import: " + ", ".join(plan["import"]))
+        if plan["conflict"]:
+            print_info("Already present (kept as-is): " + ", ".join(plan["conflict"]))
+
+        res = migrate(src, janus_home, overwrite=False, apply=True)
+        if not res["imported"]:
+            print_info("Nothing new to import from Hermes.")
+            return False
+        print_success(f"Imported {len(res['imported'])} item(s) from Hermes.")
+        if res["rewritten"]:
+            print_info("Rewrote home paths/env in: " + ", ".join(res["rewritten"]))
+        if res["errors"]:
+            print_warning(f"{len(res['errors'])} item(s) had errors — your original {src} is untouched.")
+
+        if prompt_yes_no(
+            f"Delete the old {src} now? Your data is safely in {janus_home}.", default=False
+        ):
+            if remove_legacy(src):
+                print_success(f"Removed {src}.")
+            else:
+                print_warning(f"Could not remove {src} — delete it manually.")
+        else:
+            print_info(f"Left {src} in place as a fallback.")
+        print_success("Migration complete! Continuing with setup...")
+        return True
+    except Exception as exc:  # the wizard must never crash on migration
+        logger.debug("hermes migration offer failed: %s", exc)
+        return False
+
+
 def _offer_openclaw_migration(janus_home: Path) -> bool:
     """Detect ~/.openclaw and offer to migrate during first-time setup.
 
@@ -3058,8 +3119,10 @@ def run_setup_wizard(args):
             print_info("No existing configuration found — running first-time setup.")
             print()
 
-        # Offer OpenClaw migration before configuration begins
-        migration_ran = _offer_openclaw_migration(janus_home)
+        # Offer migration from a previous install before configuration begins:
+        # Hermes Agent (this package's former name) first, then OpenClaw.
+        hermes_ran = _offer_hermes_migration(janus_home)
+        migration_ran = _offer_openclaw_migration(janus_home) or hermes_ran
         if migration_ran:
             config = load_config()
 
