@@ -47,3 +47,30 @@ def test_bad_index_falls_back_to_add():
 def test_garbage_reply_falls_back_to_add():
     d = mg.reconcile_candidate("x", _EXISTING, llm_caller=_fake_llm("nonsense"))
     assert d["action"] == "ADD"
+
+
+from agent import memory_miner as mm
+from tools.memory_tool import MemoryStore
+
+
+def test_write_time_update_replaces_stale(monkeypatch):
+    import yaml
+    from janus_constants import get_janus_home
+    home = get_janus_home(); home.mkdir(parents=True, exist_ok=True)
+    (home / "config.yaml").write_text(
+        yaml.safe_dump({"memory": {"write_time_reconcile": True}}), encoding="utf-8")
+
+    store = MemoryStore(); store.load_from_disk()
+    store.add("memory", "User is on Python 3.11.")
+
+    monkeypatch.setattr(mm, "_parse_facts", lambda raw: {"user": [], "memory": ["User is on Python 3.12."]})
+    monkeypatch.setattr(
+        "agent.memory_gardener.reconcile_candidate",
+        lambda cand, existing, **k: {"action": "UPDATE", "target_index": 0},
+    )
+    msgs = [{"role": "user", "content": "I upgraded to Python 3.12"},
+            {"role": "assistant", "content": "noted"}]
+    mm.mine_session_memory(msgs, store, llm_caller=_fake_llm("{}"))
+
+    assert "User is on Python 3.12." in store.memory_entries
+    assert "User is on Python 3.11." not in store.memory_entries

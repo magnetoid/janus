@@ -200,7 +200,11 @@ def mine_session_memory(
             "user": [_normalize(e) for e in getattr(memory_store, "user_entries", [])],
             "memory": [_normalize(e) for e in getattr(memory_store, "memory_entries", [])],
         }
+        from agent.feature_flags import flag_enabled
+        reconcile_on = flag_enabled("memory", "write_time_reconcile", default=False)
+
         for target in ("user", "memory"):
+            live = list(getattr(memory_store, f"{target}_entries", []))
             for content in facts.get(target, [])[:max_facts_per_target]:
                 content = content.strip()
                 if not content:
@@ -208,12 +212,37 @@ def mine_session_memory(
                 if _is_duplicate(content, existing[target]):
                     result["skipped_duplicates"] += 1
                     continue
+
+                if reconcile_on and live:
+                    from agent.memory_gardener import reconcile_candidate
+                    decision = reconcile_candidate(content, live, llm_caller=llm_caller,
+                                                   provider=provider, model=model)
+                    action = decision["action"]
+                    idx = decision.get("target_index")
+                    if action == "NOOP":
+                        result["skipped_duplicates"] += 1
+                        continue
+                    if action in ("UPDATE", "DELETE") and idx is not None and 0 <= idx < len(live):
+                        old = live[idx]
+                        try:
+                            memory_store.remove(target, old)
+                        except Exception as exc:
+                            logger.debug("reconcile remove failed: %s", exc)
+                        live.pop(idx)
+                        result.setdefault("reconciled", {"updated": 0, "deleted": 0})
+                        if action == "DELETE":
+                            result["reconciled"]["deleted"] += 1
+                            existing[target] = [e for e in existing[target] if e != _normalize(old)]
+                            continue
+                        result["reconciled"]["updated"] += 1
+                        existing[target] = [e for e in existing[target] if e != _normalize(old)]
+
                 add_result = memory_store.add(target, content)
                 if isinstance(add_result, dict) and add_result.get("success"):
                     result["added"][target] += 1
                     existing[target].append(_normalize(content))
+                    live.append(content)
                 else:
-                    # char-limit hit or rejected — stop piling onto this target
                     result["skipped_duplicates"] += 1
     except Exception as exc:  # mining must never break a session
         logger.debug("session memory mining failed: %s", exc)
