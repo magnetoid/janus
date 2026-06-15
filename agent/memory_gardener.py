@@ -88,6 +88,69 @@ def find_stale(
     return _parse(response.choices[0].message.content, len(entries))
 
 
+_RECONCILE_SYSTEM = (
+    "You decide how a NEW candidate memory fact relates to EXISTING memory. "
+    "Choose exactly one action: ADD (genuinely new), UPDATE (supersedes a "
+    "specific existing fact — give its index), DELETE (directly contradicts a "
+    "specific existing fact, which should be removed — give its index), or NOOP "
+    "(already covered by existing memory). Be conservative."
+)
+
+
+def _reconcile_prompt(candidate: str, existing: List[str]) -> str:
+    numbered = "\n".join(f"[{i}] {e}" for i, e in enumerate(existing)) or "(none)"
+    return (
+        f"EXISTING:\n{numbered}\n\nCANDIDATE:\n{candidate}\n\n"
+        'Return ONLY JSON: {"action": "ADD|UPDATE|DELETE|NOOP", "target_index": '
+        '<int, required for UPDATE/DELETE>}.'
+    )
+
+
+def reconcile_candidate(
+    candidate: str, existing: List[str], *,
+    llm_caller: Optional[Callable[..., Any]] = None,
+    provider: Optional[str] = None, model: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Classify a candidate fact vs existing memory. Always returns a safe dict.
+
+    ``{"action": "ADD"|"UPDATE"|"DELETE"|"NOOP", "target_index": int|None}``.
+    Any error or out-of-range index degrades to ``ADD`` (never destructive on
+    bad input). Best-effort; never raises.
+    """
+    safe = {"action": "ADD", "target_index": None}
+    try:
+        if not existing:
+            return safe
+        if llm_caller is None:
+            from agent.auxiliary_client import call_llm as llm_caller
+        resp = llm_caller(
+            task="memory_reconcile_candidate", provider=provider, model=model,
+            messages=[{"role": "system", "content": _RECONCILE_SYSTEM},
+                      {"role": "user", "content": _reconcile_prompt(candidate, existing)}],
+            temperature=0, max_tokens=60,
+        )
+        raw = resp.choices[0].message.content or ""
+        m = re.search(r"\{.*\}", raw, re.DOTALL)
+        if not m:
+            return safe
+        data = json.loads(m.group(0))
+        action = str(data.get("action", "")).strip().upper()
+        if action not in {"ADD", "UPDATE", "DELETE", "NOOP"}:
+            return safe
+        if action in {"UPDATE", "DELETE"}:
+            try:
+                idx = int(data.get("target_index"))
+            except (TypeError, ValueError):
+                return safe
+            if not (0 <= idx < len(existing)):
+                return safe
+            return {"action": action, "target_index": idx}
+        return {"action": action, "target_index": None}
+    except Exception as exc:
+        logger.debug("reconcile_candidate failed: %s", exc)
+        return safe
+
+
 def reconcile(
     store: Any, target: str = "memory", *,
     llm_caller: Optional[Callable[..., Any]] = None,
