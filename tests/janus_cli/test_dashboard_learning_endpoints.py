@@ -55,3 +55,11 @@ class TestLearningEndpoints:
         assert self.client.get("/api/sleep").json()["paused"] is False
         assert self.client.put("/api/sleep/paused", json={"paused": True}).json()["paused"] is True
         assert self.client.get("/api/sleep").json()["paused"] is True
+
+    def test_learning_stats_includes_curve(self):
+        r = self.client.get("/api/learning/stats")
+        assert r.status_code == 200
+        body = r.json()
+        assert "curve" in body
+        assert "points" in body["curve"]
+        assert "draft_pins" in body["curve"]

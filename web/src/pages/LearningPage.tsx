@@ -24,6 +24,12 @@ interface LearningMetrics {
   warnings: string[];
   summary: string;
 }
+interface LearningCurve {
+  points: { ts: string; pass_rate: number | null }[];
+  learned: string[];
+  regressed: string[];
+  draft_pins: number;
+}
 interface LearningStats {
   overall: { sessions: number; successes: number; success_rate: number | null };
   recent_success_rate: number | null;
@@ -31,6 +37,7 @@ interface LearningStats {
   personas: Record<string, { uses: number; successes: number; success_rate: number | null }>;
   metrics?: LearningMetrics;
   lessons?: { total: number; by_task_type: Record<string, number> };
+  curve?: LearningCurve;
 }
 interface Aspiration {
   id: string;
@@ -229,6 +236,35 @@ export default function LearningPage() {
               <div className="text-xs text-muted-foreground">
                 {stats.lessons.total} lesson{stats.lessons.total === 1 ? "" : "s"} learned from past
                 failures (recalled via the <code>recall_lessons</code> tool).
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Learning curve */}
+      {stats?.curve && stats.curve.points.length > 0 && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <TrendingUp className="h-4 w-4" /> Learning curve (eval pass-rate)
+            </div>
+            <div className="text-sm">
+              latest:{" "}
+              <strong>{pct(stats.curve.points[stats.curve.points.length - 1].pass_rate)}</strong>
+              <span className="ml-2 text-muted-foreground">
+                over {stats.curve.points.length} runs
+              </span>
+            </div>
+            {stats.curve.learned.length > 0 && (
+              <div className="text-xs text-emerald-500">learned: {stats.curve.learned.join(", ")}</div>
+            )}
+            {stats.curve.regressed.length > 0 && (
+              <div className="text-xs text-rose-500">regressed: {stats.curve.regressed.join(", ")}</div>
+            )}
+            {stats.curve.draft_pins > 0 && (
+              <div className="text-xs text-muted-foreground">
+                {stats.curve.draft_pins} regression-pin draft(s) awaiting review in evals/.drafts/
               </div>
             )}
           </CardContent>

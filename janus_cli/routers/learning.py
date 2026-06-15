@@ -21,6 +21,14 @@ async def get_learning_stats():
             lessons_stat = _lessons.stats()
         except Exception:
             lessons_stat = {"total": 0, "by_task_type": {}}
+        try:
+            from agent import eval_trend as _et
+            from agent.evals import evals_dir as _evals_dir
+            curve = _et.learning_curve()
+            drafts = list((_evals_dir() / ".drafts").glob("*.yaml"))
+            curve["draft_pins"] = len(drafts)
+        except Exception:
+            curve = {"points": [], "learned": [], "regressed": [], "draft_pins": 0}
         return {
             "overall": ot.overall_stats(),
             "recent_success_rate": ot.recent_success_rate(20),
@@ -28,6 +36,7 @@ async def get_learning_stats():
             "personas": po.persona_stats(),
             "metrics": ot.learning_metrics(),
             "lessons": lessons_stat,
+            "curve": curve,
         }
     except Exception as exc:
         raise web_server_mod.HTTPException(status_code=500, detail=f"learning stats unavailable: {exc}")
