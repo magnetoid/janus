@@ -86,6 +86,7 @@ janus tools        # Configure which tools are enabled
 janus config set   # Set individual config values
 janus gateway      # Start the messaging gateway (Telegram, Discord, etc.)
 janus setup        # Run the full setup wizard (configures everything at once)
+janus migrate hermes # Import a previous Hermes Agent install (~/.hermes)
 janus claw migrate # Migrate from OpenClaw (if coming from OpenClaw)
 janus update       # Update to the latest version
 janus doctor       # Diagnose any issues
@@ -178,6 +179,23 @@ All documentation lives at **[github.com/magnetoid/janus](website/docs/getting-s
 | [Environment Variables](website/docs/reference/environment-variables.md) | Complete env var reference                                 |
 
 ---
+
+## Upgrading from Hermes Agent
+
+Janus is the new name for **Hermes Agent** — same agent, same on-disk layout, just rebranded. If you have an older install with data in `~/.hermes`, Janus imports it for you (non-destructively — your `~/.hermes` is left untouched until you choose to delete it).
+
+**During first-time setup:** `janus setup` detects `~/.hermes` (or `$HERMES_HOME`) and offers to import your config, memory, skills, sessions, and learning data before configuration begins, then offers to remove the old directory.
+
+**Anytime after install:**
+
+```bash
+janus migrate hermes              # Preview, then import ~/.hermes into ~/.janus
+janus migrate hermes --dry-run    # Preview only — no changes
+janus migrate hermes --overwrite  # Overwrite items that already exist in Janus
+janus migrate hermes --source PATH  # Point at a Hermes home elsewhere
+```
+
+Top-level directories (`memories/`, `skills/`, `sessions/`, `learning/`, …) are **merged** (new files copied in, existing ones kept); singular files (`config.yaml`, `.env`) are skipped if already present unless `--overwrite`. Inside `config.yaml`/`.env`, `HERMES_HOME` becomes `JANUS_HOME` and `.hermes` paths become `.janus` — but **Nous Hermes model IDs** (`hermes-3-*`, `Hermes-4-*`, `nous-hermes-*`) and the `nous` provider slug are preserved so your model config keeps working.
 
 ## Migrating from OpenClaw
 
