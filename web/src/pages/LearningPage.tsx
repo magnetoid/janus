@@ -291,7 +291,7 @@ export default function LearningPage() {
               <span>
                 {a.title} <Badge>{a.status}</Badge>
               </span>
-              <Button ghost onClick={() => removeAspiration(a.id)}>
+              <Button ghost size="icon" onClick={() => removeAspiration(a.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -317,7 +317,7 @@ export default function LearningPage() {
           {interests.map((i) => (
             <div key={i.id} className="flex items-center justify-between text-sm">
               <span>{i.field}</span>
-              <Button ghost onClick={() => removeInterest(i.id)}>
+              <Button ghost size="icon" onClick={() => removeInterest(i.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -358,7 +358,7 @@ export default function LearningPage() {
               {sleep?.paused ? "paused" : "active"} · last run: {sleep?.last_run ?? "never"}
             </span>
           </div>
-          <Button outlined onClick={toggleSleep}>
+          <Button outlined size="sm" onClick={toggleSleep}>
             {sleep?.paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             <span className="ml-1">{sleep?.paused ? "Resume" : "Pause"}</span>
           </Button>
