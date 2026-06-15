@@ -83,8 +83,8 @@ class TestGatewayEmptyModelFallback:
 
         # Mock _resolve_gateway_model to return empty string
         # Mock _resolve_runtime_agent_kwargs to return openai-codex provider
-        with patch("gateway.run._resolve_gateway_model", return_value=""), \
-             patch("gateway.run._resolve_runtime_agent_kwargs", return_value={
+        with patch("gateway.runner._resolve_gateway_model", return_value=""), \
+             patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={
                  "provider": "openai-codex",
                  "api_key": "test-key",
                  "base_url": "https://chatgpt.com/backend-api/codex",
@@ -104,8 +104,8 @@ class TestGatewayEmptyModelFallback:
         runner = object.__new__(GatewayRunner)
         runner._session_model_overrides = {}
 
-        with patch("gateway.run._resolve_gateway_model", return_value="gpt-5.4"), \
-             patch("gateway.run._resolve_runtime_agent_kwargs", return_value={
+        with patch("gateway.runner._resolve_gateway_model", return_value="gpt-5.4"), \
+             patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={
                  "provider": "openai-codex",
                  "api_key": "test-key",
                  "base_url": "https://chatgpt.com/backend-api/codex",
@@ -122,8 +122,8 @@ class TestGatewayEmptyModelFallback:
         runner = object.__new__(GatewayRunner)
         runner._session_model_overrides = {}
 
-        with patch("gateway.run._resolve_gateway_model", return_value=""), \
-             patch("gateway.run._resolve_runtime_agent_kwargs", return_value={
+        with patch("gateway.runner._resolve_gateway_model", return_value=""), \
+             patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={
                  "provider": "",
                  "api_key": "test-key",
                  "base_url": "https://example.com",
