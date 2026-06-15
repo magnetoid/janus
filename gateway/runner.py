@@ -17831,6 +17831,8 @@ def _start_cron_ticker(stop_event: threading.Event, adapters=None, loop=None, in
             try:
                 from agent.sleep import maybe_run_sleep
                 maybe_run_sleep(idle_for_seconds=float("inf"))
+                from agent.eval_trend import maybe_run_trend
+                maybe_run_trend()
             except Exception as e:
                 logger.debug("Sleep tick error: %s", e)
 
