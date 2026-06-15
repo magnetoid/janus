@@ -60,3 +60,33 @@ def test_learning_curve_detects_regression():
 
 def test_learning_curve_empty():
     assert et.learning_curve()["points"] == []
+
+
+import os
+
+
+def test_compare_feature_reports_delta():
+    s = _specs()
+
+    def flag_sensitive_runner(spec):
+        on = os.environ.get("JANUS_FLAG_MEMORY__WRITE_TIME_RECONCILE") == "1"
+        passing = {"a", "b"} if on else {"a"}
+        text = spec.checks[0]["value"] if spec.name in passing else ""
+        return {"final_response": text, "messages": []}
+
+    out = et.compare_feature(
+        "memory.write_time_reconcile", specs=s, agent_runner=flag_sensitive_runner
+    )
+    assert out["pass_rate_on"] == 1.0
+    assert out["pass_rate_off"] == 0.5
+    assert out["delta"] == 0.5
+    assert out["per_eval_delta"]["b"] == 1
+
+
+def test_compare_feature_restores_env(monkeypatch):
+    monkeypatch.setenv("JANUS_FLAG_MEMORY__WRITE_TIME_RECONCILE", "preset")
+    et.compare_feature(
+        "memory.write_time_reconcile", specs=_specs(),
+        agent_runner=_runner({"a"}),
+    )
+    assert os.environ["JANUS_FLAG_MEMORY__WRITE_TIME_RECONCILE"] == "preset"
