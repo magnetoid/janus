@@ -90,3 +90,32 @@ def test_compare_feature_restores_env(monkeypatch):
         agent_runner=_runner({"a"}),
     )
     assert os.environ["JANUS_FLAG_MEMORY__WRITE_TIME_RECONCILE"] == "preset"
+
+
+import yaml
+from janus_constants import get_janus_home
+
+
+def _enable_trend(interval_hours=24):
+    home = get_janus_home()
+    home.mkdir(parents=True, exist_ok=True)
+    (home / "config.yaml").write_text(
+        yaml.safe_dump({"evals": {"trend": {"enabled": True, "interval_hours": interval_hours}}}),
+        encoding="utf-8",
+    )
+
+
+def test_maybe_run_trend_skips_when_disabled():
+    assert et.maybe_run_trend(agent_runner=_runner({"a"})) is None
+
+
+def test_maybe_run_trend_runs_when_due_then_skips():
+    _enable_trend()
+    from agent.evals import evals_dir
+    d = evals_dir(); d.mkdir(parents=True, exist_ok=True)
+    (d / "s.yaml").write_text(
+        "name: a\nprompt: p\nchecks:\n  - type: contains\n    value: x\n", encoding="utf-8"
+    )
+    first = et.maybe_run_trend(agent_runner=lambda spec: {"final_response": "x", "messages": []})
+    assert first is not None and first.get("pass_rate") == 1.0
+    assert et.maybe_run_trend(agent_runner=lambda spec: {"final_response": "x", "messages": []}) is None

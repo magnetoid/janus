@@ -147,6 +147,65 @@ def compare_feature(
         return {"flag": flag, "error": str(exc)}
 
 
+def _state_path() -> Path:
+    from agent.evals import evals_dir
+    return evals_dir() / "trend_state.json"
+
+
+def _load_state() -> Dict[str, Any]:
+    p = _state_path()
+    if not p.is_file():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {}
+
+
+def _save_state(data: Dict[str, Any]) -> None:
+    p = _state_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(data), encoding="utf-8")
+
+
+def _hours_since(iso: str) -> float:
+    if not iso:
+        return float("inf")
+    try:
+        from datetime import datetime
+        from janus_time import now as _now
+        prev = datetime.fromisoformat(iso)
+        return (_now() - prev).total_seconds() / 3600.0
+    except Exception:
+        return float("inf")
+
+
+def maybe_run_trend(
+    agent_runner: Optional[Callable[[Any], Dict[str, Any]]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Run a trend point iff enabled and the interval has elapsed. Else None."""
+    try:
+        from agent.feature_flags import flag_enabled
+        if not flag_enabled("evals", "trend.enabled", default=False):
+            return None
+        interval = 24
+        try:
+            from janus_cli.config import load_config
+            interval = int((load_config().get("evals", {}).get("trend", {}) or {}).get("interval_hours", 24))
+        except Exception:
+            pass
+        state = _load_state()
+        if _hours_since(state.get("last_run", "")) < interval:
+            return None
+        rec = run_trend(agent_runner=agent_runner)
+        if not rec.get("error"):
+            _save_state({"last_run": _now_iso(), "last_pass_rate": rec.get("pass_rate")})
+        return rec
+    except Exception as exc:
+        logger.debug("maybe_run_trend failed: %s", exc)
+        return None
+
+
 def learning_curve(window: Optional[int] = None) -> Dict[str, Any]:
     """Pass-rate time series for the current suite version + which evals flipped.
 
