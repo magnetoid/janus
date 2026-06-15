@@ -21,20 +21,8 @@ _MIN_MESSAGES = 6  # don't mine trivial sessions
 
 
 def _flag(section: str, key: str, *, default: bool = False) -> bool:
-    try:
-        import yaml
-        from janus_constants import get_janus_home
-
-        cfg_path = get_janus_home() / "config.yaml"
-        if not cfg_path.is_file():
-            return default
-        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
-        sec = cfg.get(section, {})
-        if not isinstance(sec, dict) or key not in sec:
-            return default
-        return bool(sec.get(key))
-    except Exception:
-        return default
+    from agent.feature_flags import flag_enabled
+    return flag_enabled(section, key, default=default)
 
 
 def maybe_automine(
