@@ -204,6 +204,9 @@ def mine_session_memory(
         reconcile_on = flag_enabled("memory", "write_time_reconcile", default=False)
 
         for target in ("user", "memory"):
+            # `live` holds RAW entry text (passed to reconcile_candidate and
+            # indexed for removal); existing[target] holds NORMALIZED text (for
+            # _is_duplicate). They are intentionally different representations.
             live = list(getattr(memory_store, f"{target}_entries", []))
             for content in facts.get(target, [])[:max_facts_per_target]:
                 content = content.strip()
