@@ -140,3 +140,73 @@ def remove_legacy(src: Path) -> bool:
     except Exception as exc:
         logger.debug("remove legacy hermes home failed: %s", exc)
         return False
+
+
+def migrate_command(args) -> int:
+    """CLI handler for ``janus migrate hermes``. Returns a process exit code.
+
+    Preview -> confirm -> copy -> (offer to delete the legacy home). Interactive
+    helpers are imported lazily so the core functions above stay dependency-free.
+    """
+    from janus_cli.setup import (
+        print_header, print_info, print_success, print_warning, prompt_yes_no,
+    )
+    from janus_cli.config import get_janus_home
+
+    raw_source = getattr(args, "source", None)
+    src = Path(raw_source).expanduser() if raw_source else legacy_hermes_home()
+    if not src or not src.is_dir():
+        print_warning("No Hermes Agent install found (looked for ~/.hermes or $HERMES_HOME).")
+        print_info("Pass --source PATH if your Hermes data lives elsewhere.")
+        return 1
+
+    dst = get_janus_home()
+    overwrite = bool(getattr(args, "overwrite", False))
+    yes = bool(getattr(args, "yes", False))
+
+    plan = plan_migration(src, dst)
+    print_header("Hermes -> Janus migration preview")
+    print_info(f"From: {src}")
+    print_info(f"To:   {dst}")
+    if plan["import"]:
+        print_info("Will import: " + ", ".join(plan["import"]))
+    if plan["conflict"]:
+        how = "OVERWRITE" if overwrite else "skip (already in Janus)"
+        print_info(f"Already present ({how}): " + ", ".join(plan["conflict"]))
+    will_change = plan["import"] or (overwrite and plan["conflict"])
+    if not will_change:
+        print_info("Nothing to import — Janus already has this data.")
+        return 0
+    if getattr(args, "dry_run", False):
+        print_info("Dry run — no changes made. Re-run without --dry-run to apply.")
+        return 0
+    if not yes and not prompt_yes_no("Proceed with migration?", default=False):
+        print_info("Migration cancelled.")
+        return 1
+
+    res = migrate(src, dst, overwrite=overwrite, apply=True)
+    if res["imported"]:
+        print_success(f"Imported {len(res['imported'])} item(s) from Hermes.")
+    if res["rewritten"]:
+        print_info("Rewrote home paths/env in: " + ", ".join(res["rewritten"]))
+    if res["skipped"]:
+        print_info(f"Left {len(res['skipped'])} existing item(s) untouched (use --overwrite to force).")
+    if res["errors"]:
+        print_warning(f"{len(res['errors'])} error(s): " + "; ".join(res["errors"][:3]))
+        return 1
+
+    # Copy-then-offer-cleanup: the original is left in place by default.
+    if res["imported"]:
+        if yes:
+            print_info(f"Left the original {src} in place — delete it manually when ready.")
+        elif prompt_yes_no(
+            f"Delete the old {src} now? Your data is safely copied to {dst}.", default=False
+        ):
+            if remove_legacy(src):
+                print_success(f"Removed {src}.")
+            else:
+                print_warning(f"Could not remove {src} — delete it manually.")
+        else:
+            print_info(f"Left {src} in place as a fallback.")
+    print_success("Migration complete.")
+    return 0
