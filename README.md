@@ -45,8 +45,10 @@ Janus installs from source. (Hosted one-line installers will follow once Imba La
 ```bash
 git clone https://github.com/magnetoid/janus.git
 cd janus
-./setup-janus.sh     # installs uv, creates the venv, installs .[all], symlinks ~/.local/bin/janus
+./setup-janus.sh
 ```
+
+`setup-janus.sh` installs uv, creates the venv, installs the `.[all]` extra, and symlinks `janus` into `~/.local/bin`. (Paste the commands one per line — don't append a `#` comment after `./setup-janus.sh`, as interactive zsh treats the unquoted `.[all]` as a glob and aborts with `no matches found`.)
 
 On Termux, install the curated `.[termux]` extra instead of `.[all]` (the full extra pulls Android-incompatible voice dependencies):
 
