@@ -18,9 +18,10 @@ from typing import Optional
 
 import httpx
 
-# Default pairing API base URL (Nous-hosted Cloudflare Worker).
-# Override for PoC/staging with TELEGRAM_ONBOARDING_URL.
-DEFAULT_API_URL = "https://setup.github.com/magnetoid/janus"
+# Default pairing API base URL (Nous-hosted Cloudflare Worker — a real external
+# service domain protected from the rebrand; do NOT rewrite to a repo URL).
+# Self-hosters override with TELEGRAM_ONBOARDING_URL.
+DEFAULT_API_URL = "https://setup.hermes-agent.nousresearch.com"
 TELEGRAM_ONBOARDING_URL_ENV = "TELEGRAM_ONBOARDING_URL"
 
 # The Nous-hosted manager bot username (without @). The backend returns the

@@ -3392,7 +3392,9 @@ def check_for_skill_updates(
 # Janus centralized index source
 # ---------------------------------------------------------------------------
 
-JANUS_INDEX_URL = "https://github.com/magnetoid/janus/api/skills-index.json"
+# Skills index service (protected real domain — the rebrand must not rewrite
+# this to a repo URL; github.com does not serve an /api/ index endpoint).
+JANUS_INDEX_URL = "https://hermes-agent.nousresearch.com/docs/api/skills-index.json"
 JANUS_INDEX_CACHE_FILE = INDEX_CACHE_DIR / "janus-index.json"
 JANUS_INDEX_TTL = 6 * 3600  # 6 hours
 

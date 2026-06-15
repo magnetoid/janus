@@ -24,6 +24,17 @@ VALID_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 SECOND_VALID_TOKEN = "987654321:abcdefghijklmnopqrstuvwxyzABCDEF"
 
 
+def test_default_onboarding_url_is_a_service_not_the_repo():
+    """Guard the rebrand regression that pointed the onboarding API at the repo
+    path (https://setup.github.com/magnetoid/janus), which broke managed
+    Telegram setup. The default must be a real https service host — never the
+    code-hosting repo."""
+    from janus_cli.telegram_managed_bot import DEFAULT_API_URL
+
+    assert DEFAULT_API_URL.startswith("https://")
+    assert "github.com" not in DEFAULT_API_URL
+
+
 class TestGenerateBotUsername:
     def test_secure_default_format(self):
         name = generate_bot_username()
