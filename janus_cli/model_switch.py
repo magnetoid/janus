@@ -51,13 +51,13 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _JANUS_MODEL_WARNING = (
-    "Nous Research Hermes 3 & 4 models are NOT agentic and are not designed "
+    "Imba Labs Hermes 3 & 4 models are NOT agentic and are not designed "
     "for use with Janus Agent. They lack the tool-calling capabilities "
     "required for agent workflows. Consider using an agentic model instead "
     "(Claude, GPT, Gemini, DeepSeek, etc.)."
 )
 
-# Match only the real Nous Research Hermes 3 / Hermes 4 chat families.
+# Match only the real Imba Labs Hermes 3 / Hermes 4 chat families.
 # ("Hermes" here is the Nous LLM model family — a third-party product — NOT the
 # Janus agent brand, so it must keep matching "hermes" and is exempt from the
 # Hermes->Janus rebrand.)
@@ -66,7 +66,7 @@ _JANUS_MODEL_WARNING = (
 # happen to carry "hermes" in their tag but are fully tool-capable.
 #
 # Positive examples the regex must match:
-#   NousResearch/Hermes-3-Llama-3.1-70B, hermes-4-405b, openrouter/hermes3:70b
+#   ImbaLabs/Hermes-3-Llama-3.1-70B, hermes-4-405b, openrouter/hermes3:70b
 # Negative examples it must NOT match:
 #   hermes-brain:qwen3-14b-ctx16k, qwen3:14b, claude-opus-4-6
 _NOUS_JANUS_NON_AGENTIC_RE = re.compile(
@@ -1299,7 +1299,7 @@ def list_authenticated_providers(
     curated: dict[str, list[str]] = dict(_PROVIDER_MODELS)
     curated["openrouter"] = [mid for mid, _ in OPENROUTER_MODELS]
     # "nous" pulls from the remote model-catalog manifest published at
-    # https://hermes-agent.nousresearch.com/docs/api/model-catalog.json so
+    # https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json so
     # newly added Portal models surface in the /model picker without
     # requiring a Janus release. Falls back to the in-repo
     # _PROVIDER_MODELS["nous"] snapshot when the manifest is unreachable.

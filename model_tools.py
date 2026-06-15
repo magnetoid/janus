@@ -174,39 +174,16 @@ def _run_async(coro):
 
 
 # =============================================================================
-# Tool Discovery  (importing each module triggers its registry.register calls)
-# =============================================================================
-
-discover_builtin_tools()
-
-# MCP tool discovery (external MCP servers from config) used to run here as
-# a module-level side effect.  It was removed because discover_mcp_tools()
-# internally uses a blocking future.result(timeout=120) wait, and the
-# gateway lazy-imports this module from inside the asyncio event loop on
-# the first user message — freezing Discord/Telegram heartbeats for up to
-# 120s whenever any configured MCP server was slow or unreachable (#16856).
-#
-# Each entry point now runs discovery explicitly at its own startup:
-#   - gateway/run.py            -> start_gateway() uses run_in_executor
-#   - cli.py, janus_cli/*      -> inline on startup (no event loop)
-#   - tui_gateway/server.py     -> inline on startup (no event loop)
-#   - acp_adapter/server.py     -> asyncio.to_thread on session init
-
-# Plugin tool discovery (user/project/pip plugins)
-try:
-    from janus_cli.plugins import discover_plugins
-    discover_plugins()
-except Exception as e:
-    logger.debug("Plugin discovery failed: %s", e)
-
-
-# =============================================================================
 # Backward-compat constants  (built once after discovery)
 # =============================================================================
 
-TOOL_TO_TOOLSET_MAP: Dict[str, str] = registry.get_tool_to_toolset_map()
+# Deprecated: built at import time before entry points trigger discovery.
+# Use registry.get_tool_to_toolset_map() instead.
+TOOL_TO_TOOLSET_MAP: Dict[str, str] = {}
 
-TOOLSET_REQUIREMENTS: Dict[str, dict] = registry.get_toolset_requirements()
+# Deprecated: built at import time before entry points trigger discovery.
+# Use registry.get_toolset_requirements() instead.
+TOOLSET_REQUIREMENTS: Dict[str, dict] = {}
 
 # Resolved tool names from the last get_tool_definitions() call.
 # Used by code_execution_tool to know which tools are available in this session.

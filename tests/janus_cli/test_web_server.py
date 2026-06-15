@@ -773,8 +773,8 @@ class TestWebServerEndpoints:
             spawned = True
             raise AssertionError("docker update guard should not spawn janus update")
 
-        monkeypatch.setattr(web_server, "detect_install_method", lambda _root: "docker")
-        monkeypatch.setattr(web_server, "_spawn_janus_action", fail_spawn)
+        import janus_cli.routers.janus as j_router; monkeypatch.setattr(j_router.web_server_mod, "detect_install_method", lambda _root: "docker")
+        monkeypatch.setattr(j_router.web_server_mod, "_spawn_janus_action", fail_spawn)
         web_server._ACTION_PROCS.pop("janus-update", None)
         web_server._ACTION_RESULTS.pop("janus-update", None)
 
@@ -812,8 +812,8 @@ class TestWebServerEndpoints:
             calls.append((subcommand, name))
             return Proc()
 
-        monkeypatch.setattr(web_server, "detect_install_method", lambda _root: "git")
-        monkeypatch.setattr(web_server, "_spawn_janus_action", fake_spawn)
+        import janus_cli.routers.janus as j_router; monkeypatch.setattr(j_router.web_server_mod, "detect_install_method", lambda _root: "git")
+        monkeypatch.setattr(j_router.web_server_mod, "_spawn_janus_action", fake_spawn)
         web_server._ACTION_PROCS.pop("janus-update", None)
         web_server._ACTION_RESULTS.pop("janus-update", None)
 
@@ -835,7 +835,7 @@ class TestWebServerEndpoints:
             def get_connected_platforms(self):
                 return [_Platform("telegram")]
 
-        monkeypatch.setattr(web_server, "get_running_pid", lambda: 1234)
+        import janus_cli.routers.status as s_router; monkeypatch.setattr(s_router.web_server_mod, "get_running_pid", lambda: 1234)
         monkeypatch.setattr(
             web_server,
             "read_runtime_status",
@@ -849,7 +849,7 @@ class TestWebServerEndpoints:
                 },
             },
         )
-        monkeypatch.setattr(web_server, "check_config_version", lambda: (1, 1))
+        monkeypatch.setattr(s_router.web_server_mod, "check_config_version", lambda: (1, 1))
         monkeypatch.setattr(gateway_config, "load_gateway_config", lambda: _GatewayConfig())
 
         resp = self.client.get("/api/status")
@@ -867,7 +867,7 @@ class TestWebServerEndpoints:
             def get_connected_platforms(self):
                 return []
 
-        monkeypatch.setattr(web_server, "get_running_pid", lambda: None)
+        import janus_cli.routers.status as s_router; monkeypatch.setattr(s_router.web_server_mod, "get_running_pid", lambda: None)
         monkeypatch.setattr(
             web_server,
             "read_runtime_status",
@@ -880,7 +880,7 @@ class TestWebServerEndpoints:
                 },
             },
         )
-        monkeypatch.setattr(web_server, "check_config_version", lambda: (1, 1))
+        monkeypatch.setattr(s_router.web_server_mod, "check_config_version", lambda: (1, 1))
         monkeypatch.setattr(gateway_config, "load_gateway_config", lambda: _GatewayConfig())
 
         resp = self.client.get("/api/status")
@@ -2822,7 +2822,7 @@ class TestModelInfoEndpoint:
     def test_model_info_with_dict_config(self, monkeypatch):
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "load_config", lambda: {
+        import janus_cli.routers.model as m_router; monkeypatch.setattr(m_router.web_server_mod, "load_config", lambda: {
             "model": {
                 "default": "anthropic/claude-opus-4.6",
                 "provider": "openrouter",
@@ -2843,7 +2843,7 @@ class TestModelInfoEndpoint:
     def test_model_info_auto_detect_when_no_override(self, monkeypatch):
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "load_config", lambda: {
+        import janus_cli.routers.model as m_router; monkeypatch.setattr(m_router.web_server_mod, "load_config", lambda: {
             "model": {"default": "anthropic/claude-opus-4.6", "provider": "openrouter"}
         })
 
@@ -2858,7 +2858,7 @@ class TestModelInfoEndpoint:
     def test_model_info_empty_model(self, monkeypatch):
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "load_config", lambda: {"model": ""})
+        import janus_cli.routers.model as m_router; monkeypatch.setattr(m_router.web_server_mod, "load_config", lambda: {"model": ""})
 
         resp = self.client.get("/api/model/info")
         data = resp.json()
@@ -2868,7 +2868,7 @@ class TestModelInfoEndpoint:
     def test_model_info_bare_string_model(self, monkeypatch):
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "load_config", lambda: {
+        import janus_cli.routers.model as m_router; monkeypatch.setattr(m_router.web_server_mod, "load_config", lambda: {
             "model": "anthropic/claude-sonnet-4"
         })
 
@@ -2884,7 +2884,7 @@ class TestModelInfoEndpoint:
     def test_model_info_capabilities(self, monkeypatch):
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "load_config", lambda: {
+        import janus_cli.routers.model as m_router; monkeypatch.setattr(m_router.web_server_mod, "load_config", lambda: {
             "model": {"default": "anthropic/claude-opus-4.6", "provider": "openrouter"}
         })
 
@@ -2911,7 +2911,7 @@ class TestModelInfoEndpoint:
         """Endpoint should return zeros on import/resolution errors, not 500."""
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "load_config", lambda: {
+        import janus_cli.routers.model as m_router; monkeypatch.setattr(m_router.web_server_mod, "load_config", lambda: {
             "model": "some/obscure-model"
         })
 
@@ -3043,8 +3043,8 @@ class TestStatusRemoteGateway:
         """When local PID check fails and remote probe succeeds, gateway shows running."""
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "get_running_pid", lambda: None)
-        monkeypatch.setattr(ws, "read_runtime_status", lambda: None)
+        import janus_cli.routers.status as s_router; monkeypatch.setattr(s_router.web_server_mod, "get_running_pid", lambda: None)
+        monkeypatch.setattr(s_router.web_server_mod, "read_runtime_status", lambda: None)
         monkeypatch.setattr(ws, "_GATEWAY_HEALTH_URL", "http://gw:8642")
         monkeypatch.setattr(ws, "_probe_gateway_health", lambda: (True, {
             "status": "ok",
@@ -3065,8 +3065,8 @@ class TestStatusRemoteGateway:
         """When local PID check succeeds, the remote probe is never called."""
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "get_running_pid", lambda: 1234)
-        monkeypatch.setattr(ws, "read_runtime_status", lambda: {
+        import janus_cli.routers.status as s_router; monkeypatch.setattr(s_router.web_server_mod, "get_running_pid", lambda: 1234)
+        monkeypatch.setattr(s_router.web_server_mod, "read_runtime_status", lambda: {
             "gateway_state": "running",
             "platforms": {},
         })
@@ -3088,8 +3088,8 @@ class TestStatusRemoteGateway:
         """When GATEWAY_HEALTH_URL is unset, no probe is attempted."""
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "get_running_pid", lambda: None)
-        monkeypatch.setattr(ws, "read_runtime_status", lambda: None)
+        import janus_cli.routers.status as s_router; monkeypatch.setattr(s_router.web_server_mod, "get_running_pid", lambda: None)
+        monkeypatch.setattr(s_router.web_server_mod, "read_runtime_status", lambda: None)
         monkeypatch.setattr(ws, "_GATEWAY_HEALTH_URL", None)
 
         resp = self.client.get("/api/status")
@@ -3102,8 +3102,8 @@ class TestStatusRemoteGateway:
         """Remote gateway running but PID not in response — pid should be None."""
         import janus_cli.web_server as ws
 
-        monkeypatch.setattr(ws, "get_running_pid", lambda: None)
-        monkeypatch.setattr(ws, "read_runtime_status", lambda: None)
+        import janus_cli.routers.status as s_router; monkeypatch.setattr(s_router.web_server_mod, "get_running_pid", lambda: None)
+        monkeypatch.setattr(s_router.web_server_mod, "read_runtime_status", lambda: None)
         monkeypatch.setattr(ws, "_GATEWAY_HEALTH_URL", "http://gw:8642")
         monkeypatch.setattr(ws, "_probe_gateway_health", lambda: (True, {
             "status": "ok",
@@ -3955,8 +3955,9 @@ class TestPtyWebSocket:
 
         # Avoid exec'ing the actual TUI in tests: every test below installs
         # its own fake argv via ``ws._resolve_chat_argv``.
-        self.ws_module = ws
-        monkeypatch.setattr(ws, "_DASHBOARD_EMBEDDED_CHAT_ENABLED", True)
+        import janus_cli.routers.pty as pty_router
+        self.ws_module = pty_router
+        monkeypatch.setattr(pty_router.web_server_mod, "_DASHBOARD_EMBEDDED_CHAT_ENABLED", True)
         self.token = ws._SESSION_TOKEN
         self.client = TestClient(ws.app)
 
@@ -3979,13 +3980,13 @@ class TestPtyWebSocket:
             lambda project_root, tui_dev=False: (["node", "dist/entry.js"], "/tmp/ui-tui"),
         )
 
-        _argv, _cwd, env = self.ws_module._resolve_chat_argv()
+        _argv, _cwd, env = self.ws_module.web_server_mod._resolve_chat_argv()
 
         assert env["JANUS_TUI_INLINE"] == "1"
         assert env["JANUS_TUI_DISABLE_MOUSE"] == "1"
 
     def test_rejects_when_embedded_chat_disabled(self, monkeypatch):
-        monkeypatch.setattr(self.ws_module, "_DASHBOARD_EMBEDDED_CHAT_ENABLED", False)
+        monkeypatch.setattr(self.ws_module.web_server_mod, "_DASHBOARD_EMBEDDED_CHAT_ENABLED", False)
         from starlette.websockets import WebSocketDisconnect
 
         with pytest.raises(WebSocketDisconnect) as exc:
@@ -3995,8 +3996,7 @@ class TestPtyWebSocket:
 
     def test_rejects_missing_token(self, monkeypatch):
         monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
+            self.ws_module.web_server_mod, "_resolve_chat_argv",
             lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
         )
         from starlette.websockets import WebSocketDisconnect
@@ -4008,8 +4008,7 @@ class TestPtyWebSocket:
 
     def test_rejects_bad_token(self, monkeypatch):
         monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
+            self.ws_module.web_server_mod, "_resolve_chat_argv",
             lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
         )
         from starlette.websockets import WebSocketDisconnect
@@ -4021,8 +4020,7 @@ class TestPtyWebSocket:
 
     def test_streams_child_stdout_to_client(self, monkeypatch):
         monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
+            self.ws_module.web_server_mod, "_resolve_chat_argv",
             lambda resume=None, sidecar_url=None: (
                 ["/bin/sh", "-c", "printf janus-ws-ok"],
                 None,
@@ -4051,8 +4049,7 @@ class TestPtyWebSocket:
         # ``cat`` echoes stdin back, so a write → read round-trip proves
         # the full duplex path.
         monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
+            self.ws_module.web_server_mod, "_resolve_chat_argv",
             lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
         )
         with self.client.websocket_connect(self._url()) as conn:
@@ -4083,8 +4080,7 @@ class TestPtyWebSocket:
             "print(cols); print(rows)"
         )
         monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
+            self.ws_module.web_server_mod, "_resolve_chat_argv",
             # sleep gives the test time to push the resize before the child reads the ioctl.
             lambda resume=None, sidecar_url=None: (
                 [sys.executable, "-c", winsize_script],
@@ -4120,8 +4116,7 @@ class TestPtyWebSocket:
             raise PtyUnavailableError("pty missing for tests")
 
         monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
+            self.ws_module.web_server_mod, "_resolve_chat_argv",
             lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
         )
         # Patch PtyBridge.spawn at the web_server module's binding.
@@ -4141,7 +4136,7 @@ class TestPtyWebSocket:
             captured["resume"] = resume
             return (["/bin/sh", "-c", "printf resume-arg-ok"], None, None)
 
-        monkeypatch.setattr(self.ws_module, "_resolve_chat_argv", fake_resolve)
+        monkeypatch.setattr(self.ws_module.web_server_mod, "_resolve_chat_argv", fake_resolve)
 
         with self.client.websocket_connect(self._url(resume="sess-42")) as conn:
             # Drain briefly so the handler actually invokes the resolver.
@@ -4161,12 +4156,12 @@ class TestPtyWebSocket:
             captured["sidecar_url"] = sidecar_url
             return (["/bin/sh", "-c", "printf sidecar-ok"], None, None)
 
-        monkeypatch.setattr(self.ws_module, "_resolve_chat_argv", fake_resolve)
+        monkeypatch.setattr(self.ws_module.web_server_mod, "_resolve_chat_argv", fake_resolve)
         monkeypatch.setattr(
-            self.ws_module.app.state, "bound_host", "127.0.0.1", raising=False
+            self.ws_module.web_server_mod.app.state, "bound_host", "127.0.0.1", raising=False
         )
         monkeypatch.setattr(
-            self.ws_module.app.state, "bound_port", 9119, raising=False
+            self.ws_module.web_server_mod.app.state, "bound_port", 9119, raising=False
         )
 
         headers = {"host": "127.0.0.1:9119", "origin": "http://127.0.0.1:9119"}

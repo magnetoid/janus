@@ -52,7 +52,7 @@ JANUS_OVERLAYS: Dict[str, JanusOverlay] = {
     "nous": JanusOverlay(
         transport="openai_chat",
         auth_type="oauth_device_code",
-        base_url_override="https://inference-api.nousresearch.com/v1",
+        base_url_override="https://inference-api.imbalabs.com/v1",
     ),
     "openai-codex": JanusOverlay(
         transport="codex_responses",
@@ -365,7 +365,7 @@ ALIASES: Dict[str, str] = {
 # not in the catalog.
 
 _LABEL_OVERRIDES: Dict[str, str] = {
-    "nous": "Nous Portal",
+    "nous": "Janus Portal",
     "openai-codex": "OpenAI Codex",
     "copilot-acp": "GitHub Copilot ACP",
     "stepfun": "StepFun Step Plan",

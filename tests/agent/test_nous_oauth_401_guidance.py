@@ -45,14 +45,14 @@ def test_nous_401_guidance_strings_present():
     source = inspect.getsource(conversation_loop.run_conversation)
 
     # Must tell the user it's an OAuth token problem, NOT an API key problem
-    # (Nous Portal has no API key path — auth_type=oauth_device_code only).
-    assert "Nous Portal OAuth token was rejected" in source
+    # (Janus Portal has no API key path — auth_type=oauth_device_code only).
+    assert "Janus Portal OAuth token was rejected" in source
 
     # Must give a concrete re-auth command, not a generic "janus setup".
     assert "janus portal" in source
 
     # Must point at the portal so users can check account/credit status.
-    assert "portal.nousresearch.com" in source
+    assert "portal.imbalabs.com" in source
 
 
 def test_free_slug_hint_for_nous_provider():
@@ -61,7 +61,7 @@ def test_free_slug_hint_for_nous_provider():
     suggest switching providers via ``/model openrouter:<slug>``.
 
     Without this hint, users re-OAuth successfully and then hit the same 401
-    on the next message because Nous Portal doesn't carry the OpenRouter
+    on the next message because Janus Portal doesn't carry the OpenRouter
     free-tier slug.
     """
     source = inspect.getsource(conversation_loop.run_conversation)

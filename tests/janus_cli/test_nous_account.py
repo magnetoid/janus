@@ -1,4 +1,4 @@
-"""Tests for normalized Nous Portal account entitlement helpers."""
+"""Tests for normalized Janus Portal account entitlement helpers."""
 
 from __future__ import annotations
 
@@ -454,7 +454,7 @@ def test_entitlement_message_for_inference_key_without_portal_login():
 
     assert message is not None
     assert "Nous inference credentials are configured" in message
-    assert "cannot verify your Nous Portal paid access" in message
+    assert "cannot verify your Janus Portal paid access" in message
     assert "Log in with `janus model`" in message
 
 
@@ -544,4 +544,4 @@ def test_entitlement_message_for_account_missing():
     message = format_nous_portal_entitlement_message(info, capability="Tool Gateway")
 
     assert message is not None
-    assert "could not find a Nous Portal account or organisation" in message
+    assert "could not find a Janus Portal account or organisation" in message

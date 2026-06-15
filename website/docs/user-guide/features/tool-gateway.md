@@ -1,6 +1,6 @@
 ---
 title: "Nous Tool Gateway"
-description: "One subscription, every tool. Web search, image generation, TTS, and cloud browsers — all routed through Nous Portal with no extra API keys."
+description: "One subscription, every tool. Web search, image generation, TTS, and cloud browsers — all routed through Janus Portal with no extra API keys."
 sidebar_label: "Tool Gateway"
 sidebar_position: 2
 ---
@@ -9,10 +9,10 @@ sidebar_position: 2
 
 **One subscription. Every tool built in.**
 
-The Tool Gateway is included with every paid [Nous Portal](https://portal.nousresearch.com) subscription. It routes Janus' tool calls — web search, image generation, text-to-speech, and cloud browser automation — through infrastructure Nous already runs, so you don't have to sign up with Firecrawl, FAL, OpenAI, Browser Use, or anyone else just to make your agent useful.
+The Tool Gateway is included with every paid [Janus Portal](https://portal.imbalabs.com) subscription. It routes Janus' tool calls — web search, image generation, text-to-speech, and cloud browser automation — through infrastructure Nous already runs, so you don't have to sign up with Firecrawl, FAL, OpenAI, Browser Use, or anyone else just to make your agent useful.
 
 <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap', margin: '1.5rem 0'}}>
-  <a href="https://portal.nousresearch.com/manage-subscription" style={{background: 'var(--ifm-color-primary)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold'}}>Start or manage subscription →</a>
+  <a href="https://portal.imbalabs.com/manage-subscription" style={{background: 'var(--ifm-color-primary)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold'}}>Start or manage subscription →</a>
 </div>
 
 ## What's included
@@ -32,7 +32,7 @@ Building an agent that can actually *do things* means stitching together 5+ API 
 
 - **One bill.** Pay Nous; we handle the rest.
 - **One signup.** No Firecrawl, FAL, Browser Use, or OpenAI audio accounts to manage.
-- **One key.** Your Nous Portal OAuth covers every tool.
+- **One key.** Your Janus Portal OAuth covers every tool.
 - **Same quality.** Same backends the direct-key route uses — just fronted by us.
 
 Bring your own keys anytime — per-tool, whenever you want to. The gateway isn't a lock-in, it's a shortcut.
@@ -46,7 +46,7 @@ janus setup --portal     # Fresh install: Nous OAuth + set Nous as provider + tu
 ```
 
 ```bash
-janus model              # Switch your inference provider to Nous Portal — Janus then offers to turn on the gateway for all tools
+janus model              # Switch your inference provider to Janus Portal — Janus then offers to turn on the gateway for all tools
 ```
 
 ```bash
@@ -55,7 +55,7 @@ janus tools              # Enable the gateway per-tool — pick "Nous Subscripti
 
 `janus setup --portal` and `janus model` are the all-at-once paths: log in once, optionally flip every tool to the gateway. `janus tools` is the à la carte path — turn on just the tools you want, one at a time.
 
-**You don't have to log in first.** With `janus tools`, the Nous-managed backends (Web search, Image, Video, TTS, Browser) are always listed, even if you've never signed into Nous Portal. Select one and Janus runs the Portal login right there if you aren't already authenticated — no need to run `janus model` beforehand. If your Nous OAuth is already active, selecting the backend enables it immediately with no extra prompt. This path only logs you in and turns on the one tool you picked — it does **not** switch your inference provider, and it does **not** prompt you to enable the gateway for every other tool.
+**You don't have to log in first.** With `janus tools`, the Nous-managed backends (Web search, Image, Video, TTS, Browser) are always listed, even if you've never signed into Janus Portal. Select one and Janus runs the Portal login right there if you aren't already authenticated — no need to run `janus model` beforehand. If your Nous OAuth is already active, selecting the backend enables it immediately with no extra prompt. This path only logs you in and turns on the one tool you picked — it does **not** switch your inference provider, and it does **not** prompt you to enable the gateway for every other tool.
 
 Check what's active at any time:
 
@@ -69,7 +69,7 @@ janus status             # Full system status (Tool Gateway is one section)
 
 ```
 ◆ Nous Tool Gateway
-  Nous Portal     ✓ managed tools available
+  Janus Portal     ✓ managed tools available
   Web tools       ✓ active via Nous subscription
   Image gen       ✓ active via Nous subscription
   TTS             ✓ active via Nous subscription
@@ -80,7 +80,7 @@ Tools marked "active via Nous subscription" are going through the gateway. Anyth
 
 ## Eligibility
 
-The Tool Gateway is a **paid-subscription** feature. Free-tier Nous accounts can use Portal for inference but don't include managed tools — [upgrade your plan](https://portal.nousresearch.com/manage-subscription) to unlock the gateway.
+The Tool Gateway is a **paid-subscription** feature. Free-tier Nous accounts can use Portal for inference but don't include managed tools — [upgrade your plan](https://portal.imbalabs.com/manage-subscription) to unlock the gateway.
 
 Some accounts are also entitled to a **free tool pool** — a small managed-tool allowance that covers gateway tool calls without a paid subscription. When a free pool is available, the gateway surfaces it and shows a setup prompt on first use, so you can opt in and start using managed tools right away.
 
@@ -98,7 +98,7 @@ Switch any tool at any time via:
 janus tools          # Interactive picker for each tool category
 ```
 
-Select the tool, pick **Nous Subscription** as the provider (or any direct provider you prefer). No config editing required. If you aren't logged into Nous Portal yet, picking **Nous Subscription** kicks off the Portal login inline — you don't need to authenticate through `janus model` first.
+Select the tool, pick **Nous Subscription** as the provider (or any direct provider you prefer). No config editing required. If you aren't logged into Janus Portal yet, picking **Nous Subscription** kicks off the Portal login inline — you don't need to authenticate through `janus model` first.
 
 ## Using individual image models
 
@@ -181,7 +181,7 @@ Tools routed through the gateway stop working until you renew or swap in direct 
 
 ### Can I see usage or costs per tool?
 
-Yes — the [Nous Portal dashboard](https://portal.nousresearch.com) breaks usage down by tool so you can see what's driving your bill.
+Yes — the [Janus Portal dashboard](https://portal.imbalabs.com) breaks usage down by tool so you can see what's driving your bill.
 
 ### Is Modal (serverless terminal) included?
 

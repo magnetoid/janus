@@ -25,7 +25,7 @@ janus chat -q "Hello"
 janus chat --model "anthropic/claude-sonnet-4"
 
 # 使用指定提供商
-janus chat --provider nous        # 使用 Nous Portal
+janus chat --provider nous        # 使用 Janus Portal
 janus chat --provider openrouter  # 强制使用 OpenRouter
 
 # 使用指定工具集

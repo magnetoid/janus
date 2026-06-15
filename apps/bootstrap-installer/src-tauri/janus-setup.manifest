@@ -19,7 +19,7 @@
     <assemblyIdentity
         version="0.0.1.0"
         processorArchitecture="*"
-        name="NousResearch.Janus.Setup"
+        name="ImbaLabs.Janus.Setup"
         type="win32"
     />
     <description>Janus Setup</description>

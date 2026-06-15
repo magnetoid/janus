@@ -149,12 +149,12 @@ janus webhook subscribe pr-review \
   --deliver github_comment
 ```
 
-Full automation templates gallery: [hermes-agent.nousresearch.com/docs/guides/automation-templates](https://github.com/magnetoid/janus)
+Full automation templates gallery: [github.com/magnetoid/janus/guides/automation-templates](https://github.com/magnetoid/janus)
 
-Documentation: [hermes-agent.nousresearch.com](https://github.com/magnetoid/janus)
+Documentation: [github.com/magnetoid/janus](https://github.com/magnetoid/janus)
 
 GitHub: [github.com/magnetoid/janus](https://github.com/magnetoid/janus)
 
 ---
 
-*Janus Agent is built by [Imba Labs](https://nousresearch.com). Open source, model-agnostic, runs on your infrastructure.*
+*Janus Agent is built by [Imba Labs](https://imbalabs.com). Open source, model-agnostic, runs on your infrastructure.*

@@ -321,7 +321,7 @@ FAL_MODELS: Dict[str, Dict[str, Any]] = {
     # Krea 2 — Krea's first foundation image model, day-0 partner launch on
     # fal (2026-05-27). Same model family as our direct ``plugins/image_gen/krea``
     # backend, exposed here for users who prefer to bill through their
-    # existing FAL key / Nous Portal subscription rather than register
+    # existing FAL key / Janus Portal subscription rather than register
     # directly with Krea.  Both variants share the same parameter schema —
     # only model id, price, and recommended use case differ.
     "fal-ai/krea/v2/medium/text-to-image": {
@@ -465,7 +465,7 @@ def _submit_fal_request(model: str, arguments: Dict[str, Any]):
             raise ValueError(
                 f"Nous Subscription gateway rejected model '{model}' "
                 f"(HTTP {status}). This model may not yet be enabled on "
-                f"the Nous Portal's FAL proxy. Either:\n"
+                f"the Janus Portal's FAL proxy. Either:\n"
                 f"  • Set FAL_KEY in your environment to use FAL.ai directly, or\n"
                 f"  • Pick a different model via `janus tools` → Image Generation."
                 f"{gateway_message}"

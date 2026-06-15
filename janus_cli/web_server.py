@@ -831,237 +831,10 @@ def _media_serve_roots() -> list[Path]:
     return out
 
 
-@app.get("/api/media")
-async def get_media(path: str):
-    """Return a gateway-local image file as a base64 data URL.
-
-    Lets remote clients (the desktop app over the network, or the web dashboard
-    in a browser) display images the agent wrote to *this* machine's filesystem
-    — they can't read the gateway's local disk directly.
-
-    Auth-gated by the session token like every other /api route. Restricted to
-    an image-extension allowlist, a size cap, AND the gateway's own media roots
-    (resolved, symlink-safe) so it can't be used to read arbitrary files.
-    """
-    try:
-        target = Path(path).expanduser().resolve()
-    except (OSError, RuntimeError):
-        raise HTTPException(status_code=400, detail="Invalid path")
-
-    if target.suffix.lower() not in _MEDIA_CONTENT_TYPES:
-        raise HTTPException(status_code=415, detail="Unsupported media type")
-
-    roots = _media_serve_roots()
-    if not any(target == root or root in target.parents for root in roots):
-        raise HTTPException(status_code=403, detail="Path outside media roots")
-
-    if not target.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
-    if target.stat().st_size > _MEDIA_MAX_BYTES:
-        raise HTTPException(status_code=413, detail="File too large")
-
-    encoded = base64.b64encode(target.read_bytes()).decode("ascii")
-    return {"data_url": f"data:{_MEDIA_CONTENT_TYPES[target.suffix.lower()]};base64,{encoded}"}
 
 
-@app.get("/api/status")
-async def get_status():
-    current_ver, latest_ver = check_config_version()
-
-    # --- Gateway liveness detection ---
-    # Try local PID check first (same-host).  If that fails and a remote
-    # GATEWAY_HEALTH_URL is configured, probe the gateway over HTTP so the
-    # dashboard works when the gateway runs in a separate container.
-    gateway_pid = get_running_pid()
-    gateway_running = gateway_pid is not None
-    remote_health_body: dict | None = None
-
-    if not gateway_running and _GATEWAY_HEALTH_URL:
-        loop = asyncio.get_running_loop()
-        alive, remote_health_body = await loop.run_in_executor(
-            None, _probe_gateway_health
-        )
-        if alive:
-            gateway_running = True
-            # PID from the remote container (display only — not locally valid)
-            if remote_health_body:
-                gateway_pid = remote_health_body.get("pid")
-
-    gateway_state = None
-    gateway_platforms: dict = {}
-    gateway_exit_reason = None
-    gateway_updated_at = None
-    configured_gateway_platforms: set[str] | None = None
-    try:
-        from gateway.config import load_gateway_config
-
-        gateway_config = load_gateway_config()
-        configured_gateway_platforms = {
-            platform.value for platform in gateway_config.get_connected_platforms()
-        }
-    except Exception:
-        configured_gateway_platforms = None
-
-    # Prefer the detailed health endpoint response (has full state) when the
-    # local runtime status file is absent or stale (cross-container).
-    runtime = read_runtime_status()
-    if runtime is None and remote_health_body and remote_health_body.get("gateway_state"):
-        runtime = remote_health_body
-
-    if runtime:
-        gateway_state = runtime.get("gateway_state")
-        gateway_platforms = runtime.get("platforms") or {}
-        if configured_gateway_platforms is not None:
-            gateway_platforms = {
-                key: value
-                for key, value in gateway_platforms.items()
-                if key in configured_gateway_platforms
-            }
-        gateway_exit_reason = runtime.get("exit_reason")
-        gateway_updated_at = runtime.get("updated_at")
-        if not gateway_running:
-            gateway_state = gateway_state if gateway_state in {"stopped", "startup_failed"} else "stopped"
-            gateway_platforms = {}
-        elif gateway_running and remote_health_body is not None:
-            # The health probe confirmed the gateway is alive, but the local
-            # runtime status file may be stale (cross-container).  Override
-            # stopped/None state so the dashboard shows the correct badge.
-            if gateway_state in {None, "stopped"}:
-                gateway_state = "running"
-
-    # If there was no runtime info at all but the health probe confirmed alive,
-    # ensure we still report the gateway as running (no shared volume scenario).
-    if gateway_running and gateway_state is None and remote_health_body is not None:
-        gateway_state = "running"
-
-    active_sessions = 0
-    try:
-        from janus_state import SessionDB
-        db = SessionDB()
-        try:
-            sessions = db.list_sessions_rich(limit=50)
-            now = time.time()
-            active_sessions = sum(
-                1 for s in sessions
-                if s.get("ended_at") is None
-                and (now - s.get("last_active", s.get("started_at", 0))) < 300
-            )
-        finally:
-            db.close()
-    except Exception:
-        pass
-
-    # Dashboard auth gate (Phase 7): surface whether the gate is engaged
-    # and which providers are registered so ``janus status`` and the
-    # SPA's StatusPage can show "OAuth gate ON via Imba Labs" or
-    # "loopback only — no auth gate" with no extra round trips.
-    auth_required = bool(getattr(app.state, "auth_required", False))
-    auth_providers: list[str] = []
-    try:
-        from janus_cli.dashboard_auth import list_providers as _list_providers
-        auth_providers = [p.name for p in _list_providers()]
-    except Exception:
-        # Module not importable yet (early startup) — leave as [].
-        pass
-
-    return {
-        "version": __version__,
-        "release_date": __release_date__,
-        "janus_home": str(get_janus_home()),
-        "config_path": str(get_config_path()),
-        "env_path": str(get_env_path()),
-        "config_version": current_ver,
-        "latest_config_version": latest_ver,
-        "gateway_running": gateway_running,
-        "gateway_pid": gateway_pid,
-        "gateway_health_url": _GATEWAY_HEALTH_URL,
-        "gateway_state": gateway_state,
-        "gateway_platforms": gateway_platforms,
-        "gateway_exit_reason": gateway_exit_reason,
-        "gateway_updated_at": gateway_updated_at,
-        "active_sessions": active_sessions,
-        "auth_required": auth_required,
-        "auth_providers": auth_providers,
-    }
 
 
-@app.get("/api/system/stats")
-async def get_system_stats():
-    """Host + process system stats for the System page.
-
-    OS / Python / host identity from stdlib; CPU / memory / disk / uptime from
-    psutil when available, with graceful degradation when it isn't.  Read-only
-    and non-sensitive (no env values, no paths beyond the janus home root).
-    """
-    import platform as _platform
-
-    info: Dict[str, Any] = {
-        "os": _platform.system(),
-        "os_release": _platform.release(),
-        "os_version": _platform.version(),
-        "platform": _platform.platform(),
-        "arch": _platform.machine(),
-        "hostname": _platform.node(),
-        "python_version": _platform.python_version(),
-        "python_impl": _platform.python_implementation(),
-        "janus_version": __version__,
-        "cpu_count": os.cpu_count(),
-    }
-
-    # psutil enriches the picture when present; everything below is optional.
-    try:
-        import psutil  # type: ignore
-
-        vm = psutil.virtual_memory()
-        info["memory"] = {
-            "total": vm.total,
-            "available": vm.available,
-            "used": vm.used,
-            "percent": vm.percent,
-        }
-        try:
-            du = psutil.disk_usage(str(get_janus_home()))
-            info["disk"] = {
-                "total": du.total,
-                "used": du.used,
-                "free": du.free,
-                "percent": du.percent,
-            }
-        except Exception:
-            pass
-        try:
-            info["cpu_percent"] = psutil.cpu_percent(interval=0.1)
-            la = getattr(psutil, "getloadavg", None)
-            if la:
-                info["load_avg"] = list(la())
-        except Exception:
-            pass
-        try:
-            boot = psutil.boot_time()
-            info["uptime_seconds"] = int(time.time() - boot)
-        except Exception:
-            pass
-        try:
-            proc = psutil.Process()
-            info["process"] = {
-                "pid": proc.pid,
-                "rss": proc.memory_info().rss,
-                "create_time": int(proc.create_time()),
-                "num_threads": proc.num_threads(),
-            }
-        except Exception:
-            pass
-        info["psutil"] = True
-    except Exception:
-        info["psutil"] = False
-        # stdlib-only fallbacks for load average + uptime where the kernel
-        # exposes them.
-        try:
-            info["load_avg"] = list(os.getloadavg())
-        except (OSError, AttributeError):
-            pass
-
-    return info
 
 
 # ---------------------------------------------------------------------------
@@ -1073,47 +846,14 @@ async def get_system_stats():
 # ---------------------------------------------------------------------------
 
 
-@app.get("/api/curator")
-async def get_curator_status():
-    try:
-        from agent import curator
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Curator unavailable: {exc}")
-    try:
-        state = curator.load_state()
-    except Exception:
-        state = {}
-    return {
-        "enabled": _safe_call(curator, "is_enabled", True),
-        "paused": _safe_call(curator, "is_paused", False),
-        "interval_hours": _safe_call(curator, "get_interval_hours", None),
-        "last_run_at": state.get("last_run_at"),
-        "min_idle_hours": _safe_call(curator, "get_min_idle_hours", None),
-        "stale_after_days": _safe_call(curator, "get_stale_after_days", None),
-        "archive_after_days": _safe_call(curator, "get_archive_after_days", None),
-    }
 
 
 class CuratorPause(BaseModel):
     paused: bool
 
 
-@app.put("/api/curator/paused")
-async def set_curator_paused(body: CuratorPause):
-    from agent import curator
-
-    curator.set_paused(bool(body.paused))
-    return {"ok": True, "paused": bool(body.paused)}
 
 
-@app.post("/api/curator/run")
-async def run_curator():
-    """Trigger a curator review now (backgrounded; tail via action status)."""
-    try:
-        proc = _spawn_janus_action(["curator", "run"], "curator-run")
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed to run curator: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "curator-run"}
 
 
 def _safe_call(mod, fn_name: str, default):
@@ -1130,129 +870,36 @@ def _safe_call(mod, fn_name: str, default):
 # blocking LLM calls happen in the request path (the CLI handles those).
 # ---------------------------------------------------------------------------
 
-@app.get("/api/learning/stats")
-async def get_learning_stats():
-    try:
-        from agent import outcome_tracker as ot
-        from agent import persona_optimizer as po
-
-        stats = ot.skill_stats()
-        ranked = sorted(stats.items(),
-                        key=lambda kv: (kv[1].get("success_rate") or 0, kv[1]["uses"]),
-                        reverse=True)
-        try:
-            from agent import lessons as _lessons
-            lessons_stat = _lessons.stats()
-        except Exception:
-            lessons_stat = {"total": 0, "by_task_type": {}}
-        return {
-            "overall": ot.overall_stats(),
-            "recent_success_rate": ot.recent_success_rate(20),
-            "skills": [{"name": n, **s} for n, s in ranked],
-            "personas": po.persona_stats(),
-            "metrics": ot.learning_metrics(),
-            "lessons": lessons_stat,
-        }
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"learning stats unavailable: {exc}")
 
 
-@app.get("/api/aspirations")
-async def list_aspirations():
-    from agent import aspirations as asp
-    return {"aspirations": asp.load()}
 
 
 class AspirationCreate(BaseModel):
     goal: str
 
 
-@app.post("/api/aspirations")
-async def add_aspiration(body: AspirationCreate):
-    from agent import aspirations as asp
-    goal = (body.goal or "").strip()
-    if not goal:
-        raise HTTPException(status_code=400, detail="goal is required")
-    return {"ok": True, "aspiration": asp.add(goal)}
 
 
-@app.delete("/api/aspirations/{aspiration_id}")
-async def remove_aspiration(aspiration_id: str):
-    from agent import aspirations as asp
-    return {"ok": asp.remove(aspiration_id)}
 
 
-@app.get("/api/interests")
-async def list_interests():
-    from agent import interests as it
-    return {"interests": it.load()}
 
 
 class InterestCreate(BaseModel):
     field: str
 
 
-@app.post("/api/interests")
-async def add_interest(body: InterestCreate):
-    from agent import interests as it
-    field = (body.field or "").strip()
-    if not field:
-        raise HTTPException(status_code=400, detail="field is required")
-    return {"ok": True, "interest": it.add(field)}
 
 
-@app.delete("/api/interests/{interest_id}")
-async def remove_interest(interest_id: str):
-    from agent import interests as it
-    return {"ok": it.remove(interest_id)}
 
 
-@app.get("/api/skills/graph")
-async def get_skill_graph():
-    try:
-        from agent import skill_graph as sg
-
-        sg.build_graph_from_skills()
-        nodes = []
-        for name in sg.graph_node_keys():
-            node = sg.get_node(name) or {}
-            a = sg.assess_promotability(name)
-            nodes.append({
-                "name": name,
-                "promotion_level": node.get("promotion_level", 0),
-                "verdict": ("promotable" if a["promotable"]
-                            else "refine" if a["refinement_needed"] else "stable"),
-                "success_rate": a.get("success_rate"),
-                "uses": a.get("uses"),
-                "dependencies": sg.dependencies_of(name),
-            })
-        return {"nodes": nodes, "edges": sg.load_graph().get("edges", [])}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"skill graph unavailable: {exc}")
 
 
-@app.get("/api/sleep")
-async def get_sleep_status():
-    from agent import sleep as sl
-    state = sl.load_sleep_state()
-    return {
-        "paused": bool(state.get("paused")),
-        "last_run": state.get("last_run"),
-        "last_report": state.get("last_report"),
-    }
 
 
 class SleepPause(BaseModel):
     paused: bool
 
 
-@app.put("/api/sleep/paused")
-async def set_sleep_paused(body: SleepPause):
-    from agent import sleep as sl
-    state = sl.load_sleep_state()
-    state["paused"] = bool(body.paused)
-    sl.save_sleep_state(state)
-    return {"ok": True, "paused": bool(body.paused)}
 
 
 # ---------------------------------------------------------------------------
@@ -1260,45 +907,6 @@ async def set_sleep_paused(body: SleepPause):
 # ---------------------------------------------------------------------------
 
 
-@app.get("/api/portal")
-async def get_portal_status():
-    cfg = load_config() or {}
-    auth: Dict[str, Any] = {}
-    try:
-        from janus_cli.auth import get_nous_auth_status
-
-        auth = get_nous_auth_status() or {}
-    except Exception:
-        auth = {}
-
-    features = []
-    try:
-        from janus_cli.nous_subscription import get_nous_subscription_features
-
-        feats = get_nous_subscription_features(cfg)
-        if feats is not None:
-            for feat in feats.items():
-                if getattr(feat, "managed_by_nous", False):
-                    state = "via Janus Portal"
-                elif getattr(feat, "active", False) and getattr(feat, "current_provider", None):
-                    state = feat.current_provider
-                elif getattr(feat, "active", False):
-                    state = "active"
-                else:
-                    state = "not configured"
-                features.append({"label": getattr(feat, "label", ""), "state": state})
-    except Exception:
-        _log.exception("portal features failed")
-
-    model_cfg = cfg.get("model") if isinstance(cfg.get("model"), dict) else {}
-    return {
-        "logged_in": bool(auth.get("logged_in")),
-        "portal_url": auth.get("portal_base_url"),
-        "inference_url": auth.get("inference_base_url"),
-        "provider": str((model_cfg or {}).get("provider") or ""),
-        "subscription_url": "https://portal.imbalabs.com/manage-subscription",
-        "features": features,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -1308,31 +916,10 @@ async def get_portal_status():
 # ---------------------------------------------------------------------------
 
 
-@app.post("/api/ops/prompt-size")
-async def run_prompt_size():
-    try:
-        proc = _spawn_janus_action(["prompt-size"], "prompt-size")
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "prompt-size"}
 
 
-@app.post("/api/ops/dump")
-async def run_dump():
-    try:
-        proc = _spawn_janus_action(["dump"], "dump")
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "dump"}
 
 
-@app.post("/api/ops/config-migrate")
-async def run_config_migrate():
-    try:
-        proc = _spawn_janus_action(["config", "migrate"], "config-migrate")
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "config-migrate"}
 
 
 class DebugShareRequest(BaseModel):
@@ -1344,40 +931,6 @@ class DebugShareRequest(BaseModel):
     lines: int = 200
 
 
-@app.post("/api/ops/debug-share")
-async def run_debug_share_endpoint(body: DebugShareRequest | None = None):
-    """Upload a redacted debug report + full logs and return the paste URLs.
-
-    Unlike the other diagnostics actions (doctor, dump, prompt-size) this is
-    *synchronous*: the whole point of ``debug share`` is the set of shareable
-    URLs it produces, so we run the upload in a worker thread and return the
-    structured ``{urls, failures, redacted, ...}`` payload directly. The
-    dashboard renders those as real, copyable links instead of scraping a log
-    tail. Pastes auto-delete after 6 hours (handled inside the share core).
-    """
-    from janus_cli.debug import build_debug_share
-
-    req = body or DebugShareRequest()
-    try:
-        result = await asyncio.to_thread(
-            build_debug_share,
-            log_lines=max(1, min(int(req.lines), 5000)),
-            redact=bool(req.redact),
-        )
-    except RuntimeError as exc:
-        # Required summary-report upload failed (offline / paste service down).
-        raise HTTPException(status_code=502, detail=f"Upload failed: {exc}")
-    except Exception as exc:
-        _log.exception("debug share failed")
-        raise HTTPException(status_code=500, detail=f"Failed: {exc}")
-
-    return {
-        "ok": True,
-        "urls": result.urls,
-        "failures": result.failures,
-        "redacted": result.redacted,
-        "auto_delete_seconds": result.auto_delete_seconds,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -1493,187 +1046,12 @@ def _tail_lines(path: Path, n: int) -> List[str]:
     return lines[-n:] if n > 0 else lines
 
 
-@app.post("/api/gateway/restart")
-async def restart_gateway():
-    """Kick off a ``janus gateway restart`` in the background."""
-    try:
-        proc = _spawn_janus_action(["gateway", "restart"], "gateway-restart")
-    except Exception as exc:
-        _log.exception("Failed to spawn gateway restart")
-        raise HTTPException(status_code=500, detail=f"Failed to restart gateway: {exc}")
-    return {
-        "ok": True,
-        "pid": proc.pid,
-        "name": "gateway-restart",
-    }
 
 
-@app.post("/api/janus/update")
-async def update_janus():
-    """Kick off ``janus update`` in the background."""
-    install_method = detect_install_method(PROJECT_ROOT)
-    if install_method == "docker":
-        message = format_docker_update_message()
-        _record_completed_action("janus-update", message, exit_code=1)
-        return {
-            "ok": False,
-            "pid": None,
-            "name": "janus-update",
-            "error": "docker_update_unsupported",
-            "message": message,
-            "update_command": recommended_update_command_for_method(install_method),
-        }
-
-    try:
-        proc = _spawn_janus_action(["update"], "janus-update")
-    except Exception as exc:
-        _log.exception("Failed to spawn janus update")
-        raise HTTPException(status_code=500, detail=f"Failed to start update: {exc}")
-    return {
-        "ok": True,
-        "pid": proc.pid,
-        "name": "janus-update",
-    }
 
 
-@app.get("/api/janus/update/check")
-async def check_janus_update(force: bool = False):
-    """Report whether a Janus update is available, without applying it.
-
-    Powers the dashboard's "check before you update" flow: the System page
-    shows the commit-behind count and asks the user to confirm before
-    ``POST /api/janus/update`` actually runs ``janus update``.
-
-    Returns:
-        install_method: 'git' | 'pip' | 'docker' | 'nixos' | 'homebrew' | ...
-        current_version: installed Janus version string
-        behind: commits behind upstream (>=1), 0 if up to date,
-                -1 if behind by an unknown count (nix/pypi), or null if the
-                check could not run (offline, no remote, etc.)
-        update_available: convenience bool (behind is non-zero and not null)
-        can_apply: True when the dashboard's update button can apply it
-                   in place (git/pip); False for docker/nix/homebrew where the
-                   user must update out-of-band
-        update_command: the recommended command for this install method
-        message: human-readable guidance for non-applyable methods
-    """
-    install_method = detect_install_method(PROJECT_ROOT)
-    update_command = recommended_update_command_for_method(install_method)
-
-    payload: Dict[str, Any] = {
-        "install_method": install_method,
-        "current_version": __version__,
-        "behind": None,
-        "update_available": False,
-        "can_apply": install_method in ("git", "pip"),
-        "update_command": update_command,
-        "message": None,
-    }
-
-    if install_method == "docker":
-        payload["message"] = format_docker_update_message()
-        return payload
-
-    # banner.check_for_updates() handles git / pypi / nix-revision paths and
-    # caches the result for 6h. ``force`` busts the cache so the "Check now"
-    # button reflects reality immediately.
-    try:
-        from janus_cli.banner import check_for_updates
-
-        if force:
-            try:
-                (get_janus_home() / ".update_check").unlink()
-            except OSError:
-                pass
-
-        behind = await asyncio.to_thread(check_for_updates)
-    except Exception:
-        _log.exception("Update check failed")
-        behind = None
-
-    payload["behind"] = behind
-    if behind is None:
-        payload["message"] = "Couldn't reach the update source — try again later."
-    elif behind == 0:
-        payload["message"] = "You're on the latest version."
-    else:
-        payload["update_available"] = True
-
-    return payload
 
 
-@app.post("/api/audio/transcribe")
-async def transcribe_audio_upload(payload: AudioTranscriptionRequest):
-    data_url = (payload.data_url or "").strip()
-    if not data_url.startswith("data:") or "," not in data_url:
-        raise HTTPException(status_code=400, detail="Invalid audio payload")
-
-    header, encoded = data_url.split(",", 1)
-    if ";base64" not in header:
-        raise HTTPException(
-            status_code=400, detail="Audio payload must be base64 encoded"
-        )
-
-    mime_type = (
-        payload.mime_type or header[5:].split(";", 1)[0] or "audio/webm"
-    ).strip()
-    normalized_mime_type = mime_type.split(";", 1)[0].lower()
-    if not (
-        normalized_mime_type.startswith("audio/")
-        or normalized_mime_type == "video/webm"
-    ):
-        raise HTTPException(
-            status_code=400, detail="Payload must be an audio recording"
-        )
-
-    try:
-        audio_bytes = base64.b64decode(encoded, validate=True)
-    except (binascii.Error, ValueError):
-        raise HTTPException(status_code=400, detail="Audio payload is not valid base64")
-
-    if not audio_bytes:
-        raise HTTPException(status_code=400, detail="Audio recording is empty")
-    if len(audio_bytes) > _MAX_TRANSCRIPTION_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Audio recording is too large")
-
-    temp_path = ""
-    try:
-        suffix = _audio_extension_for_mime(mime_type)
-        with tempfile.NamedTemporaryFile(
-            prefix="janus-desktop-voice-",
-            suffix=suffix,
-            delete=False,
-        ) as tmp:
-            tmp.write(audio_bytes)
-            temp_path = tmp.name
-
-        from tools.transcription_tools import transcribe_audio
-
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(None, transcribe_audio, temp_path)
-    except HTTPException:
-        raise
-    except Exception as exc:
-        _log.exception("Desktop voice transcription failed")
-        raise HTTPException(status_code=500, detail=f"Transcription failed: {exc}")
-    finally:
-        if temp_path:
-            try:
-                os.unlink(temp_path)
-            except OSError:
-                pass
-
-    if not result.get("success"):
-        raise HTTPException(
-            status_code=400,
-            detail=result.get("error") or "Transcription failed",
-        )
-
-    return {
-        "ok": True,
-        "transcript": str(result.get("transcript") or "").strip(),
-        "provider": result.get("provider"),
-    }
 
 
 class TTSSpeakRequest(BaseModel):
@@ -1687,509 +1065,16 @@ def _elevenlabs_voice_label(voice: Dict[str, Any]) -> str:
     return f"{name} ({category})" if category else name
 
 
-@app.get("/api/audio/elevenlabs/voices")
-async def get_elevenlabs_voices():
-    """Return ElevenLabs voices when an API key is configured.
-
-    The desktop UI uses this for the ``tts.elevenlabs.voice_id`` dropdown.
-    Only non-secret voice metadata is returned; the API key stays server-side.
-    """
-    api_key = (load_env().get("ELEVENLABS_API_KEY") or os.environ.get("ELEVENLABS_API_KEY") or "").strip()
-    if not api_key:
-        return {"available": False, "voices": []}
-
-    request = urllib.request.Request(
-        "https://api.elevenlabs.io/v1/voices",
-        headers={
-            "Accept": "application/json",
-            "xi-api-key": api_key,
-        },
-    )
-
-    try:
-        loop = asyncio.get_running_loop()
-
-        def _fetch() -> Dict[str, Any]:
-            with urllib.request.urlopen(request, timeout=10) as response:
-                return json.loads(response.read().decode("utf-8"))
-
-        payload = await loop.run_in_executor(None, _fetch)
-    except Exception as exc:
-        _log.warning("ElevenLabs voice list failed: %s", exc)
-        raise HTTPException(status_code=502, detail="Could not load ElevenLabs voices")
-
-    voices = []
-    for voice in payload.get("voices") or []:
-        if not isinstance(voice, dict):
-            continue
-
-        voice_id = str(voice.get("voice_id") or "").strip()
-        if not voice_id:
-            continue
-
-        voices.append({
-            "voice_id": voice_id,
-            "name": str(voice.get("name") or voice_id),
-            "label": _elevenlabs_voice_label(voice),
-        })
-
-    voices.sort(key=lambda item: str(item.get("label") or "").lower())
-    return {"available": True, "voices": voices}
 
 
-@app.post("/api/audio/speak")
-async def speak_text(payload: TTSSpeakRequest):
-    """Synthesize speech and return audio as base64 data URL.
-
-    Used by the desktop voice-conversation mode to play back assistant
-    responses without exposing the on-disk file path. Reuses the
-    existing TTS provider chain (Edge / OpenAI / ElevenLabs / etc.)
-    configured in ``~/.janus/config.yaml`` under ``tts.``.
-    """
-    text = (payload.text or "").strip()
-    if not text:
-        raise HTTPException(status_code=400, detail="Text is required")
-
-    try:
-        from tools.tts_tool import text_to_speech_tool
-        loop = asyncio.get_running_loop()
-        result_json = await loop.run_in_executor(None, text_to_speech_tool, text)
-    except Exception as exc:
-        _log.exception("Desktop voice TTS failed")
-        raise HTTPException(status_code=500, detail=f"Speech synthesis failed: {exc}")
-
-    try:
-        result = json.loads(result_json) if isinstance(result_json, str) else result_json
-    except Exception:
-        raise HTTPException(status_code=500, detail="Invalid TTS response")
-
-    if not result.get("success"):
-        raise HTTPException(
-            status_code=400,
-            detail=result.get("error") or "Speech synthesis failed",
-        )
-
-    file_path = result.get("file_path")
-    if not file_path or not os.path.isfile(file_path):
-        raise HTTPException(status_code=500, detail="Audio file missing")
-
-    ext = os.path.splitext(file_path)[1].lower()
-    mime_type = {
-        ".mp3": "audio/mpeg",
-        ".ogg": "audio/ogg",
-        ".opus": "audio/ogg",
-        ".wav": "audio/wav",
-        ".flac": "audio/flac",
-    }.get(ext, "audio/mpeg")
-
-    try:
-        with open(file_path, "rb") as fh:
-            audio_bytes = fh.read()
-    except OSError as exc:
-        raise HTTPException(status_code=500, detail=f"Could not read audio: {exc}")
-    finally:
-        try:
-            os.unlink(file_path)
-        except OSError:
-            pass
-
-    encoded = base64.b64encode(audio_bytes).decode("ascii")
-    return {
-        "ok": True,
-        "data_url": f"data:{mime_type};base64,{encoded}",
-        "mime_type": mime_type,
-        "provider": result.get("provider"),
-    }
 
 
-@app.get("/api/actions/{name}/status")
-async def get_action_status(name: str, lines: int = 200):
-    """Tail an action log and report whether the process is still running."""
-    log_file_name = _ACTION_LOG_FILES.get(name)
-    if log_file_name is None:
-        raise HTTPException(status_code=404, detail=f"Unknown action: {name}")
-
-    log_path = _ACTION_LOG_DIR / log_file_name
-    tail = _tail_lines(log_path, min(max(lines, 1), 2000))
-
-    proc = _ACTION_PROCS.get(name)
-    if proc is None:
-        result = _ACTION_RESULTS.get(name)
-        running = False
-        exit_code = result.get("exit_code") if result else None
-        pid = result.get("pid") if result else None
-    else:
-        exit_code = proc.poll()
-        running = exit_code is None
-        pid = proc.pid
-
-    return {
-        "name": name,
-        "running": running,
-        "exit_code": exit_code,
-        "pid": pid,
-        "lines": tail,
-    }
 
 
-@app.get("/api/sessions")
-async def get_sessions(
-    limit: int = 20,
-    offset: int = 0,
-    min_messages: int = 0,
-    archived: str = "exclude",
-    order: str = "created",
-    source: str = None,
-    exclude_sources: str = None,
-):
-    """List sessions.
-
-    ``archived`` controls how soft-archived sessions are treated:
-    ``exclude`` (default) hides them, ``only`` returns just the archived ones
-    (used by the desktop "Archived sessions" settings panel), and ``include``
-    returns both.
-
-    ``order`` controls pagination order: ``created`` (default, by original
-    start time) or ``recent`` (by latest activity across the compression
-    chain). ``recent`` keeps a long-running conversation on the first page
-    after it auto-compresses into a fresh continuation id.
-    """
-    if archived not in ("exclude", "only", "include"):
-        raise HTTPException(
-            status_code=400,
-            detail="archived must be one of: exclude, only, include",
-        )
-    if order not in ("created", "recent"):
-        raise HTTPException(
-            status_code=400,
-            detail="order must be one of: created, recent",
-        )
-    try:
-        from janus_state import SessionDB
-        db = SessionDB()
-        try:
-            min_message_count = max(0, min_messages)
-            archived_only = archived == "only"
-            include_archived = archived == "include"
-            # Optional source scoping: ``source`` includes a single class,
-            # ``exclude_sources`` (comma-separated) drops classes. The desktop
-            # uses these to split recents (exclude=cron) from the cron-jobs
-            # section (source=cron) into two independent lists.
-            exclude_list = [s for s in (exclude_sources or "").split(",") if s.strip()]
-            sessions = db.list_sessions_rich(
-                source=source or None,
-                exclude_sources=exclude_list or None,
-                limit=limit,
-                offset=offset,
-                min_message_count=min_message_count,
-                include_archived=include_archived,
-                archived_only=archived_only,
-                order_by_last_active=order == "recent",
-            )
-            total = db.session_count(
-                source=source or None,
-                exclude_sources=exclude_list or None,
-                min_message_count=min_message_count,
-                include_archived=include_archived,
-                archived_only=archived_only,
-                exclude_children=True,
-            )
-            now = time.time()
-            for s in sessions:
-                s["is_active"] = (
-                    s.get("ended_at") is None
-                    and (now - s.get("last_active", s.get("started_at", 0))) < 300
-                )
-                # SQLite stores the flag as 0/1; expose a real JSON boolean.
-                s["archived"] = bool(s.get("archived"))
-            return {"sessions": sessions, "total": total, "limit": limit, "offset": offset}
-        finally:
-            db.close()
-    except Exception:
-        _log.exception("GET /api/sessions failed")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/api/profiles/sessions")
-async def get_profiles_sessions(
-    limit: int = 20,
-    offset: int = 0,
-    min_messages: int = 0,
-    archived: str = "exclude",
-    order: str = "recent",
-    profile: str = "all",
-    source: str = None,
-    exclude_sources: str = None,
-):
-    """Unified, read-only session list aggregated across ALL profiles.
-
-    Intentionally process-light: this opens each profile's ``state.db`` directly
-    from disk — it does NOT spawn a dashboard backend per profile. Each returned
-    session is tagged with its owning ``profile`` so the desktop renders one
-    browsable list and only spins up a profile's backend when the user actually
-    interacts (sends a message). A user with a single (default) profile gets the
-    same rows as ``/api/sessions``, just tagged ``profile="default"``.
-    """
-    if archived not in ("exclude", "only", "include"):
-        raise HTTPException(status_code=400, detail="archived must be one of: exclude, only, include")
-    if order not in ("created", "recent"):
-        raise HTTPException(status_code=400, detail="order must be one of: created, recent")
-
-    from janus_state import SessionDB
-    from janus_cli import profiles as profiles_mod
-
-    targets: List[Tuple[str, Path]] = []
-    if profile and profile != "all":
-        name, home = _cron_profile_home(profile)
-        targets.append((name, home))
-    else:
-        try:
-            infos = profiles_mod.list_profiles()
-            targets = [(info.name, info.path) for info in infos]
-        except Exception:
-            _log.exception("GET /api/profiles/sessions: list_profiles failed")
-            targets = []
-        if not targets:
-            targets.append(("default", profiles_mod.get_profile_dir("default")))
-
-    min_message_count = max(0, min_messages)
-    archived_only = archived == "only"
-    include_archived = archived == "include"
-    # Source scoping (see /api/sessions): recents pass exclude_sources=cron,
-    # the cron-jobs section passes source=cron — two independent lists so
-    # newest cron sessions can't starve the recents page.
-    source_filter = source or None
-    exclude_list = [s for s in (exclude_sources or "").split(",") if s.strip()]
-    # Over-fetch per profile so the merged+sorted window is correct for the
-    # requested page. Capped so a huge profile can't blow up the response.
-    per_profile = min(max(limit + offset, limit), 500)
-
-    merged: List[Dict[str, Any]] = []
-    total = 0
-    profile_totals: Dict[str, int] = {}
-    errors: List[Dict[str, str]] = []
-    now = time.time()
-    for name, home in targets:
-        db_path = Path(home) / "state.db"
-        if not db_path.exists():
-            continue
-        try:
-            # Read-only: this loop runs on every sidebar refresh, so it must
-            # never DDL/write-lock another profile's live DB (see SessionDB
-            # read_only docstring).
-            db = SessionDB(db_path=db_path, read_only=True)
-        except Exception as exc:
-            errors.append({"profile": name, "error": str(exc)})
-            continue
-        try:
-            rows = db.list_sessions_rich(
-                source=source_filter,
-                exclude_sources=exclude_list or None,
-                limit=per_profile,
-                offset=0,
-                min_message_count=min_message_count,
-                include_archived=include_archived,
-                archived_only=archived_only,
-                order_by_last_active=order == "recent",
-            )
-            profile_total = db.session_count(
-                source=source_filter,
-                exclude_sources=exclude_list or None,
-                min_message_count=min_message_count,
-                include_archived=include_archived,
-                archived_only=archived_only,
-                exclude_children=True,
-            )
-            total += profile_total
-            profile_totals[name] = profile_total
-            for s in rows:
-                s["profile"] = name
-                s["is_default_profile"] = name == "default"
-                s["is_active"] = (
-                    s.get("ended_at") is None
-                    and (now - s.get("last_active", s.get("started_at", 0))) < 300
-                )
-                s["archived"] = bool(s.get("archived"))
-                merged.append(s)
-        except Exception as exc:
-            errors.append({"profile": name, "error": str(exc)})
-        finally:
-            db.close()
-
-    sort_key = "last_active" if order == "recent" else "started_at"
-    merged.sort(key=lambda s: s.get(sort_key) or s.get("started_at") or 0, reverse=True)
-    window = merged[offset:offset + limit]
-    return {
-        "sessions": window,
-        "total": total,
-        "profile_totals": profile_totals,
-        "limit": limit,
-        "offset": offset,
-        "errors": errors,
-    }
 
 
-@app.get("/api/sessions/search")
-async def search_sessions(q: str = "", limit: int = 20):
-    """Search sessions by ID plus full-text message content using FTS5.
-
-    Direct session-id matches are surfaced first, then FTS message-content
-    matches. Results are deduped by compression lineage, not by raw
-    ``session_id``. Auto-compression rotates a conversation onto a fresh
-    session id (and leaves the old segment's messages in the FTS index), so one
-    logical chat can own many ``sessions`` rows that all match the same query.
-    Branches also use ``parent_session_id``, but they are real alternate
-    conversations; don't collapse branch-specific hits back into the parent.
-    """
-    if not q or not q.strip():
-        return {"results": []}
-    try:
-        from janus_state import SessionDB
-        db = SessionDB()
-        try:
-            safe_limit = max(1, min(int(limit or 20), 100))
-
-            # Walk parent_session_id to the compression root, memoized so a
-            # chain of compression segments only costs one walk. We deliberately
-            # stop at branch/delegate edges: those sessions may diverge from the
-            # parent and should remain searchable on their own.
-            root_cache: dict = {}
-
-            def compression_root(session_id: str) -> str:
-                if not session_id:
-                    return session_id
-                if session_id in root_cache:
-                    return root_cache[session_id]
-                chain = []
-                cur = session_id
-                visited = set()
-                root = session_id
-                while cur and cur not in visited:
-                    visited.add(cur)
-                    chain.append(cur)
-                    if cur in root_cache:
-                        root = root_cache[cur]
-                        break
-                    try:
-                        s = db.get_session(cur)
-                    except Exception:
-                        s = None
-                    if not s:
-                        root = cur
-                        break
-                    parent = s.get("parent_session_id") if isinstance(s, dict) else None
-                    if not parent:
-                        root = cur
-                        break
-                    try:
-                        parent_session = db.get_session(parent)
-                    except Exception:
-                        parent_session = None
-                    if not parent_session:
-                        root = cur
-                        break
-                    parent_ended_at = parent_session.get("ended_at")
-                    started_at = s.get("started_at")
-                    is_compression_edge = (
-                        parent_session.get("end_reason") == "compression"
-                        and parent_ended_at is not None
-                        and started_at is not None
-                        and started_at >= parent_ended_at
-                    )
-                    if not is_compression_edge:
-                        root = cur
-                        break
-                    cur = parent
-                for node in chain:
-                    root_cache[node] = root
-                return root
-
-            tip_cache: dict = {}
-
-            def lineage_tip(root_id: str) -> str:
-                if root_id in tip_cache:
-                    return tip_cache[root_id]
-                tip = root_id
-                try:
-                    resolved = db.get_compression_tip(root_id)
-                    if resolved:
-                        tip = resolved
-                except Exception:
-                    pass
-                tip_cache[root_id] = tip
-                return tip
-
-            # Both ID matches and content matches share one keyspace, keyed by
-            # compression lineage root, so an id-hit and a content-hit on the
-            # same logical conversation collapse to a single result. The first
-            # hit for a lineage wins; ID matches run first and take priority.
-            seen: dict = {}
-
-            def add_lineage_result(raw_sid: str, payload: dict) -> None:
-                if not raw_sid:
-                    return
-                root = compression_root(raw_sid)
-                if root in seen or len(seen) >= safe_limit:
-                    return
-                payload = dict(payload)
-                payload["session_id"] = lineage_tip(root)
-                payload["lineage_root"] = root
-                seen[root] = payload
-
-            # Direct ID matches first: users often paste a session id from CLI,
-            # logs, or another Janus surface. FTS can't find those unless the
-            # id happens to appear in message text. search_sessions_by_id is
-            # SQL-bounded, so this stays cheap even with thousands of sessions.
-            for row in db.search_sessions_by_id(q, limit=safe_limit, include_archived=True):
-                sid = row.get("id")
-                preview = (row.get("preview") or "").strip()
-                snippet = preview or f"Session ID: {sid}"
-                add_lineage_result(
-                    sid,
-                    {
-                        "snippet": snippet,
-                        "role": None,
-                        "source": row.get("source"),
-                        "model": row.get("model"),
-                        "session_started": row.get("started_at"),
-                    },
-                )
-
-            # Auto-add prefix wildcards so partial words match
-            # e.g. "nimb" → "nimb*" matches "nimby"
-            # Preserve quoted phrases and existing wildcards as-is
-            import re
-            terms = []
-            for token in re.findall(r'"[^"]*"|\S+', q.strip()):
-                if token.startswith('"') or token.endswith("*"):
-                    terms.append(token)
-                else:
-                    terms.append(token + "*")
-            prefix_query = " ".join(terms)
-            # Over-fetch so lineage dedup can still surface `limit` distinct
-            # conversations even when several hits collapse onto one root.
-            fetch_limit = max(safe_limit * 5, 50)
-            matches = db.search_messages(query=prefix_query, limit=fetch_limit)
-
-            for m in matches:
-                if len(seen) >= safe_limit:
-                    break
-                add_lineage_result(
-                    m["session_id"],
-                    {
-                        "snippet": m.get("snippet", ""),
-                        "role": m.get("role"),
-                        "source": m.get("source"),
-                        "model": m.get("model"),
-                        "session_started": m.get("session_started"),
-                    },
-                )
-            return {"results": list(seen.values())}
-        finally:
-            db.close()
-    except Exception:
-        _log.exception("GET /api/sessions/search failed")
-        raise HTTPException(status_code=500, detail="Search failed")
 
 
 def _normalize_config_for_web(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -2215,21 +1100,10 @@ def _normalize_config_for_web(config: Dict[str, Any]) -> Dict[str, Any]:
     return config
 
 
-@app.get("/api/config")
-async def get_config():
-    config = _normalize_config_for_web(load_config())
-    # Strip internal keys that the frontend shouldn't see or send back
-    return {k: v for k, v in config.items() if not k.startswith("_")}
 
 
-@app.get("/api/config/defaults")
-async def get_defaults():
-    return DEFAULT_CONFIG
 
 
-@app.get("/api/config/schema")
-async def get_schema():
-    return {"fields": CONFIG_SCHEMA, "category_order": _CATEGORY_ORDER}
 
 
 _EMPTY_MODEL_INFO: dict = {
@@ -2242,81 +1116,6 @@ _EMPTY_MODEL_INFO: dict = {
 }
 
 
-@app.get("/api/model/info")
-def get_model_info():
-    """Return resolved model metadata for the currently configured model.
-
-    Calls the same context-length resolution chain the agent uses, so the
-    frontend can display "Auto-detected: 200K" alongside the override field.
-    Also returns model capabilities (vision, reasoning, tools) when available.
-    """
-    try:
-        cfg = load_config()
-        model_cfg = cfg.get("model", "")
-
-        # Extract model name and provider from the config
-        if isinstance(model_cfg, dict):
-            model_name = model_cfg.get("default", model_cfg.get("name", ""))
-            provider = model_cfg.get("provider", "")
-            base_url = model_cfg.get("base_url", "")
-            config_ctx = model_cfg.get("context_length")
-        else:
-            model_name = str(model_cfg) if model_cfg else ""
-            provider = ""
-            base_url = ""
-            config_ctx = None
-
-        if not model_name:
-            return dict(_EMPTY_MODEL_INFO, provider=provider)
-
-        # Resolve auto-detected context length (pass config_ctx=None to get
-        # purely auto-detected value, then separately report the override)
-        try:
-            from agent.model_metadata import get_model_context_length
-            auto_ctx = get_model_context_length(
-                model=model_name,
-                base_url=base_url,
-                provider=provider,
-                config_context_length=None,  # ignore override — we want auto value
-            )
-        except Exception:
-            auto_ctx = 0
-
-        config_ctx_int = 0
-        if isinstance(config_ctx, int) and config_ctx > 0:
-            config_ctx_int = config_ctx
-
-        # Effective is what the agent actually uses
-        effective_ctx = config_ctx_int if config_ctx_int > 0 else auto_ctx
-
-        # Try to get model capabilities from models.dev
-        caps = {}
-        try:
-            from agent.models_dev import get_model_capabilities
-            mc = get_model_capabilities(provider=provider, model=model_name)
-            if mc is not None:
-                caps = {
-                    "supports_tools": mc.supports_tools,
-                    "supports_vision": mc.supports_vision,
-                    "supports_reasoning": mc.supports_reasoning,
-                    "context_window": mc.context_window,
-                    "max_output_tokens": mc.max_output_tokens,
-                    "model_family": mc.model_family,
-                }
-        except Exception:
-            pass
-
-        return {
-            "model": model_name,
-            "provider": provider,
-            "auto_context_length": auto_ctx,
-            "config_context_length": config_ctx_int,
-            "effective_context_length": effective_ctx,
-            "capabilities": caps,
-        }
-    except Exception:
-        _log.exception("GET /api/model/info failed")
-        return dict(_EMPTY_MODEL_INFO)
 
 
 # ---------------------------------------------------------------------------
@@ -2342,300 +1141,12 @@ _AUX_TASK_SLOTS: Tuple[str, ...] = (
 )
 
 
-@app.get("/api/model/options")
-def get_model_options():
-    """Return authenticated providers + their curated model lists.
-
-    REST equivalent of the ``model.options`` JSON-RPC on tui_gateway, so the
-    dashboard Models page can render the picker without a live chat session.
-    The response shape matches ``model.options`` 1:1 so ``ModelPickerDialog``
-    can share the same types.
-    """
-    try:
-        from janus_cli.inventory import build_models_payload, load_picker_context
-
-        # include_unconfigured + picker_hints + canonical_order mirror the
-        # tui_gateway `model.options` JSON-RPC handler exactly, so every GUI
-        # surface fed by this endpoint (Settings → Model, the first-run
-        # onboarding picker) sees the SAME full provider universe `janus model`
-        # exposes — not just the authenticated subset. Unconfigured providers
-        # come back as skeleton rows carrying `authenticated=False` +
-        # `auth_type`/`key_env`/`warning` so the GUI can render a setup
-        # affordance instead of hiding the provider entirely.
-        return build_models_payload(
-            load_picker_context(),
-            max_models=50,
-            include_unconfigured=True,
-            picker_hints=True,
-            canonical_order=True,
-            pricing=True,
-            capabilities=True,
-        )
-    except Exception:
-        _log.exception("GET /api/model/options failed")
-        raise HTTPException(status_code=500, detail="Failed to list model options")
 
 
-@app.get("/api/model/recommended-default")
-def get_recommended_default_model(provider: str = ""):
-    """Return the recommended default model for a freshly-authenticated provider.
-
-    Mirrors the model-curation `janus model` does so GUI onboarding lands on a
-    sensible default instead of blindly taking the first curated entry. For
-    Nous this honors the user's free/paid tier: free users get a free model,
-    paid users get the full curated default. For any other provider it falls
-    back to the first curated model (same as before).
-
-    Response: {"provider": str, "model": str, "free_tier": bool | None}
-    where free_tier is True/False for Nous and None otherwise. `model` may be
-    empty if nothing could be resolved (caller degrades gracefully).
-    """
-    slug = (provider or "").strip().lower()
-
-    if slug == "nous":
-        try:
-            from janus_cli.models import (
-                get_curated_nous_model_ids,
-                get_pricing_for_provider,
-                check_nous_free_tier,
-                partition_nous_models_by_tier,
-                union_with_portal_free_recommendations,
-                union_with_portal_paid_recommendations,
-            )
-            from janus_cli.auth import get_provider_auth_state
-
-            model_ids = get_curated_nous_model_ids()
-            pricing = get_pricing_for_provider("nous") or {}
-            free_tier = check_nous_free_tier(force_fresh=True)
-
-            portal_url = ""
-            try:
-                state = get_provider_auth_state("nous") or {}
-                portal_url = state.get("portal_base_url", "") or ""
-            except Exception:
-                portal_url = ""
-
-            if free_tier:
-                model_ids, pricing = union_with_portal_free_recommendations(
-                    model_ids, pricing, portal_url
-                )
-                model_ids, _unavailable = partition_nous_models_by_tier(
-                    model_ids, pricing, free_tier=True
-                )
-            else:
-                model_ids, pricing = union_with_portal_paid_recommendations(
-                    model_ids, pricing, portal_url
-                )
-
-            model = model_ids[0] if model_ids else ""
-            return {"provider": "nous", "model": model, "free_tier": bool(free_tier)}
-        except Exception:
-            _log.exception("GET /api/model/recommended-default (nous) failed")
-            return {"provider": "nous", "model": "", "free_tier": None}
-
-    # Non-Nous: first curated model for the provider, matching prior behaviour.
-    try:
-        from janus_cli.inventory import build_models_payload, load_picker_context
-
-        payload = build_models_payload(load_picker_context(), max_models=50)
-        for row in payload.get("providers", []):
-            if str(row.get("slug", "")).lower() == slug:
-                models = row.get("models") or []
-                return {"provider": slug, "model": models[0] if models else "", "free_tier": None}
-        return {"provider": slug, "model": "", "free_tier": None}
-    except Exception:
-        _log.exception("GET /api/model/recommended-default failed")
-        return {"provider": slug, "model": "", "free_tier": None}
 
 
-@app.get("/api/model/auxiliary")
-def get_auxiliary_models():
-    """Return current auxiliary task assignments.
-
-    Shape:
-      {
-        "tasks": [
-          {"task": "vision", "provider": "auto", "model": "", "base_url": ""},
-          ...
-        ],
-        "main": {"provider": "openrouter", "model": "anthropic/claude-opus-4.7"},
-      }
-    """
-    try:
-        cfg = load_config()
-        aux_cfg = cfg.get("auxiliary", {})
-        if not isinstance(aux_cfg, dict):
-            aux_cfg = {}
-
-        tasks = []
-        for slot in _AUX_TASK_SLOTS:
-            slot_cfg = aux_cfg.get(slot, {}) if isinstance(aux_cfg.get(slot), dict) else {}
-            tasks.append({
-                "task": slot,
-                "provider": str(slot_cfg.get("provider", "auto") or "auto"),
-                "model": str(slot_cfg.get("model", "") or ""),
-                "base_url": str(slot_cfg.get("base_url", "") or ""),
-            })
-
-        model_cfg = cfg.get("model", {})
-        if isinstance(model_cfg, dict):
-            main = {
-                "provider": str(model_cfg.get("provider", "") or ""),
-                "model": str(model_cfg.get("default", model_cfg.get("name", "")) or ""),
-            }
-        else:
-            main = {"provider": "", "model": str(model_cfg) if model_cfg else ""}
-
-        return {"tasks": tasks, "main": main}
-    except Exception:
-        _log.exception("GET /api/model/auxiliary failed")
-        raise HTTPException(status_code=500, detail="Failed to read auxiliary config")
 
 
-@app.post("/api/model/set")
-async def set_model_assignment(body: ModelAssignment):
-    """Assign a model to the main slot or an auxiliary task slot.
-
-    Writes to ``~/.janus/config.yaml`` — applies to **new** sessions only.
-    The currently running chat PTY (if any) is not affected; use the
-    ``/model`` slash command inside a chat to hot-swap that specific session.
-    """
-    scope = (body.scope or "").strip().lower()
-    provider = (body.provider or "").strip()
-    model = (body.model or "").strip()
-    task = (body.task or "").strip().lower()
-    base_url = (body.base_url or "").strip()
-
-    if scope not in {"main", "auxiliary"}:
-        raise HTTPException(status_code=400, detail="scope must be 'main' or 'auxiliary'")
-
-    try:
-        cfg = load_config()
-
-        if scope == "main":
-            if not provider or not model:
-                raise HTTPException(status_code=400, detail="provider and model required for main")
-            model_cfg = _apply_main_model_assignment(
-                cfg.get("model", {}), provider, model, base_url
-            )
-            cfg["model"] = model_cfg
-
-            # When switching the main provider to Nous, mirror the CLI's
-            # post-model-selection behaviour (janus_cli/main.py
-            # prompt_enable_tool_gateway / tools_config apply_nous_managed_defaults):
-            # auto-route any *unconfigured* tools through the Nous Tool Gateway.
-            # This is purely additive — apply_nous_managed_defaults skips every
-            # tool where the user already has a direct key (FIRECRAWL_API_KEY,
-            # FAL_KEY, etc.) or an explicit backend/provider in config, so it
-            # never overwrites a user's own setup. GUI users thus land on the
-            # gateway the same way CLI users do, without a separate prompt.
-            gateway_tools: list[str] = []
-            if provider.strip().lower() == "nous":
-                try:
-                    from janus_cli.nous_subscription import apply_nous_managed_defaults
-                    from janus_cli.tools_config import _get_platform_tools
-
-                    enabled = _get_platform_tools(
-                        cfg, "cli", include_default_mcp_servers=False
-                    )
-                    changed = apply_nous_managed_defaults(
-                        cfg,
-                        enabled_toolsets=enabled,
-                        force_fresh=True,
-                    )
-                    gateway_tools = sorted(changed)
-                except Exception:
-                    # Portal lookup hiccups / non-subscriber / non-nous gating
-                    # must never block saving the model assignment.
-                    _log.debug("apply_nous_managed_defaults skipped", exc_info=True)
-
-            save_config(cfg)
-
-            # Surface auxiliary slots still pinned to a *different* provider than
-            # the new main one. Switching the main model does NOT touch aux pins
-            # (they're independent, sticky per-task overrides — see
-            # auxiliary_client._resolve_auto). A user who switches main away from
-            # a now-unpaid provider (e.g. nous with $0 balance) keeps paying 402s
-            # on every background aux call until they reset those pins. We never
-            # auto-clear them — pinning aux to a cheaper/different model is a
-            # legitimate config — but we tell the caller so the UI can offer a
-            # "reset to main" nudge instead of silently burning credits.
-            new_provider = provider.strip().lower()
-            stale_aux: list[dict] = []
-            aux_cfg = cfg.get("auxiliary", {})
-            if isinstance(aux_cfg, dict):
-                for slot in _AUX_TASK_SLOTS:
-                    slot_cfg = aux_cfg.get(slot)
-                    if not isinstance(slot_cfg, dict):
-                        continue
-                    slot_provider = str(slot_cfg.get("provider", "") or "").strip()
-                    if (
-                        slot_provider
-                        and slot_provider.lower() not in {"auto", ""}
-                        and slot_provider.lower() != new_provider
-                    ):
-                        stale_aux.append({
-                            "task": slot,
-                            "provider": slot_provider,
-                            "model": str(slot_cfg.get("model", "") or ""),
-                        })
-
-            return {
-                "ok": True,
-                "scope": "main",
-                "provider": provider,
-                "model": model,
-                "base_url": model_cfg.get("base_url", ""),
-                "gateway_tools": gateway_tools,
-                "stale_aux": stale_aux,
-            }
-
-        # scope == "auxiliary"
-        aux = cfg.get("auxiliary")
-        if not isinstance(aux, dict):
-            aux = {}
-
-        if task == "__reset__":
-            # Reset every slot to provider="auto", model="" — keeps other fields intact.
-            for slot in _AUX_TASK_SLOTS:
-                slot_cfg = aux.get(slot)
-                if not isinstance(slot_cfg, dict):
-                    slot_cfg = {}
-                slot_cfg["provider"] = "auto"
-                slot_cfg["model"] = ""
-                aux[slot] = slot_cfg
-            cfg["auxiliary"] = aux
-            save_config(cfg)
-            return {"ok": True, "scope": "auxiliary", "reset": True}
-
-        if not provider:
-            raise HTTPException(status_code=400, detail="provider required for auxiliary")
-
-        targets = [task] if task else list(_AUX_TASK_SLOTS)
-        for slot in targets:
-            if slot not in _AUX_TASK_SLOTS:
-                raise HTTPException(status_code=400, detail=f"unknown auxiliary task: {slot}")
-            slot_cfg = aux.get(slot)
-            if not isinstance(slot_cfg, dict):
-                slot_cfg = {}
-            slot_cfg["provider"] = provider
-            slot_cfg["model"] = model
-            aux[slot] = slot_cfg
-
-        cfg["auxiliary"] = aux
-        save_config(cfg)
-        return {
-            "ok": True,
-            "scope": "auxiliary",
-            "tasks": targets,
-            "provider": provider,
-            "model": model,
-        }
-    except HTTPException:
-        raise
-    except Exception:
-        _log.exception("POST /api/model/set failed")
-        raise HTTPException(status_code=500, detail="Failed to save model assignment")
 
 
 
@@ -2692,54 +1203,10 @@ def _denormalize_config_from_web(config: Dict[str, Any]) -> Dict[str, Any]:
     return config
 
 
-@app.put("/api/config")
-async def update_config(body: ConfigUpdate):
-    try:
-        save_config(_denormalize_config_from_web(body.config))
-        return {"ok": True}
-    except Exception:
-        _log.exception("PUT /api/config failed")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/api/env")
-async def get_env_vars():
-    env_on_disk = load_env()
-    channel_keys = _channel_managed_env_keys()
-    result = {}
-    for var_name, info in OPTIONAL_ENV_VARS.items():
-        value = env_on_disk.get(var_name)
-        result[var_name] = {
-            "is_set": bool(value),
-            "redacted_value": redact_key(value) if value else None,
-            "description": info.get("description", ""),
-            "url": info.get("url"),
-            "category": info.get("category", ""),
-            "is_password": info.get("password", False),
-            "tools": info.get("tools", []),
-            "advanced": info.get("advanced", False),
-            # True when this var is a messaging-platform credential owned by a
-            # Channels page card. The Keys/Env page uses this to hide it and
-            # avoid duplicating the (richer) Channels configuration UI.
-            "channel_managed": var_name in channel_keys,
-        }
-    return result
 
 
-@app.put("/api/env")
-async def set_env_var(body: EnvVarUpdate):
-    try:
-        save_env_value(body.key, body.value)
-        return {"ok": True, "key": body.key}
-    except ValueError as exc:
-        # save_env_value raises ValueError for invalid names and for keys
-        # on the denylist (LD_PRELOAD, PATH, PYTHONPATH, …). Surface the
-        # message to the SPA so the user understands why the write was
-        # refused instead of seeing an opaque 500.
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception:
-        _log.exception("PUT /api/env failed")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # Live credential probes keyed by env var. Each entry is (method, url, auth)
@@ -2782,110 +1249,10 @@ def _parse_model_ids(resp: "Any") -> List[str]:
     return ids
 
 
-@app.post("/api/providers/validate")
-async def validate_provider_credential(body: EnvVarUpdate, request: Request):
-    """Live-probe a provider credential before it's saved.
-
-    Returns {ok, reachable, message}. ok=True means the provider accepted the
-    key; ok=False + reachable=True means the key is bad (caller should block);
-    reachable=False means the network probe couldn't run (caller may save with
-    a warning rather than hard-blocking offline users).
-    """
-    _require_token(request)
-    import httpx
-
-    key = (body.key or "").strip()
-    value = (body.value or "").strip()
-    if not value:
-        return {"ok": False, "reachable": True, "message": "Enter a value first."}
-
-    # Local / custom endpoint: validate connectivity, not auth — any HTTP
-    # response (even 401) proves the endpoint is up. Also surface the model
-    # ids the endpoint advertises (OpenAI ``/v1/models`` shape) so the GUI can
-    # auto-pick a default without asking the user to type a model name.
-    if key == "OPENAI_BASE_URL":
-        url = value.rstrip("/") + "/models"
-        try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(8.0)) as client:
-                resp = await client.get(url)
-            return {"ok": True, "reachable": True, "message": "", "models": _parse_model_ids(resp)}
-        except Exception:
-            return {"ok": False, "reachable": False, "message": f"Could not reach {url}."}
-
-    probe = _CREDENTIAL_PROBES.get(key)
-    if not probe:
-        # No probe for this provider — can't validate, don't block.
-        return {"ok": True, "reachable": False, "message": ""}
-
-    url, auth = probe
-    headers = {"Accept": "application/json"}
-    params = {}
-    if auth == "bearer":
-        headers["Authorization"] = f"Bearer {value}"
-    else:
-        params["key"] = value
-
-    try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
-            resp = await client.get(url, headers=headers, params=params)
-    except Exception:
-        return {"ok": False, "reachable": False, "message": "Could not reach the provider to verify the key."}
-
-    if resp.status_code in (401, 403):
-        return {"ok": False, "reachable": True, "message": "That API key was rejected. Double-check it and try again."}
-    if resp.status_code == 429 or resp.is_success:
-        # 429 = key is valid but rate-limited; success = valid.
-        return {"ok": True, "reachable": True, "message": ""}
-    return {"ok": False, "reachable": True, "message": f"Provider returned HTTP {resp.status_code} for this key."}
 
 
-@app.delete("/api/env")
-async def remove_env_var(body: EnvVarDelete):
-    try:
-        removed = remove_env_value(body.key)
-        if not removed:
-            raise HTTPException(status_code=404, detail=f"{body.key} not found in .env")
-        return {"ok": True, "key": body.key}
-    except HTTPException:
-        raise
-    except ValueError as exc:
-        # remove_env_value raises ValueError for invalid key names. Surface
-        # the message to the SPA so the user understands why the delete was
-        # refused instead of seeing an opaque 500. Mirrors PUT /api/env.
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception:
-        _log.exception("DELETE /api/env failed")
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/api/env/reveal")
-async def reveal_env_var(body: EnvVarReveal, request: Request):
-    """Return the real (unredacted) value of a single env var.
-
-    Protected by:
-    - Ephemeral session token (generated per server start, injected into SPA)
-    - Rate limiting (max 5 reveals per 30s window)
-    - Audit logging
-    """
-    # --- Token check ---
-    _require_token(request)
-
-    # --- Rate limit ---
-    now = time.time()
-    cutoff = now - _REVEAL_WINDOW_SECONDS
-    _reveal_timestamps[:] = [t for t in _reveal_timestamps if t > cutoff]
-    if len(_reveal_timestamps) >= _REVEAL_MAX_PER_WINDOW:
-        raise HTTPException(status_code=429, detail="Too many reveal requests. Try again shortly.")
-    _reveal_timestamps.append(now)
-
-    # --- Reveal ---
-    env_on_disk = load_env()
-    value = env_on_disk.get(body.key)
-    if value is None:
-        raise HTTPException(status_code=404, detail=f"{body.key} not found in .env")
-
-    _log.info("env/reveal: %s", body.key)
-    return {"key": body.key, "value": value}
 
 
 # Entries omit fields they don't need to override; the catalog builder fills
@@ -3657,286 +2024,18 @@ async def _telegram_onboarding_request(
     )
 
 
-@app.post("/api/messaging/telegram/onboarding/start")
-async def start_telegram_onboarding(body: TelegramOnboardingStart):
-    bot_name = (body.bot_name or "Janus").strip() or "Janus"
-    payload = await _telegram_onboarding_request(
-        "POST",
-        "/v1/telegram/pairings",
-        body={"bot_name": bot_name},
-    )
-
-    pairing_id = str(payload.get("pairing_id") or "").strip()
-    poll_token = str(payload.get("poll_token") or "").strip()
-    expires_at = str(payload.get("expires_at") or "").strip()
-    deep_link = str(payload.get("deep_link") or "").strip()
-    qr_payload = str(payload.get("qr_payload") or deep_link).strip()
-    suggested_username = str(payload.get("suggested_username") or "").strip()
-    if not pairing_id or not poll_token or not expires_at or not deep_link:
-        raise HTTPException(
-            status_code=502,
-            detail="Telegram setup service returned an incomplete response.",
-        )
-
-    with _telegram_onboarding_lock:
-        _prune_telegram_onboarding_pairings()
-        _telegram_onboarding_pairings[pairing_id] = _TelegramOnboardingPairing(
-            poll_token=poll_token,
-            expires_at=expires_at,
-            expires_at_ts=_parse_expiry_ts(expires_at),
-        )
-
-    return {
-        "pairing_id": pairing_id,
-        "suggested_username": suggested_username,
-        "deep_link": deep_link,
-        "qr_payload": qr_payload,
-        "expires_at": expires_at,
-    }
 
 
-@app.get("/api/messaging/telegram/onboarding/{pairing_id}")
-async def get_telegram_onboarding_status(pairing_id: str):
-    with _telegram_onboarding_lock:
-        _prune_telegram_onboarding_pairings()
-        record = _telegram_onboarding_pairings.get(pairing_id)
-        if not record:
-            raise HTTPException(
-                status_code=404,
-                detail="Telegram setup session was not found. Start a new setup.",
-            )
-        if record.bot_token:
-            return {
-                "status": "ready",
-                "bot_username": record.bot_username,
-                "owner_user_id": record.owner_user_id,
-                "expires_at": record.expires_at,
-            }
-        poll_token = record.poll_token
-
-    payload = await _telegram_onboarding_request(
-        "GET",
-        f"/v1/telegram/pairings/{urllib.parse.quote(pairing_id, safe='')}",
-        bearer_token=poll_token,
-    )
-    status = str(payload.get("status") or "").strip()
-    if status == "waiting":
-        with _telegram_onboarding_lock:
-            current = _telegram_onboarding_pairings.get(pairing_id)
-            expires_at = current.expires_at if current else ""
-        return {"status": "waiting", "expires_at": expires_at}
-
-    if status == "ready":
-        bot_token = str(payload.get("token") or "").strip()
-        bot_username = str(payload.get("bot_username") or "").strip()
-        if not bot_token:
-            raise HTTPException(
-                status_code=502,
-                detail="Telegram setup service returned an incomplete response.",
-            )
-        owner_user_id = _normalize_telegram_user_id(payload.get("owner_user_id"))
-        with _telegram_onboarding_lock:
-            record = _telegram_onboarding_pairings.get(pairing_id)
-            if not record:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Telegram setup session was not found. Start a new setup.",
-                )
-            record.bot_token = bot_token
-            record.bot_username = bot_username or None
-            record.owner_user_id = owner_user_id
-            return {
-                "status": "ready",
-                "bot_username": record.bot_username,
-                "owner_user_id": record.owner_user_id,
-                "expires_at": record.expires_at,
-            }
-
-    if status in {"expired", "claimed"}:
-        with _telegram_onboarding_lock:
-            _telegram_onboarding_pairings.pop(pairing_id, None)
-        raise HTTPException(
-            status_code=410,
-            detail=_telegram_onboarding_error_message(
-                status,
-                "Telegram setup is no longer available. Start a new setup.",
-            ),
-        )
-
-    raise HTTPException(
-        status_code=502,
-        detail="Telegram setup service returned an unknown status.",
-    )
 
 
-@app.post("/api/messaging/telegram/onboarding/{pairing_id}/apply")
-async def apply_telegram_onboarding(
-    pairing_id: str, body: TelegramOnboardingApply
-):
-    allowed_user_ids = []
-    seen = set()
-    for raw_id in body.allowed_user_ids:
-        normalized = _normalize_telegram_user_id(raw_id)
-        if not normalized:
-            raise HTTPException(
-                status_code=400,
-                detail="Allowed Telegram user IDs must be numeric.",
-            )
-        if normalized not in seen:
-            seen.add(normalized)
-            allowed_user_ids.append(normalized)
-    if not allowed_user_ids:
-        raise HTTPException(
-            status_code=400,
-            detail="Add at least one allowed Telegram user ID.",
-        )
-
-    with _telegram_onboarding_lock:
-        _prune_telegram_onboarding_pairings()
-        record = _telegram_onboarding_pairings.get(pairing_id)
-        if not record:
-            raise HTTPException(
-                status_code=404,
-                detail="Telegram setup session was not found. Start a new setup.",
-            )
-        bot_token = record.bot_token
-        bot_username = record.bot_username
-        if not bot_token:
-            raise HTTPException(
-                status_code=409,
-                detail="Telegram setup is not ready yet.",
-            )
-
-    try:
-        save_env_value("TELEGRAM_BOT_TOKEN", bot_token)
-        save_env_value("TELEGRAM_ALLOWED_USERS", ",".join(allowed_user_ids))
-        _write_platform_enabled("telegram", True)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        _log.exception("Telegram onboarding apply failed")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to save Telegram setup.",
-        ) from exc
-
-    with _telegram_onboarding_lock:
-        _telegram_onboarding_pairings.pop(pairing_id, None)
-
-    return {
-        "ok": True,
-        "platform": "telegram",
-        "bot_username": bot_username,
-        "needs_restart": True,
-    }
 
 
-@app.delete("/api/messaging/telegram/onboarding/{pairing_id}")
-async def cancel_telegram_onboarding(pairing_id: str):
-    with _telegram_onboarding_lock:
-        _telegram_onboarding_pairings.pop(pairing_id, None)
-    return {"ok": True}
 
 
-@app.get("/api/messaging/platforms")
-async def get_messaging_platforms():
-    env_on_disk = load_env()
-    runtime = read_runtime_status()
-    return {
-        "platforms": [
-            _messaging_platform_payload(entry, env_on_disk, runtime)
-            for entry in _messaging_platform_catalog()
-        ]
-    }
 
 
-@app.put("/api/messaging/platforms/{platform_id}")
-async def update_messaging_platform(platform_id: str, body: MessagingPlatformUpdate):
-    entry = _catalog_lookup(platform_id)
-    if not entry:
-        raise HTTPException(
-            status_code=404, detail=f"Unknown messaging platform: {platform_id}"
-        )
-
-    allowed_env = set(entry["env_vars"])
-    try:
-        for key in body.clear_env:
-            if key not in allowed_env:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"{key} is not configurable for {entry['name']}",
-                )
-            remove_env_value(key)
-
-        for key, value in body.env.items():
-            if key not in allowed_env:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"{key} is not configurable for {entry['name']}",
-                )
-            trimmed = value.strip()
-            if trimmed:
-                save_env_value(key, trimmed)
-
-        if body.enabled is not None:
-            _write_platform_enabled(platform_id, body.enabled)
-
-        return {"ok": True, "platform": platform_id}
-    except HTTPException:
-        raise
-    except Exception:
-        _log.exception("PUT /api/messaging/platforms/%s failed", platform_id)
-        raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/api/messaging/platforms/{platform_id}/test")
-async def test_messaging_platform(platform_id: str):
-    entry = _catalog_lookup(platform_id)
-    if not entry:
-        raise HTTPException(
-            status_code=404, detail=f"Unknown messaging platform: {platform_id}"
-        )
-
-    env_on_disk = load_env()
-    payload = _messaging_platform_payload(entry, env_on_disk, read_runtime_status())
-    if not payload["enabled"]:
-        message = f"{entry['name']} is disabled. Enable it, then restart the gateway."
-        return {"ok": False, "state": payload["state"], "message": message}
-    if not payload["configured"]:
-        missing = [
-            field["key"]
-            for field in payload["env_vars"]
-            if field["required"] and not field["is_set"]
-        ]
-        message = (
-            f"Missing required setup: {', '.join(missing)}"
-            if missing
-            else "Platform setup is incomplete."
-        )
-        return {"ok": False, "state": payload["state"], "message": message}
-    if not payload["gateway_running"]:
-        return {
-            "ok": False,
-            "state": payload["state"],
-            "message": "Gateway is not running. Restart the gateway to connect this platform.",
-        }
-    if payload["state"] == "connected":
-        return {
-            "ok": True,
-            "state": payload["state"],
-            "message": f"{entry['name']} is connected.",
-        }
-    if payload.get("error_message"):
-        return {
-            "ok": False,
-            "state": payload["state"],
-            "message": payload["error_message"],
-        }
-    return {
-        "ok": False,
-        "state": payload["state"],
-        "message": "Setup looks complete, but the gateway has not reported a connection yet. Restart the gateway.",
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -4212,79 +2311,8 @@ def _resolve_provider_status(provider_id: str, status_fn) -> Dict[str, Any]:
     return {"logged_in": False}
 
 
-@app.get("/api/providers/oauth")
-async def list_oauth_providers():
-    """Enumerate every OAuth-capable LLM provider with current status.
-
-    Response shape (per provider):
-        id              stable identifier (used in DELETE path)
-        name            human label
-        flow            "pkce" | "device_code" | "external" | "loopback"
-        cli_command     fallback CLI command for users to run manually
-        docs_url        external docs/portal link for the "Learn more" link
-        status:
-          logged_in        bool — currently has usable creds
-          source           short slug ("janus_pkce", "claude_code", ...)
-          source_label     human-readable origin (file path, env var name)
-          token_preview    last N chars of the token, never the full token
-          expires_at       ISO timestamp string or null
-          has_refresh_token bool
-    """
-    providers = []
-    for p in _OAUTH_PROVIDER_CATALOG:
-        status = _resolve_provider_status(p["id"], p.get("status_fn"))
-        providers.append({
-            "id": p["id"],
-            "name": p["name"],
-            "flow": p["flow"],
-            "cli_command": p["cli_command"],
-            "docs_url": p["docs_url"],
-            "status": status,
-        })
-    return {"providers": providers}
 
 
-@app.delete("/api/providers/oauth/{provider_id}")
-async def disconnect_oauth_provider(provider_id: str, request: Request):
-    """Disconnect an OAuth provider. Token-protected (matches /env/reveal)."""
-    _require_token(request)
-
-    valid_ids = {p["id"] for p in _OAUTH_PROVIDER_CATALOG}
-    if provider_id not in valid_ids:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown provider: {provider_id}. "
-                   f"Available: {', '.join(sorted(valid_ids))}",
-        )
-
-    # Anthropic and claude-code clear the same Janus-managed PKCE file
-    # AND forget the Claude Code import. We don't touch ~/.claude/* directly
-    # — that's owned by the Claude Code CLI; users can re-auth there if they
-    # want to undo a disconnect.
-    if provider_id in {"anthropic", "claude-code"}:
-        try:
-            from agent.anthropic_adapter import _JANUS_OAUTH_FILE
-            if _JANUS_OAUTH_FILE.exists():
-                _JANUS_OAUTH_FILE.unlink()
-        except Exception:
-            pass
-        # Also clear the credential pool entry if present.
-        try:
-            from janus_cli.auth import clear_provider_auth
-            clear_provider_auth("anthropic")
-        except Exception:
-            pass
-        _log.info("oauth/disconnect: %s", provider_id)
-        return {"ok": True, "provider": provider_id}
-
-    try:
-        from janus_cli.auth import clear_provider_auth
-        cleared = clear_provider_auth(provider_id)
-        _log.info("oauth/disconnect: %s (cleared=%s)", provider_id, cleared)
-        return {"ok": bool(cleared), "provider": provider_id}
-    except Exception as e:
-        _log.exception("disconnect %s failed", provider_id)
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -5193,41 +3221,6 @@ def _codex_full_login_worker(session_id: str) -> None:
                 s["error_message"] = str(e)
 
 
-@app.post("/api/providers/oauth/{provider_id}/start")
-async def start_oauth_login(provider_id: str, request: Request):
-    """Initiate an OAuth login flow. Token-protected."""
-    _require_token(request)
-    _gc_oauth_sessions()
-    valid = {p["id"] for p in _OAUTH_PROVIDER_CATALOG}
-    if provider_id not in valid:
-        raise HTTPException(status_code=400, detail=f"Unknown provider {provider_id}")
-    catalog_entry = next(p for p in _OAUTH_PROVIDER_CATALOG if p["id"] == provider_id)
-    if catalog_entry["flow"] == "external":
-        raise HTTPException(
-            status_code=400,
-            detail=f"{provider_id} uses an external CLI; run `{catalog_entry['cli_command']}` manually",
-        )
-    try:
-        # The pkce branch is gated on provider_id == "anthropic" because
-        # `_start_anthropic_pkce()` is hardcoded to the Anthropic flow.
-        # Routing any other future pkce-flagged provider through it would
-        # silently launch the Anthropic OAuth flow (the bug fixed in this
-        # change for MiniMax). New PKCE providers must add their own
-        # start function and an explicit branch here.
-        if catalog_entry["flow"] == "pkce" and provider_id == "anthropic":
-            return _start_anthropic_pkce()
-        if catalog_entry["flow"] == "device_code":
-            return await _start_device_code_flow(provider_id)
-        if catalog_entry["flow"] == "loopback" and provider_id == "xai-oauth":
-            return await asyncio.get_running_loop().run_in_executor(
-                None, _start_xai_loopback_flow
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        _log.exception("oauth/start %s failed", provider_id)
-        raise HTTPException(status_code=500, detail=str(e))
-    raise HTTPException(status_code=400, detail="Unsupported flow")
 
 
 class OAuthSubmitBody(BaseModel):
@@ -5235,76 +3228,10 @@ class OAuthSubmitBody(BaseModel):
     code: str
 
 
-@app.post("/api/providers/oauth/{provider_id}/submit")
-async def submit_oauth_code(provider_id: str, body: OAuthSubmitBody, request: Request):
-    """Submit the auth code for PKCE flows. Token-protected."""
-    _require_token(request)
-    if provider_id == "anthropic":
-        return await asyncio.get_running_loop().run_in_executor(
-            None, _submit_anthropic_pkce, body.session_id, body.code,
-        )
-    raise HTTPException(status_code=400, detail=f"submit not supported for {provider_id}")
 
 
-@app.get("/api/providers/oauth/{provider_id}/poll/{session_id}")
-async def poll_oauth_session(provider_id: str, session_id: str):
-    """Poll a session's status (no auth — read-only state).
-
-    Shared by the device-code flows (Nous, OpenAI Codex, MiniMax) and the
-    loopback flow (xAI Grok). Both surface progress through the same
-    background-worker-updated ``status`` field, so a single poll endpoint
-    serves them all.
-    """
-    with _oauth_sessions_lock:
-        sess = _oauth_sessions.get(session_id)
-    if not sess:
-        raise HTTPException(status_code=404, detail="Session not found or expired")
-    if sess["provider"] != provider_id:
-        raise HTTPException(status_code=400, detail="Provider mismatch for session")
-    return {
-        "session_id": session_id,
-        "status": sess["status"],
-        "error_message": sess.get("error_message"),
-        "expires_at": sess.get("expires_at"),
-    }
 
 
-@app.delete("/api/providers/oauth/sessions/{session_id}")
-async def cancel_oauth_session(session_id: str, request: Request):
-    """Cancel a pending OAuth session. Token-protected."""
-    _require_token(request)
-    with _oauth_sessions_lock:
-        sess = _oauth_sessions.pop(session_id, None)
-    if sess is None:
-        return {"ok": False, "message": "session not found"}
-    # Loopback sessions own a bound 127.0.0.1 callback server. Without an
-    # explicit shutdown the worker would keep that port held until
-    # _xai_wait_for_callback times out (up to 5 min). Free it immediately so
-    # an orphaned listener can't block a subsequent sign-in attempt.
-    if sess.get("flow") == "loopback":
-        # The worker is blocked in _xai_wait_for_callback, which polls
-        # callback_result rather than the server state. Flag the result as
-        # cancelled so that loop returns on its next tick instead of spinning
-        # until the timeout — otherwise repeated cancel/retry piles up daemon
-        # threads. (_cancelled() in the worker then short-circuits before any
-        # persist.)
-        result = sess.get("callback_result")
-        if isinstance(result, dict):
-            result["error"] = result.get("error") or "cancelled"
-        server = sess.get("server")
-        thread = sess.get("thread")
-        try:
-            if server is not None:
-                server.shutdown()
-                server.server_close()
-        except Exception:
-            pass
-        try:
-            if thread is not None:
-                thread.join(timeout=1.0)
-        except Exception:
-            pass
-    return {"ok": True, "session_id": session_id}
 
 
 # ---------------------------------------------------------------------------
@@ -5404,133 +3331,12 @@ class BulkDeleteSessions(BaseModel):
     ids: List[str]
 
 
-@app.post("/api/sessions/bulk-delete")
-async def bulk_delete_sessions_endpoint(body: BulkDeleteSessions):
-    """Delete every session in ``body.ids`` in a single DB transaction.
-
-    Backs the dashboard's bulk-select-and-delete flow on the sessions
-    page. POST (not DELETE) because most HTTP clients refuse to send a
-    request body on DELETE and a body is the natural shape for a list
-    of IDs — Starlette accepts both, but POSTing a list keeps proxies,
-    curl, and the browser ``fetch`` API consistent.
-
-    Per-row contract matches :meth:`SessionDB.delete_sessions`:
-
-    * Unknown IDs are silently skipped (the response ``deleted`` count
-      reflects what really happened, not the input length). This is
-      deliberate — UI selection state can race against another tab's
-      delete, and we'd rather succeed-on-the-rest than fail-the-whole-
-      batch.
-    * Children of every deleted parent are orphaned, not cascade-
-      deleted.
-    * Active and archived sessions ARE deleted when explicitly
-      selected — unlike ``DELETE /api/sessions/empty``, the user
-      hand-picked the rows so we trust the selection.
-    * Like the other session-delete endpoints, this does NOT pass a
-      ``sessions_dir`` through; on-disk transcript / request-dump
-      cleanup runs at the CLI/agent layer on the next prune pass.
-
-    The response carries the actual deleted count, so the dashboard
-    can surface it in a toast. The IDs that were removed are not
-    echoed back because the client already knows what it asked to
-    delete (unknown IDs are silently skipped — see contract above)
-    and can prune its in-memory list directly from the request.
-    """
-    # Enforce a hard cap so a runaway/typo'd selection can't lock the
-    # DB writer for an extended window. The dashboard pages 20 rows
-    # at a time; 500 covers a "select all on every page in a
-    # reasonable scrollback" worst case without opening the door to
-    # multi-thousand-row transactions.
-    if len(body.ids) > 500:
-        raise HTTPException(
-            status_code=400,
-            detail="ids must contain at most 500 entries",
-        )
-    from janus_state import SessionDB
-    db = SessionDB()
-    try:
-        deleted = db.delete_sessions(body.ids)
-        return {"ok": True, "deleted": deleted}
-    finally:
-        db.close()
 
 
-@app.get("/api/sessions/empty/count")
-async def count_empty_sessions_endpoint():
-    """Return the number of empty, ended, non-archived sessions.
-
-    Drives the dashboard's "Delete empty (N)" button — when N is 0 the
-    UI hides the affordance so users aren't presented with a button
-    that does nothing. Cheap, single-COUNT query.
-    """
-    from janus_state import SessionDB
-    db = SessionDB()
-    try:
-        return {"count": db.count_empty_sessions()}
-    finally:
-        db.close()
 
 
-@app.delete("/api/sessions/empty")
-async def delete_empty_sessions_endpoint():
-    """Delete every empty (``message_count == 0``), ended,
-    non-archived session in a single transaction.
-
-    Safety contract mirrors :meth:`SessionDB.delete_empty_sessions`:
-
-    * Active sessions are skipped (``ended_at IS NULL``) so a live
-      agent isn't yanked mid-handshake.
-    * Archived sessions are skipped — the user explicitly chose to
-      keep those rows.
-    * Children of deleted parents are orphaned, not cascade-deleted.
-
-    Like the single-session ``DELETE /api/sessions/{id}`` endpoint
-    below, this doesn't pass a ``sessions_dir`` through — the on-disk
-    transcript / request-dump cleanup is wired at the CLI/agent layer
-    but the web server historically leaves file cleanup to the next
-    prune-on-startup pass. Matching that pre-existing trade-off keeps
-    the two delete endpoints' DB-vs-disk behaviour consistent.
-    """
-    from janus_state import SessionDB
-    db = SessionDB()
-    try:
-        deleted = db.delete_empty_sessions()
-        return {"ok": True, "deleted": deleted}
-    finally:
-        db.close()
 
 
-@app.get("/api/sessions/stats")
-async def get_session_stats():
-    """Session-store statistics for the Sessions page (mirrors `janus sessions stats`).
-
-    Registered before ``/api/sessions/{session_id}`` so the literal ``stats``
-    path isn't captured as a session id by the parameterized route.
-    """
-    from janus_state import SessionDB
-
-    db = SessionDB()
-    try:
-        total = db.session_count(include_archived=True)
-        active_store = db.session_count(include_archived=False)
-        archived = db.session_count(archived_only=True)
-        messages = db.message_count()
-        by_source: Dict[str, int] = {}
-        try:
-            for s in db.list_sessions_rich(limit=10000, include_archived=True):
-                src = str(s.get("source") or "cli")
-                by_source[src] = by_source.get(src, 0) + 1
-        except Exception:
-            pass
-        return {
-            "total": total,
-            "active_store": active_store,
-            "archived": archived,
-            "messages": messages,
-            "by_source": by_source,
-        }
-    finally:
-        db.close()
 
 
 def _open_session_db_for_profile(profile: Optional[str]):
@@ -5548,59 +3354,12 @@ def _open_session_db_for_profile(profile: Optional[str]):
     return SessionDB(db_path=Path(home) / "state.db")
 
 
-@app.get("/api/sessions/{session_id}")
-async def get_session_detail(session_id: str, profile: Optional[str] = None):
-    db = _open_session_db_for_profile(profile)
-    try:
-        sid = db.resolve_session_id(session_id)
-        session = db.get_session(sid) if sid else None
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-        if profile:
-            session["profile"] = _cron_profile_home(profile)[0]
-        return session
-    finally:
-        db.close()
 
 
 
-@app.get("/api/sessions/{session_id}/latest-descendant")
-async def get_session_latest_descendant(session_id: str):
-    latest, path = _session_latest_descendant(session_id)
-    if not latest:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return {
-        "requested_session_id": path[0] if path else session_id,
-        "session_id": latest,
-        "path": path,
-        "changed": bool(path and latest != path[0]),
-    }
-
-@app.get("/api/sessions/{session_id}/messages")
-async def get_session_messages(session_id: str, profile: Optional[str] = None):
-    db = _open_session_db_for_profile(profile)
-    try:
-        sid = db.resolve_session_id(session_id)
-        if not sid:
-            raise HTTPException(status_code=404, detail="Session not found")
-        messages = db.get_messages(sid)
-        return {"session_id": sid, "messages": messages}
-    finally:
-        db.close()
 
 
-@app.delete("/api/sessions/{session_id}")
-async def delete_session_endpoint(session_id: str, profile: Optional[str] = None):
-    # ``profile`` deletes a session belonging to another (local) profile by
-    # opening its state.db directly. Remote profiles never reach here — the
-    # desktop routes their DELETE to the remote backend. Omit for current/default.
-    db = _open_session_db_for_profile(profile)
-    try:
-        if not db.delete_session(session_id):
-            raise HTTPException(status_code=404, detail="Session not found")
-        return {"ok": True}
-    finally:
-        db.close()
+
 
 
 class SessionRename(BaseModel):
@@ -5611,56 +3370,8 @@ class SessionRename(BaseModel):
     profile: Optional[str] = None
 
 
-@app.patch("/api/sessions/{session_id}")
-async def rename_session_endpoint(session_id: str, body: SessionRename):
-    """Update a session: rename (or clear its title) and/or archive it.
-
-    ``title`` renames (empty/null clears the title); ``archived`` soft-hides or
-    restores the session. Either field may be omitted. ``profile`` targets
-    another profile's session.
-    """
-    db = _open_session_db_for_profile(body.profile)
-    try:
-        sid = db.resolve_session_id(session_id)
-        if not sid:
-            raise HTTPException(status_code=404, detail="Session not found")
-        if body.title is None and body.archived is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Nothing to update; provide 'title' and/or 'archived'.",
-            )
-        if body.title is not None:
-            try:
-                db.set_session_title(sid, body.title or "")
-            except ValueError as e:
-                # Title too long, invalid characters, or already in use.
-                raise HTTPException(status_code=400, detail=str(e))
-        if body.archived is not None:
-            db.set_session_archived(sid, body.archived)
-        result = {"ok": True, "title": db.get_session_title(sid) or ""}
-        if body.archived is not None:
-            result["archived"] = bool(body.archived)
-        return result
-    finally:
-        db.close()
 
 
-@app.get("/api/sessions/{session_id}/export")
-async def export_session_endpoint(session_id: str):
-    """Export a single session (metadata + messages) as JSON."""
-    from janus_state import SessionDB
-
-    db = SessionDB()
-    try:
-        sid = db.resolve_session_id(session_id)
-        if not sid:
-            raise HTTPException(status_code=404, detail="Session not found")
-        data = db.export_session(sid)
-        if data is None:
-            raise HTTPException(status_code=404, detail="Session not found")
-        return data
-    finally:
-        db.close()
 
 
 class SessionPrune(BaseModel):
@@ -5668,24 +3379,6 @@ class SessionPrune(BaseModel):
     source: Optional[str] = None
 
 
-@app.post("/api/sessions/prune")
-async def prune_sessions_endpoint(body: SessionPrune):
-    """Delete ended sessions older than N days (mirrors `janus sessions prune`)."""
-    if body.older_than_days < 1:
-        raise HTTPException(status_code=400, detail="older_than_days must be >= 1")
-    from janus_state import SessionDB
-
-    db = SessionDB()
-    try:
-        sessions_dir = get_janus_home() / "sessions"
-        removed = db.prune_sessions(
-            older_than_days=body.older_than_days,
-            source=(body.source or None),
-            sessions_dir=sessions_dir if sessions_dir.exists() else None,
-        )
-        return {"ok": True, "removed": removed}
-    finally:
-        db.close()
 
 
 # ---------------------------------------------------------------------------
@@ -5693,57 +3386,6 @@ async def prune_sessions_endpoint(body: SessionPrune):
 # ---------------------------------------------------------------------------
 
 
-@app.get("/api/logs")
-async def get_logs(
-    file: str = "agent",
-    lines: int = 100,
-    level: Optional[str] = None,
-    component: Optional[str] = None,
-    search: Optional[str] = None,
-):
-    from janus_cli.logs import _read_tail, LOG_FILES
-
-    log_name = LOG_FILES.get(file)
-    if not log_name:
-        raise HTTPException(status_code=400, detail=f"Unknown log file: {file}")
-    log_path = get_janus_home() / "logs" / log_name
-    if not log_path.exists():
-        return {"file": file, "lines": []}
-
-    try:
-        from janus_logging import COMPONENT_PREFIXES
-    except ImportError:
-        COMPONENT_PREFIXES = {}
-
-    # Normalize "ALL" / "all" / empty → no filter. _matches_filters treats an
-    # empty tuple as "must match a prefix" (startswith(()) is always False),
-    # so passing () instead of None silently drops every line.
-    min_level = level if level and level.upper() != "ALL" else None
-    if component and component.lower() != "all":
-        comp_prefixes = COMPONENT_PREFIXES.get(component)
-        if comp_prefixes is None:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unknown component: {component}. "
-                       f"Available: {', '.join(sorted(COMPONENT_PREFIXES))}",
-            )
-    else:
-        comp_prefixes = None
-
-    has_filters = bool(min_level or comp_prefixes or search)
-    result = _read_tail(
-        log_path, min(lines, 500) if not search else 2000,
-        has_filters=has_filters,
-        min_level=min_level,
-        component_prefixes=comp_prefixes,
-    )
-    # Post-filter by search term (case-insensitive substring match).
-    # _read_tail doesn't support free-text search, so we filter here and
-    # trim to the requested line count afterward.
-    if search:
-        needle = search.lower()
-        result = [l for l in result if needle in l.lower()][-min(lines, 500):]
-    return {"file": file, "lines": result}
 
 
 # ---------------------------------------------------------------------------
@@ -5842,184 +3484,24 @@ def _find_cron_job_profile(job_id: str) -> Optional[str]:
     return None
 
 
-@app.get("/api/cron/jobs")
-async def list_cron_jobs(profile: str = "all"):
-    requested = (profile or "all").strip()
-    if requested.lower() != "all":
-        return _call_cron_for_profile(requested, "list_jobs", True)
-
-    jobs: List[Dict[str, Any]] = []
-    for item in _cron_profile_dicts():
-        name = str(item.get("name") or "")
-        if not name:
-            continue
-        try:
-            jobs.extend(_call_cron_for_profile(name, "list_jobs", True))
-        except Exception:
-            _log.exception("Failed to list cron jobs for profile %s", name)
-    return jobs
 
 
-@app.get("/api/cron/jobs/{job_id}")
-async def get_cron_job(job_id: str, profile: Optional[str] = None):
-    selected = profile or _find_cron_job_profile(job_id)
-    if not selected:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = _call_cron_for_profile(selected, "get_job", job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
 
 
-@app.get("/api/cron/jobs/{job_id}/runs")
-async def list_cron_job_runs(job_id: str, profile: Optional[str] = None, limit: int = 20):
-    """Run sessions produced by a cron job, newest first.
-
-    Cron runs are stored as ordinary sessions whose id is
-    ``cron_{job_id}_{timestamp}`` (see cron/scheduler.run_job). A job's history
-    is therefore every session whose id carries that prefix; ``source='cron'``
-    narrows it and the id prefix binds it to this job. Powers the run-history
-    list under each job in the desktop cron detail. Same row shape as
-    ``/api/sessions`` so the frontend can reuse SessionInfo.
-
-    Backed by ``SessionDB.list_cron_job_runs`` — a bounded ``[prefix, hi)``
-    id-range scan, not the compression-chain CTE used for the recents list,
-    so the cost scales with the requested window and not the (unbounded) total
-    cron history.
-    """
-    selected = profile or _find_cron_job_profile(job_id)
-    # job_id may be a human name; resolve to the canonical id used in run-session ids.
-    canonical = job_id
-    if selected:
-        job = _call_cron_for_profile(selected, "get_job", job_id)
-        if job and job.get("id"):
-            canonical = str(job["id"])
-
-    try:
-        limit_n = max(1, min(int(limit), 100))
-    except (TypeError, ValueError):
-        limit_n = 20
-
-    db = _open_session_db_for_profile(selected)
-    try:
-        runs = db.list_cron_job_runs(canonical, limit=limit_n, offset=0)
-        now = time.time()
-        for s in runs:
-            s["is_active"] = (
-                s.get("ended_at") is None
-                and (now - s.get("last_active", s.get("started_at", 0))) < 300
-            )
-            s["archived"] = bool(s.get("archived"))
-            if selected:
-                s["profile"] = selected
-        return {"runs": runs, "limit": limit_n}
-    finally:
-        db.close()
 
 
-@app.post("/api/cron/jobs")
-async def create_cron_job(body: CronJobCreate, profile: str = "default"):
-    try:
-        return _call_cron_for_profile(
-            profile,
-            "create_job",
-            prompt=body.prompt,
-            schedule=body.schedule,
-            name=body.name,
-            deliver=body.deliver,
-        )
-    except Exception as e:
-        _log.exception("POST /api/cron/jobs failed")
-        raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.get("/api/cron/delivery-targets")
-async def get_cron_delivery_targets():
-    """Delivery targets the cron dropdown should offer.
-
-    Always includes the implicit ``local`` option. Beyond that, the list is
-    derived dynamically from the configured gateway platforms via
-    ``cron.scheduler.cron_delivery_targets()`` — no hardcoded platform list. A
-    configured platform that hasn't set its cron home channel is still returned
-    with ``home_target_set: false`` so the UI can surface it as "configure a
-    home channel first" rather than hiding it.
-    """
-    targets = [
-        {
-            "id": "local",
-            "name": "Local (save only)",
-            "home_target_set": True,
-            "home_env_var": None,
-        }
-    ]
-    try:
-        from cron.scheduler import cron_delivery_targets
-
-        targets.extend(cron_delivery_targets())
-    except Exception:
-        _log.exception("GET /api/cron/delivery-targets failed")
-    return {"targets": targets}
 
 
-@app.put("/api/cron/jobs/{job_id}")
-async def update_cron_job(job_id: str, body: CronJobUpdate, profile: Optional[str] = None):
-    selected = profile or _find_cron_job_profile(job_id)
-    if not selected:
-        raise HTTPException(status_code=404, detail="Job not found")
-    try:
-        job = _call_cron_for_profile(selected, "update_job", job_id, body.updates)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
 
 
-@app.post("/api/cron/jobs/{job_id}/pause")
-async def pause_cron_job(job_id: str, profile: Optional[str] = None):
-    selected = profile or _find_cron_job_profile(job_id)
-    if not selected:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = _call_cron_for_profile(selected, "pause_job", job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
 
 
-@app.post("/api/cron/jobs/{job_id}/resume")
-async def resume_cron_job(job_id: str, profile: Optional[str] = None):
-    selected = profile or _find_cron_job_profile(job_id)
-    if not selected:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = _call_cron_for_profile(selected, "resume_job", job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
 
 
-@app.post("/api/cron/jobs/{job_id}/trigger")
-async def trigger_cron_job(job_id: str, profile: Optional[str] = None):
-    selected = profile or _find_cron_job_profile(job_id)
-    if not selected:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = _call_cron_for_profile(selected, "trigger_job", job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
 
 
-@app.delete("/api/cron/jobs/{job_id}")
-async def delete_cron_job(job_id: str, profile: Optional[str] = None):
-    selected = profile or _find_cron_job_profile(job_id)
-    if not selected:
-        raise HTTPException(status_code=404, detail="Job not found")
-    try:
-        removed = _call_cron_for_profile(selected, "remove_job", job_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    if not removed:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------
@@ -6070,157 +3552,20 @@ def _mcp_server_summary(name: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-@app.get("/api/mcp/servers")
-async def list_mcp_servers():
-    from janus_cli.mcp_config import _get_mcp_servers
-
-    servers = _get_mcp_servers()
-    return {
-        "servers": [
-            _mcp_server_summary(name, cfg) for name, cfg in sorted(servers.items())
-        ]
-    }
 
 
-@app.post("/api/mcp/servers")
-async def add_mcp_server(body: MCPServerCreate):
-    from janus_cli.mcp_config import _get_mcp_servers, _save_mcp_server
-
-    name = (body.name or "").strip()
-    if not name:
-        raise HTTPException(status_code=400, detail="Server name is required")
-    if name in _get_mcp_servers():
-        raise HTTPException(status_code=409, detail=f"Server '{name}' already exists")
-    if not body.url and not body.command:
-        raise HTTPException(
-            status_code=400,
-            detail="Provide either a URL (HTTP/SSE server) or a command (stdio server)",
-        )
-
-    server_config: Dict[str, Any] = {}
-    if body.url:
-        server_config["url"] = body.url.strip()
-    if body.command:
-        server_config["command"] = body.command.strip()
-        if body.args:
-            server_config["args"] = list(body.args)
-    if body.env:
-        server_config["env"] = dict(body.env)
-    if body.auth:
-        server_config["auth"] = body.auth
-
-    try:
-        _save_mcp_server(name, server_config)
-    except Exception as exc:
-        _log.exception("POST /api/mcp/servers failed")
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    return _mcp_server_summary(name, server_config)
 
 
-@app.delete("/api/mcp/servers/{name}")
-async def remove_mcp_server(name: str):
-    from janus_cli.mcp_config import _remove_mcp_server
-
-    if not _remove_mcp_server(name):
-        raise HTTPException(status_code=404, detail=f"Server '{name}' not found")
-    return {"ok": True}
 
 
-@app.post("/api/mcp/servers/{name}/test")
-async def test_mcp_server(name: str):
-    """Connect to the server, list its tools, disconnect.  Returns tool list."""
-    from janus_cli.mcp_config import _get_mcp_servers, _probe_single_server
-
-    servers = _get_mcp_servers()
-    if name not in servers:
-        raise HTTPException(status_code=404, detail=f"Server '{name}' not found")
-
-    try:
-        # Probe blocks on a dedicated MCP event loop — run in a thread so the
-        # FastAPI event loop is never blocked.
-        tools = await asyncio.to_thread(_probe_single_server, name, servers[name])
-    except Exception as exc:
-        return {
-            "ok": False,
-            "error": str(exc),
-            "tools": [],
-        }
-    return {
-        "ok": True,
-        "tools": [{"name": t, "description": d} for t, d in tools],
-    }
 
 
 class MCPEnabledToggle(BaseModel):
     enabled: bool
 
 
-@app.put("/api/mcp/servers/{name}/enabled")
-async def set_mcp_server_enabled(name: str, body: MCPEnabledToggle):
-    """Enable or disable an MCP server (takes effect on next session/gateway).
-
-    Toggles the ``enabled`` key on the server's config.yaml entry — the same
-    flag the agent reads at startup.  Disabled servers stay in config so they
-    can be re-enabled without re-entering their settings.
-    """
-    cfg = load_config()
-    servers = cfg.get("mcp_servers")
-    if not isinstance(servers, dict) or name not in servers:
-        raise HTTPException(status_code=404, detail=f"Server '{name}' not found")
-    if not isinstance(servers[name], dict):
-        raise HTTPException(status_code=400, detail="Malformed server config")
-    servers[name]["enabled"] = bool(body.enabled)
-    save_config(cfg)
-    return {"ok": True, "name": name, "enabled": bool(body.enabled)}
 
 
-@app.get("/api/mcp/catalog")
-async def list_mcp_catalog():
-    """Browse the Nous-approved MCP catalog (the optional-mcps/ manifests).
-
-    Each entry reports whether it's already installed and enabled so the UI
-    can show install / enabled state inline.  This is the same catalog
-    `janus mcp catalog` / `janus mcp install` read.
-    """
-    try:
-        from janus_cli import mcp_catalog
-    except Exception as exc:
-        _log.exception("mcp_catalog import failed")
-        raise HTTPException(status_code=500, detail=f"Catalog unavailable: {exc}")
-
-    entries = []
-    try:
-        for entry in mcp_catalog.list_catalog():
-            auth = entry.auth
-            entries.append({
-                "name": entry.name,
-                "description": entry.description,
-                "source": entry.source,
-                "transport": entry.transport.type,
-                "auth_type": getattr(auth, "type", "none"),
-                # Env vars the user must supply (names + prompts only, never values).
-                "required_env": [
-                    {"name": e.name, "prompt": e.prompt, "required": e.required}
-                    for e in getattr(auth, "env", []) or []
-                ],
-                "needs_install": entry.install is not None,
-                "installed": mcp_catalog.is_installed(entry.name),
-                "enabled": mcp_catalog.is_enabled(entry.name),
-            })
-    except Exception:
-        _log.exception("list_mcp_catalog failed")
-
-    diagnostics = []
-    try:
-        diagnostics = [
-            {"name": n, "kind": k, "message": m}
-            for (n, k, m) in mcp_catalog.catalog_diagnostics()
-        ]
-    except Exception:
-        pass
-
-    return {"entries": entries, "diagnostics": diagnostics}
 
 
 class MCPCatalogInstall(BaseModel):
@@ -6230,45 +3575,6 @@ class MCPCatalogInstall(BaseModel):
     enable: bool = True
 
 
-@app.post("/api/mcp/catalog/install")
-async def install_mcp_catalog_entry(body: MCPCatalogInstall):
-    """Install a catalog MCP into config.yaml.
-
-    For HTTP/stdio entries with required env vars, those are written to .env
-    via the standard env path so the agent can read them at session start.
-    Entries that need a git bootstrap (``needs_install``) are installed via
-    the CLI action path because the clone can take time.
-    """
-    from janus_cli import mcp_catalog
-
-    name = (body.name or "").strip()
-    entry = mcp_catalog.get_entry(name)
-    if entry is None:
-        raise HTTPException(status_code=404, detail=f"No catalog entry '{name}'")
-
-    # Persist any supplied env vars first (catalog entries declare which names
-    # they need; we only write the ones the user provided).
-    if body.env:
-        for k, v in body.env.items():
-            if v:
-                save_env_value(k, v)
-
-    # Git-bootstrap entries can take a while to clone — run via the background
-    # action path so the request returns immediately and the UI can tail logs.
-    if entry.install is not None:
-        try:
-            proc = _spawn_janus_action(["mcp", "install", name], "mcp-install")
-        except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Install failed: {exc}")
-        return {"ok": True, "name": name, "background": True, "action": "mcp-install"}
-
-    # No git step — install synchronously via the catalog API.
-    try:
-        await asyncio.to_thread(mcp_catalog.install_entry, entry, enable=body.enable)
-    except Exception as exc:
-        _log.exception("install_mcp_catalog_entry failed")
-        raise HTTPException(status_code=400, detail=str(exc))
-    return {"ok": True, "name": name, "background": False}
 
 
 # Register the mcp-install action log so /api/actions/mcp-install/status works.
@@ -6299,56 +3605,12 @@ def _pairing_store():
     return PairingStore()
 
 
-@app.get("/api/pairing")
-async def list_pairing():
-    store = _pairing_store()
-    return {
-        "pending": store.list_pending(),
-        "approved": store.list_approved(),
-    }
 
 
-@app.post("/api/pairing/approve")
-async def approve_pairing(body: PairingApprove):
-    store = _pairing_store()
-    platform = (body.platform or "").lower().strip()
-    code = (body.code or "").upper().strip()
-    if not platform or not code:
-        raise HTTPException(status_code=400, detail="platform and code are required")
-
-    result = store.approve_code(platform, code)
-    if result:
-        return {"ok": True, "user": result}
-    if store._is_locked_out(platform):
-        raise HTTPException(
-            status_code=429,
-            detail=f"Platform '{platform}' is locked out after too many failed approvals.",
-        )
-    raise HTTPException(
-        status_code=404,
-        detail=f"Code '{code}' not found or expired for platform '{platform}'.",
-    )
 
 
-@app.post("/api/pairing/revoke")
-async def revoke_pairing(body: PairingRevoke):
-    store = _pairing_store()
-    platform = (body.platform or "").lower().strip()
-    if not platform or not body.user_id:
-        raise HTTPException(status_code=400, detail="platform and user_id are required")
-    if store.revoke(platform, body.user_id):
-        return {"ok": True}
-    raise HTTPException(
-        status_code=404,
-        detail=f"User {body.user_id} not found in approved list for {platform}.",
-    )
 
 
-@app.post("/api/pairing/clear-pending")
-async def clear_pending_pairing():
-    store = _pairing_store()
-    count = store.clear_pending()
-    return {"ok": True, "cleared": count}
 
 
 # ---------------------------------------------------------------------------
@@ -6391,109 +3653,16 @@ def _webhook_route_summary(name: str, route: Dict[str, Any], base_url: str) -> D
     }
 
 
-@app.get("/api/webhooks")
-async def list_webhooks():
-    import janus_cli.webhook as wh
-
-    base_url = wh._get_webhook_base_url()
-    subs = wh._load_subscriptions()
-    return {
-        "enabled": wh._is_webhook_enabled(),
-        "base_url": base_url,
-        "subscriptions": [
-            _webhook_route_summary(name, route, base_url)
-            for name, route in subs.items()
-        ],
-    }
 
 
-@app.post("/api/webhooks")
-async def create_webhook(body: WebhookCreate):
-    import re as _re
-    import secrets as _secrets
-    import time as _time
-    import janus_cli.webhook as wh
-
-    if not wh._is_webhook_enabled():
-        raise HTTPException(
-            status_code=400,
-            detail="Webhook platform is not enabled. Enable it in messaging settings first.",
-        )
-
-    name = (body.name or "").strip().lower().replace(" ", "-")
-    if not _re.match(r"^[a-z0-9][a-z0-9_-]*$", name):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid name. Use lowercase alphanumeric with hyphens/underscores.",
-        )
-
-    if body.deliver_only and body.deliver == "log":
-        raise HTTPException(
-            status_code=400,
-            detail="Direct delivery requires a real target (telegram, discord, …), not 'log'.",
-        )
-
-    secret = body.secret or _secrets.token_urlsafe(32)
-    route: Dict[str, Any] = {
-        "description": body.description or f"Dashboard-created subscription: {name}",
-        "events": [e.strip() for e in body.events if e.strip()],
-        "secret": secret,
-        "prompt": body.prompt or "",
-        "skills": [s.strip() for s in body.skills if s.strip()],
-        "deliver": body.deliver or "log",
-        "created_at": _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime()),
-    }
-    if body.deliver_only:
-        route["deliver_only"] = True
-    if body.deliver_chat_id:
-        route["deliver_extra"] = {"chat_id": body.deliver_chat_id}
-
-    subs = wh._load_subscriptions()
-    subs[name] = route
-    wh._save_subscriptions(subs)
-
-    base_url = wh._get_webhook_base_url()
-    summary = _webhook_route_summary(name, route, base_url)
-    # Surface the secret exactly once, on create.
-    summary["secret"] = secret
-    return summary
 
 
-@app.delete("/api/webhooks/{name}")
-async def delete_webhook(name: str):
-    import janus_cli.webhook as wh
-
-    key = (name or "").strip().lower()
-    subs = wh._load_subscriptions()
-    if key not in subs:
-        raise HTTPException(status_code=404, detail=f"No subscription named '{key}'")
-    del subs[key]
-    wh._save_subscriptions(subs)
-    return {"ok": True}
 
 
 class WebhookEnabledToggle(BaseModel):
     enabled: bool
 
 
-@app.put("/api/webhooks/{name}/enabled")
-async def set_webhook_enabled(name: str, body: WebhookEnabledToggle):
-    """Enable or disable a webhook route.
-
-    Disabled routes stay in the subscriptions file (so they can be
-    re-enabled) but the gateway rejects incoming events with 403.  The
-    gateway hot-reloads the subscriptions file, so this takes effect on the
-    next event without a restart.
-    """
-    import janus_cli.webhook as wh
-
-    key = (name or "").strip().lower()
-    subs = wh._load_subscriptions()
-    if key not in subs:
-        raise HTTPException(status_code=404, detail=f"No subscription named '{key}'")
-    subs[key]["enabled"] = bool(body.enabled)
-    wh._save_subscriptions(subs)
-    return {"ok": True, "name": key, "enabled": bool(body.enabled)}
 
 
 # ---------------------------------------------------------------------------
@@ -6506,24 +3675,8 @@ async def set_webhook_enabled(name: str, body: WebhookEnabledToggle):
 # ---------------------------------------------------------------------------
 
 
-@app.post("/api/gateway/start")
-async def start_gateway():
-    try:
-        proc = _spawn_janus_action(["gateway", "start"], "gateway-start")
-    except Exception as exc:
-        _log.exception("Failed to spawn gateway start")
-        raise HTTPException(status_code=500, detail=f"Failed to start gateway: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "gateway-start"}
 
 
-@app.post("/api/gateway/stop")
-async def stop_gateway():
-    try:
-        proc = _spawn_janus_action(["gateway", "stop"], "gateway-stop")
-    except Exception as exc:
-        _log.exception("Failed to spawn gateway stop")
-        raise HTTPException(status_code=500, detail=f"Failed to stop gateway: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "gateway-stop"}
 
 
 # ---------------------------------------------------------------------------
@@ -6563,82 +3716,10 @@ def _pool_entry_summary(entry: Any, index: int) -> Dict[str, Any]:
     }
 
 
-@app.get("/api/credentials/pool")
-async def list_credential_pool():
-    from agent.credential_pool import load_pool
-    from janus_cli.auth import read_credential_pool
-
-    providers = []
-    # read_credential_pool(None) lists every provider that has pooled entries;
-    # load_pool() then gives us the rich PooledCredential objects per provider.
-    raw_pool = read_credential_pool()
-    for provider_id in sorted(raw_pool.keys()):
-        try:
-            pool = load_pool(provider_id)
-        except Exception:
-            _log.exception("load_pool(%s) failed", provider_id)
-            continue
-        entries = pool.entries()
-        if not entries:
-            continue
-        providers.append({
-            "provider": provider_id,
-            "entries": [
-                _pool_entry_summary(e, i) for i, e in enumerate(entries, start=1)
-            ],
-        })
-    return {"providers": providers}
 
 
-@app.post("/api/credentials/pool")
-async def add_credential_pool_entry(body: CredentialPoolAdd):
-    import uuid as _uuid
-    from agent.credential_pool import (
-        load_pool,
-        PooledCredential,
-        AUTH_TYPE_API_KEY,
-        SOURCE_MANUAL,
-    )
-
-    provider = (body.provider or "").strip().lower()
-    api_key = (body.api_key or "").strip()
-    if not provider or not api_key:
-        raise HTTPException(status_code=400, detail="provider and api_key are required")
-
-    try:
-        pool = load_pool(provider)
-        label = (body.label or "").strip() or f"key #{len(pool.entries()) + 1}"
-        entry = PooledCredential(
-            provider=provider,
-            id=_uuid.uuid4().hex[:6],
-            label=label,
-            auth_type=AUTH_TYPE_API_KEY,
-            priority=0,
-            source=SOURCE_MANUAL,
-            access_token=api_key,
-        )
-        pool.add_entry(entry)
-    except Exception as exc:
-        _log.exception("POST /api/credentials/pool failed")
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"ok": True, "provider": provider, "count": len(pool.entries())}
 
 
-@app.delete("/api/credentials/pool/{provider}/{index}")
-async def remove_credential_pool_entry(provider: str, index: int):
-    """Remove a pool entry.  ``index`` is 1-based (matches the list response)."""
-    from agent.credential_pool import load_pool
-
-    provider = (provider or "").strip().lower()
-    try:
-        pool = load_pool(provider)
-        removed = pool.remove_index(index)
-    except Exception as exc:
-        _log.exception("DELETE /api/credentials/pool failed")
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    if removed is None:
-        raise HTTPException(status_code=404, detail="No pool entry at that index")
-    return {"ok": True, "provider": provider, "count": len(pool.entries())}
 
 
 # ---------------------------------------------------------------------------
@@ -6662,87 +3743,10 @@ class MemoryReset(BaseModel):
     target: str = "all"
 
 
-@app.get("/api/memory")
-async def get_memory_status():
-    from plugins.memory import discover_memory_providers
-
-    cfg = load_config()
-    active = ""
-    mem = cfg.get("memory")
-    if isinstance(mem, dict):
-        active = str(mem.get("provider") or "")
-
-    providers = []
-    try:
-        for name, description, configured in discover_memory_providers():
-            providers.append({
-                "name": name,
-                "description": description,
-                "configured": bool(configured),
-            })
-    except Exception:
-        _log.exception("discover_memory_providers failed")
-
-    # Built-in memory file sizes (so the UI can show what a reset would erase).
-    mem_dir = get_janus_home() / "memories"
-    files = {}
-    for fname, key in (("MEMORY.md", "memory"), ("USER.md", "user")):
-        path = mem_dir / fname
-        files[key] = path.stat().st_size if path.exists() else 0
-
-    return {
-        "active": active,
-        "providers": providers,
-        "builtin_files": files,
-    }
 
 
-@app.put("/api/memory/provider")
-async def set_memory_provider(body: MemoryProviderSelect):
-    provider = (body.provider or "").strip()
-    if provider.lower() in {"built-in", "builtin", "none"}:
-        provider = ""
-
-    if provider:
-        from plugins.memory import discover_memory_providers
-
-        valid = {name for name, _d, _c in discover_memory_providers()}
-        if provider not in valid:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unknown memory provider '{provider}'. Run `janus memory setup` to configure a new one.",
-            )
-
-    cfg = load_config()
-    if not isinstance(cfg.get("memory"), dict):
-        cfg["memory"] = {}
-    cfg["memory"]["provider"] = provider
-    save_config(cfg)
-    return {"ok": True, "active": provider}
 
 
-@app.post("/api/memory/reset")
-async def reset_memory(body: MemoryReset):
-    target = (body.target or "all").strip().lower()
-    if target not in {"all", "memory", "user"}:
-        raise HTTPException(status_code=400, detail="target must be all, memory, or user")
-
-    mem_dir = get_janus_home() / "memories"
-    deleted = []
-    targets = []
-    if target in {"all", "memory"}:
-        targets.append("MEMORY.md")
-    if target in {"all", "user"}:
-        targets.append("USER.md")
-    for fname in targets:
-        path = mem_dir / fname
-        if path.exists():
-            try:
-                path.unlink()
-                deleted.append(fname)
-            except OSError as exc:
-                raise HTTPException(status_code=500, detail=f"Could not delete {fname}: {exc}")
-    return {"ok": True, "deleted": deleted}
 
 
 # ---------------------------------------------------------------------------
@@ -6758,24 +3762,8 @@ async def reset_memory(body: MemoryReset):
 # ---------------------------------------------------------------------------
 
 
-@app.post("/api/ops/doctor")
-async def run_doctor():
-    try:
-        proc = _spawn_janus_action(["doctor"], "doctor")
-    except Exception as exc:
-        _log.exception("Failed to spawn doctor")
-        raise HTTPException(status_code=500, detail=f"Failed to run doctor: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "doctor"}
 
 
-@app.post("/api/ops/security-audit")
-async def run_security_audit():
-    try:
-        proc = _spawn_janus_action(["security", "audit"], "security-audit")
-    except Exception as exc:
-        _log.exception("Failed to spawn security audit")
-        raise HTTPException(status_code=500, detail=f"Failed to run security audit: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "security-audit"}
 
 
 class BackupRequest(BaseModel):
@@ -6783,84 +3771,14 @@ class BackupRequest(BaseModel):
     output: Optional[str] = None
 
 
-@app.post("/api/ops/backup")
-async def run_backup(body: BackupRequest):
-    args = ["backup"]
-    if body.output:
-        args.append(body.output.strip())
-    try:
-        proc = _spawn_janus_action(args, "backup")
-    except Exception as exc:
-        _log.exception("Failed to spawn backup")
-        raise HTTPException(status_code=500, detail=f"Failed to run backup: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "backup"}
 
 
 class ImportRequest(BaseModel):
     archive: str
 
 
-@app.post("/api/ops/import")
-async def run_import(body: ImportRequest):
-    archive = (body.archive or "").strip()
-    if not archive:
-        raise HTTPException(status_code=400, detail="archive path is required")
-    if not os.path.isfile(archive):
-        raise HTTPException(status_code=404, detail=f"Archive not found: {archive}")
-    try:
-        proc = _spawn_janus_action(["import", archive], "import")
-    except Exception as exc:
-        _log.exception("Failed to spawn import")
-        raise HTTPException(status_code=500, detail=f"Failed to run import: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "import"}
 
 
-@app.get("/api/ops/hooks")
-async def list_hooks():
-    """List configured shell hooks from config.yaml with consent + health.
-
-    Reports each hook's allowlist (consent) status and whether the script is
-    currently executable, plus the set of valid hook events so the create
-    form can offer them.
-    """
-    from janus_cli.config import load_config as _load_config
-    from agent import shell_hooks
-
-    try:
-        from janus_cli.plugins import VALID_HOOKS
-        valid_events = sorted(VALID_HOOKS)
-    except Exception:
-        valid_events = []
-
-    specs = []
-    try:
-        specs = shell_hooks.iter_configured_hooks(_load_config())
-    except Exception:
-        _log.exception("iter_configured_hooks failed")
-
-    out = []
-    for spec in specs:
-        entry = None
-        try:
-            entry = shell_hooks.allowlist_entry_for(spec.event, spec.command)
-        except Exception:
-            pass
-        executable = False
-        try:
-            executable = shell_hooks.script_is_executable(spec.command)
-        except Exception:
-            pass
-        out.append({
-            "event": spec.event,
-            "matcher": spec.matcher,
-            "command": spec.command,
-            "timeout": spec.timeout,
-            "allowed": entry is not None,
-            "approved_at": (entry or {}).get("approved_at"),
-            "executable": executable,
-        })
-
-    return {"hooks": out, "valid_events": valid_events}
 
 
 class HookCreate(BaseModel):
@@ -6874,61 +3792,6 @@ class HookCreate(BaseModel):
     approve: bool = True
 
 
-@app.post("/api/ops/hooks")
-async def create_hook(body: HookCreate):
-    """Add a shell hook to config.yaml (and optionally approve it).
-
-    Shell hooks run arbitrary commands, so this is a privileged action: it
-    writes to the ``hooks:`` config block and, when ``approve`` is set, records
-    consent in the allowlist so the hook actually fires.  Takes effect on the
-    next session / gateway restart.
-    """
-    from agent import shell_hooks
-
-    event = (body.event or "").strip()
-    command = (body.command or "").strip()
-    if not event or not command:
-        raise HTTPException(status_code=400, detail="event and command are required")
-
-    try:
-        from janus_cli.plugins import VALID_HOOKS
-        if event not in VALID_HOOKS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unknown event '{event}'. Valid: {', '.join(sorted(VALID_HOOKS))}",
-            )
-    except HTTPException:
-        raise
-    except Exception:
-        pass
-
-    cfg = load_config()
-    hooks_cfg = cfg.get("hooks")
-    if not isinstance(hooks_cfg, dict):
-        hooks_cfg = {}
-        cfg["hooks"] = hooks_cfg
-    entries = hooks_cfg.get(event)
-    if not isinstance(entries, list):
-        entries = []
-        hooks_cfg[event] = entries
-
-    new_entry: Dict[str, Any] = {"command": command}
-    if body.matcher:
-        new_entry["matcher"] = body.matcher
-    if body.timeout is not None:
-        new_entry["timeout"] = int(body.timeout)
-    entries.append(new_entry)
-    save_config(cfg)
-
-    approved = False
-    if body.approve:
-        try:
-            shell_hooks._record_approval(event, command)
-            approved = True
-        except Exception:
-            _log.exception("hook consent record failed")
-
-    return {"ok": True, "event": event, "command": command, "approved": approved}
 
 
 class HookDelete(BaseModel):
@@ -6936,88 +3799,10 @@ class HookDelete(BaseModel):
     command: str
 
 
-@app.delete("/api/ops/hooks")
-async def delete_hook(body: HookDelete):
-    """Remove a hook from config.yaml and revoke its consent allowlist entry."""
-    from agent import shell_hooks
-
-    event = (body.event or "").strip()
-    command = (body.command or "").strip()
-    if not event or not command:
-        raise HTTPException(status_code=400, detail="event and command are required")
-
-    cfg = load_config()
-    hooks_cfg = cfg.get("hooks")
-    removed = False
-    if isinstance(hooks_cfg, dict) and isinstance(hooks_cfg.get(event), list):
-        before = len(hooks_cfg[event])
-        hooks_cfg[event] = [
-            e for e in hooks_cfg[event]
-            if not (isinstance(e, dict) and e.get("command") == command)
-        ]
-        removed = len(hooks_cfg[event]) < before
-        if not hooks_cfg[event]:
-            del hooks_cfg[event]
-        if not hooks_cfg:
-            cfg.pop("hooks", None)
-        save_config(cfg)
-
-    # Revoke consent regardless so a re-add re-prompts.
-    try:
-        shell_hooks.revoke(command)
-    except Exception:
-        pass
-
-    if not removed:
-        raise HTTPException(status_code=404, detail="No matching hook found")
-    return {"ok": True}
 
 
-@app.get("/api/ops/checkpoints")
-async def list_checkpoints():
-    """List the /rollback shadow store checkpoints (read-only)."""
-    # Checkpoints live under <janus_home>/checkpoints/.  Surface a count +
-    # total size so the dashboard can show what a prune would reclaim; the
-    # actual prune is a spawned action so confirmation/pruning logic stays
-    # in one place (the CLI).
-    cp_dir = get_janus_home() / "checkpoints"
-
-    def _scan_checkpoints() -> tuple[list, int]:
-        sessions = []
-        total_bytes = 0
-        if cp_dir.is_dir():
-            for child in sorted(cp_dir.iterdir()):
-                if not child.is_dir():
-                    continue
-                size = 0
-                count = 0
-                for f in child.rglob("*"):
-                    if f.is_file():
-                        try:
-                            size += f.stat().st_size
-                            count += 1
-                        except OSError:
-                            pass
-                total_bytes += size
-                sessions.append({
-                    "session": child.name,
-                    "files": count,
-                    "bytes": size,
-                })
-        return sessions, total_bytes
-
-    sessions, total_bytes = await asyncio.to_thread(_scan_checkpoints)
-    return {"sessions": sessions, "total_bytes": total_bytes}
 
 
-@app.post("/api/ops/checkpoints/prune")
-async def prune_checkpoints():
-    try:
-        proc = _spawn_janus_action(["checkpoints", "prune"], "checkpoints-prune")
-    except Exception as exc:
-        _log.exception("Failed to spawn checkpoints prune")
-        raise HTTPException(status_code=500, detail=f"Failed to prune checkpoints: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "checkpoints-prune"}
 
 
 # ---------------------------------------------------------------------------
@@ -7034,44 +3819,14 @@ class SkillInstallRequest(BaseModel):
     identifier: str
 
 
-@app.post("/api/skills/hub/install")
-async def install_skill_hub(body: SkillInstallRequest):
-    identifier = (body.identifier or "").strip()
-    if not identifier:
-        raise HTTPException(status_code=400, detail="identifier is required")
-    try:
-        proc = _spawn_janus_action(["skills", "install", identifier], "skills-install")
-    except Exception as exc:
-        _log.exception("Failed to spawn skills install")
-        raise HTTPException(status_code=500, detail=f"Failed to install skill: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "skills-install"}
 
 
 class SkillUninstallRequest(BaseModel):
     name: str
 
 
-@app.post("/api/skills/hub/uninstall")
-async def uninstall_skill_hub(body: SkillUninstallRequest):
-    name = (body.name or "").strip()
-    if not name:
-        raise HTTPException(status_code=400, detail="name is required")
-    try:
-        proc = _spawn_janus_action(["skills", "uninstall", name, "--yes"], "skills-uninstall")
-    except Exception as exc:
-        _log.exception("Failed to spawn skills uninstall")
-        raise HTTPException(status_code=500, detail=f"Failed to uninstall skill: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "skills-uninstall"}
 
 
-@app.post("/api/skills/hub/update")
-async def update_skills_hub():
-    try:
-        proc = _spawn_janus_action(["skills", "update"], "skills-update")
-    except Exception as exc:
-        _log.exception("Failed to spawn skills update")
-        raise HTTPException(status_code=500, detail=f"Failed to update skills: {exc}")
-    return {"ok": True, "pid": proc.pid, "name": "skills-update"}
 
 
 # Human-readable labels for each hub source id (matches `janus skills search`
@@ -7125,260 +3880,12 @@ def _installed_hub_identifiers() -> dict:
         return {}
 
 
-@app.get("/api/skills/hub/sources")
-async def list_skills_hub_sources():
-    """List the configured skill-hub sources and installed-skill provenance.
-
-    Gives the dashboard something to show BEFORE a search runs — which hubs
-    are wired up, their trust tier, and a set of featured skills pulled from
-    the centralized index (zero extra API calls).  Without this the Browse-hub
-    tab is a blank page with no indication it's even connected to anything.
-    """
-
-    def _run():
-        from tools.skills_hub import create_source_router
-
-        sources = create_source_router()
-        out = []
-        index_available = False
-        featured = []
-        for src in sources:
-            sid = src.source_id()
-            entry = {
-                "id": sid,
-                "label": _SKILL_HUB_SOURCE_LABELS.get(sid, sid),
-            }
-            # GitHub exposes a rate-limit flag; the index an availability flag.
-            if sid == "github":
-                try:
-                    entry["rate_limited"] = bool(getattr(src, "is_rate_limited", False))
-                except Exception:
-                    entry["rate_limited"] = False
-            if sid == "janus-index":
-                try:
-                    index_available = bool(getattr(src, "is_available", False))
-                except Exception:
-                    index_available = False
-                entry["available"] = index_available
-                # Empty-query search on the index returns featured/popular skills.
-                if index_available:
-                    try:
-                        featured = [
-                            _skill_meta_to_payload(m) for m in src.search("", limit=12)
-                        ]
-                    except Exception:
-                        featured = []
-            out.append(entry)
-        return {
-            "sources": out,
-            "index_available": index_available,
-            "featured": featured,
-            "installed": _installed_hub_identifiers(),
-        }
-
-    try:
-        return await asyncio.to_thread(_run)
-    except Exception as exc:
-        _log.exception("skills hub sources listing failed")
-        raise HTTPException(status_code=502, detail=f"Hub sources failed: {exc}")
 
 
-@app.get("/api/skills/hub/search")
-async def search_skills_hub(q: str = "", source: str = "all", limit: int = 20):
-    """Search the skill hub across all configured sources.
-
-    Network-bound (parallel source search); runs in a thread so the FastAPI
-    loop isn't blocked.  Returns structured results the UI installs by
-    identifier via POST /api/skills/hub/install, previews via
-    /api/skills/hub/preview, and scans via /api/skills/hub/scan.
-    """
-    query = (q or "").strip()
-    if not query:
-        return {"results": [], "source_counts": {}, "timed_out": [], "installed": {}}
-
-    def _run():
-        from tools.skills_hub import create_source_router, parallel_search_sources
-
-        sources = create_source_router()
-        capped = min(max(limit, 1), 50)
-        all_results, source_counts, timed_out = parallel_search_sources(
-            sources, query=query, source_filter=source or "all", overall_timeout=30
-        )
-
-        # Dedupe by identifier, preferring higher trust (mirrors unified_search).
-        _rank = {"builtin": 2, "trusted": 1, "community": 0}
-        seen = {}
-        for r in all_results:
-            if r.identifier not in seen:
-                seen[r.identifier] = r
-            elif _rank.get(r.trust_level, 0) > _rank.get(seen[r.identifier].trust_level, 0):
-                seen[r.identifier] = r
-        deduped = list(seen.values())[:capped]
-
-        return {
-            "results": [_skill_meta_to_payload(m) for m in deduped],
-            "source_counts": source_counts,
-            "timed_out": timed_out,
-            "installed": _installed_hub_identifiers(),
-        }
-
-    try:
-        return await asyncio.to_thread(_run)
-    except Exception as exc:
-        _log.exception("skills hub search failed")
-        raise HTTPException(status_code=502, detail=f"Hub search failed: {exc}")
 
 
-@app.get("/api/skills/hub/preview")
-async def preview_skill_hub(identifier: str = ""):
-    """Fetch a hub skill's SKILL.md content + metadata for in-dashboard reading.
-
-    Resolves the identifier across configured sources (same path the CLI
-    installer uses), then returns the rendered SKILL.md text and the file
-    manifest WITHOUT installing anything.  This is the 'read the actual skill
-    before installing' affordance the Browse-hub tab was missing.
-    """
-    ident = (identifier or "").strip()
-    if not ident:
-        raise HTTPException(status_code=400, detail="identifier is required")
-
-    def _run():
-        from janus_cli.skills_hub import _resolve_source_meta_and_bundle
-        from tools.skills_hub import create_source_router
-
-        sources = create_source_router()
-        meta, bundle, _src = _resolve_source_meta_and_bundle(ident, sources)
-        if not bundle and not meta:
-            return None
-
-        files = {}
-        skill_md = ""
-        if bundle:
-            for rel, content in (bundle.files or {}).items():
-                if isinstance(content, bytes):
-                    # Some sources (e.g. official optional skills) store every
-                    # file as bytes.  Decode text so SKILL.md / docs render;
-                    # only fall back to a placeholder for genuinely-binary data.
-                    try:
-                        files[rel] = content.decode("utf-8")
-                    except UnicodeDecodeError:
-                        files[rel] = "(binary file)"
-                else:
-                    files[rel] = content
-            skill_md = files.get("SKILL.md", "") or ""
-
-        m = meta or bundle
-        return {
-            "name": getattr(m, "name", ident),
-            "description": getattr(m, "description", "") or "",
-            "source": getattr(m, "source", "") or "",
-            "identifier": getattr(m, "identifier", ident) or ident,
-            "trust_level": getattr(m, "trust_level", "community") or "community",
-            "repo": getattr(m, "repo", None),
-            "tags": list(getattr(m, "tags", None) or []),
-            "skill_md": skill_md,
-            "files": sorted(files.keys()),
-        }
-
-    try:
-        result = await asyncio.to_thread(_run)
-    except Exception as exc:
-        _log.exception("skills hub preview failed")
-        raise HTTPException(status_code=502, detail=f"Hub preview failed: {exc}")
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Skill not found: {ident}")
-    return result
 
 
-@app.get("/api/skills/hub/scan")
-async def scan_skill_hub(identifier: str = ""):
-    """Run the install-time security scan on a hub skill WITHOUT installing it.
-
-    Fetches the bundle, quarantines it, and runs the same `scan_skill` /
-    `should_allow_install` pipeline the CLI installer uses — then cleans up the
-    quarantine.  Returns the verdict, per-finding detail, trust tier, and the
-    install-policy decision so the dashboard can show a visual safety result
-    on demand (the 'scan' button the Browse-hub tab was missing).
-    """
-    ident = (identifier or "").strip()
-    if not ident:
-        raise HTTPException(status_code=400, detail="identifier is required")
-
-    def _run():
-        import shutil as _shutil
-
-        from janus_cli.skills_hub import _resolve_source_meta_and_bundle
-        from tools.skills_hub import create_source_router, quarantine_bundle
-        from tools.skills_guard import scan_skill, should_allow_install
-
-        sources = create_source_router()
-        meta, bundle, _src = _resolve_source_meta_and_bundle(ident, sources)
-        if not bundle:
-            return None
-
-        if bundle.source == "official":
-            scan_source = "official"
-        else:
-            scan_source = (
-                getattr(bundle, "identifier", "")
-                or getattr(meta, "identifier", "")
-                or ident
-            )
-
-        q_path = None
-        try:
-            q_path = quarantine_bundle(bundle)
-            result = scan_skill(q_path, source=scan_source)
-        finally:
-            if q_path is not None:
-                _shutil.rmtree(q_path, ignore_errors=True)
-
-        allowed, reason = should_allow_install(result, force=False)
-        # `allowed` may be None ("ask") for agent-created/dangerous gates.
-        if allowed is True:
-            policy = "allow"
-        elif allowed is None:
-            policy = "ask"
-        else:
-            policy = "block"
-
-        findings = [
-            {
-                "severity": f.severity,
-                "category": f.category,
-                "file": f.file,
-                "line": f.line,
-                "description": f.description,
-            }
-            for f in result.findings
-        ]
-        # Per-severity tally for an at-a-glance summary.
-        counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-        for f in result.findings:
-            if f.severity in counts:
-                counts[f.severity] += 1
-
-        return {
-            "name": result.skill_name,
-            "identifier": ident,
-            "source": result.source,
-            "trust_level": result.trust_level,
-            "verdict": result.verdict,
-            "summary": result.summary,
-            "policy": policy,
-            "policy_reason": reason,
-            "findings": findings,
-            "severity_counts": counts,
-        }
-
-    try:
-        result = await asyncio.to_thread(_run)
-    except Exception as exc:
-        _log.exception("skills hub scan failed")
-        raise HTTPException(status_code=502, detail=f"Hub scan failed: {exc}")
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Skill not found: {ident}")
-    return result
 
 
 # ---------------------------------------------------------------------------
@@ -7544,299 +4051,30 @@ def _write_profile_model(profile_dir: Path, provider: str, model: str) -> None:
         reset_janus_home_override(token)
 
 
-@app.get("/api/profiles")
-async def list_profiles_endpoint():
-    from janus_cli import profiles as profiles_mod
-    try:
-        return {"profiles": [_profile_to_dict(p) for p in profiles_mod.list_profiles()]}
-    except Exception:
-        _log.exception("GET /api/profiles failed; falling back to profile directory scan")
-        return {"profiles": _fallback_profile_dicts(profiles_mod)}
 
 
-@app.post("/api/profiles")
-async def create_profile_endpoint(body: ProfileCreate):
-    from janus_cli import profiles as profiles_mod
-    explicit_source = (body.clone_from or "").strip()
-    if explicit_source:
-        # Duplicating a specific profile: clone its config/skills/SOUL (or full
-        # state when clone_all) from the named source rather than "default".
-        clone = True
-        clone_from = explicit_source
-        clone_config = not body.clone_all
-    else:
-        clone = body.clone_from_default or body.clone_all
-        clone_from = "default" if clone else None
-        clone_config = body.clone_from_default and not body.clone_all
-    try:
-        path = profiles_mod.create_profile(
-            name=body.name,
-            clone_from=clone_from,
-            clone_all=body.clone_all,
-            clone_config=clone_config,
-            no_skills=body.no_skills,
-            description=body.description,
-        )
-        # Match the CLI's profile-create flow: fresh named profiles get the
-        # bundled skills installed. When cloning from default, create_profile()
-        # has already copied the source profile's skills, including any
-        # user-installed skills. When no_skills=True, create_profile() wrote
-        # the opt-out marker and seed_profile_skills() will no-op.
-        if not clone:
-            profiles_mod.seed_profile_skills(path, quiet=True)
-
-        # Match the CLI's profile-create flow: named profiles should get a
-        # wrapper in ~/.local/bin when the alias is safe to create.
-        collision = profiles_mod.check_alias_collision(body.name)
-        if not collision:
-            profiles_mod.create_wrapper_script(body.name)
-    except (ValueError, FileExistsError, FileNotFoundError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        _log.exception("POST /api/profiles failed")
-        raise HTTPException(status_code=500, detail=str(e))
-
-    # Optional explicit model assignment for the new profile. Best-effort:
-    # the profile already exists, so a model-write hiccup must not 500 the
-    # whole create — the user can set the model later from the Models page
-    # or `<profile> setup`.
-    provider = (body.provider or "").strip()
-    model = (body.model or "").strip()
-    model_set = False
-    if provider and model:
-        try:
-            _write_profile_model(path, provider, model)
-            model_set = True
-        except Exception:
-            _log.exception("Setting model for new profile %s failed", body.name)
-
-    return {"ok": True, "name": body.name, "path": str(path), "model_set": model_set}
 
 
-@app.get("/api/profiles/active")
-async def get_active_profile_endpoint():
-    """Return the sticky active profile and the profile this dashboard
-    process is currently running as.
-
-    ``active`` is the sticky default written by ``janus profile use`` —
-    the profile new CLI invocations pick up. ``current`` is the profile
-    the running dashboard/gateway is scoped to (derived from JANUS_HOME).
-    """
-    from janus_cli import profiles as profiles_mod
-    try:
-        active = profiles_mod.get_active_profile() or "default"
-    except Exception:
-        active = "default"
-    try:
-        current = profiles_mod.get_active_profile_name() or "default"
-    except Exception:
-        current = "default"
-    return {"active": active, "current": current}
 
 
-@app.post("/api/profiles/active")
-async def set_active_profile_endpoint(body: ProfileActiveUpdate):
-    """Set the sticky active profile (mirrors ``janus profile use``).
-
-    Note: this does not retarget the already-running dashboard process —
-    it changes which profile subsequent CLI commands and gateways use.
-    """
-    from janus_cli import profiles as profiles_mod
-    try:
-        profiles_mod.set_active_profile(body.name)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        _log.exception("POST /api/profiles/active failed")
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"ok": True, "active": profiles_mod.normalize_profile_name(body.name)}
 
 
-@app.get("/api/profiles/{name}/setup-command")
-async def get_profile_setup_command(name: str):
-    return {"command": _profile_setup_command(name)}
 
 
-@app.post("/api/profiles/{name}/open-terminal")
-async def open_profile_terminal_endpoint(name: str):
-    try:
-        command = _profile_setup_command(name)
-
-        if sys.platform.startswith("win"):
-            subprocess.Popen(["cmd.exe", "/c", "start", "", command])
-        elif sys.platform == "darwin":
-            escaped = command.replace("\\", "\\\\").replace('"', '\\"')
-            applescript = (
-                'tell application "Terminal"\n'
-                "activate\n"
-                f'do script "{escaped}"\n'
-                "end tell"
-            )
-            subprocess.Popen(["osascript", "-e", applescript])
-        else:
-            terminal_commands = [
-                ("x-terminal-emulator", ["x-terminal-emulator", "-e", "sh", "-lc", command]),
-                ("gnome-terminal", ["gnome-terminal", "--", "sh", "-lc", command]),
-                ("konsole", ["konsole", "-e", "sh", "-lc", command]),
-                ("xfce4-terminal", ["xfce4-terminal", "-e", f"sh -lc '{command}'"]),
-                ("mate-terminal", ["mate-terminal", "-e", f"sh -lc '{command}'"]),
-                ("lxterminal", ["lxterminal", "-e", f"sh -lc '{command}'"]),
-                ("tilix", ["tilix", "-e", "sh", "-lc", command]),
-                ("alacritty", ["alacritty", "-e", "sh", "-lc", command]),
-                ("kitty", ["kitty", "sh", "-lc", command]),
-                ("xterm", ["xterm", "-e", "sh", "-lc", command]),
-            ]
-            for executable, popen_args in terminal_commands:
-                if subprocess.call(
-                    ["which", executable],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                ) == 0:
-                    subprocess.Popen(popen_args)
-                    break
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail="No supported terminal emulator found",
-                )
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except HTTPException:
-        raise
-    except Exception as e:
-        _log.exception("POST /api/profiles/%s/open-terminal failed", name)
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"ok": True, "command": command}
 
 
-@app.patch("/api/profiles/{name}")
-async def rename_profile_endpoint(name: str, body: ProfileRename):
-    from janus_cli import profiles as profiles_mod
-    try:
-        path = profiles_mod.rename_profile(name, body.new_name)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except (ValueError, FileExistsError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        _log.exception("PATCH /api/profiles/%s failed", name)
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"ok": True, "name": body.new_name, "path": str(path)}
 
 
-@app.delete("/api/profiles/{name}")
-async def delete_profile_endpoint(name: str):
-    """Delete a profile. The dashboard collects the user's confirmation in
-    its own dialog before this request, so we always pass ``yes=True`` to
-    skip the CLI's interactive prompt."""
-    from janus_cli import profiles as profiles_mod
-    try:
-        path = profiles_mod.delete_profile(name, yes=True)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        _log.exception("DELETE /api/profiles/%s failed", name)
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"ok": True, "path": str(path)}
 
 
-@app.get("/api/profiles/{name}/soul")
-async def get_profile_soul(name: str):
-    soul_path = _resolve_profile_dir(name) / "SOUL.md"
-    if soul_path.exists():
-        try:
-            return {"content": soul_path.read_text(encoding="utf-8"), "exists": True}
-        except OSError as e:
-            raise HTTPException(status_code=500, detail=f"Could not read SOUL.md: {e}")
-    return {"content": "", "exists": False}
 
 
-@app.put("/api/profiles/{name}/soul")
-async def update_profile_soul(name: str, body: ProfileSoulUpdate):
-    soul_path = _resolve_profile_dir(name) / "SOUL.md"
-    try:
-        soul_path.write_text(body.content, encoding="utf-8")
-    except OSError as e:
-        _log.exception("PUT /api/profiles/%s/soul failed", name)
-        raise HTTPException(status_code=500, detail=f"Could not write SOUL.md: {e}")
-    return {"ok": True}
 
 
-@app.put("/api/profiles/{name}/description")
-async def update_profile_description_endpoint(name: str, body: ProfileDescriptionUpdate):
-    """Set or clear a profile's role description (kanban routing signal).
-
-    Empty string clears the description. Non-empty stores it as a
-    user-authored description (``description_auto: false``) so the
-    auto-describer won't overwrite it on a sweep.
-    """
-    from janus_cli import profiles as profiles_mod
-    profile_dir = _resolve_profile_dir(name)
-    text = (body.description or "").strip()
-    try:
-        profiles_mod.write_profile_meta(
-            profile_dir,
-            description=text,
-            description_auto=False,
-        )
-    except Exception as e:
-        _log.exception("PUT /api/profiles/%s/description failed", name)
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"ok": True, "description": text, "description_auto": False}
 
 
-@app.put("/api/profiles/{name}/model")
-async def update_profile_model_endpoint(name: str, body: ProfileModelUpdate):
-    """Set the main model (``model.default`` + ``model.provider``) for a
-    specific profile's config.yaml, without touching the dashboard's own
-    active profile. Mirrors ``POST /api/model/set`` (main scope) but scoped
-    to the named profile via the JANUS_HOME override.
-    """
-    profile_dir = _resolve_profile_dir(name)
-    provider = (body.provider or "").strip()
-    model = (body.model or "").strip()
-    if not provider or not model:
-        raise HTTPException(status_code=400, detail="provider and model are required")
-    try:
-        _write_profile_model(profile_dir, provider, model)
-    except Exception as e:
-        _log.exception("PUT /api/profiles/%s/model failed", name)
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"ok": True, "provider": provider, "model": model}
 
 
-@app.post("/api/profiles/{name}/describe-auto")
-async def describe_profile_auto_endpoint(name: str, body: ProfileDescribeAuto):
-    """Auto-generate a profile's description via the auxiliary LLM
-    (``auxiliary.profile_describer``). Mirrors ``janus profile describe
-    <name> --auto``.
-
-    A failed generation (no aux client, LLM error, …) is returned as
-    ``ok: false`` with a reason rather than an HTTP error so the UI can
-    surface it inline and let the operator fix config and retry.
-    """
-    _resolve_profile_dir(name)
-    try:
-        from janus_cli import profile_describer
-        outcome = profile_describer.describe_profile(name, overwrite=bool(body.overwrite))
-    except Exception as e:
-        _log.exception("POST /api/profiles/%s/describe-auto failed", name)
-        raise HTTPException(status_code=500, detail=str(e))
-    return {
-        "ok": bool(outcome.ok),
-        "reason": outcome.reason,
-        "description": outcome.description,
-        # Only a successful generation is an auto-authored description. A failed
-        # sweep leaves any existing description untouched, so don't claim it's
-        # auto-generated.
-        "description_auto": bool(outcome.ok),
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -7849,292 +4087,36 @@ class SkillToggle(BaseModel):
     enabled: bool
 
 
-@app.get("/api/skills")
-async def get_skills():
-    from tools.skills_tool import _find_all_skills
-    from janus_cli.skills_config import get_disabled_skills
-    config = load_config()
-    disabled = get_disabled_skills(config)
-    skills = _find_all_skills(skip_disabled=True)
-    for s in skills:
-        s["enabled"] = s["name"] not in disabled
-    return skills
 
 
-@app.put("/api/skills/toggle")
-async def toggle_skill(body: SkillToggle):
-    from janus_cli.skills_config import get_disabled_skills, save_disabled_skills
-    config = load_config()
-    disabled = get_disabled_skills(config)
-    if body.enabled:
-        disabled.discard(body.name)
-    else:
-        disabled.add(body.name)
-    save_disabled_skills(config, disabled)
-    return {"ok": True, "name": body.name, "enabled": body.enabled}
 
 
-@app.get("/api/tools/toolsets")
-async def get_toolsets():
-    from janus_cli.tools_config import (
-        _get_effective_configurable_toolsets,
-        _get_platform_tools,
-        _toolset_has_keys,
-        gui_toolset_label,
-    )
-    from toolsets import resolve_toolset
-
-    config = load_config()
-    enabled_toolsets = _get_platform_tools(
-        config,
-        "cli",
-        include_default_mcp_servers=False,
-    )
-    result = []
-    for name, label, desc in _get_effective_configurable_toolsets():
-        try:
-            tools = sorted(set(resolve_toolset(name)))
-        except Exception:
-            tools = []
-        is_enabled = name in enabled_toolsets
-        result.append({
-            "name": name,
-            "label": gui_toolset_label(label),
-            "description": desc,
-            "enabled": is_enabled,
-            "available": is_enabled,
-            "configured": _toolset_has_keys(name, config),
-            "tools": tools,
-        })
-    return result
 
 
 class ToolsetToggle(BaseModel):
     enabled: bool
 
 
-@app.put("/api/tools/toolsets/{name}")
-async def toggle_toolset(name: str, body: ToolsetToggle):
-    """Enable/disable a configurable toolset for the desktop (cli) platform.
-
-    Persists to ``platform_toolsets.cli`` via the same ``_save_platform_tools``
-    helper the CLI ``janus tools`` picker uses, so the GUI and CLI stay in
-    lockstep. Returns 400 for unknown toolset keys.
-    """
-    from janus_cli.tools_config import (
-        _get_effective_configurable_toolsets,
-        _get_platform_tools,
-        _save_platform_tools,
-    )
-
-    valid = {ts_key for ts_key, _, _ in _get_effective_configurable_toolsets()}
-    if name not in valid:
-        raise HTTPException(status_code=400, detail=f"Unknown toolset: {name}")
-
-    config = load_config()
-    enabled = set(
-        _get_platform_tools(config, "cli", include_default_mcp_servers=False)
-    )
-    if body.enabled:
-        enabled.add(name)
-    else:
-        enabled.discard(name)
-    _save_platform_tools(config, "cli", enabled)
-    return {"ok": True, "name": name, "enabled": body.enabled}
 
 
-@app.get("/api/tools/toolsets/{name}/config")
-async def get_toolset_config(name: str):
-    """Return the provider matrix + key status for a toolset's config panel.
-
-    Surfaces the same provider rows the CLI ``janus tools`` picker shows
-    (via ``_visible_providers``), each with its ``env_vars`` annotated with
-    current ``is_set`` state so the GUI can render provider selection + key
-    entry. Toolsets without a ``TOOL_CATEGORIES`` entry return an empty
-    provider list and ``has_category: false``. Returns 400 for unknown keys.
-    """
-    from janus_cli.tools_config import (
-        TOOL_CATEGORIES,
-        _get_effective_configurable_toolsets,
-        _is_provider_active,
-        _visible_providers,
-    )
-    from janus_cli.config import get_env_value
-
-    valid = {ts_key for ts_key, _, _ in _get_effective_configurable_toolsets()}
-    if name not in valid:
-        raise HTTPException(status_code=400, detail=f"Unknown toolset: {name}")
-
-    config = load_config()
-    cat = TOOL_CATEGORIES.get(name)
-    providers = []
-    active_provider = None
-    if cat:
-        for prov in _visible_providers(cat, config, force_fresh=True):
-            env_vars = [
-                {
-                    "key": e["key"],
-                    "prompt": e.get("prompt", e["key"]),
-                    "url": e.get("url"),
-                    "default": e.get("default"),
-                    "is_set": bool(get_env_value(e["key"])),
-                }
-                for e in prov.get("env_vars", [])
-            ]
-            # Surface the same active-provider determination the CLI picker
-            # uses (``_is_provider_active``) so the GUI highlights the provider
-            # actually written to config (e.g. web.backend), not just the first
-            # keyless one in the list.
-            is_active = _is_provider_active(prov, config, force_fresh=True)
-            if is_active and active_provider is None:
-                active_provider = prov["name"]
-            providers.append({
-                "name": prov["name"],
-                "badge": prov.get("badge", ""),
-                "tag": prov.get("tag", ""),
-                "env_vars": env_vars,
-                "post_setup": prov.get("post_setup"),
-                "requires_nous_auth": bool(prov.get("requires_nous_auth")),
-                "is_active": is_active,
-            })
-    return {
-        "name": name,
-        "has_category": cat is not None,
-        "providers": providers,
-        "active_provider": active_provider,
-    }
 
 
 class ToolsetProviderSelect(BaseModel):
     provider: str
 
 
-@app.put("/api/tools/toolsets/{name}/provider")
-async def select_toolset_provider(name: str, body: ToolsetProviderSelect):
-    """Persist a provider selection for a toolset (no key prompting).
-
-    Delegates to ``apply_provider_selection`` — the shared, non-interactive
-    core extracted from the CLI configurator — so the GUI and ``janus tools``
-    write identical config keys (``web.backend``, ``tts.provider``, etc.).
-    API keys and post-setup flows are handled by separate endpoints. Returns
-    400 for unknown toolset or provider names.
-    """
-    from janus_cli.tools_config import (
-        apply_provider_selection,
-        _get_effective_configurable_toolsets,
-    )
-
-    valid = {ts_key for ts_key, _, _ in _get_effective_configurable_toolsets()}
-    if name not in valid:
-        raise HTTPException(status_code=400, detail=f"Unknown toolset: {name}")
-
-    config = load_config()
-    try:
-        apply_provider_selection(name, body.provider, config)
-    except KeyError as exc:
-        raise HTTPException(status_code=400, detail=str(exc).strip('"'))
-    save_config(config)
-    return {"ok": True, "name": name, "provider": body.provider}
 
 
 class ToolsetEnvUpdate(BaseModel):
     env: Dict[str, str]
 
 
-@app.put("/api/tools/toolsets/{name}/env")
-async def save_toolset_env(name: str, body: ToolsetEnvUpdate):
-    """Persist API keys for a toolset's provider env vars.
-
-    Writes each ``key: value`` to ``~/.janus/.env`` via ``save_env_value`` —
-    the same store ``janus tools`` writes when it prompts for keys. Keys are
-    validated against the env-var allowlist for the toolset's category (the
-    union of every visible provider's ``env_vars``), so the GUI can't write an
-    arbitrary env var through this endpoint. A blank value is treated as
-    "leave unchanged" and skipped. Returns the saved/skipped key lists and the
-    refreshed ``is_set`` status. Returns 400 for unknown toolset or env keys.
-    """
-    from janus_cli.tools_config import (
-        TOOL_CATEGORIES,
-        _get_effective_configurable_toolsets,
-        _visible_providers,
-    )
-    from janus_cli.config import get_env_value, save_env_value
-
-    valid_ts = {ts_key for ts_key, _, _ in _get_effective_configurable_toolsets()}
-    if name not in valid_ts:
-        raise HTTPException(status_code=400, detail=f"Unknown toolset: {name}")
-
-    config = load_config()
-    cat = TOOL_CATEGORIES.get(name)
-    allowed: set[str] = set()
-    if cat:
-        for prov in _visible_providers(cat, config, force_fresh=True):
-            for e in prov.get("env_vars", []):
-                allowed.add(e["key"])
-
-    unknown = [k for k in body.env if k not in allowed]
-    if unknown:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown env var(s) for toolset {name}: {', '.join(sorted(unknown))}",
-        )
-
-    saved: List[str] = []
-    skipped: List[str] = []
-    for key, value in body.env.items():
-        if value and value.strip():
-            try:
-                save_env_value(key, value.strip())
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail=str(exc))
-            saved.append(key)
-        else:
-            skipped.append(key)
-
-    status = {k: bool(get_env_value(k)) for k in allowed}
-    return {"ok": True, "name": name, "saved": saved, "skipped": skipped, "is_set": status}
 
 
 class ToolsetPostSetup(BaseModel):
     key: str
 
 
-@app.post("/api/tools/toolsets/{name}/post-setup")
-async def run_toolset_post_setup(name: str, body: ToolsetPostSetup):
-    """Spawn a provider's post-setup install hook as a background action.
-
-    Post-setup hooks (npm install for browser/Camofox, pip install for
-    KittenTTS/Piper/ddgs, cua-driver fetch, etc.) are long-running and
-    text-output, so this follows the spawn-action pattern: it launches
-    ``janus tools post-setup <key>`` and the frontend tails the log via
-    ``GET /api/actions/tools-post-setup/status``. The ``key`` is validated
-    against the declared post-setup allowlist before spawning. Returns 400
-    for unknown toolset or post-setup key.
-    """
-    from janus_cli.tools_config import (
-        _get_effective_configurable_toolsets,
-        valid_post_setup_keys,
-    )
-
-    valid_ts = {ts_key for ts_key, _, _ in _get_effective_configurable_toolsets()}
-    if name not in valid_ts:
-        raise HTTPException(status_code=400, detail=f"Unknown toolset: {name}")
-
-    if body.key not in valid_post_setup_keys():
-        raise HTTPException(
-            status_code=400, detail=f"Unknown post-setup key: {body.key}"
-        )
-
-    try:
-        proc = _spawn_janus_action(
-            ["tools", "post-setup", body.key], "tools-post-setup"
-        )
-    except Exception as exc:
-        _log.exception("Failed to spawn tools post-setup")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to run post-setup: {exc}"
-        )
-    return {"ok": True, "pid": proc.pid, "name": "tools-post-setup", "key": body.key}
 
 
 # ---------------------------------------------------------------------------
@@ -8146,24 +4128,8 @@ class RawConfigUpdate(BaseModel):
     yaml_text: str
 
 
-@app.get("/api/config/raw")
-async def get_config_raw():
-    path = get_config_path()
-    if not path.exists():
-        return {"yaml": ""}
-    return {"yaml": path.read_text(encoding="utf-8")}
 
 
-@app.put("/api/config/raw")
-async def update_config_raw(body: RawConfigUpdate):
-    try:
-        parsed = yaml.safe_load(body.yaml_text)
-        if not isinstance(parsed, dict):
-            raise HTTPException(status_code=400, detail="YAML must be a mapping")
-        save_config(parsed)
-        return {"ok": True}
-    except yaml.YAMLError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid YAML: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -8171,166 +4137,8 @@ async def update_config_raw(body: RawConfigUpdate):
 # ---------------------------------------------------------------------------
 
 
-@app.get("/api/analytics/usage")
-async def get_usage_analytics(days: int = 30):
-    from janus_state import SessionDB
-    from agent.insights import InsightsEngine
-
-    db = SessionDB()
-    try:
-        cutoff = time.time() - (days * 86400)
-        cur = db._conn.execute("""
-            SELECT date(started_at, 'unixepoch') as day,
-                   SUM(input_tokens) as input_tokens,
-                   SUM(output_tokens) as output_tokens,
-                   SUM(cache_read_tokens) as cache_read_tokens,
-                   SUM(reasoning_tokens) as reasoning_tokens,
-                   COALESCE(SUM(estimated_cost_usd), 0) as estimated_cost,
-                   COALESCE(SUM(actual_cost_usd), 0) as actual_cost,
-                   COUNT(*) as sessions,
-                   SUM(COALESCE(api_call_count, 0)) as api_calls
-            FROM sessions WHERE started_at > ?
-            GROUP BY day ORDER BY day
-        """, (cutoff,))
-        daily = [dict(r) for r in cur.fetchall()]
-
-        cur2 = db._conn.execute("""
-            SELECT model,
-                   SUM(input_tokens) as input_tokens,
-                   SUM(output_tokens) as output_tokens,
-                   COALESCE(SUM(estimated_cost_usd), 0) as estimated_cost,
-                   COUNT(*) as sessions,
-                   SUM(COALESCE(api_call_count, 0)) as api_calls
-            FROM sessions WHERE started_at > ? AND model IS NOT NULL
-            GROUP BY model ORDER BY SUM(input_tokens) + SUM(output_tokens) DESC
-        """, (cutoff,))
-        by_model = [dict(r) for r in cur2.fetchall()]
-
-        cur3 = db._conn.execute("""
-            SELECT SUM(input_tokens) as total_input,
-                   SUM(output_tokens) as total_output,
-                   SUM(cache_read_tokens) as total_cache_read,
-                   SUM(reasoning_tokens) as total_reasoning,
-                   COALESCE(SUM(estimated_cost_usd), 0) as total_estimated_cost,
-                   COALESCE(SUM(actual_cost_usd), 0) as total_actual_cost,
-                   COUNT(*) as total_sessions,
-                   SUM(COALESCE(api_call_count, 0)) as total_api_calls
-            FROM sessions WHERE started_at > ?
-        """, (cutoff,))
-        totals = dict(cur3.fetchone())
-        insights_report = InsightsEngine(db).generate(days=days)
-        skills = insights_report.get("skills", {
-            "summary": {
-                "total_skill_loads": 0,
-                "total_skill_edits": 0,
-                "total_skill_actions": 0,
-                "distinct_skills_used": 0,
-            },
-            "top_skills": [],
-        })
-
-        return {
-            "daily": daily,
-            "by_model": by_model,
-            "totals": totals,
-            "period_days": days,
-            "skills": skills,
-        }
-    finally:
-        db.close()
 
 
-@app.get("/api/analytics/models")
-async def get_models_analytics(days: int = 30):
-    """Rich per-model analytics for the Models dashboard page.
-
-    Returns token/cost/session breakdown per model plus capability metadata
-    from models.dev (context window, vision, tools, reasoning, etc.).
-    """
-    from janus_state import SessionDB
-
-    db = SessionDB()
-    try:
-        cutoff = time.time() - (days * 86400)
-
-        cur = db._conn.execute("""
-            SELECT model,
-                   billing_provider,
-                   SUM(input_tokens) as input_tokens,
-                   SUM(output_tokens) as output_tokens,
-                   SUM(cache_read_tokens) as cache_read_tokens,
-                   SUM(reasoning_tokens) as reasoning_tokens,
-                   COALESCE(SUM(estimated_cost_usd), 0) as estimated_cost,
-                   COALESCE(SUM(actual_cost_usd), 0) as actual_cost,
-                   COUNT(*) as sessions,
-                   SUM(COALESCE(api_call_count, 0)) as api_calls,
-                   SUM(tool_call_count) as tool_calls,
-                   MAX(started_at) as last_used_at,
-                   AVG(input_tokens + output_tokens) as avg_tokens_per_session
-            FROM sessions WHERE started_at > ? AND model IS NOT NULL AND model != ''
-            GROUP BY model, billing_provider
-            ORDER BY SUM(input_tokens) + SUM(output_tokens) DESC
-        """, (cutoff,))
-        rows = [dict(r) for r in cur.fetchall()]
-
-        models = []
-        for row in rows:
-            provider = row.get("billing_provider") or ""
-            model_name = row["model"]
-            caps = {}
-            try:
-                from agent.models_dev import get_model_capabilities
-                mc = get_model_capabilities(provider=provider, model=model_name)
-                if mc is not None:
-                    caps = {
-                        "supports_tools": mc.supports_tools,
-                        "supports_vision": mc.supports_vision,
-                        "supports_reasoning": mc.supports_reasoning,
-                        "context_window": mc.context_window,
-                        "max_output_tokens": mc.max_output_tokens,
-                        "model_family": mc.model_family,
-                    }
-            except Exception:
-                pass
-
-            models.append({
-                "model": model_name,
-                "provider": provider,
-                "input_tokens": row["input_tokens"],
-                "output_tokens": row["output_tokens"],
-                "cache_read_tokens": row["cache_read_tokens"],
-                "reasoning_tokens": row["reasoning_tokens"],
-                "estimated_cost": row["estimated_cost"],
-                "actual_cost": row["actual_cost"],
-                "sessions": row["sessions"],
-                "api_calls": row["api_calls"],
-                "tool_calls": row["tool_calls"],
-                "last_used_at": row["last_used_at"],
-                "avg_tokens_per_session": row["avg_tokens_per_session"],
-                "capabilities": caps,
-            })
-
-        totals_cur = db._conn.execute("""
-            SELECT COUNT(DISTINCT model) as distinct_models,
-                   SUM(input_tokens) as total_input,
-                   SUM(output_tokens) as total_output,
-                   SUM(cache_read_tokens) as total_cache_read,
-                   SUM(reasoning_tokens) as total_reasoning,
-                   COALESCE(SUM(estimated_cost_usd), 0) as total_estimated_cost,
-                   COALESCE(SUM(actual_cost_usd), 0) as total_actual_cost,
-                   COUNT(*) as total_sessions,
-                   SUM(COALESCE(api_call_count, 0)) as total_api_calls
-            FROM sessions WHERE started_at > ? AND model IS NOT NULL AND model != ''
-        """, (cutoff,))
-        totals = dict(totals_cur.fetchone())
-
-        return {
-            "models": models,
-            "totals": totals,
-            "period_days": days,
-        }
-    finally:
-        db.close()
 
 
 # ---------------------------------------------------------------------------
@@ -8749,135 +4557,6 @@ def _ws_close_reason(text: str) -> str:
     return encoded[:120].decode("utf-8", "ignore") + "..."
 
 
-@app.websocket("/api/pty")
-async def pty_ws(ws: WebSocket) -> None:
-    peer = ws.client.host if ws.client else "?"
-
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        _log.info("pty refused: embedded chat disabled peer=%s", peer)
-        await ws.close(code=4404, reason="embedded chat disabled")
-        return
-
-    # --- auth + host/origin/peer check (before accept so we can close
-    #     cleanly AND tell the client WHY via the close code + reason).
-    #     Each gate maps to a distinct close code so the log and the
-    #     browser banner agree on the cause:
-    #       4401 bad credential   4403 host/origin mismatch
-    #       4408 peer not allowed  4404 chat disabled
-    auth_reason, cred = _ws_auth_reason(ws)
-    mode = _ws_auth_mode()
-    if auth_reason is not None:
-        _log.warning(
-            "pty auth rejected reason=%s mode=%s cred=%s peer=%s",
-            auth_reason, mode, cred, peer,
-        )
-        await ws.close(code=4401, reason=_ws_close_reason(f"auth: {auth_reason}"))
-        return
-
-    host_origin_reason = _ws_host_origin_reason(ws)
-    if host_origin_reason is not None:
-        _log.warning("pty refused: %s peer=%s", host_origin_reason, peer)
-        await ws.close(code=4403, reason=_ws_close_reason(host_origin_reason))
-        return
-
-    client_reason = _ws_client_reason(ws)
-    if client_reason is not None:
-        _log.warning("pty refused: %s", client_reason)
-        await ws.close(code=4408, reason=_ws_close_reason(client_reason))
-        return
-
-    await ws.accept()
-    _log.info("pty accepted peer=%s mode=%s cred=%s", peer, mode, cred)
-
-    # On native Windows, the POSIX PTY bridge can't be imported.  Tell the
-    # client and close cleanly rather than pretending the feature works.
-    if not _PTY_BRIDGE_AVAILABLE:
-        await ws.send_text(
-            "\r\n\x1b[31mChat unavailable: the embedded terminal requires a "
-            "POSIX PTY, which native Windows Python doesn't provide.\x1b[0m\r\n"
-            "\x1b[33mInstall Janus inside WSL2 to use the dashboard's /chat "
-            "tab — the rest of the dashboard works here.\x1b[0m\r\n"
-        )
-        await ws.close(code=1011)
-        return
-
-    # --- spawn PTY ------------------------------------------------------
-    resume = ws.query_params.get("resume") or None
-    channel = _channel_or_close_code(ws)
-    sidecar_url = _build_sidecar_url(channel) if channel else None
-
-    try:
-        argv, cwd, env = _resolve_chat_argv(resume=resume, sidecar_url=sidecar_url)
-    except SystemExit as exc:
-        # _make_tui_argv calls sys.exit(1) when node/npm is missing.
-        await ws.send_text(f"\r\n\x1b[31mChat unavailable: {exc}\x1b[0m\r\n")
-        await ws.close(code=1011)
-        return
-
-
-    try:
-        bridge = PtyBridge.spawn(argv, cwd=cwd, env=env)
-    except PtyUnavailableError as exc:
-        await ws.send_text(f"\r\n\x1b[31mChat unavailable: {exc}\x1b[0m\r\n")
-        await ws.close(code=1011)
-        return
-    except (FileNotFoundError, OSError) as exc:
-        await ws.send_text(f"\r\n\x1b[31mChat failed to start: {exc}\x1b[0m\r\n")
-        await ws.close(code=1011)
-        return
-
-    loop = asyncio.get_running_loop()
-
-    # --- reader task: PTY master → WebSocket ----------------------------
-    async def pump_pty_to_ws() -> None:
-        while True:
-            chunk = await loop.run_in_executor(
-                None, bridge.read, _PTY_READ_CHUNK_TIMEOUT
-            )
-            if chunk is None:  # EOF
-                return
-            if not chunk:  # no data this tick; yield control and retry
-                await asyncio.sleep(0)
-                continue
-            try:
-                await ws.send_bytes(chunk)
-            except Exception:
-                return
-
-    reader_task = asyncio.create_task(pump_pty_to_ws())
-
-    # --- writer loop: WebSocket → PTY master ----------------------------
-    try:
-        while True:
-            msg = await ws.receive()
-            msg_type = msg.get("type")
-            if msg_type == "websocket.disconnect":
-                break
-            raw = msg.get("bytes")
-            if raw is None:
-                text = msg.get("text")
-                raw = text.encode("utf-8") if isinstance(text, str) else b""
-            if not raw:
-                continue
-
-            # Resize escape is consumed locally, never written to the PTY.
-            match = _RESIZE_RE.match(raw)
-            if match and match.end() == len(raw):
-                cols = int(match.group(1))
-                rows = int(match.group(2))
-                bridge.resize(cols=cols, rows=rows)
-                continue
-
-            bridge.write(raw)
-    except WebSocketDisconnect:
-        pass
-    finally:
-        reader_task.cancel()
-        try:
-            await reader_task
-        except (asyncio.CancelledError, Exception):
-            pass
-        bridge.close()
 
 
 # ---------------------------------------------------------------------------
@@ -8891,23 +4570,6 @@ async def pty_ws(ws: WebSocket) -> None:
 # ---------------------------------------------------------------------------
 
 
-@app.websocket("/api/ws")
-async def gateway_ws(ws: WebSocket) -> None:
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        await ws.close(code=4403)
-        return
-
-    if not _ws_auth_ok(ws):
-        await ws.close(code=4401)
-        return
-
-    if not _ws_request_is_allowed(ws):
-        await ws.close(code=4403)
-        return
-
-    from tui_gateway.ws import handle_ws
-
-    await handle_ws(ws)
 
 
 # ---------------------------------------------------------------------------
@@ -8922,76 +4584,8 @@ async def gateway_ws(ws: WebSocket) -> None:
 # ---------------------------------------------------------------------------
 
 
-@app.websocket("/api/pub")
-async def pub_ws(ws: WebSocket) -> None:
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        await ws.close(code=4403)
-        return
-
-    if not _ws_auth_ok(ws):
-        await ws.close(code=4401)
-        return
-
-    if not _ws_request_is_allowed(ws):
-        await ws.close(code=4403)
-        return
-
-    channel = _channel_or_close_code(ws)
-    if not channel:
-        await ws.close(code=4400)
-        return
-
-    await ws.accept()
-
-    try:
-        while True:
-            await _broadcast_event(ws.app, channel, await ws.receive_text())
-    except WebSocketDisconnect:
-        pass
 
 
-@app.websocket("/api/events")
-async def events_ws(ws: WebSocket) -> None:
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        await ws.close(code=4403)
-        return
-
-    if not _ws_auth_ok(ws):
-        await ws.close(code=4401)
-        return
-
-    if not _ws_request_is_allowed(ws):
-        await ws.close(code=4403)
-        return
-
-    channel = _channel_or_close_code(ws)
-    if not channel:
-        await ws.close(code=4400)
-        return
-
-    await ws.accept()
-
-    event_channels, event_lock = _get_event_state(ws.app)
-    async with event_lock:
-        event_channels.setdefault(channel, set()).add(ws)
-
-    try:
-        while True:
-            # Subscribers don't speak — the receive() just blocks until
-            # disconnect so the connection stays open as long as the
-            # browser holds it.
-            await ws.receive_text()
-    except WebSocketDisconnect:
-        pass
-    finally:
-        async with event_lock:
-            subs = event_channels.get(channel)
-
-            if subs is not None:
-                subs.discard(ws)
-
-                if not subs:
-                    event_channels.pop(channel, None)
 
 
 def _normalise_prefix(raw: Optional[str]) -> str:
@@ -9383,50 +4977,12 @@ def _discover_user_themes() -> list:
     return result
 
 
-@app.get("/api/dashboard/themes")
-async def get_dashboard_themes():
-    """Return available themes and the currently active one.
-
-    Built-in entries ship name/label/description only (the frontend owns
-    their full definitions in `web/src/themes/presets.ts`).  User themes
-    from `~/.janus/dashboard-themes/*.yaml` ship with their full
-    normalised definition under `definition`, so the client can apply
-    them without a stub.
-    """
-    config = load_config()
-    active = cfg_get(config, "dashboard", "theme", default="default")
-    user_themes = _discover_user_themes()
-    seen = set()
-    themes = []
-    for t in _BUILTIN_DASHBOARD_THEMES:
-        seen.add(t["name"])
-        themes.append(t)
-    for t in user_themes:
-        if t["name"] in seen:
-            continue
-        themes.append({
-            "name": t["name"],
-            "label": t["label"],
-            "description": t["description"],
-            "definition": t,
-        })
-        seen.add(t["name"])
-    return {"themes": themes, "active": active}
 
 
 class ThemeSetBody(BaseModel):
     name: str
 
 
-@app.put("/api/dashboard/theme")
-async def set_dashboard_theme(body: ThemeSetBody):
-    """Set the active dashboard theme (persists to config.yaml)."""
-    config = load_config()
-    if "dashboard" not in config:
-        config["dashboard"] = {}
-    config["dashboard"]["theme"] = body.name
-    save_config(config)
-    return {"ok": True, "theme": body.name}
 
 
 # Curated font-override ids. Kept in sync with FONT_CHOICES in
@@ -9443,36 +4999,12 @@ _FONT_CHOICES = frozenset({
 })
 
 
-@app.get("/api/dashboard/font")
-async def get_dashboard_font():
-    """Return the active font override (``"theme"`` = use the theme's font)."""
-    config = load_config()
-    font = cfg_get(config, "dashboard", "font", default=_FONT_DEFAULT_ID)
-    if font not in _FONT_CHOICES:
-        font = _FONT_DEFAULT_ID
-    return {"font": font}
 
 
 class FontSetBody(BaseModel):
     font: str
 
 
-@app.put("/api/dashboard/font")
-async def set_dashboard_font(body: FontSetBody):
-    """Set the dashboard font override (persists to config.yaml).
-
-    Accepts any id in the curated catalog, or ``"theme"`` to clear the
-    override and fall back to the active theme's own font. Unknown ids are
-    coerced to ``"theme"`` rather than 400'd so a stale client can't wedge
-    the picker.
-    """
-    font = body.font if body.font in _FONT_CHOICES else _FONT_DEFAULT_ID
-    config = load_config()
-    if "dashboard" not in config:
-        config["dashboard"] = {}
-    config["dashboard"]["font"] = font
-    save_config(config)
-    return {"ok": True, "font": font}
 
 
 # ---------------------------------------------------------------------------
@@ -9634,26 +5166,8 @@ def _get_dashboard_plugins(force_rescan: bool = False) -> list:
     return _dashboard_plugins_cache
 
 
-@app.get("/api/dashboard/plugins")
-async def get_dashboard_plugins():
-    """Return discovered dashboard plugins (excludes user-hidden ones)."""
-    plugins = _get_dashboard_plugins()
-    # Read user's hidden plugins list from config.
-    config = load_config()
-    hidden: list = cfg_get(config, "dashboard", "hidden_plugins", default=[]) or []
-    # Strip internal fields before sending to frontend and filter out hidden.
-    return [
-        {k: v for k, v in p.items() if not k.startswith("_")}
-        for p in plugins
-        if p["name"] not in hidden
-    ]
 
 
-@app.get("/api/dashboard/plugins/rescan")
-async def rescan_dashboard_plugins():
-    """Force re-scan of dashboard plugins."""
-    plugins = _get_dashboard_plugins(force_rescan=True)
-    return {"ok": True, "count": len(plugins)}
 
 
 class _AgentPluginInstallBody(BaseModel):
@@ -9781,36 +5295,8 @@ def _merged_plugins_hub() -> Dict[str, Any]:
     }
 
 
-@app.get("/api/dashboard/plugins/hub")
-async def get_plugins_hub(request: Request):
-    """Unified agent plugins + dashboard extension metadata (session protected)."""
-    _require_token(request)
-    try:
-        return _merged_plugins_hub()
-    except Exception as exc:
-        _log.warning("plugins/hub failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Failed to build plugins hub.") from exc
 
 
-@app.post("/api/dashboard/agent-plugins/install")
-async def post_agent_plugin_install(request: Request, body: _AgentPluginInstallBody):
-    _require_token(request)
-    from janus_cli.plugins_cmd import dashboard_install_plugin
-
-    result = dashboard_install_plugin(
-        body.identifier.strip(),
-        force=body.force,
-        enable=body.enable,
-    )
-    if not result.get("ok"):
-        raise HTTPException(
-            status_code=400,
-            detail=result.get("error") or "Install failed.",
-        )
-    _get_dashboard_plugins(force_rescan=True)
-    # Strip internal paths from the response
-    result.pop("after_install_path", None)
-    return result
 
 
 def _validate_plugin_name(name: str) -> str:
@@ -9821,54 +5307,12 @@ def _validate_plugin_name(name: str) -> str:
     return name
 
 
-@app.post("/api/dashboard/agent-plugins/{name:path}/enable")
-async def post_agent_plugin_enable(request: Request, name: str):
-    _require_token(request)
-    name = _validate_plugin_name(name)
-    from janus_cli.plugins_cmd import dashboard_set_agent_plugin_enabled
-
-    result = dashboard_set_agent_plugin_enabled(name, enabled=True)
-    if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error") or "Enable failed.")
-    return result
 
 
-@app.post("/api/dashboard/agent-plugins/{name:path}/disable")
-async def post_agent_plugin_disable(request: Request, name: str):
-    _require_token(request)
-    name = _validate_plugin_name(name)
-    from janus_cli.plugins_cmd import dashboard_set_agent_plugin_enabled
-
-    result = dashboard_set_agent_plugin_enabled(name, enabled=False)
-    if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error") or "Disable failed.")
-    return result
 
 
-@app.post("/api/dashboard/agent-plugins/{name:path}/update")
-async def post_agent_plugin_update(request: Request, name: str):
-    _require_token(request)
-    name = _validate_plugin_name(name)
-    from janus_cli.plugins_cmd import dashboard_update_user_plugin
-
-    result = dashboard_update_user_plugin(name)
-    if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error") or "Update failed.")
-    _get_dashboard_plugins(force_rescan=True)
-    return result
 
 
-@app.delete("/api/dashboard/agent-plugins/{name:path}")
-async def delete_agent_plugin(request: Request, name: str):
-    _require_token(request)
-    name = _validate_plugin_name(name)
-    from janus_cli.plugins_cmd import dashboard_remove_user_plugin
-
-    result = dashboard_remove_user_plugin(name)
-    if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error") or "Remove failed.")
-    _get_dashboard_plugins(force_rescan=True)
-    return result
 
 
 class _PluginProvidersPutBody(BaseModel):
@@ -9876,116 +5320,14 @@ class _PluginProvidersPutBody(BaseModel):
     context_engine: Optional[str] = None
 
 
-@app.put("/api/dashboard/plugin-providers")
-async def put_plugin_providers(request: Request, body: _PluginProvidersPutBody):
-    """Persist memory provider / context engine selection (writes config.yaml)."""
-    _require_token(request)
-    from janus_cli.plugins_cmd import (
-        _save_context_engine,
-        _save_memory_provider,
-    )
-
-    if body.memory_provider is not None:
-        _save_memory_provider(body.memory_provider)
-    if body.context_engine is not None:
-        _save_context_engine(body.context_engine)
-    return {"ok": True}
 
 
 class _PluginVisibilityBody(BaseModel):
     hidden: bool
 
 
-@app.post("/api/dashboard/plugins/{name:path}/visibility")
-async def post_plugin_visibility(request: Request, name: str, body: _PluginVisibilityBody):
-    """Toggle a plugin's sidebar visibility (persists to config.yaml dashboard.hidden_plugins)."""
-    _require_token(request)
-    name = _validate_plugin_name(name)
-
-    config = load_config()
-    if "dashboard" not in config or not isinstance(config.get("dashboard"), dict):
-        config["dashboard"] = {}
-    hidden_list: list = config["dashboard"].get("hidden_plugins") or []
-    if not isinstance(hidden_list, list):
-        hidden_list = []
-
-    if body.hidden and name not in hidden_list:
-        hidden_list.append(name)
-    elif not body.hidden and name in hidden_list:
-        hidden_list.remove(name)
-
-    config["dashboard"]["hidden_plugins"] = hidden_list
-    save_config(config)
-    return {"ok": True, "name": name, "hidden": body.hidden}
 
 
-@app.get("/dashboard-plugins/{plugin_name}/{file_path:path}")
-async def serve_plugin_asset(plugin_name: str, file_path: str):
-    """Serve static assets from a dashboard plugin directory.
-
-    Only serves files from the plugin's ``dashboard/`` subdirectory.
-    Path traversal is blocked by checking ``resolve().is_relative_to()``.
-
-    Restricted to a browser-fetchable suffix allowlist (JS/CSS/JSON/HTML/
-    SVG/PNG/JPG/WOFF). The dashboard loads plugin JS via ``<script src>``
-    and CSS via ``<link href>``, neither of which can attach a custom
-    auth header — so this route stays unauthenticated to keep the SPA
-    working. But user-installed plugins ship a ``plugin_api.py``
-    backend module that the browser never fetches; it's only imported
-    by :func:`_mount_plugin_api_routes` at startup. Without a suffix
-    allowlist, anyone on the loopback port can curl the ``.py`` source
-    of a private third-party plugin. Reject everything outside the
-    browser-asset set.
-    """
-    plugins = _get_dashboard_plugins()
-    plugin = next((p for p in plugins if p["name"] == plugin_name), None)
-    if not plugin:
-        raise HTTPException(status_code=404, detail="Plugin not found")
-
-    base = Path(plugin["_dir"])
-    target = (base / file_path).resolve()
-
-    if not target.is_relative_to(base.resolve()):
-        raise HTTPException(status_code=403, detail="Path traversal blocked")
-    if not target.exists() or not target.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
-
-    # Browser-asset suffix allowlist. Everything outside this set is
-    # rejected with 404 so we don't leak ``.py`` backend sources, README
-    # files, ``.env.example`` templates, etc. — none of which the SPA
-    # actually fetches. Add to this set deliberately when a new asset
-    # type comes up; do NOT change the default fallback.
-    suffix = target.suffix.lower()
-    content_types = {
-        ".js": "application/javascript",
-        ".mjs": "application/javascript",
-        ".css": "text/css",
-        ".json": "application/json",
-        ".html": "text/html",
-        ".svg": "image/svg+xml",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".gif": "image/gif",
-        ".webp": "image/webp",
-        ".ico": "image/x-icon",
-        ".woff2": "font/woff2",
-        ".woff": "font/woff",
-        ".ttf": "font/ttf",
-        ".otf": "font/otf",
-        ".map": "application/json",
-    }
-    if suffix not in content_types:
-        raise HTTPException(
-            status_code=404,
-            detail="File not found",
-        )
-    media_type = content_types[suffix]
-    return FileResponse(
-        target,
-        media_type=media_type,
-        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
-    )
 
 
 def _mount_plugin_api_routes():
@@ -10071,6 +5413,82 @@ _mount_plugin_api_routes()
 from janus_cli.dashboard_auth.routes import router as _dashboard_auth_router  # noqa: E402
 app.include_router(_dashboard_auth_router)
 
+
+# --- ROUTERS ---
+from janus_cli.routers.media import router as media_router
+app.include_router(media_router)
+from janus_cli.routers.status import router as status_router
+app.include_router(status_router)
+from janus_cli.routers.system import router as system_router
+app.include_router(system_router)
+from janus_cli.routers.curator import router as curator_router
+app.include_router(curator_router)
+from janus_cli.routers.learning import router as learning_router
+app.include_router(learning_router)
+from janus_cli.routers.aspirations import router as aspirations_router
+app.include_router(aspirations_router)
+from janus_cli.routers.interests import router as interests_router
+app.include_router(interests_router)
+from janus_cli.routers.skills import router as skills_router
+app.include_router(skills_router)
+from janus_cli.routers.sleep import router as sleep_router
+app.include_router(sleep_router)
+from janus_cli.routers.portal import router as portal_router
+app.include_router(portal_router)
+from janus_cli.routers.ops import router as ops_router
+app.include_router(ops_router)
+from janus_cli.routers.gateway import router as gateway_router
+app.include_router(gateway_router)
+from janus_cli.routers.janus import router as janus_router
+app.include_router(janus_router)
+from janus_cli.routers.audio import router as audio_router
+app.include_router(audio_router)
+from janus_cli.routers.actions import router as actions_router
+app.include_router(actions_router)
+from janus_cli.routers.sessions import router as sessions_router
+app.include_router(sessions_router)
+from janus_cli.routers.profiles import router as profiles_router
+app.include_router(profiles_router)
+from janus_cli.routers.config import router as config_router
+app.include_router(config_router)
+from janus_cli.routers.model import router as model_router
+app.include_router(model_router)
+from janus_cli.routers.env import router as env_router
+app.include_router(env_router)
+from janus_cli.routers.providers import router as providers_router
+app.include_router(providers_router)
+from janus_cli.routers.messaging import router as messaging_router
+app.include_router(messaging_router)
+from janus_cli.routers.logs import router as logs_router
+app.include_router(logs_router)
+from janus_cli.routers.cron import router as cron_router
+app.include_router(cron_router)
+from janus_cli.routers.mcp import router as mcp_router
+app.include_router(mcp_router)
+from janus_cli.routers.pairing import router as pairing_router
+app.include_router(pairing_router)
+from janus_cli.routers.webhooks import router as webhooks_router
+app.include_router(webhooks_router)
+from janus_cli.routers.credentials import router as credentials_router
+app.include_router(credentials_router)
+from janus_cli.routers.memory import router as memory_router
+app.include_router(memory_router)
+from janus_cli.routers.tools import router as tools_router
+app.include_router(tools_router)
+from janus_cli.routers.analytics import router as analytics_router
+app.include_router(analytics_router)
+from janus_cli.routers.pty import router as pty_router
+app.include_router(pty_router)
+from janus_cli.routers.ws import router as ws_router
+app.include_router(ws_router)
+from janus_cli.routers.pub import router as pub_router
+app.include_router(pub_router)
+from janus_cli.routers.events import router as events_router
+app.include_router(events_router)
+from janus_cli.routers.dashboard import router as dashboard_router
+app.include_router(dashboard_router)
+from janus_cli.routers.dashboard_plugins import router as dashboard_plugins_router
+app.include_router(dashboard_plugins_router)
 mount_spa(app)
 
 

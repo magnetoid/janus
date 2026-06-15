@@ -2,7 +2,7 @@
 name = "janus-bootstrap"
 version = "0.0.1"
 description = "Janus Setup — signed installer that drives scripts/install.ps1"
-authors = ["Imba Labs <info@nousresearch.com>"]
+authors = ["Imba Labs <info@imbalabs.com>"]
 edition = "2021"
 rust-version = "1.77"
 

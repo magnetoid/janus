@@ -1,7 +1,7 @@
 """
 Multi-provider authentication system for Janus Agent.
 
-Supports OAuth device code flows (Nous Portal, future: OpenAI Codex) and
+Supports OAuth device code flows (Janus Portal, future: OpenAI Codex) and
 traditional API key providers (OpenRouter, custom endpoints). Auth state
 is persisted in ~/.janus/auth.json with cross-process file locking.
 
@@ -66,9 +66,9 @@ except Exception:
 AUTH_STORE_VERSION = 1
 AUTH_LOCK_TIMEOUT_SECONDS = 15.0
 
-# Nous Portal defaults
-DEFAULT_NOUS_PORTAL_URL = "https://portal.nousresearch.com"
-DEFAULT_NOUS_INFERENCE_URL = "https://inference-api.nousresearch.com/v1"
+# Janus Portal defaults
+DEFAULT_NOUS_PORTAL_URL = "https://portal.imbalabs.com"
+DEFAULT_NOUS_INFERENCE_URL = "https://inference-api.imbalabs.com/v1"
 DEFAULT_NOUS_CLIENT_ID = "janus-cli"
 NOUS_INFERENCE_INVOKE_SCOPE = "inference:invoke"
 DEFAULT_NOUS_SCOPE = NOUS_INFERENCE_INVOKE_SCOPE
@@ -167,7 +167,7 @@ class ProviderConfig:
 PROVIDER_REGISTRY: Dict[str, ProviderConfig] = {
     "nous": ProviderConfig(
         id="nous",
-        name="Nous Portal",
+        name="Janus Portal",
         auth_type="oauth_device_code",
         portal_base_url=DEFAULT_NOUS_PORTAL_URL,
         inference_base_url=DEFAULT_NOUS_INFERENCE_URL,
@@ -820,7 +820,7 @@ def _format_nous_entitlement_auth_error(error: AuthError) -> str:
             return message
     except Exception:
         pass
-    return f"{error} Check credits or billing in Nous Portal, then retry."
+    return f"{error} Check credits or billing in Janus Portal, then retry."
 
 
 def _token_fingerprint(token: Any) -> Optional[str]:
@@ -1637,7 +1637,7 @@ def _optional_base_url(value: Any) -> Optional[str]:
     return cleaned if cleaned else None
 
 
-# Allowlist of hosts the Nous Portal proxy is willing to forward inference
+# Allowlist of hosts the Janus Portal proxy is willing to forward inference
 # JWTs to. Sending a bearer anywhere else would leak it.
 #
 # This is consulted only for URLs coming from the NETWORK side (Portal
@@ -1646,7 +1646,7 @@ def _optional_base_url(value: Any) -> Optional[str]:
 # dev/staging escape hatch and the env source is already trusted (the
 # user set it themselves).
 _ALLOWED_NOUS_INFERENCE_HOSTS: FrozenSet[str] = frozenset({
-    "inference-api.nousresearch.com",
+    "inference-api.imbalabs.com",
 })
 
 
@@ -1787,7 +1787,7 @@ def _assert_nous_inference_jwt_usable(
     if reason is None:
         return
     raise AuthError(
-        "Nous Portal access token is not a usable inference JWT "
+        "Janus Portal access token is not a usable inference JWT "
         f"({reason}). Re-authenticate with: janus auth add nous",
         provider="nous",
         code=reason,
@@ -4306,7 +4306,7 @@ def _poll_for_token(
 
 
 # =============================================================================
-# Nous Portal — token refresh and model discovery
+# Janus Portal — token refresh and model discovery
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -4781,7 +4781,7 @@ def _refresh_access_token(
     lowered = description.lower()
     if code == "refresh_token_reused" or "reuse" in lowered or "reuse detected" in lowered:
         description = (
-            "Nous Portal detected refresh-token reuse and revoked this session.\n"
+            "Janus Portal detected refresh-token reuse and revoked this session.\n"
             "This usually means an external process (monitoring script, "
             "custom self-heal hook, or another Janus install sharing "
             "~/.janus/auth.json) called POST /api/oauth/token with Janus's "
@@ -4872,14 +4872,14 @@ def resolve_nous_access_token(
     ca_bundle: Optional[str] = None,
     refresh_skew_seconds: int = ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
 ) -> str:
-    """Resolve a refresh-aware Nous Portal access token for managed tool gateways."""
+    """Resolve a refresh-aware Janus Portal access token for managed tool gateways."""
     with _auth_store_lock():
         auth_store = _load_auth_store()
         state = _load_provider_state(auth_store, "nous")
 
         if not state:
             raise AuthError(
-                "Janus is not logged into Nous Portal.",
+                "Janus is not logged into Janus Portal.",
                 provider="nous",
                 relogin_required=True,
             )
@@ -4899,7 +4899,7 @@ def resolve_nous_access_token(
             refresh_token = state.get("refresh_token")
             if not isinstance(access_token, str) or not access_token:
                 raise AuthError(
-                    "No access token found for Nous Portal login.",
+                    "No access token found for Janus Portal login.",
                     provider="nous",
                     relogin_required=True,
                 )
@@ -5026,7 +5026,7 @@ def refresh_nous_oauth_pure(
             if not isinstance(refresh_token_value, str) or not refresh_token_value:
                 if current_invoke_jwt_status is not None:
                     raise AuthError(
-                        "Nous Portal access token is not a usable inference JWT "
+                        "Janus Portal access token is not a usable inference JWT "
                         f"({current_invoke_jwt_status}) and no refresh token is available. "
                         "Re-authenticate with: janus auth add nous",
                         provider="nous",
@@ -5034,7 +5034,7 @@ def refresh_nous_oauth_pure(
                         relogin_required=True,
                     )
                 raise AuthError(
-                    "No refresh token is available for Nous Portal.",
+                    "No refresh token is available for Janus Portal.",
                     provider="nous",
                     relogin_required=True,
                 )
@@ -5188,7 +5188,7 @@ def resolve_nous_runtime_credentials(
         state = _load_provider_state(auth_store, "nous")
 
         if not state:
-            raise AuthError("Janus is not logged into Nous Portal.",
+            raise AuthError("Janus is not logged into Janus Portal.",
                             provider="nous", relogin_required=True)
 
         persisted_state = dict(state)
@@ -5260,7 +5260,7 @@ def resolve_nous_runtime_credentials(
             refresh_token = state.get("refresh_token")
 
             if not isinstance(access_token, str) or not access_token:
-                raise AuthError("No access token found for Nous Portal login.",
+                raise AuthError("No access token found for Janus Portal login.",
                                 provider="nous", relogin_required=True)
 
             invoke_jwt_status = _nous_invoke_jwt_status(
@@ -5284,7 +5284,7 @@ def resolve_nous_runtime_credentials(
                         if not isinstance(refresh_token, str) or not refresh_token:
                             reason = invoke_jwt_status or "force_refresh"
                             raise AuthError(
-                                "Nous Portal access token is not a usable inference JWT "
+                                "Janus Portal access token is not a usable inference JWT "
                                 f"({reason}) and no refresh token is available. "
                                 "Re-authenticate with: janus auth add nous",
                                 provider="nous",
@@ -5472,7 +5472,7 @@ def _snapshot_nous_pool_status() -> Dict[str, Any]:
 
 # ── Process-level memo for get_nous_auth_status() ──
 # get_nous_auth_status() validates state by calling resolve_nous_runtime_credentials(),
-# which does a synchronous OAuth refresh POST to portal.nousresearch.com. That can take
+# which does a synchronous OAuth refresh POST to portal.imbalabs.com. That can take
 # ~350ms even on the failure path, and read-only UI surfaces (`janus tools`, status panels,
 # subscription-feature checks) call it many times per render — `janus tools` → "All Platforms"
 # was firing the refresh ~31× during one menu paint, racking up >13s of HTTP and burning
@@ -7474,7 +7474,7 @@ def _nous_device_code_login(
 
 
 def _login_nous(args, pconfig: ProviderConfig) -> None:
-    """Nous Portal device authorization flow."""
+    """Janus Portal device authorization flow."""
     timeout_seconds = getattr(args, "timeout", None) or 15.0
     insecure = bool(getattr(args, "insecure", False))
     ca_bundle = (
@@ -7630,7 +7630,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                 print("No free models currently available.")
                 print(unavailable_message or f"Upgrade at {_url} to access paid models.")
             else:
-                print("No curated models available for Nous Portal.")
+                print("No curated models available for Janus Portal.")
         except Exception as exc:
             message = format_auth_error(exc) if isinstance(exc, AuthError) else str(exc)
             print()
@@ -7655,7 +7655,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                 _save_auth_store(auth_store)
             print()
             print("No provider change. Nous credentials saved for future use.")
-            print("  Run `janus model` again to switch to Nous Portal.")
+            print("  Run `janus model` again to switch to Janus Portal.")
             return
 
         config_path = _update_config_for_provider(

@@ -45,7 +45,7 @@ Bundled skills (in `skills/`) ship with every Janus install. They should be **br
 
 If your skill is official and useful but not universally needed (e.g., a paid service integration, a heavyweight dependency), put it in **`optional-skills/`** — it ships with the repo but isn't activated by default. Users can discover it via `janus skills browse` (labeled "official") and install it with `janus skills install` (no third-party warning, built-in trust).
 
-If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a skills registry and share it in the [Imba Labs Discord](https://discord.gg/NousResearch). Users can install it with `janus skills install`.
+If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a skills registry and share it in the [Imba Labs Discord](https://discord.gg/imbalabs). Users can install it with `janus skills install`.
 
 ---
 
@@ -154,7 +154,7 @@ janus-agent/
 │   ├── main.py                   # Entry point, argument parsing, command dispatch
 │   ├── config.py                 # Config management, migration, env var definitions
 │   ├── setup.py                  # Interactive setup wizard
-│   ├── auth.py                   # Provider resolution, OAuth, Nous Portal
+│   ├── auth.py                   # Provider resolution, OAuth, Janus Portal
 │   ├── models.py                 # OpenRouter model selection lists
 │   ├── banner.py                 # Welcome banner, ASCII art
 │   ├── commands.py               # Central slash command registry (CommandDef), autocomplete, gateway helpers
@@ -194,7 +194,7 @@ janus-agent/
 ├── skills/                   # Bundled skills (copied to ~/.janus/skills/ on install)
 ├── optional-skills/          # Official optional skills (discoverable via hub, not activated by default)
 ├── tests/                    # Test suite
-├── website/                  # Documentation site (hermes-agent.nousresearch.com)
+├── website/                  # Documentation site (github.com/magnetoid/janus)
 │
 ├── cli-config.yaml.example   # Example configuration (copied to ~/.janus/config.yaml)
 └── AGENTS.md                 # Development guide for AI coding assistants
@@ -206,7 +206,7 @@ janus-agent/
 |------|---------|
 | `~/.janus/config.yaml` | Settings (model, terminal, toolsets, compression, etc.) |
 | `~/.janus/.env` | API keys and secrets |
-| `~/.janus/auth.json` | OAuth credentials (Nous Portal) |
+| `~/.janus/auth.json` | OAuth credentials (Janus Portal) |
 | `~/.janus/skills/` | All active skills (bundled + hub-installed + agent-created) |
 | `~/.janus/memories/` | Persistent memory (MEMORY.md, USER.md) |
 | `~/.janus/state.db` | SQLite session database |
@@ -241,7 +241,7 @@ User message → AIAgent._run_agent_loop()
 - **Toolset grouping**: Tools are grouped into toolsets (`web`, `terminal`, `file`, `browser`, etc.) that can be enabled/disabled per platform.
 - **Session persistence**: All conversations are stored in SQLite (`janus_state.py`) with full-text search and unique session titles. Per-session JSON snapshots in `~/.janus/sessions/` were superseded by the SQLite store and are off by default; opt back in with `sessions.write_json_snapshots: true` if you have external tooling that consumes the JSON files directly.
 - **Ephemeral injection**: System prompts and prefill messages are injected at API call time, never persisted to the database or logs.
-- **Provider abstraction**: The agent works with any OpenAI-compatible API. Provider resolution happens at init time (Nous Portal OAuth, OpenRouter API key, or custom endpoint).
+- **Provider abstraction**: The agent works with any OpenAI-compatible API. Provider resolution happens at init time (Janus Portal OAuth, OpenRouter API key, or custom endpoint).
 - **Provider routing**: When using OpenRouter, `provider_routing` in config.yaml controls provider selection (sort by throughput/latency/price, allow/ignore specific providers, data retention policies). These are injected as `extra_body.provider` in API requests.
 
 ---
@@ -806,40 +806,25 @@ After the [litellm supply chain compromise](https://github.com/BerriAI/litellm/i
 
 | Source type | Required treatment | Rationale |
 |---|---|---|
-| **PyPI package** | `>=floor,<next_major` | PyPI versions are immutable once published, but new versions can be pushed into your range. A `<next_major` ceiling stops a 1.x install from upgrading to a malicious 2.0.0. |
+| **PyPI package** | `==exact` | Ranges allow PyPI to ship a fresh version of a transitive at any time without a code review. Exact pins mean the only way a new package version reaches a user is via an intentional update on our end. |
 | **Git URL** (atroposlib, tinker, yc-bench, Baileys) | Full commit SHA | Branches and tags are mutable refs; SHA is content-addressed. |
 | **GitHub Actions** | Full commit SHA + version comment | Action tags are mutable refs (e.g. tj-actions/changed-files March 2025). Pin as `uses: owner/action@<sha>  # vX.Y.Z` |
-| **CI-only pip installs** | `==exact` | Hermetic CI builds; churn is acceptable. |
 
-**Every new PyPI dependency in a PR must have a `<next_major` upper bound.** PRs adding unbounded `>=X.Y.Z` specs will be rejected by reviewers. The `supply-chain-audit.yml` CI workflow also flags dependency manifest changes for manual review.
-
-**How to determine the ceiling:**
-- If the package is at version `1.x.y`, use `<2`.
-- If the package is at version `0.x.y` (pre-1.0), use `<0.(current_minor + 2)` — e.g. if current is `0.29.x`, use `<0.32`. This gives ~2 minor versions of headroom while keeping the window small enough that a hostile takeover version is unlikely to land inside it.
-- Exception: packages with very stable APIs (e.g. `aiohttp-socks`) can use `<1` at reviewer discretion.
+**Every new PyPI dependency in a PR must be exact-pinned to `==X.Y.Z` (no ranges).** PRs adding ranges like `>=X.Y.Z` or `<next_major` will be rejected by reviewers. The `supply-chain-audit.yml` CI workflow also flags dependency manifest changes for manual review.
 
 **Examples:**
 ```toml
-# ✅ Correct — post-1.0
-"openai>=2.21.0,<3"
-"pydantic>=2.12.5,<3"
+# ✅ Correct
+"openai==2.24.0"
+"pydantic==2.13.4"
 
-# ✅ Correct — pre-1.0 (tight minor window)
-"asyncpg>=0.29,<0.32"
-"aiosqlite>=0.20,<0.23"
-"hindsight-client>=0.4.22,<0.5"
-
-# ❌ Rejected — no upper bound
+# ❌ Rejected — range used
 "some-package>=1.2.3"
-
-# ❌ Rejected — too tight (blocks legitimate patches)
-"some-package==1.2.3"
-
-# ❌ Rejected — too loose for pre-1.0 (allows 80 minor versions)
 "some-package>=0.20,<1"
+"some-package>=1.2.3,<2"
 ```
 
-**Reference PRs:** #2796 (litellm removal), #2810 (upper bounds pass), #9801 (SHA pinning + supply-chain-audit CI).
+**Reference PRs:** #2796 (litellm removal), #9801 (SHA pinning + supply-chain-audit CI), May 2026 strict pin update.
 
 ---
 
@@ -911,7 +896,7 @@ test(tools): add unit tests for file_operations
 
 ## Community
 
-- **Discord**: [discord.gg/NousResearch](https://discord.gg/NousResearch) — for questions, showcasing projects, and sharing skills
+- **Discord**: [discord.gg/imbalabs](https://discord.gg/imbalabs) — for questions, showcasing projects, and sharing skills
 - **GitHub Discussions**: For design proposals and architecture discussions
 - **Skills Hub**: Upload specialized skills to a registry and share them with the community
 

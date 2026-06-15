@@ -151,7 +151,7 @@ The connection has two halves: on the backend you protect the dashboard with an 
 
 **Pick a provider based on where the backend lives:**
 
-- **OAuth (Nous Portal) — preferred for anything reachable beyond your own machine.** Logins are verified against your Nous account, so this is the option suitable for a VPS, a public host, or any remote backend. Register the dashboard with `janus dashboard register` (or the Portal [`/local-dashboards`](https://portal.nousresearch.com/local-dashboards) page) to provision its OAuth client, then sign in from the app with **Sign in with Imba Labs**. A self-hosted OIDC provider works the same way if you run your own identity provider.
+- **OAuth (Janus Portal) — preferred for anything reachable beyond your own machine.** Logins are verified against your Nous account, so this is the option suitable for a VPS, a public host, or any remote backend. Register the dashboard with `janus dashboard register` (or the Portal [`/local-dashboards`](https://portal.imbalabs.com/local-dashboards) page) to provision its OAuth client, then sign in from the app with **Sign in with Imba Labs**. A self-hosted OIDC provider works the same way if you run your own identity provider.
 - **Username/password — local / trusted-network use only.** The simplest option when the backend is on the same trusted LAN or reachable only over a VPN (e.g. Tailscale). It protects a single shared credential with no external identity provider, so **do not use it for a dashboard exposed to the public internet** — reach for OAuth there instead.
 
 The rest of this section shows the username/password path because it's the quickest to stand up on a trusted network; for the OAuth path see [Web Dashboard → Default provider: Imba Labs](./features/web-dashboard.md#default-provider-nous-research).
@@ -186,7 +186,7 @@ Prefer not to keep a plaintext password at rest? Set `JANUS_DASHBOARD_BASIC_AUTH
 Running the dashboard as a systemd service? Give the unit `EnvironmentFile=%h/.janus/.env` so the credentials are in the environment at boot.
 
 :::warning
-The dashboard reads and writes your `.env` (API keys, secrets) and can run agent commands. The **username/password** setup shown above is for a trusted network — never expose a password-protected dashboard directly to the open internet; put it behind a VPN. [Tailscale](https://tailscale.com/) is the clean option: bind to the machine's tailscale IP (`--host <tailscale-ip>`) and use `http://<tailscale-ip>:9119` as the Remote URL so only your tailnet can reach it. To reach a backend over the public internet, use the **OAuth (Nous Portal)** provider instead.
+The dashboard reads and writes your `.env` (API keys, secrets) and can run agent commands. The **username/password** setup shown above is for a trusted network — never expose a password-protected dashboard directly to the open internet; put it behind a VPN. [Tailscale](https://tailscale.com/) is the clean option: bind to the machine's tailscale IP (`--host <tailscale-ip>`) and use `http://<tailscale-ip>:9119` as the Remote URL so only your tailnet can reach it. To reach a backend over the public internet, use the **OAuth (Janus Portal)** provider instead.
 :::
 
 ### In the app
@@ -230,7 +230,7 @@ rm "$HOME/.janus/janus-agent/.janus-bootstrap-complete"
 rm -rf "$HOME/.janus/janus-agent/venv"
 
 # Reset a stuck macOS microphone prompt
-tccutil reset Microphone com.nousresearch.janus
+tccutil reset Microphone com.imbalabs.janus
 ```
 
 ## Building from source

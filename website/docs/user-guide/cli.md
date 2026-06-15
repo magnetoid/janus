@@ -9,7 +9,7 @@ description: "Master the Janus Agent terminal interface — commands, keybinding
 Janus Agent's CLI is a full terminal user interface (TUI) — not a web UI. It features multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, and streaming tool output. Built for people who live in the terminal.
 
 :::tip First-time setup
-One command — `janus setup --portal` — and you're ready to `janus chat`. See [Nous Portal](/integrations/nous-portal).
+One command — `janus setup --portal` — and you're ready to `janus chat`. See [Janus Portal](/integrations/nous-portal).
 :::
 
 :::tip
@@ -29,7 +29,7 @@ janus chat -q "Hello"
 janus chat --model "anthropic/claude-sonnet-4"
 
 # With a specific provider
-janus chat --provider nous        # Use Nous Portal
+janus chat --provider nous        # Use Janus Portal
 janus chat --provider openrouter  # Force OpenRouter
 
 # With specific toolsets

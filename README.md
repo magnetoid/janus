@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Docs-GitHub-FFD700?style=for-the-badge" alt="Documentation"></a>
+  <a href="https://discord.gg/imbalabs"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/magnetoid/janus/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Built%20by-Imba%20Labs-blueviolet?style=for-the-badge" alt="Built by Imba Labs"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/Lang-中文-red?style=for-the-badge" alt="中文"></a>
@@ -21,7 +22,7 @@
 
 **The self-improving AI agent built by [Imba Labs](https://github.com/magnetoid/janus).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
 
-Use any model you want — [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai) (AI-native cloud for Model API, Agent Sandbox, and GPU Cloud), [NVIDIA NIM](https://build.nvidia.com) (Nemotron), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch with `janus model` — no code changes, no lock-in.
+Use any model you want — [Janus Portal](https://portal.imbalabs.com), [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai) (AI-native cloud for Model API, Agent Sandbox, and GPU Cloud), [NVIDIA NIM](https://build.nvidia.com) (Nemotron), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch with `janus model` — no code changes, no lock-in.
 
 <table>
 <tr><td><b>A real terminal interface</b></td><td>Full TUI with multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, and streaming tool output.</td></tr>
@@ -90,7 +91,7 @@ janus update       # Update to the latest version
 janus doctor       # Diagnose any issues
 ```
 
-📖 **[Full documentation →](https://github.com/magnetoid/janus)**
+📖 **[Full documentation →](website/docs/getting-started/quickstart.md)**
 
 ---
 
@@ -115,9 +116,9 @@ The slash variants (`/memory`, `/aspire`, `/interest`) work from the messaging g
 
 ---
 
-## Skip the API-key collection — Nous Portal
+## Skip the API-key collection — Janus Portal
 
-Janus works with whatever provider you want — that's not changing. But if you'd rather not collect five separate API keys for the model, web search, image generation, TTS, and a cloud browser, **[Nous Portal](https://portal.imbamarketing.com)** covers all of them under one subscription:
+Janus works with whatever provider you want — that's not changing. But if you'd rather not collect five separate API keys for the model, web search, image generation, TTS, and a cloud browser, **[Janus Portal](https://portal.imbalabs.com)** covers all of them under one subscription:
 
 - **300+ models** — pick any of them with `/model <name>`
 - **Tool Gateway** — web search (Firecrawl), image generation (FAL), text-to-speech (OpenAI), cloud browser (Browser Use), all routed through your sub. No extra accounts.
@@ -128,7 +129,7 @@ One command from a fresh install:
 janus setup --portal
 ```
 
-That logs you in via OAuth, sets Nous as your provider, and turns on the Tool Gateway. Check what's wired up any time with `janus portal info`. Full details on the [Tool Gateway docs page](https://github.com/magnetoid/janus).
+That logs you in via OAuth, sets Nous as your provider, and turns on the Tool Gateway. Check what's wired up any time with `janus portal info`. Full details on the [Tool Gateway docs page](website/docs/user-guide/features/tool-gateway.md).
 
 You can still bring your own keys per-tool whenever you want — the gateway is per-backend, not all-or-nothing.
 
@@ -150,31 +151,31 @@ Janus has two entry points: start the terminal UI with `janus`, or run the gatew
 | Interrupt current work         | `Ctrl+C` or send a new message                | `/stop` or send a new message                                                    |
 | Platform-specific status       | `/platforms`                                  | `/status`, `/sethome`                                                            |
 
-For the full command lists, see the [CLI guide](https://github.com/magnetoid/janus) and the [Messaging Gateway guide](https://github.com/magnetoid/janus).
+For the full command lists, see the [CLI guide](website/docs/reference/cli-commands.md) and the [Messaging Gateway guide](website/docs/user-guide/messaging/index.md).
 
 ---
 
 ## Documentation
 
-All documentation lives at **[hermes-agent.nousresearch.com/docs](https://github.com/magnetoid/janus)**:
+All documentation lives at **[github.com/magnetoid/janus](website/docs/getting-started/quickstart.md)**:
 
 | Section                                                                                             | What's Covered                                             |
 | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| [Quickstart](https://github.com/magnetoid/janus)                 | Install → setup → first conversation in 2 minutes          |
-| [CLI Usage](https://github.com/magnetoid/janus)                              | Commands, keybindings, personalities, sessions             |
-| [Configuration](https://github.com/magnetoid/janus)                | Config file, providers, models, all options                |
-| [Messaging Gateway](https://github.com/magnetoid/janus)                | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
-| [Security](https://github.com/magnetoid/janus)                          | Command approval, DM pairing, container isolation          |
-| [Tools & Toolsets](https://github.com/magnetoid/janus)            | 40+ tools, toolset system, terminal backends               |
-| [Skills System](https://github.com/magnetoid/janus)              | Procedural memory, Skills Hub, creating skills             |
-| [Memory](https://github.com/magnetoid/janus)                     | Persistent memory, user profiles, best practices           |
-| [MCP Integration](https://github.com/magnetoid/janus)               | Connect any MCP server for extended capabilities           |
-| [Cron Scheduling](https://github.com/magnetoid/janus)              | Scheduled tasks with platform delivery                     |
-| [Context Files](https://github.com/magnetoid/janus)       | Project context that shapes every conversation             |
-| [Architecture](https://github.com/magnetoid/janus)             | Project structure, agent loop, key classes                 |
-| [Contributing](https://github.com/magnetoid/janus)             | Development setup, PR process, code style                  |
-| [CLI Reference](https://github.com/magnetoid/janus)                  | All commands and flags                                     |
-| [Environment Variables](https://github.com/magnetoid/janus) | Complete env var reference                                 |
+| [Quickstart](website/docs/getting-started/quickstart.md)                 | Install → setup → first conversation in 2 minutes          |
+| [CLI Usage](website/docs/reference/cli-commands.md)                              | Commands, keybindings, personalities, sessions             |
+| [Configuration](website/docs/user-guide/configuration.md)                | Config file, providers, models, all options                |
+| [Messaging Gateway](website/docs/user-guide/messaging/index.md)                | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
+| [Security](website/docs/user-guide/security.md)                          | Command approval, DM pairing, container isolation          |
+| [Tools & Toolsets](website/docs/user-guide/features/tools.md)            | 40+ tools, toolset system, terminal backends               |
+| [Skills System](website/docs/user-guide/features/skills.md)              | Procedural memory, Skills Hub, creating skills             |
+| [Memory](website/docs/user-guide/features/memory.md)                     | Persistent memory, user profiles, best practices           |
+| [MCP Integration](website/docs/user-guide/features/mcp.md)               | Connect any MCP server for extended capabilities           |
+| [Cron Scheduling](website/docs/user-guide/features/cron.md)              | Scheduled tasks with platform delivery                     |
+| [Context Files](website/docs/user-guide/features/context-files.md)       | Project context that shapes every conversation             |
+| [Architecture](website/docs/developer-guide/architecture.md)             | Project structure, agent loop, key classes                 |
+| [Contributing](website/docs/developer-guide/contributing.md)             | Development setup, PR process, code style                  |
+| [CLI Reference](website/docs/reference/cli-commands.md)                  | All commands and flags                                     |
+| [Environment Variables](website/docs/reference/environment-variables.md) | Complete env var reference                                 |
 
 ---
 
@@ -210,7 +211,7 @@ See `janus claw migrate --help` for all options, or use the `openclaw-migration`
 
 ## Contributing
 
-We welcome contributions! See the [Contributing Guide](https://github.com/magnetoid/janus) for development setup, code style, and PR process.
+We welcome contributions! See the [Contributing Guide](website/docs/developer-guide/contributing.md) for development setup, code style, and PR process.
 
 Quick start for contributors — clone and go with `setup-janus.sh`:
 
@@ -235,7 +236,7 @@ scripts/run_tests.sh
 
 ## Community
 
-
+- 💬 [Discord](https://discord.gg/imbalabs)
 - 📚 [Skills Hub](https://agentskills.io)
 - 🐛 [Issues](https://github.com/magnetoid/janus/issues)
 
@@ -247,4 +248,4 @@ scripts/run_tests.sh
 
 MIT — see [LICENSE](LICENSE).
 
-Built by [Imba Labs](https://imbamarketing.com).
+Built by [Imba Labs](https://imbalabs.com).

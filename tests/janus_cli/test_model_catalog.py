@@ -42,7 +42,7 @@ def _valid_manifest() -> dict:
                 ],
             },
             "nous": {
-                "metadata": {"display_name": "Nous Portal"},
+                "metadata": {"display_name": "Janus Portal"},
                 "models": [
                     {"id": "anthropic/claude-opus-4.7"},
                     {"id": "moonshotai/kimi-k2.6"},
@@ -180,7 +180,7 @@ class TestFallbackChain:
     releases (opus 4.8, etc.) never reach the picker.
     """
 
-    PRIMARY = "https://hermes-agent.nousresearch.com/docs/api/model-catalog.json"
+    PRIMARY = "https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json"
     FALLBACK = (
         "https://raw.githubusercontent.com/magnetoid/janus"
         "/main/website/static/api/model-catalog.json"

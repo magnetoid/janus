@@ -17,7 +17,7 @@ _VALID_MODAL_MODES = {"auto", "direct", "managed"}
 def managed_nous_tools_enabled(*, force_fresh: bool = False) -> bool:
     """Return True when the user is entitled to the Nous Tool Gateway.
 
-    Entitlement is paid Nous Portal service access OR a live free tool pool
+    Entitlement is paid Janus Portal service access OR a live free tool pool
     (``tool_gateway_entitled``). Per-category coverage (the pool funds image but
     not video, etc.) is narrowed by callers via ``tool_gateway_entitled_for``;
     this coarse gate only answers "is any managed tool usable at all".
@@ -64,7 +64,7 @@ def nous_tool_gateway_unavailable_message(
         pass
     return (
         f"{capability} is unavailable. Run `janus model` to refresh your "
-        "Nous Portal login and billing status."
+        "Janus Portal login and billing status."
     )
 
 

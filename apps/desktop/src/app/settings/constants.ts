@@ -40,9 +40,9 @@ export const CONTROL_TEXT = 'text-xs'
 export const PROVIDER_GROUPS: ProviderPrefix[] = [
   {
     prefix: 'NOUS_',
-    name: 'Nous Portal',
+    name: 'Janus Portal',
     description: 'Hosted Janus & Nous-trained models',
-    docsUrl: 'https://portal.nousresearch.com',
+    docsUrl: 'https://portal.imbalabs.com',
     priority: 0
   },
   {

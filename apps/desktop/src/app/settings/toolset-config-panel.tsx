@@ -321,7 +321,7 @@ export function ToolsetConfigPanel({ toolset, onConfiguredChange }: ToolsetConfi
   // Default the expanded provider to the one actually active in config
   // (`is_active` / `cfg.active_provider`, mirroring the CLI picker), then the
   // first fully-configured provider, else the first provider. Without this the
-  // panel highlighted the first keyless provider (e.g. Nous Portal) even when
+  // panel highlighted the first keyless provider (e.g. Janus Portal) even when
   // the user had already selected another (e.g. DuckDuckGo).
   useEffect(() => {
     if (activeProvider || providers.length === 0) {

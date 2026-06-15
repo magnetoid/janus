@@ -659,7 +659,7 @@ export const zhHant = defineLocale({
       noProviderOptions: '此工具集沒有提供方選項；啟用後即可使用目前設定。',
       noProviders: '此工具集目前沒有可用提供方。',
       ready: '就緒',
-      nousIncluded: '包含在 Nous 訂閱中；登入 Nous Portal 即可啟用。',
+      nousIncluded: '包含在 Nous 訂閱中；登入 Janus Portal 即可啟用。',
       noApiKeyRequired: '不需要 API 金鑰。',
       postSetupHint: step => `此後端需要一次性安裝 (${step})。將在此機器上執行，可能需要幾分鐘。`,
       postSetupRun: '執行設定',

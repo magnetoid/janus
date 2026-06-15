@@ -1,6 +1,6 @@
 """Regression tests for the ``auto`` → main-model-first policy.
 
-Prior to this change, aggregator users (OpenRouter / Nous Portal) had aux
+Prior to this change, aggregator users (OpenRouter / Janus Portal) had aux
 tasks routed through a cheap provider-side default (Gemini Flash) while
 non-aggregator users got their main model.  This made behavior inconsistent
 and surprising — users picked Claude but got Gemini Flash summaries.
@@ -52,7 +52,7 @@ class TestResolveAutoMainFirst:
         assert mock_resolve.call_args.args[1] == "anthropic/claude-sonnet-4.6"
 
     def test_nous_main_uses_main_model_for_aux(self, monkeypatch):
-        """Nous Portal main user → aux uses their picked Nous model, not free-tier MiMo."""
+        """Janus Portal main user → aux uses their picked Nous model, not free-tier MiMo."""
         # No OPENROUTER_API_KEY → ensures if main failed we'd fall to chain
         with patch(
             "agent.auxiliary_client._read_main_provider", return_value="nous",

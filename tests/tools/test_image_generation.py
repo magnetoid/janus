@@ -258,7 +258,7 @@ class TestDefaults:
 
 class TestGptQualityPinnedToMedium:
     """GPT-Image quality is baked into the FAL_MODELS defaults at 'medium'
-    and cannot be overridden via config. Pinning keeps Nous Portal billing
+    and cannot be overridden via config. Pinning keeps Janus Portal billing
     predictable across all users."""
 
     def test_gpt_payload_always_has_medium_quality(self, image_tool):

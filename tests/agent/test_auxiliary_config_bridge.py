@@ -203,7 +203,7 @@ class TestGatewayBridgeCodeParity:
         in source. Assert the dynamic shape and the canonical built-in keys
         bridged set instead.
         """
-        gateway_path = Path(__file__).parent.parent.parent / "gateway" / "run.py"
+        gateway_path = Path(__file__).parent.parent.parent / "gateway" / "core.py"
         # Pin encoding to UTF-8: source files in this repo are UTF-8, but
         # Path.read_text() defaults to the system locale — which is cp1252
         # on most Western Windows installs and crashes as soon as the file

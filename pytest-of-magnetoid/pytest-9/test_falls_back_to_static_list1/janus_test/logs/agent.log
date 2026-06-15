@@ -1,18 +1,18 @@
-2026-06-08 00:48:45,808 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:48:45,808 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:48:46,033 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:48:47,837 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:48:47,837 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:48:47,962 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:48:51,061 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:48:51,061 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:48:51,184 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:48:55,021 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:48:55,021 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:48:55,141 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:48:58,927 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:48:58,927 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:48:59,058 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:49:03,059 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:49:03,059 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:49:03,184 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:49:06,966 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:49:06,966 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:49:07,109 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:49:11,599 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:49:11,599 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:49:11,718 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json
-2026-06-08 00:49:15,432 INFO janus_cli.model_catalog: model catalog fetch failed (https://hermes-agent.nousresearch.com/docs/api/model-catalog.json): HTTP Error 403: Forbidden
+2026-06-08 00:49:15,432 INFO janus_cli.model_catalog: model catalog fetch failed (https://raw.githubusercontent.com/magnetoid/janus/main/docs/api/model-catalog.json): HTTP Error 403: Forbidden
 2026-06-08 00:49:15,539 INFO janus_cli.model_catalog: model catalog primary URL failed; using fallback https://raw.githubusercontent.com/magnetoid/janus/main/website/static/api/model-catalog.json

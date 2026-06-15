@@ -10,7 +10,7 @@ Janus can optionally hand `openai/*` and `openai-codex/*` turns to the [Codex CL
 This is **opt-in only**. Default Janus behavior is unchanged unless you flip the flag. Janus never auto-routes you onto this runtime.
 
 :::tip
-Not using OpenAI Codex? `janus setup --portal` configures a non-Codex backend with Claude/Gemini/etc. in one step. See [Nous Portal](/integrations/nous-portal).
+Not using OpenAI Codex? `janus setup --portal` configures a non-Codex backend with Claude/Gemini/etc. in one step. See [Janus Portal](/integrations/nous-portal).
 :::
 
 ## Why

@@ -15823,6 +15823,11 @@ def main(
     except Exception:
         pass
 
+    # Discover built-in tools explicitly now that we removed the import-time side effect
+    from tools.registry import discover_builtin_tools
+    discover_builtin_tools()
+
+
     # Signal to terminal_tool that we're in interactive mode
     # This enables interactive sudo password prompts with timeout
     os.environ["JANUS_INTERACTIVE"] = "1"

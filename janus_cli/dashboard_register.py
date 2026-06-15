@@ -1,12 +1,12 @@
 """``janus dashboard register`` — register a self-hosted dashboard OAuth client.
 
-Automates what a user otherwise does by hand: open the Nous Portal
+Automates what a user otherwise does by hand: open the Janus Portal
 ``/local-dashboards`` page in a browser, click "register", copy the
 resulting ``agent:{id}`` OAuth client ID, and paste it into ``~/.janus/.env``
 as ``JANUS_DASHBOARD_OAUTH_CLIENT_ID``.
 
 This command:
-  1. Resolves a fresh Nous Portal access token from the existing login
+  1. Resolves a fresh Janus Portal access token from the existing login
      (``~/.janus/auth.json``), refreshing it if needed. Fails fast with a
      "run `janus setup`" hint when the user isn't logged in.
   2. POSTs to ``{portal}/api/oauth/self-hosted-client`` with that bearer
@@ -87,7 +87,7 @@ def _resolve_portal_base_url(override: Optional[str] = None) -> str:
             return base.rstrip("/")
         return str(DEFAULT_NOUS_PORTAL_URL).rstrip("/")
     except Exception:
-        return "https://portal.nousresearch.com"
+        return "https://portal.imbalabs.com"
 
 
 def _register_self_hosted_client(
@@ -137,7 +137,7 @@ def _register_self_hosted_client(
             pass
         if exc.code == 401:
             raise RuntimeError(
-                "Nous Portal rejected the access token (401). "
+                "Janus Portal rejected the access token (401). "
                 "Try `janus auth login nous` to re-authenticate."
             ) from exc
         if exc.code == 403:
@@ -151,7 +151,7 @@ def _register_self_hosted_client(
         ) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(
-            f"Could not reach Nous Portal at {portal_base_url}: {exc.reason}"
+            f"Could not reach Janus Portal at {portal_base_url}: {exc.reason}"
         ) from exc
 
     if not isinstance(payload, dict) or not payload.get("client_id"):
@@ -207,7 +207,7 @@ def _print_post_register_hint(
 
 
 def cmd_dashboard_register(args) -> None:
-    """Register a self-hosted dashboard OAuth client with Nous Portal."""
+    """Register a self-hosted dashboard OAuth client with Janus Portal."""
     from janus_cli.auth import AuthError, resolve_nous_access_token
     from janus_cli.config import get_env_value, is_managed, save_env_value
 
@@ -229,13 +229,13 @@ def cmd_dashboard_register(args) -> None:
         access_token = resolve_nous_access_token()
     except AuthError as exc:
         if getattr(exc, "relogin_required", False):
-            print("✗ You're not logged into Nous Portal.")
+            print("✗ You're not logged into Janus Portal.")
             print("  Run `janus setup` (or `janus auth login nous`) first, then retry.")
         else:
-            print(f"✗ Could not resolve a Nous Portal access token: {exc}")
+            print(f"✗ Could not resolve a Janus Portal access token: {exc}")
         sys.exit(1)
     except Exception as exc:
-        print(f"✗ Could not resolve a Nous Portal access token: {exc}")
+        print(f"✗ Could not resolve a Janus Portal access token: {exc}")
         sys.exit(1)
 
     # Portal override: explicit --portal-url flag wins, else the
@@ -277,7 +277,7 @@ def cmd_dashboard_register(args) -> None:
         sys.exit(1)
 
     wrote_portal_url = False
-    default_portal = "https://portal.nousresearch.com"
+    default_portal = "https://portal.imbalabs.com"
     existing_portal = None
     try:
         existing_portal = get_env_value("JANUS_DASHBOARD_PORTAL_URL")

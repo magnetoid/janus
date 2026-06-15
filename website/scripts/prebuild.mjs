@@ -34,7 +34,7 @@ const llmsScript = join(scriptDir, "generate-llms-txt.py");
 const outputFile = join(websiteDir, "static", "api", "skills.json");
 const unifiedIndexFile = join(websiteDir, "static", "api", "skills-index.json");
 const UNIFIED_INDEX_URL =
-  "https://hermes-agent.nousresearch.com/docs/api/skills-index.json";
+  "https://github.com/magnetoid/janus/api/skills-index.json";
 const UNIFIED_INDEX_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
 
 function writeEmptyFallback(reason) {

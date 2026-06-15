@@ -55,7 +55,7 @@ class TestFastFails:
                     dr.cmd_dashboard_register(_ns())
         assert exc.value.code == 1
         out = capsys.readouterr().out
-        assert "not logged into Nous Portal" in out
+        assert "not logged into Janus Portal" in out
         assert "janus setup" in out
 
     def test_managed_install_refuses(self, capsys):
@@ -75,7 +75,7 @@ def _fake_http_ok(payload: dict):
 
 
 class TestHappyPath:
-    def _run(self, *, args, account_token="tok_abc", portal="https://portal.nousresearch.com",
+    def _run(self, *, args, account_token="tok_abc", portal="https://portal.imbalabs.com",
              response=None, captured=None):
         response = response or {
             "client_id": "agent:selfhost-1",
@@ -167,28 +167,28 @@ class TestPortalResolution:
     def test_falls_back_to_stored_login_portal(self):
         with patch(
             "janus_cli.auth.get_provider_auth_state",
-            return_value={"portal_base_url": "https://portal.staging-nousresearch.com"},
+            return_value={"portal_base_url": "https://portal.staging-imbalabs.com"},
         ):
             assert (
                 dr._resolve_portal_base_url(None)
-                == "https://portal.staging-nousresearch.com"
+                == "https://portal.staging-imbalabs.com"
             )
 
     def test_blank_override_ignored(self):
         with patch(
             "janus_cli.auth.get_provider_auth_state",
-            return_value={"portal_base_url": "https://portal.staging-nousresearch.com"},
+            return_value={"portal_base_url": "https://portal.staging-imbalabs.com"},
         ):
             assert (
                 dr._resolve_portal_base_url("   ")
-                == "https://portal.staging-nousresearch.com"
+                == "https://portal.staging-imbalabs.com"
             )
 
 
 class TestPortalErrors:
     def _run_http_error(self, code, body):
         err = urllib.error.HTTPError(
-            url="https://portal.nousresearch.com/api/oauth/self-hosted-client",
+            url="https://portal.imbalabs.com/api/oauth/self-hosted-client",
             code=code,
             msg="err",
             hdrs=None,
@@ -198,7 +198,7 @@ class TestPortalErrors:
         with patch(
             "janus_cli.auth.resolve_nous_access_token", return_value="tok"
         ), patch("janus_cli.config.is_managed", return_value=False), patch.object(
-            dr, "_resolve_portal_base_url", return_value="https://portal.nousresearch.com"
+            dr, "_resolve_portal_base_url", return_value="https://portal.imbalabs.com"
         ), patch.object(dr.urllib.request, "urlopen", side_effect=err):
             with pytest.raises(SystemExit) as exc:
                 dr.cmd_dashboard_register(_ns())
