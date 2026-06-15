@@ -4803,6 +4803,7 @@ def _model_flow_named_custom(config, provider_info):
     from janus_cli.auth import _save_model_choice, deactivate_provider
     from janus_cli.config import load_config, save_config
     from janus_cli.models import fetch_api_models
+    from janus_cli.secret_prompt import masked_secret_prompt
 
     name = provider_info["name"]
     base_url = provider_info["base_url"]
@@ -4816,6 +4817,21 @@ def _model_flow_named_custom(config, provider_info):
     if not api_key and key_env:
         api_key = os.environ.get(key_env, "")
     config_api_key = _custom_provider_api_key_config_value(provider_info, api_key)
+
+    # Entries with no saved key (e.g. the built-in APIKEY.FUN preset) must
+    # prompt for one — otherwise the /models probe runs unauthenticated and the
+    # key is never collected. A user-saved provider already has its key, so this
+    # only fires for keyless presets.
+    if not api_key:
+        try:
+            api_key = masked_secret_prompt(f"  API key for {name}: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nCancelled.")
+            return
+        if not api_key:
+            print("No API key provided. Cancelled.")
+            return
+        config_api_key = api_key
 
     # Honor ``discover_models: false`` (default True) — when discovery is
     # disabled, use the configured ``models:`` list verbatim and skip the

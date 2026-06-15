@@ -45,3 +45,39 @@ def test_user_apikey_entry_takes_precedence_over_preset():
     hits = _apikey_entries(custom_providers_for_picker(cfg))
     assert len(hits) == 1
     assert hits[0]["api_key"] == "sk-x"  # the user's entry won the dedup slot
+
+
+def test_selecting_keyless_preset_prompts_for_key_and_saves(monkeypatch):
+    """The reported bug: selecting the keyless APIKEY.FUN preset never asked for
+    a key. It must now prompt and persist the key + base_url."""
+    import janus_cli.main as m
+    import janus_cli.models as models_mod
+    import janus_cli.auth as auth_mod
+    import janus_cli.curses_ui as curses_mod
+    import janus_cli.secret_prompt as sp_mod
+    from janus_cli.config import load_config
+
+    preset = next(
+        e for e in custom_providers_for_picker({})
+        if "apikey.fun" in str(e.get("base_url", "")).lower()
+    )
+
+    prompted = {"called": False}
+
+    def _fake_prompt(*a, **k):
+        prompted["called"] = True
+        return "sk-test-key"
+
+    monkeypatch.setattr(sp_mod, "masked_secret_prompt", _fake_prompt)
+    monkeypatch.setattr(models_mod, "fetch_api_models", lambda *a, **k: ["model-a"])
+    monkeypatch.setattr(curses_mod, "curses_radiolist", lambda *a, **k: 0)
+    monkeypatch.setattr(auth_mod, "_save_model_choice", lambda *a, **k: None)
+    monkeypatch.setattr(auth_mod, "deactivate_provider", lambda *a, **k: None)
+
+    m._model_flow_named_custom({}, preset)
+
+    assert prompted["called"], "should prompt for the API key when the preset has none"
+    model = load_config().get("model", {})
+    assert model.get("provider") == "custom"
+    assert "apikey.fun" in str(model.get("base_url", "")).lower()
+    assert model.get("api_key") == "sk-test-key"
