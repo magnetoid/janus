@@ -1,17 +1,13 @@
 ---
 type: decision
-status: accepted
+status: superseded
 tags:
 - adr
 links: []
 created: '2026-06-08T02:34:30'
-updated: '2026-06-08T02:34:30'
-rules:
-- kind: forbid_pattern
-  target: Nous Research
-  scope: '*.py'
-  message: "Company brand 'Nous Research' must be 'Imba Labs' \u2014 see ADR brand-taxonomy"
-  severity: warning
+updated: '2026-06-15T04:00:47'
+rules: []  # retired \u2014 superseded by ADR 0004 (Cloud Industry); see its rules
+superseded_by: 0004-brand-taxonomy-cloud-industry-company-janus-agent
 ---
 
 # ADR 0003: Brand taxonomy: Imba Labs (company) + Janus (agent)
