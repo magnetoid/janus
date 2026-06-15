@@ -3,6 +3,20 @@ from gateway.core import _janus_home
 import logging
 logger = logging.getLogger(__name__)
 
+# The gateway runner was extracted from a monolith and uses many PRIVATE
+# (underscore-prefixed) helpers and constants from gateway.core. The wildcard
+# ``from gateway.core import *`` above does NOT re-export underscore-prefixed
+# names, so the extraction silently dropped ~50 of them — crashing
+# `janus gateway` with NameError on the first private helper GatewayRunner
+# touches (_weakref, _load_gateway_runtime_config, _resolve_gateway_model, …).
+# Re-export every private core name not already bound here, restoring the
+# monolith's name visibility without listing all of them by hand.
+import gateway.core as _core
+for _n in dir(_core):
+    if _n.startswith("_") and not _n.startswith("__") and _n not in globals():
+        globals()[_n] = getattr(_core, _n)
+del _core, _n
+
 class GatewayRunner:
     """
     Main gateway controller.
