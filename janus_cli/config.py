@@ -1810,6 +1810,38 @@ DEFAULT_CONFIG = {
         "subagent_auto_approve": False,
     },
 
+    # Consensus / smart model routing. Route each task to the right-cost model:
+    # the cheapest model that can do simple work, a balanced model for the
+    # middle, and — for the hardest problems — an ENSEMBLE of the strongest
+    # models whose answers are synthesized (via the mixture_of_agents tool).
+    # Saves tokens on easy work and lifts quality on hard work. Opt-in (off).
+    #
+    # Routing is cache-safe: it picks a model at TASK ENTRY (a consensus tool
+    # call or a delegated subtask), never mid-conversation — so it never
+    # violates the prompt-cache invariant.
+    "consensus": {
+        "enabled": False,            # master switch
+        # Complexity classification is a free, local heuristic by default (no
+        # extra model call — that would defeat the token savings). Set to
+        # "model" to use a cheap aux model for ambiguous cases.
+        "complexity_mode": "heuristic",   # "heuristic" | "model"
+        # Model tiers: provider:model per complexity band. Empty model = inherit
+        # the agent's configured main model for that tier.
+        "model_tiers": {
+            "cheap":  {"provider": "", "model": ""},   # simple work (summaries, lookups)
+            "mid":    {"provider": "", "model": ""},   # the default / most work
+            "smart":  {"provider": "", "model": ""},   # hard work + ensemble members
+        },
+        # Ensemble (consensus) for the hardest tasks: run several strong models
+        # and synthesize. Reuses the mixture_of_agents tool + the model-strengths
+        # KB (agent/model_strengths.py) to pick the members per task category.
+        "ensemble": {
+            "enabled": False,
+            "min_complexity": "hard",   # only ensemble at/above this band
+            "member_count": 3,          # how many strong models to consult
+        },
+    },
+
     # Ephemeral prefill messages file — JSON list of {role, content} dicts
     # injected at the start of every API call for few-shot priming.
     # Never saved to sessions, logs, or trajectories.
