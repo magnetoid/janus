@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Brain, Pause, Play, Sparkles, Target, Trash2, TrendingUp } from "lucide-react";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import { fetchJSON } from "@/lib/api";
 
 interface SkillStat {
@@ -163,9 +162,9 @@ export default function LearningPage() {
 
   return (
     <div className="space-y-6 p-4">
-      <H2 className="flex items-center gap-2">
+      <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
         <Brain className="h-5 w-5" /> Self-Learning
-      </H2>
+      </h2>
 
       {/* Outcome reinforcement metrics */}
       <Card>
@@ -291,7 +290,7 @@ export default function LearningPage() {
               <span>
                 {a.title} <Badge>{a.status}</Badge>
               </span>
-              <Button ghost size="icon" onClick={() => removeAspiration(a.id)}>
+              <Button variant="ghost" size="icon" onClick={() => removeAspiration(a.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -317,7 +316,7 @@ export default function LearningPage() {
           {interests.map((i) => (
             <div key={i.id} className="flex items-center justify-between text-sm">
               <span>{i.field}</span>
-              <Button ghost size="icon" onClick={() => removeInterest(i.id)}>
+              <Button variant="ghost" size="icon" onClick={() => removeInterest(i.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -358,7 +357,7 @@ export default function LearningPage() {
               {sleep?.paused ? "paused" : "active"} · last run: {sleep?.last_run ?? "never"}
             </span>
           </div>
-          <Button outlined size="sm" onClick={toggleSleep}>
+          <Button variant="outline" size="sm" onClick={toggleSleep}>
             {sleep?.paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             <span className="ml-1">{sleep?.paused ? "Resume" : "Pause"}</span>
           </Button>
