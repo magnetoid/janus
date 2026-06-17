@@ -52,6 +52,8 @@ _JANUS_CORE_TOOLS = [
     "session_search",
     # Agentic RAG over a registered corpus (gated on a corpus existing via check_fn)
     "search_corpus",
+    # Consensus model routing (gated on consensus.enabled via check_fn)
+    "consensus",
     # Clarifying questions
     "clarify",
     # Code execution + delegation
@@ -233,6 +235,12 @@ TOOLSETS = {
     "rag": {
         "description": "Agentic retrieval over a registered corpus (code repo, docs, knowledge base)",
         "tools": ["search_corpus"],
+        "includes": []
+    },
+
+    "consensus": {
+        "description": "Smart model routing: cheap model for simple work, an ensemble of strong models for hard work",
+        "tools": ["consensus"],
         "includes": []
     },
 
