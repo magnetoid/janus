@@ -12600,7 +12600,7 @@ _BUILTIN_SUBCOMMANDS = frozenset(
     {
         "acp", "auth", "backup", "bundles", "checkpoints", "claw", "completion",
         "computer-use",
-        "config", "cron", "curator", "dashboard", "debug", "doctor",
+        "config", "consensus", "cron", "curator", "dashboard", "debug", "doctor",
         "dump", "evals", "fallback", "gateway", "hooks", "import", "insights",
         "gui", "desktop", "kanban", "login", "logout", "logs", "lsp", "mcp", "memory", "migrate",
         "model", "pairing", "plugins", "portal", "postinstall", "profile", "proxy",
@@ -14837,6 +14837,26 @@ Examples:
         _register_evals_cli(evals_parser)
     except Exception as _exc:
         logging.getLogger(__name__).debug("evals CLI wiring failed: %s", _exc)
+
+    # =========================================================================
+    # consensus command (smart model routing)
+    # =========================================================================
+    consensus_parser = subparsers.add_parser(
+        "consensus",
+        help="Smart model routing — cheap model for simple work, ensemble for hard work",
+        description=(
+            "Route each task to the right-cost model: the cheapest model that "
+            "can do simple work, a strong model for hard work, and an ensemble "
+            "of top models (synthesized via mixture_of_agents) for the hardest. "
+            "Configure tiers with `janus setup` or `janus config set consensus.*`."
+        ),
+    )
+    try:
+        from janus_cli.consensus import register_cli as _register_consensus_cli
+
+        _register_consensus_cli(consensus_parser)
+    except Exception as _exc:
+        logging.getLogger(__name__).debug("consensus CLI wiring failed: %s", _exc)
 
     # =========================================================================
     # memory command
