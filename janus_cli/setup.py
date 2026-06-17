@@ -2952,6 +2952,59 @@ def _run_portal_one_shot(config: dict) -> None:
     print_info("  Run `janus` to start chatting.")
 
 
+def setup_consensus(config: dict) -> None:
+    """Configure consensus / smart model routing (opt-in).
+
+    Routes each task to the right-cost model: cheap for simple work, strong for
+    hard work, and — optionally — an ensemble of top models for the hardest.
+    """
+    print()
+    print_header("Consensus Model Routing")
+    print_info("Route each task to the right-cost model: a cheap model for simple")
+    print_info("work, a strong model for hard work, and (optionally) an ensemble of")
+    print_info("top models for the hardest — saving tokens and improving answers.")
+    print()
+
+    consensus = config.setdefault("consensus", {})
+    if not isinstance(consensus, dict):
+        consensus = {}
+        config["consensus"] = consensus
+
+    if not prompt_yes_no("Enable consensus model routing?", default=bool(consensus.get("enabled"))):
+        consensus["enabled"] = False
+        print_info("Skipped. Enable later with: janus config set consensus.enabled true")
+        return
+    consensus["enabled"] = True
+
+    tiers = consensus.setdefault("model_tiers", {})
+    if not isinstance(tiers, dict):
+        tiers = {}
+        consensus["model_tiers"] = tiers
+    print_info("Leave a tier blank to inherit your main model.")
+    for name, hint in (
+        ("cheap", "fast & cheap — e.g. a -mini / -flash / haiku model"),
+        ("smart", "strongest — e.g. an opus / gpt-5.5 / -pro model"),
+    ):
+        t = tiers.setdefault(name, {})
+        if not isinstance(t, dict):
+            t = {}
+            tiers[name] = t
+        cur = str(t.get("model", "")).strip()
+        val = prompt(f"{name.capitalize()}-tier model id ({hint}) [{cur or 'inherit'}]")
+        if val and val.strip():
+            t["model"] = val.strip()
+
+    ens = consensus.setdefault("ensemble", {})
+    if not isinstance(ens, dict):
+        ens = {}
+        consensus["ensemble"] = ens
+    ens["enabled"] = prompt_yes_no(
+        "Ensemble the strongest models on the hardest problems? (needs OpenRouter)",
+        default=bool(ens.get("enabled")),
+    )
+    print_success("Consensus routing configured. Inspect with: janus consensus status")
+
+
 def run_setup_wizard(args):
     """Run the interactive setup wizard.
 
@@ -3175,6 +3228,10 @@ def run_setup_wizard(args):
     # Section 5: Tools
     if not (migration_ran and _skip_configured_section(config, "tools", "Tools")):
         setup_tools(config, first_install=not is_existing)
+
+    # Section 6: Consensus model routing
+    if not (migration_ran and _skip_configured_section(config, "consensus", "Consensus Routing")):
+        setup_consensus(config)
 
     # Save and show summary
     save_config(config)
