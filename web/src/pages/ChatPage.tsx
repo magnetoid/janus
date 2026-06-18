@@ -22,8 +22,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Typography } from "@nous-research/ui/ui/components/typography/index";
+import { Button } from "@/components/ui/button";
 import { JANUS_BASE_PATH, buildWsAuthParam } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Copy, PanelRight, X } from "lucide-react";
@@ -244,7 +243,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
     }
     setEnd(
       <Button
-        ghost
+        variant="ghost"
         onClick={() => setMobilePanelOpenRaw(true)}
         aria-expanded={mobilePanelOpen}
         aria-controls="chat-side-panel"
@@ -792,7 +791,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       <>
         {mobilePanelOpen && (
           <Button
-            ghost
+            variant="ghost"
             aria-label={t.app.closeModelTools}
             onClick={closeMobilePanel}
             className={cn(
@@ -824,18 +823,16 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               "flex h-14 shrink-0 items-center justify-between gap-2 border-b border-current/20 px-5",
             )}
           >
-            <Typography
-              mondwest
-              className="text-display font-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground"
+            <div className="font-mondwest text-display font-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground"
               style={{ mixBlendMode: "plus-lighter" }}
             >
               {t.app.modelToolsSheetTitle}
               <br />
               {t.app.modelToolsSheetSubtitle}
-            </Typography>
+            </div>
 
             <Button
-              ghost
+              variant="ghost"
               size="icon"
               onClick={closeMobilePanel}
               aria-label={t.app.closeModelTools}
@@ -886,7 +883,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           />
 
           <Button
-            ghost
+            variant="ghost"
             onClick={handleCopyLast}
             title="Copy last assistant response as raw markdown"
             aria-label="Copy last assistant response"
