@@ -15445,6 +15445,8 @@ Examples:
         "gaps", help="Identify knowledge gaps from repeated failures")
     _l_gaps.add_argument(
         "--adopt", action="store_true", help="Track each gap as an interest (researched by the discovery cron)")
+    learning_sub.add_parser(
+        "playbook", help="Show the ACE playbook — guidance the loop applies to its own prompts")
 
     def cmd_learning(args):
         from agent import outcome_tracker as ot
@@ -15489,6 +15491,28 @@ Examples:
                     adopt_gap_as_interest(g["topic"])
             if getattr(args, "adopt", False):
                 print("  ✓ Tracking these as interests; the discovery cron will research them.")
+            print()
+            return
+        if sub == "playbook":
+            from agent import playbook as pb
+            entries = pb.load()
+            st = pb.stats()
+            print(f"\n  ACE playbook: {st['total']} entr{'y' if st['total'] == 1 else 'ies'}"
+                  f"  ({'enabled' if pb.enabled() else 'disabled'})")
+            if not entries:
+                print("  No guidance learned yet. Enable with: "
+                      "janus config set learning.playbook.enabled true\n")
+                return
+            by: dict = {}
+            for e in entries:
+                by.setdefault(str(e.get("scope", "general")), []).append(e)
+            for scope in ("general", "memory", "lessons", "skills", "outcomes"):
+                items = by.get(scope, [])
+                if not items:
+                    continue
+                print(f"\n  [{scope}]")
+                for e in sorted(items, key=lambda x: x.get("score", 0), reverse=True):
+                    print(f"    • {e.get('guidance', '')}  (score {e.get('score', 0):.2f})")
             print()
             return
         # stats (default)
