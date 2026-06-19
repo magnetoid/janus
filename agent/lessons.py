@@ -156,11 +156,15 @@ def reflect_on_failure(
             return None
         if llm_caller is None:
             from agent.auxiliary_client import call_llm as llm_caller
+        # ACE playbook: prepend learned guidance for the lesson-distillation step
+        # (no-op when the playbook is disabled/empty).
+        from agent.playbook import augment_system
+        system_prompt = augment_system(_REFLECT_SYSTEM, "lessons")
         response = llm_caller(
             task="reflexion_lesson",
             provider=provider, model=model,
             messages=[
-                {"role": "system", "content": _REFLECT_SYSTEM},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": _build_reflect_prompt(transcript)},
             ],
             temperature=0, max_tokens=200,

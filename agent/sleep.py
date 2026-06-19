@@ -226,6 +226,18 @@ def run_sleep_cycle(
                 except Exception:
                     pass
 
+        # 6. ACE PLAYBOOK: improve the learning loop's OWN prompts. From this
+        # cycle's activity, propose guidance, red-team it (fails closed), and
+        # merge into the capped playbook. Off by default (learning.playbook).
+        if not dry_run and session_summaries:
+            try:
+                from agent.playbook import enabled as _pb_enabled, run_curation
+                if _pb_enabled():
+                    report["playbook"] = run_curation(
+                        "\n".join(str(s) for s in session_summaries), llm_caller=llm_caller)
+            except Exception as exc:
+                logger.debug("sleep playbook curation failed: %s", exc)
+
         if not dry_run:
             state = load_sleep_state()
             state["last_run"] = _now_iso()

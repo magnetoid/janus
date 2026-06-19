@@ -1740,6 +1740,17 @@ DEFAULT_CONFIG = {
             "skills": True,     # flag mined skill drafts
             "outcomes": True,   # two-judge quorum for success/failure labels
         },
+        # ACE playbook (agent/playbook.py) — the loop improves its OWN prompts.
+        # When on, a small curated playbook of learned guidance is prepended to
+        # the learning-loop step prompts (memory mining, lesson distillation).
+        # Guidance is distilled from recent loop activity in the sleep cycle and
+        # admitted ONLY through the dialectic red-team gate (fails closed), then
+        # capped. Opt-in — this is the one place the loop edits its own learning
+        # machinery, so it's gated and conservative by design.
+        "playbook": {
+            "enabled": False,       # master switch
+            "max_entries": 40,      # hard cap (prevents prompt bloat / collapse)
+        },
     },
 
     # Measurable self-improvement (docs/superpowers/specs/2026-06-15-...).

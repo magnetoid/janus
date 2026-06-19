@@ -171,12 +171,17 @@ def mine_session_memory(
         if llm_caller is None:
             from agent.auxiliary_client import call_llm as llm_caller
 
+        # ACE playbook: prepend any learned guidance for the memory-mining step
+        # (no-op when the playbook is disabled/empty — learning.playbook.enabled).
+        from agent.playbook import augment_system
+        system_prompt = augment_system(_MINING_SYSTEM, "memory")
+
         response = llm_caller(
             task="memory_mining",
             provider=provider,
             model=model,
             messages=[
-                {"role": "system", "content": _MINING_SYSTEM},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": _build_prompt(transcript)},
             ],
             temperature=0,
