@@ -63,3 +63,12 @@ class TestLearningEndpoints:
         assert "curve" in body
         assert "points" in body["curve"]
         assert "draft_pins" in body["curve"]
+        assert "playbook" in body and "consensus" in body
+
+    def test_toggle_consensus_and_playbook(self):
+        assert self.client.put("/api/learning/consensus/enabled",
+                               json={"enabled": True}).json()["enabled"] is True
+        assert self.client.get("/api/learning/stats").json()["consensus"]["enabled"] is True
+        assert self.client.put("/api/learning/playbook/enabled",
+                               json={"enabled": True}).status_code == 200
+        assert self.client.get("/api/learning/stats").json()["playbook"]["enabled"] is True

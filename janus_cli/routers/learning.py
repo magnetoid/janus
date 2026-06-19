@@ -59,3 +59,26 @@ async def get_learning_stats():
     except Exception as exc:
         raise web_server_mod.HTTPException(status_code=500, detail=f"learning stats unavailable: {exc}")
 
+
+class _ToggleBody(BaseModel):
+    enabled: bool
+
+
+def _set_flag(dotted_key: str, enabled: bool) -> Dict[str, Any]:
+    try:
+        from janus_cli.config import set_config_value
+        set_config_value(dotted_key, "true" if enabled else "false")
+        return {"ok": True, "enabled": enabled}
+    except Exception as exc:
+        raise web_server_mod.HTTPException(status_code=500, detail=f"could not set {dotted_key}: {exc}")
+
+
+@router.put("/api/learning/consensus/enabled")
+async def set_consensus_enabled(body: _ToggleBody):
+    return _set_flag("consensus.enabled", body.enabled)
+
+
+@router.put("/api/learning/playbook/enabled")
+async def set_playbook_enabled(body: _ToggleBody):
+    return _set_flag("learning.playbook.enabled", body.enabled)
+

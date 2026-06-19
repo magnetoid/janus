@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import { fetchJSON } from "@/lib/api";
 
 interface SkillStat {
@@ -153,6 +154,14 @@ export default function LearningPage() {
     });
     void refresh();
   };
+  const toggleFlag = async (path: string, enabled: boolean) => {
+    await fetchJSON(path, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled }),
+    });
+    void refresh();
+  };
 
   if (loading) {
     return (
@@ -278,7 +287,11 @@ export default function LearningPage() {
           <CardContent className="space-y-2 p-4">
             <div className="flex items-center justify-between text-sm font-medium">
               <span>Consensus routing</span>
-              <Badge>{stats.consensus.enabled ? "enabled" : "disabled"}</Badge>
+              <Switch
+                checked={stats.consensus.enabled}
+                onCheckedChange={(v) => void toggleFlag("/api/learning/consensus/enabled", v)}
+                aria-label="Toggle consensus routing"
+              />
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
               {(["cheap", "mid", "smart"] as const).map((t) => (
@@ -305,7 +318,11 @@ export default function LearningPage() {
           <CardContent className="space-y-2 p-4">
             <div className="flex items-center justify-between text-sm font-medium">
               <span>ACE playbook (loop self-tuning)</span>
-              <Badge>{stats.playbook.enabled ? "enabled" : "disabled"}</Badge>
+              <Switch
+                checked={stats.playbook.enabled}
+                onCheckedChange={(v) => void toggleFlag("/api/learning/playbook/enabled", v)}
+                aria-label="Toggle ACE playbook"
+              />
             </div>
             <div className="text-sm">
               <strong>{stats.playbook.total}</strong> learned guidance entr

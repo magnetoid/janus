@@ -31,8 +31,12 @@
 ## 快速安装
 
 ```bash
-curl -fsSL https://github.com/magnetoid/janus | bash
+git clone https://github.com/magnetoid/janus.git
+cd janus
+./setup-janus.sh
 ```
+
+`setup-janus.sh` 会安装 uv、创建 venv、安装 `.[all]` 扩展，并把 `janus` 链接到 `~/.local/bin`。（命令请逐行粘贴，不要在 `./setup-janus.sh` 后面附加 `#` 注释——交互式 zsh 会把未加引号的 `.[all]` 当作通配符并报错 `no matches found`。）
 
 支持 Linux、macOS、WSL2 和 Android (Termux)。安装程序会自动处理平台特定的配置。
 
@@ -167,9 +171,9 @@ janus claw migrate --overwrite  # 覆盖已有冲突
 
 ```bash
 git clone https://github.com/magnetoid/janus.git
-cd janus-agent
-./setup-janus.sh     # 安装 uv、创建 venv、安装 .[all]、创建符号链接 ~/.local/bin/janus
-./janus              # 自动检测 venv，无需先 source
+cd janus
+./setup-janus.sh
+./janus
 ```
 
 手动安装（等效于上述命令）：
