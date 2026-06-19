@@ -882,6 +882,63 @@ Full user-facing docs: `website/docs/user-guide/features/deliberation.md`.
 
 ---
 
+## Self-learning loop
+
+A post-session, best-effort, **config-gated (default off)**, injectable-`llm_caller`
+pipeline that turns sessions into durable improvement. Every module never raises
+into the agent loop and routes paths through `get_janus_home()`. Fired at session
+end by `agent/auto_mine.py` and consolidated offline by `agent/sleep.py`.
+
+- **Reward signal** — `agent/outcome_tracker.py`: `classify_session` →
+  `record_outcome` (per-session success/fail attributed to skills/persona, in
+  `learning/outcomes.json`). Also the continual-learning metrics
+  `learning_metrics()` (forward/backward transfer, forgetting, skill-diversity
+  trend = collapse early-warning). Gated by `learning.track_outcomes`.
+- **Reflexion write-back** — `agent/lessons.py`: a classified *failure* distills
+  one transferable lesson keyed to task type (`learning/lessons.json`), recalled
+  by the `recall_lessons` tool. Wired into `auto_mine` (`learning.reflexion`).
+- **Mining** — `agent/memory_miner.py` (durable facts) and `agent/skill_miner.py`
+  (draft skills, **quarantined** under `skills/.drafts/` for review). Both carry
+  the dialectic red-team admission gate.
+- **Consolidation** — `agent/sleep.py` `run_sleep_cycle`: graduate → reconcile
+  (`memory_gardener.py`) → prune by salience → synthesize cross-session lessons →
+  **ACE playbook curation** (below). `maybe_run_sleep` is the schedule gate
+  (`sleep.*`), wired into the gateway cron like `maybe_run_curator`.
+- **Skill graph** — `agent/skill_graph.py`: verifiable-reward promotion
+  (`assess_promotability` = self-test pass **and** success-rate ≥ threshold).
+- **Eval spine** — `agent/eval_trend.py` (longitudinal pass-rate curve +
+  `compare_feature` A/B), `agent/eval_miner.py` (failure → quarantined
+  regression-pin eval in `evals/.drafts/`). Gated by `evals.trend.*` /
+  `evals.autopin`; `maybe_run_trend` runs on the gateway cron.
+
+### ACE playbook (`agent/playbook.py`) — the loop tunes its OWN prompts
+
+The one place Janus edits its learning machinery. `for_scope(scope)` /
+`augment_system(base, scope)` prepend a small curated guidance block to the
+loop's step system prompts (currently `memory_miner` + `lessons`). Guidance is
+distilled from recent activity (`propose`, the Generator), admitted ONLY through
+`deliberation.red_team_claims` (the Reflector — **fails closed**: no entry
+without a passing verdict), and merged/deduped/pruned by score (`curate` +
+`prune`, the Curator — never collapsed into a lossy summary). `run_curation`
+runs in the sleep cycle. **Capped** (`learning.playbook.max_entries`),
+**default-off** (`learning.playbook.enabled`). Inspect: `janus learning playbook`.
+
+## Consensus / smart model routing (`agent/model_routing.py`)
+
+Routes each task to the right-cost model. `agent/task_complexity.py`
+`classify_complexity` is a **free local heuristic** (no token cost — spending a
+token to classify would defeat the savings; `complexity_mode: "model"` escalates
+only the ambiguous `mid` band). `model_routing.route()` maps band → tier
+(`consensus.model_tiers` cheap/mid/smart) → model; for hard tasks with the
+ensemble on it pulls strong members from the model-strengths KB
+(`agent/model_strengths.py`) for the `mixture_of_agents` tool. Surfaced as the
+`consensus` tool (`tools/consensus_tool.py`, check_fn-gated on
+`consensus.enabled`), the `janus consensus` CLI (`janus_cli/consensus.py`), and a
+`janus setup` section. **Cache-safe by design**: routing decides at task entry (a
+tool call or a delegated subtask), never mid-conversation.
+
+---
+
 ## Cron (scheduled jobs)
 
 `cron/jobs.py` (job store) + `cron/scheduler.py` (tick loop). Agents

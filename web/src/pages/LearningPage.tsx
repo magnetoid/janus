@@ -37,6 +37,8 @@ interface LearningStats {
   metrics?: LearningMetrics;
   lessons?: { total: number; by_task_type: Record<string, number> };
   curve?: LearningCurve;
+  playbook?: { enabled: boolean; total: number; by_scope: Record<string, number> };
+  consensus?: { enabled: boolean; tiers: Record<string, string>; ensemble: boolean };
 }
 interface Aspiration {
   id: string;
@@ -266,6 +268,59 @@ export default function LearningPage() {
                 {stats.curve.draft_pins} regression-pin draft(s) awaiting review in evals/.drafts/
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Consensus routing */}
+      {stats?.consensus && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <div className="flex items-center justify-between text-sm font-medium">
+              <span>Consensus routing</span>
+              <Badge>{stats.consensus.enabled ? "enabled" : "disabled"}</Badge>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+              {(["cheap", "mid", "smart"] as const).map((t) => (
+                <div key={t}>
+                  {t}: <span className="text-foreground">{stats.consensus!.tiers[t] || "inherit"}</span>
+                </div>
+              ))}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              ensemble on hardest tasks: {stats.consensus.ensemble ? "on" : "off"}
+            </div>
+            {!stats.consensus.enabled && (
+              <div className="text-xs text-muted-foreground">
+                Enable in <code>janus setup</code> or <code>janus config set consensus.enabled true</code>.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ACE playbook */}
+      {stats?.playbook && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <div className="flex items-center justify-between text-sm font-medium">
+              <span>ACE playbook (loop self-tuning)</span>
+              <Badge>{stats.playbook.enabled ? "enabled" : "disabled"}</Badge>
+            </div>
+            <div className="text-sm">
+              <strong>{stats.playbook.total}</strong> learned guidance entr
+              {stats.playbook.total === 1 ? "y" : "ies"} the loop applies to its own prompts
+            </div>
+            {Object.keys(stats.playbook.by_scope).length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(stats.playbook.by_scope).map(([scope, n]) => (
+                  <Badge key={scope}>{scope}: {n}</Badge>
+                ))}
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground">
+              Inspect with <code>janus learning playbook</code>. Red-team-gated, capped.
+            </div>
           </CardContent>
         </Card>
       )}

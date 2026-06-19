@@ -29,6 +29,22 @@ async def get_learning_stats():
             curve["draft_pins"] = len(drafts)
         except Exception:
             curve = {"points": [], "learned": [], "regressed": [], "draft_pins": 0}
+        try:
+            from agent import playbook as _pb
+            playbook = {"enabled": _pb.enabled(), **_pb.stats()}
+        except Exception:
+            playbook = {"enabled": False, "total": 0, "by_scope": {}}
+        try:
+            from agent.model_routing import _consensus_config, enabled as _consensus_enabled
+            _cc = _consensus_config()
+            _tiers = _cc.get("model_tiers", {}) or {}
+            consensus = {
+                "enabled": _consensus_enabled(),
+                "tiers": {k: (_tiers.get(k, {}) or {}).get("model", "") for k in ("cheap", "mid", "smart")},
+                "ensemble": bool((_cc.get("ensemble", {}) or {}).get("enabled")),
+            }
+        except Exception:
+            consensus = {"enabled": False, "tiers": {}, "ensemble": False}
         return {
             "overall": ot.overall_stats(),
             "recent_success_rate": ot.recent_success_rate(20),
@@ -37,6 +53,8 @@ async def get_learning_stats():
             "metrics": ot.learning_metrics(),
             "lessons": lessons_stat,
             "curve": curve,
+            "playbook": playbook,
+            "consensus": consensus,
         }
     except Exception as exc:
         raise web_server_mod.HTTPException(status_code=500, detail=f"learning stats unavailable: {exc}")
