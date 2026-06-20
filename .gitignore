@@ -8,3 +8,4 @@ node_modules/
 .venv/
 .pytest-cache/
 .pytest_cache/
+pytest-of-*/

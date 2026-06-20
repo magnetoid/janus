@@ -1,7 +1,0 @@
-2026-06-08 00:48:47,102 ERROR janus_cli.codex_runtime_switch: failed to persist openai_runtime change
-Traceback (most recent call last):
-  File "/Users/magnetoid/Documents/trae_projects/Janus/janus_cli/codex_runtime_switch.py", line 178, in apply
-    persist_callback(config)
-  File "/Users/magnetoid/Documents/trae_projects/Janus/tests/janus_cli/test_codex_runtime_switch.py", line 149, in persist_boom
-    raise IOError("disk full")
-OSError: disk full
