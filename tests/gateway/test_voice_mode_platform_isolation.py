@@ -81,7 +81,7 @@ class TestLegacyKeyMigration:
             voice_path.write_text(json.dumps(legacy_data))
 
             with patch.object(runner, "_VOICE_MODE_PATH", voice_path):
-                with patch("gateway.run.logger") as mock_logger:
+                with patch("gateway.runner.logger") as mock_logger:
                     result = runner._load_voice_modes()
 
             # Legacy keys without ':' should be skipped
@@ -210,7 +210,7 @@ class TestSyncVoiceModeStateToAdapter:
 
 def _make_runner() -> GatewayRunner:
     """Create a minimal GatewayRunner for testing."""
-    with patch("gateway.run.GatewayRunner._load_voice_modes", return_value={}):
+    with patch("gateway.runner.GatewayRunner._load_voice_modes", return_value={}):
         runner = GatewayRunner.__new__(GatewayRunner)
         runner._voice_mode = {}
         runner.adapters = {}
