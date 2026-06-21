@@ -52,7 +52,10 @@ class TestVerboseCommand:
         config_path = janus_home / "config.yaml"
         config_path.write_text("display:\n  tool_progress: all\n", encoding="utf-8")
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+        # Handler writes via gateway.runner._janus_home but reads via
+        # _load_gateway_config() in gateway.core -> patch both.
+        monkeypatch.setattr("gateway.runner._janus_home", janus_home)
+        monkeypatch.setattr("gateway.core._janus_home", janus_home)
 
         runner = _make_runner()
         result = await runner._handle_verbose_command(_make_event())
@@ -71,7 +74,10 @@ class TestVerboseCommand:
             encoding="utf-8",
         )
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+        # Handler writes via gateway.runner._janus_home but reads via
+        # _load_gateway_config() in gateway.core -> patch both.
+        monkeypatch.setattr("gateway.runner._janus_home", janus_home)
+        monkeypatch.setattr("gateway.core._janus_home", janus_home)
 
         runner = _make_runner()
         result = await runner._handle_verbose_command(_make_event())
@@ -95,7 +101,10 @@ class TestVerboseCommand:
             encoding="utf-8",
         )
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+        # Handler writes via gateway.runner._janus_home but reads via
+        # _load_gateway_config() in gateway.core -> patch both.
+        monkeypatch.setattr("gateway.runner._janus_home", janus_home)
+        monkeypatch.setattr("gateway.core._janus_home", janus_home)
 
         runner = _make_runner()
         result = await runner._handle_verbose_command(_make_event())
@@ -114,7 +123,10 @@ class TestVerboseCommand:
             encoding="utf-8",
         )
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+        # Handler writes via gateway.runner._janus_home but reads via
+        # _load_gateway_config() in gateway.core -> patch both.
+        monkeypatch.setattr("gateway.runner._janus_home", janus_home)
+        monkeypatch.setattr("gateway.core._janus_home", janus_home)
         runner = _make_runner()
 
         # off -> new -> all -> verbose -> off
@@ -143,7 +155,10 @@ class TestVerboseCommand:
             encoding="utf-8",
         )
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+        # Handler writes via gateway.runner._janus_home but reads via
+        # _load_gateway_config() in gateway.core -> patch both.
+        monkeypatch.setattr("gateway.runner._janus_home", janus_home)
+        monkeypatch.setattr("gateway.core._janus_home", janus_home)
 
         runner = _make_runner()
         result = await runner._handle_verbose_command(_make_event())
@@ -170,7 +185,10 @@ class TestVerboseCommand:
             encoding="utf-8",
         )
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+        # Handler writes via gateway.runner._janus_home but reads via
+        # _load_gateway_config() in gateway.core -> patch both.
+        monkeypatch.setattr("gateway.runner._janus_home", janus_home)
+        monkeypatch.setattr("gateway.core._janus_home", janus_home)
         runner = _make_runner()
 
         # Cycle on Telegram
@@ -196,7 +214,10 @@ class TestVerboseCommand:
         janus_home.mkdir()
         # No config.yaml
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+        # Handler writes via gateway.runner._janus_home but reads via
+        # _load_gateway_config() in gateway.core -> patch both.
+        monkeypatch.setattr("gateway.runner._janus_home", janus_home)
+        monkeypatch.setattr("gateway.core._janus_home", janus_home)
 
         runner = _make_runner()
         result = await runner._handle_verbose_command(_make_event())
