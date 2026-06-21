@@ -55,6 +55,17 @@ def _make_runner(janus_home=None):
     return runner
 
 
+@pytest.fixture(autouse=True)
+def _guard_against_real_update_spawn():
+    """Hard safety net: no test here may spawn a real ``janus update`` via Popen
+    (it would ``git stash`` the live repo). Tests that assert on Popen re-patch
+    it locally, overriding this guard within their own context.
+    """
+    with patch("subprocess.Popen") as _popen:
+        _popen.return_value = MagicMock()
+        yield
+
+
 # ---------------------------------------------------------------------------
 # _gateway_prompt (file-based IPC in main.py)
 # ---------------------------------------------------------------------------
@@ -225,8 +236,8 @@ class TestUpdateCommandGatewayFlag:
         janus_home.mkdir()
 
         mock_popen = MagicMock()
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("subprocess.Popen", mock_popen):
             result = await runner._handle_update_command(event)
@@ -273,7 +284,7 @@ class TestWatchUpdateProgress:
             , encoding="utf-8")
             (janus_home / ".update_exit_code").write_text("0")
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             task = asyncio.create_task(write_exit_code())
             await runner._watch_update_progress(
                 poll_interval=0.1,
@@ -314,7 +325,7 @@ class TestWatchUpdateProgress:
             await asyncio.sleep(0.3)
             (janus_home / ".update_exit_code").write_text("0")
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             task = asyncio.create_task(simulate_prompt_cycle())
             await runner._watch_update_progress(
                 poll_interval=0.1,
@@ -369,7 +380,7 @@ class TestWatchUpdateProgress:
             await asyncio.sleep(0.2)
             (janus_home / ".update_exit_code").write_text("0")
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             task = asyncio.create_task(finish_after_prompt())
             await runner._watch_update_progress(
                 poll_interval=0.1,
@@ -401,7 +412,7 @@ class TestWatchUpdateProgress:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._watch_update_progress(
                 poll_interval=0.1,
                 stream_interval=0.2,
@@ -428,7 +439,7 @@ class TestWatchUpdateProgress:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._watch_update_progress(
                 poll_interval=0.1,
                 stream_interval=0.2,
@@ -468,7 +479,7 @@ class TestWatchUpdateProgress:
             await asyncio.sleep(0.3)
             runner.adapters[Platform.DISCORD] = discord_adapter
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             task = asyncio.create_task(reconnect_discord())
             await runner._watch_update_progress(
                 poll_interval=0.1,
@@ -517,7 +528,7 @@ class TestWatchUpdateProgress:
             await asyncio.sleep(0.3)
             (janus_home / ".update_exit_code").write_text("0")
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             task = asyncio.create_task(finish_after_polls())
             await runner._watch_update_progress(
                 poll_interval=0.1,
@@ -559,7 +570,7 @@ class TestWatchUpdateProgress:
         adapter1 = AsyncMock()
         runner1.adapters = {Platform.TELEGRAM: adapter1}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             watch1 = asyncio.create_task(
                 runner1._watch_update_progress(
                     poll_interval=0.05,
@@ -629,7 +640,7 @@ class TestUpdatePromptInterception:
         runner._is_user_authorized = MagicMock(return_value=True)
         runner._session_key_for_source = MagicMock(return_value=session_key)
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             result = await runner._handle_message(event)
 
         assert result is not None
@@ -662,7 +673,7 @@ class TestUpdatePromptInterception:
         runner._handle_reset_command = AsyncMock(return_value="reset ok")
         (janus_home / ".update_prompt.json").write_text(json.dumps({"prompt": "test"}))
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             result = await runner._handle_message(event)
 
         assert result == "reset ok"
@@ -692,7 +703,7 @@ class TestUpdatePromptInterception:
         runner._session_key_for_source = MagicMock(return_value=session_key)
         (janus_home / ".update_prompt.json").write_text(json.dumps({"prompt": "test"}))
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             result = await runner._handle_message(event)
 
         response_path = janus_home / ".update_response"
