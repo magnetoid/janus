@@ -37,6 +37,21 @@ def _make_runner():
     return runner
 
 
+@pytest.fixture(autouse=True)
+def _guard_against_real_update_spawn():
+    """Hard safety net: no test in this file may spawn a real ``janus update``.
+
+    ``_handle_update_command`` ends in ``subprocess.Popen([...janus update...])``,
+    which runs ``git stash`` against the live repo — the source of the
+    ``janus-update-autostash`` pile, reverted edits, and non-deterministic
+    failures. Mock ``subprocess.Popen`` for every test; the few tests that assert
+    on Popen re-patch it locally, overriding this guard within their context.
+    """
+    with patch("subprocess.Popen") as _popen:
+        _popen.return_value = MagicMock()
+        yield
+
+
 # ---------------------------------------------------------------------------
 # _handle_update_command
 # ---------------------------------------------------------------------------
@@ -64,8 +79,8 @@ class TestHandleUpdateCommand:
         # Point _janus_home to tmp_path and project_root to a dir without .git
         fake_root = tmp_path / "project"
         fake_root.mkdir()
-        with patch("gateway.run._janus_home", tmp_path), \
-             patch("gateway.run.Path") as MockPath:
+        with patch("gateway.runner._janus_home", tmp_path), \
+             patch("gateway.runner.Path") as MockPath:
             # Path(__file__).parent.parent.resolve() -> fake_root
             MockPath.return_value = MagicMock()
             MockPath.__truediv__ = Path.__truediv__
@@ -75,7 +90,7 @@ class TestHandleUpdateCommand:
         # Simpler approach — mock at method level using a wrapper
         runner = _make_runner()
 
-        with patch("gateway.run._janus_home", tmp_path):
+        with patch("gateway.runner._janus_home", tmp_path):
             # The handler does Path(__file__).parent.parent.resolve()
             # We need to make project_root / '.git' not exist.
             # Since Path(__file__) resolves to the real gateway/run.py,
@@ -91,7 +106,7 @@ class TestHandleUpdateCommand:
             (fake_root / "gateway").mkdir(parents=True)
             (fake_root / "gateway" / "run.py").touch()
 
-            with patch("gateway.run.__file__", fake_file):
+            with patch("gateway.runner.__file__", fake_file):
                 result = await runner._handle_update_command(event)
 
         assert "Not a git repository" in result
@@ -110,8 +125,8 @@ class TestHandleUpdateCommand:
         (fake_root / "gateway" / "run.py").touch()
         fake_file = str(fake_root / "gateway" / "run.py")
 
-        with patch("gateway.run._janus_home", tmp_path), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", tmp_path), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", return_value=None), \
              patch("importlib.util.find_spec", return_value=None):
             result = await runner._handle_update_command(event)
@@ -137,8 +152,8 @@ class TestHandleUpdateCommand:
         mock_popen = MagicMock()
         fake_spec = MagicMock()
 
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", return_value=None), \
              patch("importlib.util.find_spec", return_value=fake_spec), \
              patch("subprocess.Popen", mock_popen):
@@ -200,8 +215,8 @@ class TestHandleUpdateCommand:
         janus_home = tmp_path / "janus"
         janus_home.mkdir()
 
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: "/usr/bin/janus" if x == "janus" else "/usr/bin/setsid"), \
              patch("subprocess.Popen"):
             result = await runner._handle_update_command(event)
@@ -236,8 +251,8 @@ class TestHandleUpdateCommand:
         janus_home = tmp_path / "janus"
         janus_home.mkdir()
 
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: "/usr/bin/janus" if x == "janus" else "/usr/bin/setsid"), \
              patch("subprocess.Popen"):
             await runner._handle_update_command(event)
@@ -262,8 +277,8 @@ class TestHandleUpdateCommand:
         janus_home.mkdir()
 
         mock_popen = MagicMock()
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("subprocess.Popen", mock_popen):
             result = await runner._handle_update_command(event)
@@ -299,8 +314,8 @@ class TestHandleUpdateCommand:
                 return None
             return None
 
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", side_effect=which_no_setsid), \
              patch("subprocess.Popen", mock_popen):
             result = await runner._handle_update_command(event)
@@ -330,8 +345,8 @@ class TestHandleUpdateCommand:
         janus_home = tmp_path / "janus"
         janus_home.mkdir()
 
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("subprocess.Popen", side_effect=OSError("spawn failed")):
             result = await runner._handle_update_command(event)
@@ -356,8 +371,8 @@ class TestHandleUpdateCommand:
         janus_home = tmp_path / "janus"
         janus_home.mkdir()
 
-        with patch("gateway.run._janus_home", janus_home), \
-             patch("gateway.run.__file__", fake_file), \
+        with patch("gateway.runner._janus_home", janus_home), \
+             patch("gateway.runner.__file__", fake_file), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("subprocess.Popen"):
             result = await runner._handle_update_command(event)
@@ -526,7 +541,7 @@ class TestSendUpdateNotification:
         janus_home = tmp_path / "janus"
         janus_home.mkdir()
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             # Should not raise
             await runner._send_update_notification()
 
@@ -546,7 +561,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         assert result is False
@@ -570,7 +585,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         assert result is True
@@ -602,7 +617,7 @@ class TestSendUpdateNotification:
         mock_adapter.send = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._send_update_notification()
 
         mock_adapter.send.assert_called_once()
@@ -632,7 +647,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._send_update_notification()
 
         assert mock_adapter.send.call_args.kwargs["metadata"] == {
@@ -659,7 +674,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._send_update_notification()
 
         sent_text = mock_adapter.send.call_args[0][1]
@@ -681,7 +696,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._send_update_notification()
 
         sent_text = mock_adapter.send.call_args[0][1]
@@ -705,7 +720,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         assert result is True
@@ -728,7 +743,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._send_update_notification()
 
         sent_text = mock_adapter.send.call_args[0][1]
@@ -753,7 +768,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._send_update_notification()
 
         assert not pending_path.exists()
@@ -781,7 +796,7 @@ class TestSendUpdateNotification:
         mock_adapter.send.side_effect = RuntimeError("network error")
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             await runner._send_update_notification()
 
         # Files should still be cleaned up (finally block)
@@ -799,7 +814,7 @@ class TestSendUpdateNotification:
         pending_path = janus_home / ".update_pending.json"
         pending_path.write_text("{corrupt json!!")
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             # Should not raise
             await runner._send_update_notification()
 
@@ -831,7 +846,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.TELEGRAM: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             result = await runner._send_update_notification()
 
         # No send (wrong platform offline) and the result is deferred.
@@ -866,7 +881,7 @@ class TestSendUpdateNotification:
         exit_code_path.write_text("0")
 
         # First pass: target platform (discord) is still offline → defer.
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             first = await runner._send_update_notification()
 
         assert first is False
@@ -876,7 +891,7 @@ class TestSendUpdateNotification:
         mock_adapter = AsyncMock()
         runner.adapters = {Platform.DISCORD: mock_adapter}
 
-        with patch("gateway.run._janus_home", janus_home):
+        with patch("gateway.runner._janus_home", janus_home):
             second = await runner._send_update_notification()
 
         assert second is True
