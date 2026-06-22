@@ -43,7 +43,7 @@ def _build_runner(monkeypatch, tmp_path, mode: str) -> GatewayRunner:
         encoding="utf-8",
     )
 
-    import gateway.run as gateway_run
+    import gateway.core as gateway_run
 
     monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
 
@@ -72,7 +72,7 @@ def _watcher_dict(session_id="proc_test", thread_id=""):
 class TestLoadBackgroundNotificationsMode:
 
     def test_defaults_to_all(self, monkeypatch, tmp_path):
-        import gateway.run as gw
+        import gateway.core as gw
         monkeypatch.setattr(gw, "_janus_home", tmp_path)
         monkeypatch.delenv("JANUS_BACKGROUND_NOTIFICATIONS", raising=False)
         assert GatewayRunner._load_background_notifications_mode() == "all"
@@ -81,7 +81,7 @@ class TestLoadBackgroundNotificationsMode:
         (tmp_path / "config.yaml").write_text(
             "display:\n  background_process_notifications: error\n"
         )
-        import gateway.run as gw
+        import gateway.core as gw
         monkeypatch.setattr(gw, "_janus_home", tmp_path)
         monkeypatch.delenv("JANUS_BACKGROUND_NOTIFICATIONS", raising=False)
         assert GatewayRunner._load_background_notifications_mode() == "error"
@@ -90,7 +90,7 @@ class TestLoadBackgroundNotificationsMode:
         (tmp_path / "config.yaml").write_text(
             "display:\n  background_process_notifications: error\n"
         )
-        import gateway.run as gw
+        import gateway.core as gw
         monkeypatch.setattr(gw, "_janus_home", tmp_path)
         monkeypatch.setenv("JANUS_BACKGROUND_NOTIFICATIONS", "off")
         assert GatewayRunner._load_background_notifications_mode() == "off"
@@ -99,7 +99,7 @@ class TestLoadBackgroundNotificationsMode:
         (tmp_path / "config.yaml").write_text(
             "display:\n  background_process_notifications: false\n"
         )
-        import gateway.run as gw
+        import gateway.core as gw
         monkeypatch.setattr(gw, "_janus_home", tmp_path)
         monkeypatch.delenv("JANUS_BACKGROUND_NOTIFICATIONS", raising=False)
         assert GatewayRunner._load_background_notifications_mode() == "off"
@@ -108,7 +108,7 @@ class TestLoadBackgroundNotificationsMode:
         (tmp_path / "config.yaml").write_text(
             "display:\n  background_process_notifications: banana\n"
         )
-        import gateway.run as gw
+        import gateway.core as gw
         monkeypatch.setattr(gw, "_janus_home", tmp_path)
         monkeypatch.delenv("JANUS_BACKGROUND_NOTIFICATIONS", raising=False)
         assert GatewayRunner._load_background_notifications_mode() == "all"

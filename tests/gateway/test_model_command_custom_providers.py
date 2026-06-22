@@ -50,7 +50,7 @@ async def test_handle_model_command_lists_saved_custom_provider(tmp_path, monkey
         encoding="utf-8",
     )
 
-    import gateway.run as gateway_run
+    import gateway.core as gateway_run
 
     monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
     monkeypatch.setattr("agent.models_dev.fetch_models_dev", lambda: {})
