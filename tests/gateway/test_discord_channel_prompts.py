@@ -28,7 +28,7 @@ def _ensure_discord_mock():
     sys.modules.setdefault("discord.ext.commands", commands_mod)
 
 
-import gateway.run as gateway_run
+import gateway.runner as gateway_run
 from gateway.config import Platform
 from gateway.platforms.base import MessageEvent
 from gateway.session import SessionSource
