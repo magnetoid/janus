@@ -97,7 +97,7 @@ class TestHandleBackgroundCommand:
             created_tasks.append(mock_task)
             return mock_task
 
-        with patch("gateway.run.asyncio.create_task", side_effect=capture_task):
+        with patch("gateway.runner.asyncio.create_task", side_effect=capture_task):
             event = _make_event(text="/background Summarize the top HN stories")
             result = await runner._handle_background_command(event)
 
@@ -132,7 +132,7 @@ class TestHandleBackgroundCommand:
             reply_to_message_id="462",
         )
 
-        with patch("gateway.run.asyncio.create_task", side_effect=capture_task):
+        with patch("gateway.runner.asyncio.create_task", side_effect=capture_task):
             result = await runner._handle_background_command(event)
 
         assert "Background task started" in result
@@ -145,7 +145,7 @@ class TestHandleBackgroundCommand:
         runner = _make_runner()
         long_prompt = "A" * 100
 
-        with patch("gateway.run.asyncio.create_task", side_effect=lambda c, **kw: (c.close(), MagicMock())[1]):
+        with patch("gateway.runner.asyncio.create_task", side_effect=lambda c, **kw: (c.close(), MagicMock())[1]):
             event = _make_event(text=f"/background {long_prompt}")
             result = await runner._handle_background_command(event)
 
@@ -159,7 +159,7 @@ class TestHandleBackgroundCommand:
         runner = _make_runner()
         task_ids = set()
 
-        with patch("gateway.run.asyncio.create_task", side_effect=lambda c, **kw: (c.close(), MagicMock())[1]):
+        with patch("gateway.runner.asyncio.create_task", side_effect=lambda c, **kw: (c.close(), MagicMock())[1]):
             for i in range(5):
                 event = _make_event(text=f"/background task {i}")
                 result = await runner._handle_background_command(event)
@@ -176,7 +176,7 @@ class TestHandleBackgroundCommand:
         """The /background command works for all platforms."""
         for platform in [Platform.TELEGRAM, Platform.DISCORD, Platform.SLACK]:
             runner = _make_runner()
-            with patch("gateway.run.asyncio.create_task", side_effect=lambda c, **kw: (c.close(), MagicMock())[1]):
+            with patch("gateway.runner.asyncio.create_task", side_effect=lambda c, **kw: (c.close(), MagicMock())[1]):
                 event = _make_event(
                     text="/background test task",
                     platform=platform,
@@ -221,7 +221,7 @@ class TestRunBackgroundTask:
             user_name="testuser",
         )
 
-        with patch("gateway.run._resolve_runtime_agent_kwargs", return_value={"api_key": None}):
+        with patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={"api_key": None}):
             await runner._run_background_task("test prompt", source, "bg_test")
 
         # Should have sent an error message
@@ -248,7 +248,7 @@ class TestRunBackgroundTask:
 
         mock_result = {"final_response": "Hello from background!", "messages": []}
 
-        with patch("gateway.run._resolve_runtime_agent_kwargs", return_value={"api_key": "test-key"}), \
+        with patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={"api_key": "test-key"}), \
              patch("run_agent.AIAgent") as MockAgent:
             mock_agent_instance = MagicMock()
             mock_agent_instance.shutdown_memory_provider = MagicMock()
@@ -298,7 +298,9 @@ class TestRunBackgroundTask:
         # (default mode requires the file to exist as a regular file).
         import os as _os
         import tempfile as _tempfile
-        _tmpdir = _tempfile.mkdtemp(prefix="bg_media_")
+        # realpath so /var -> /private/var (macOS symlink) matches the resolved
+        # paths the handler emits; otherwise the equality assertions flake on macOS.
+        _tmpdir = _os.path.realpath(_tempfile.mkdtemp(prefix="bg_media_"))
         _ogg = _os.path.join(_tmpdir, "clip.ogg")
         _mp4 = _os.path.join(_tmpdir, "render.mp4")
         _png = _os.path.join(_tmpdir, "chart.png")
@@ -416,7 +418,7 @@ class TestRunBackgroundTask:
             user_name="testuser",
         )
 
-        with patch("gateway.run._resolve_runtime_agent_kwargs", return_value={"api_key": "test-key"}), \
+        with patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={"api_key": "test-key"}), \
              patch("run_agent.AIAgent") as MockAgent:
             mock_agent_instance = MagicMock()
             mock_agent_instance.shutdown_memory_provider = MagicMock()
@@ -445,7 +447,7 @@ class TestRunBackgroundTask:
             user_name="testuser",
         )
 
-        with patch("gateway.run._resolve_runtime_agent_kwargs", side_effect=RuntimeError("boom")):
+        with patch("gateway.runner._resolve_runtime_agent_kwargs", side_effect=RuntimeError("boom")):
             await runner._run_background_task("test prompt", source, "bg_test")
 
         mock_adapter.send.assert_called_once()
