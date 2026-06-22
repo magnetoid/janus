@@ -10,6 +10,7 @@ import pytest
 import yaml
 
 import gateway.run as gateway_run
+import gateway.runner as gateway_runner
 from gateway.config import Platform
 from gateway.platforms.base import MessageEvent
 from gateway.session import SessionSource
@@ -82,16 +83,13 @@ class TestReasoningCommand:
         assert gateway_run.GatewayRunner._parse_reasoning_command_args("—global xhigh") == ("xhigh", True)
 
     @pytest.mark.asyncio
-    async def test_reasoning_command_reloads_current_state_from_config(self, tmp_path, monkeypatch):
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
+    async def test_reasoning_command_reloads_current_state_from_config(self, gateway_home):
+        janus_home = gateway_home
         config_path = janus_home / "config.yaml"
         config_path.write_text(
             "agent:\n  reasoning_effort: none\ndisplay:\n  show_reasoning: true\n",
             encoding="utf-8",
         )
-
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
 
         runner = _make_runner()
         runner._reasoning_config = {"enabled": True, "effort": "xhigh"}
@@ -105,13 +103,10 @@ class TestReasoningCommand:
         assert runner._show_reasoning is True
 
     @pytest.mark.asyncio
-    async def test_handle_reasoning_command_updates_config_and_cache(self, tmp_path, monkeypatch):
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
+    async def test_handle_reasoning_command_updates_config_and_cache(self, gateway_home):
+        janus_home = gateway_home
         config_path = janus_home / "config.yaml"
         config_path.write_text("agent:\n  reasoning_effort: medium\n", encoding="utf-8")
-
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
 
         runner = _make_runner()
         runner._reasoning_config = {"enabled": True, "effort": "medium"}
@@ -145,13 +140,10 @@ class TestReasoningCommand:
         assert "session only" in result
 
     @pytest.mark.asyncio
-    async def test_reasoning_global_clears_existing_session_override(self, tmp_path, monkeypatch):
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
+    async def test_reasoning_global_clears_existing_session_override(self, gateway_home):
+        janus_home = gateway_home
         config_path = janus_home / "config.yaml"
         config_path.write_text("agent:\n  reasoning_effort: medium\n", encoding="utf-8")
-
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
 
         runner = _make_runner()
         event = _make_event("/reasoning low --global")
@@ -200,16 +192,14 @@ class TestReasoningCommand:
 
         assert runner._resolve_session_reasoning_config(source=source) == {"enabled": True, "effort": "xhigh"}
 
-    def test_run_agent_reloads_reasoning_config_per_message(self, tmp_path, monkeypatch):
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
+    def test_run_agent_reloads_reasoning_config_per_message(self, gateway_home, monkeypatch):
+        janus_home = gateway_home
         (janus_home / "config.yaml").write_text("agent:\n  reasoning_effort: low\n", encoding="utf-8")
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
-        monkeypatch.setattr(gateway_run, "_env_path", janus_home / ".env")
-        monkeypatch.setattr(gateway_run, "load_dotenv", lambda *args, **kwargs: None)
+        monkeypatch.setattr(gateway_runner, "_env_path", janus_home / ".env")
+        monkeypatch.setattr(gateway_runner, "load_dotenv", lambda *args, **kwargs: None)
         monkeypatch.setattr(
-            gateway_run,
+            gateway_runner,
             "_resolve_runtime_agent_kwargs",
             lambda: {
                 "provider": "openrouter",
@@ -249,16 +239,14 @@ class TestReasoningCommand:
         assert _CapturingAgent.last_init is not None
         assert _CapturingAgent.last_init["reasoning_config"] == {"enabled": True, "effort": "low"}
 
-    def test_run_agent_prefers_session_reasoning_override(self, tmp_path, monkeypatch):
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
+    def test_run_agent_prefers_session_reasoning_override(self, gateway_home, monkeypatch):
+        janus_home = gateway_home
         (janus_home / "config.yaml").write_text("agent:\n  reasoning_effort: low\n", encoding="utf-8")
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
-        monkeypatch.setattr(gateway_run, "_env_path", janus_home / ".env")
-        monkeypatch.setattr(gateway_run, "load_dotenv", lambda *args, **kwargs: None)
+        monkeypatch.setattr(gateway_runner, "_env_path", janus_home / ".env")
+        monkeypatch.setattr(gateway_runner, "load_dotenv", lambda *args, **kwargs: None)
         monkeypatch.setattr(
-            gateway_run,
+            gateway_runner,
             "_resolve_runtime_agent_kwargs",
             lambda: {
                 "provider": "openrouter",
@@ -299,9 +287,8 @@ class TestReasoningCommand:
         assert _CapturingAgent.last_init is not None
         assert _CapturingAgent.last_init["reasoning_config"] == {"enabled": True, "effort": "high"}
 
-    def test_run_agent_includes_enabled_mcp_servers_in_gateway_toolsets(self, tmp_path, monkeypatch):
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
+    def test_run_agent_includes_enabled_mcp_servers_in_gateway_toolsets(self, gateway_home, monkeypatch):
+        janus_home = gateway_home
         (janus_home / "config.yaml").write_text(
             "platform_toolsets:\n"
             "  cli: [web, memory]\n"
@@ -313,11 +300,10 @@ class TestReasoningCommand:
             encoding="utf-8",
         )
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
-        monkeypatch.setattr(gateway_run, "_env_path", janus_home / ".env")
-        monkeypatch.setattr(gateway_run, "load_dotenv", lambda *args, **kwargs: None)
+        monkeypatch.setattr(gateway_runner, "_env_path", janus_home / ".env")
+        monkeypatch.setattr(gateway_runner, "load_dotenv", lambda *args, **kwargs: None)
         monkeypatch.setattr(
-            gateway_run,
+            gateway_runner,
             "_resolve_runtime_agent_kwargs",
             lambda: {
                 "provider": "openrouter",
@@ -360,16 +346,14 @@ class TestReasoningCommand:
         assert "exa" in enabled_toolsets
         assert "web-search-prime" in enabled_toolsets
 
-    def test_run_agent_homeassistant_uses_default_platform_toolset(self, tmp_path, monkeypatch):
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
+    def test_run_agent_homeassistant_uses_default_platform_toolset(self, gateway_home, monkeypatch):
+        janus_home = gateway_home
         (janus_home / "config.yaml").write_text("", encoding="utf-8")
 
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
-        monkeypatch.setattr(gateway_run, "_env_path", janus_home / ".env")
-        monkeypatch.setattr(gateway_run, "load_dotenv", lambda *args, **kwargs: None)
+        monkeypatch.setattr(gateway_runner, "_env_path", janus_home / ".env")
+        monkeypatch.setattr(gateway_runner, "load_dotenv", lambda *args, **kwargs: None)
         monkeypatch.setattr(
-            gateway_run,
+            gateway_runner,
             "_resolve_runtime_agent_kwargs",
             lambda: {
                 "provider": "openrouter",
@@ -412,39 +396,39 @@ class TestReasoningCommand:
 class TestLoadShowReasoningCoercion:
     """Regression: display.show_reasoning must be coerced, not bool()'d."""
 
-    def _load_with_config(self, tmp_path, monkeypatch, yaml_body: str) -> bool:
-        janus_home = tmp_path / "janus"
-        janus_home.mkdir()
-        (janus_home / "config.yaml").write_text(yaml_body, encoding="utf-8")
-        monkeypatch.setattr(gateway_run, "_janus_home", janus_home)
+    def _load_with_config(self, gateway_home, yaml_body: str) -> bool:
+        # ``_load_show_reasoning`` -> ``_load_gateway_runtime_config`` ->
+        # ``_load_gateway_config`` reads ``gateway.core._janus_home``; the
+        # ``gateway_home`` fixture redirects ``_janus_home`` across run/runner/core.
+        (gateway_home / "config.yaml").write_text(yaml_body, encoding="utf-8")
         return gateway_run.GatewayRunner._load_show_reasoning()
 
-    def test_quoted_false_is_false(self, tmp_path, monkeypatch):
+    def test_quoted_false_is_false(self, gateway_home):
         assert self._load_with_config(
-            tmp_path, monkeypatch,
+            gateway_home,
             'display:\n  show_reasoning: "false"\n',
         ) is False
 
-    def test_quoted_off_is_false(self, tmp_path, monkeypatch):
+    def test_quoted_off_is_false(self, gateway_home):
         assert self._load_with_config(
-            tmp_path, monkeypatch,
+            gateway_home,
             'display:\n  show_reasoning: "off"\n',
         ) is False
 
-    def test_quoted_true_is_true(self, tmp_path, monkeypatch):
+    def test_quoted_true_is_true(self, gateway_home):
         assert self._load_with_config(
-            tmp_path, monkeypatch,
+            gateway_home,
             'display:\n  show_reasoning: "true"\n',
         ) is True
 
-    def test_bare_true_is_true(self, tmp_path, monkeypatch):
+    def test_bare_true_is_true(self, gateway_home):
         assert self._load_with_config(
-            tmp_path, monkeypatch,
+            gateway_home,
             'display:\n  show_reasoning: true\n',
         ) is True
 
-    def test_missing_is_false(self, tmp_path, monkeypatch):
+    def test_missing_is_false(self, gateway_home):
         assert self._load_with_config(
-            tmp_path, monkeypatch,
+            gateway_home,
             'display: {}\n',
         ) is False

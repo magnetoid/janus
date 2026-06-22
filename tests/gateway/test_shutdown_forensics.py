@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import signal
 import sys
 import time
@@ -12,6 +13,15 @@ from pathlib import Path
 import pytest
 
 from gateway import shutdown_forensics as sf
+
+# ``spawn_async_diagnostic`` shells out to ``timeout bash -c <ps/pstree/...>``,
+# which is a Linux/coreutils-oriented forensic dump.  When the ``timeout``
+# binary is absent (stock macOS ships neither ``timeout`` nor ``gtimeout``),
+# ``subprocess.Popen`` raises ``FileNotFoundError`` and the function correctly
+# returns ``None`` per its documented contract — there is no subprocess to
+# observe.  Guard the spawn-and-observe test on that binary being present so it
+# only runs where the diagnostic can actually execute.
+_HAS_TIMEOUT_BIN = shutil.which("timeout") is not None
 
 
 # ---------------------------------------------------------------------------
@@ -152,6 +162,10 @@ class TestFormatters:
 
 class TestSpawnAsyncDiagnostic:
     @pytest.mark.skipif(sys.platform == "win32", reason="POSIX-only diagnostic")
+    @pytest.mark.skipif(
+        not _HAS_TIMEOUT_BIN,
+        reason="requires the 'timeout' binary (coreutils); absent on stock macOS",
+    )
     def test_spawns_subprocess_and_writes_output(self, tmp_path):
         log_path = tmp_path / "diag.log"
         pid = sf.spawn_async_diagnostic(log_path, "SIGTERM", timeout_seconds=3.0)

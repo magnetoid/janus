@@ -164,7 +164,7 @@ async def test_background_task_prefers_session_override_over_global_runtime(monk
     assert _CapturingAgent.last_init["api_key"] == "***"
     assert _CapturingAgent.last_init["reasoning_config"] == {"enabled": True, "effort": "high"}
 
-def test_gateway_auth_fallback_uses_fallback_model_from_config(tmp_path, monkeypatch):
+def test_gateway_auth_fallback_uses_fallback_model_from_config(gateway_home, monkeypatch):
     """Regression: fallback provider must not inherit the primary model.
 
     If primary openai-codex auth fails and fallback_providers selects
@@ -172,7 +172,11 @@ def test_gateway_auth_fallback_uses_fallback_model_from_config(tmp_path, monkeyp
     model, not the primary config model (e.g. gpt-5.5). Otherwise OpenRouter
     receives an unintended GPT request.
     """
-    config = tmp_path / "config.yaml"
+    # ``_try_resolve_fallback_provider`` (gateway.core) reads
+    # ``gateway.core._janus_home`` regardless of the calling module, so the
+    # config must live in the shared tmp home the ``gateway_home`` fixture
+    # redirects across run/runner/core — not just the gateway.run shim binding.
+    config = gateway_home / "config.yaml"
     config.write_text(
         """
 model:
@@ -184,7 +188,6 @@ fallback_providers:
 """.lstrip(),
         encoding="utf-8",
     )
-    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
 
     def fake_resolve_runtime_provider(*, requested=None, explicit_base_url=None, explicit_api_key=None):
         if requested in {None, "", "openai-codex"}:
@@ -219,9 +222,12 @@ fallback_providers:
     assert runtime_kwargs["api_key"] == "sk-openrouter"
 
 
-def test_gateway_auth_fallback_resolves_key_env_for_custom_provider(tmp_path, monkeypatch):
+def test_gateway_auth_fallback_resolves_key_env_for_custom_provider(gateway_home, monkeypatch):
     """Auth-failure fallback should honor key_env/api_key_env custom-endpoint hints."""
-    config = tmp_path / "config.yaml"
+    # ``_try_resolve_fallback_provider`` reads ``gateway.core._janus_home`` even
+    # when called through the gateway.run shim, so the config must live in the
+    # shared tmp home the ``gateway_home`` fixture redirects across all modules.
+    config = gateway_home / "config.yaml"
     config.write_text(
         """
 fallback_providers:
@@ -232,7 +238,6 @@ fallback_providers:
 """.lstrip(),
         encoding="utf-8",
     )
-    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
     monkeypatch.setenv("MY_FALLBACK_KEY", "env-secret")
 
     def fake_resolve_runtime_provider(*, requested=None, explicit_base_url=None, explicit_api_key=None):

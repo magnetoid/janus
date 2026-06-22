@@ -89,18 +89,23 @@ async def test_draining_rejects_new_session_messages():
     assert result == "⏳ Gateway is restarting and is not accepting new work right now."
 
 
-def test_load_busy_input_mode_prefers_env_then_config_then_default(tmp_path, monkeypatch):
-    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+def test_load_busy_input_mode_prefers_env_then_config_then_default(
+    gateway_home, monkeypatch
+):
+    # ``_load_busy_input_mode`` reads config via ``_load_gateway_config`` which
+    # lives in ``gateway.core`` and reads ``gateway.core._janus_home``. Patching
+    # only ``gateway.run._janus_home`` is a no-op (refactor 70dbbfa), so use the
+    # shared ``gateway_home`` fixture which redirects the home across run/runner/core.
     monkeypatch.delenv("JANUS_GATEWAY_BUSY_INPUT_MODE", raising=False)
 
     assert gateway_run.GatewayRunner._load_busy_input_mode() == "interrupt"
 
-    (tmp_path / "config.yaml").write_text(
+    (gateway_home / "config.yaml").write_text(
         "display:\n  busy_input_mode: queue\n", encoding="utf-8"
     )
     assert gateway_run.GatewayRunner._load_busy_input_mode() == "queue"
 
-    (tmp_path / "config.yaml").write_text(
+    (gateway_home / "config.yaml").write_text(
         "display:\n  busy_input_mode: steer\n", encoding="utf-8"
     )
     assert gateway_run.GatewayRunner._load_busy_input_mode() == "steer"
@@ -116,8 +121,11 @@ def test_load_busy_input_mode_prefers_env_then_config_then_default(tmp_path, mon
     assert gateway_run.GatewayRunner._load_busy_input_mode() == "interrupt"
 
 
-def test_load_busy_text_mode_follows_input_mode_and_honors_legacy(tmp_path, monkeypatch):
-    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+def test_load_busy_text_mode_follows_input_mode_and_honors_legacy(
+    gateway_home, monkeypatch
+):
+    # Config is read via ``gateway.core._janus_home`` — see the note in
+    # ``test_load_busy_input_mode_prefers_env_then_config_then_default``.
     monkeypatch.delenv("JANUS_GATEWAY_BUSY_TEXT_MODE", raising=False)
     monkeypatch.delenv("JANUS_GATEWAY_BUSY_INPUT_MODE", raising=False)
 
@@ -125,20 +133,20 @@ def test_load_busy_text_mode_follows_input_mode_and_honors_legacy(tmp_path, monk
     assert gateway_run.GatewayRunner._load_busy_text_mode() == "interrupt"
 
     # busy_input_mode=queue propagates to text handling (single source of truth).
-    (tmp_path / "config.yaml").write_text(
+    (gateway_home / "config.yaml").write_text(
         "display:\n  busy_input_mode: queue\n", encoding="utf-8"
     )
     assert gateway_run.GatewayRunner._load_busy_text_mode() == "queue"
 
     # Legacy explicit busy_text_mode still wins for backward compat.
-    (tmp_path / "config.yaml").write_text(
+    (gateway_home / "config.yaml").write_text(
         "display:\n  busy_input_mode: interrupt\n  busy_text_mode: queue\n",
         encoding="utf-8",
     )
     assert gateway_run.GatewayRunner._load_busy_text_mode() == "queue"
 
     # Legacy env override wins too.
-    (tmp_path / "config.yaml").write_text(
+    (gateway_home / "config.yaml").write_text(
         "display:\n  busy_input_mode: interrupt\n", encoding="utf-8"
     )
     monkeypatch.setenv("JANUS_GATEWAY_BUSY_TEXT_MODE", "queue")
@@ -150,9 +158,10 @@ def test_load_busy_text_mode_follows_input_mode_and_honors_legacy(tmp_path, monk
 
 
 def test_load_restart_drain_timeout_prefers_env_then_config_then_default(
-    tmp_path, monkeypatch, caplog
+    gateway_home, monkeypatch, caplog
 ):
-    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+    # Config is read via ``gateway.core._janus_home`` — see the note in
+    # ``test_load_busy_input_mode_prefers_env_then_config_then_default``.
     monkeypatch.delenv("JANUS_RESTART_DRAIN_TIMEOUT", raising=False)
 
     assert (
@@ -160,7 +169,7 @@ def test_load_restart_drain_timeout_prefers_env_then_config_then_default(
         == DEFAULT_GATEWAY_RESTART_DRAIN_TIMEOUT
     )
 
-    (tmp_path / "config.yaml").write_text(
+    (gateway_home / "config.yaml").write_text(
         "agent:\n  restart_drain_timeout: 12\n", encoding="utf-8"
     )
     assert gateway_run.GatewayRunner._load_restart_drain_timeout() == 12.0

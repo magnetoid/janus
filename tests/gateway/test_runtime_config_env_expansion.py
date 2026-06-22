@@ -14,40 +14,48 @@ def _write_config(home, body: str) -> None:
 
 
 @pytest.fixture
-def gateway_home(monkeypatch, tmp_path):
-    monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+def gateway_env(monkeypatch, gateway_home):
+    """Clear env vars that override the config-file path under test.
+
+    ``gateway_home`` is the shared fixture from ``tests/gateway/conftest.py``: it
+    redirects the import-cached ``_janus_home`` across ``gateway.run`` /
+    ``gateway.runner`` / ``gateway.core`` (the runner methods resolve relative
+    paths via ``gateway.runner._janus_home`` while ``_load_gateway_runtime_config``
+    reads config through ``gateway.core._janus_home``) and returns the tmp home.
+    Patching only ``gateway.run._janus_home`` left the real ``~/.janus`` in play.
+    """
     monkeypatch.delenv("JANUS_PREFILL_MESSAGES_FILE", raising=False)
     monkeypatch.delenv("JANUS_EPHEMERAL_SYSTEM_PROMPT", raising=False)
     monkeypatch.delenv("JANUS_GATEWAY_BUSY_INPUT_MODE", raising=False)
     monkeypatch.delenv("JANUS_RESTART_DRAIN_TIMEOUT", raising=False)
     monkeypatch.delenv("JANUS_BACKGROUND_NOTIFICATIONS", raising=False)
-    return tmp_path
+    return gateway_home
 
 
-def test_load_prefill_messages_expands_env_var_path(monkeypatch, gateway_home):
+def test_load_prefill_messages_expands_env_var_path(monkeypatch, gateway_env):
     prefill = [{"role": "system", "content": "few-shot"}]
-    (gateway_home / "prefill.json").write_text(json.dumps(prefill), encoding="utf-8")
-    _write_config(gateway_home, "prefill_messages_file: ${PREFILL_FILE}\n")
+    (gateway_env / "prefill.json").write_text(json.dumps(prefill), encoding="utf-8")
+    _write_config(gateway_env, "prefill_messages_file: ${PREFILL_FILE}\n")
     monkeypatch.setenv("PREFILL_FILE", "prefill.json")
 
     assert gateway_run.GatewayRunner._load_prefill_messages() == prefill
 
 
-def test_load_prefill_messages_accepts_legacy_agent_key(monkeypatch, gateway_home):
+def test_load_prefill_messages_accepts_legacy_agent_key(monkeypatch, gateway_env):
     prefill = [{"role": "system", "content": "legacy few-shot"}]
-    (gateway_home / "prefill.json").write_text(json.dumps(prefill), encoding="utf-8")
-    _write_config(gateway_home, "agent:\n  prefill_messages_file: prefill.json\n")
+    (gateway_env / "prefill.json").write_text(json.dumps(prefill), encoding="utf-8")
+    _write_config(gateway_env, "agent:\n  prefill_messages_file: prefill.json\n")
 
     assert gateway_run.GatewayRunner._load_prefill_messages() == prefill
 
 
-def test_load_prefill_messages_prefers_top_level_over_legacy(monkeypatch, gateway_home):
+def test_load_prefill_messages_prefers_top_level_over_legacy(monkeypatch, gateway_env):
     top_level = [{"role": "system", "content": "top-level"}]
     legacy = [{"role": "system", "content": "legacy"}]
-    (gateway_home / "top.json").write_text(json.dumps(top_level), encoding="utf-8")
-    (gateway_home / "legacy.json").write_text(json.dumps(legacy), encoding="utf-8")
+    (gateway_env / "top.json").write_text(json.dumps(top_level), encoding="utf-8")
+    (gateway_env / "legacy.json").write_text(json.dumps(legacy), encoding="utf-8")
     _write_config(
-        gateway_home,
+        gateway_env,
         "prefill_messages_file: top.json\n"
         "agent:\n"
         "  prefill_messages_file: legacy.json\n",
@@ -105,14 +113,14 @@ def test_load_prefill_messages_prefers_top_level_over_legacy(monkeypatch, gatewa
 )
 def test_gateway_runtime_loaders_expand_env_var_templates(
     monkeypatch,
-    gateway_home,
+    gateway_env,
     config_body,
     env_name,
     env_value,
     loader_name,
     expected,
 ):
-    _write_config(gateway_home, config_body)
+    _write_config(gateway_env, config_body)
     monkeypatch.setenv(env_name, env_value)
 
     loader = getattr(gateway_run.GatewayRunner, loader_name)
