@@ -45,7 +45,7 @@ def isolated_home(tmp_path, monkeypatch):
         for mod in list(sys.modules.keys()):
             if mod.startswith(("janus_cli", "gateway")):
                 del sys.modules[mod]
-        return importlib.import_module("gateway.run")
+        return importlib.import_module("gateway.runner")
 
     try:
         yield write_cfg, fresh_gateway

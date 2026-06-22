@@ -132,7 +132,7 @@ class FailingAgent:
 
 
 def _make_runner(adapter):
-    gateway_run = importlib.import_module("gateway.run")
+    gateway_run = importlib.import_module("gateway.runner")
     GatewayRunner = gateway_run.GatewayRunner
     runner = object.__new__(GatewayRunner)
     runner.adapters = {adapter.platform: adapter}
@@ -167,7 +167,7 @@ def _install_fakes(monkeypatch, agent_cls, *, cleanup_on: bool):
     monkeypatch.setitem(sys.modules, "run_agent", fake_run_agent)
     import tools.terminal_tool  # noqa: F401 — register tool emoji
 
-    gateway_run = importlib.import_module("gateway.run")
+    gateway_run = importlib.import_module("gateway.runner")
     monkeypatch.setattr(gateway_run, "_resolve_runtime_agent_kwargs", lambda: {"api_key": "fake"})
 
     # Wire the per-platform cleanup_progress flag via the config loader the

@@ -107,7 +107,7 @@ class InterruptedAgent:
 
 
 def _make_runner(adapter):
-    gateway_run = importlib.import_module("gateway.run")
+    gateway_run = importlib.import_module("gateway.runner")
     GatewayRunner = gateway_run.GatewayRunner
 
     runner = object.__new__(GatewayRunner)
@@ -143,7 +143,7 @@ async def _run_once(monkeypatch, tmp_path, agent_cls, session_id):
 
     adapter = ProgressCaptureAdapter()
     runner = _make_runner(adapter)
-    gateway_run = importlib.import_module("gateway.run")
+    gateway_run = importlib.import_module("gateway.runner")
     monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
     monkeypatch.setattr(
         gateway_run,
