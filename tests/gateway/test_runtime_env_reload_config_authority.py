@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from gateway import run as gateway_run
+from gateway import core as gateway_run
 
 
 def test_reload_runtime_env_preserves_config_max_turns(tmp_path: Path, monkeypatch) -> None:

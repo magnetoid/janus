@@ -19,7 +19,7 @@ import ast
 import inspect
 import textwrap
 
-from gateway import run as gateway_run
+from gateway import runner as gateway_run
 
 
 def _session_id_assignments_followed_by_save(source: str) -> list[tuple[int, bool]]:
