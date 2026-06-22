@@ -32,11 +32,42 @@ incident.
 """
 
 import ast
+import importlib
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+
+
+@pytest.fixture
+def gateway_home(tmp_path, monkeypatch):
+    """Redirect the gateway's import-cached ``_janus_home`` to a tmp home across
+    every module that holds its own binding.
+
+    Refactor 70dbbfa split the gateway into ``gateway.core`` / ``gateway.runner``
+    (re-exported by the legacy ``gateway.run`` shim). Each module caches its own
+    ``_janus_home = get_janus_home()`` at import, and a given path read may resolve
+    through any of them — e.g. ``GatewayRunner`` methods read
+    ``gateway.runner._janus_home`` while ``_load_gateway_config`` /
+    ``_resolve_runtime_agent_kwargs`` read ``gateway.core._janus_home``. A test that
+    patched only one module silently hit the real ``~/.janus``, which is the entire
+    class of stale-mock failures this fixture exists to prevent.
+
+    Request this fixture instead of hand-patching ``_janus_home`` per module; it
+    returns the tmp home directory. Opt-in (not autouse) so the many tests that
+    manage their own home are unaffected.
+    """
+    home = tmp_path / "janus"
+    home.mkdir(exist_ok=True)
+    for name in ("gateway.run", "gateway.runner", "gateway.core"):
+        try:
+            mod = importlib.import_module(name)
+        except Exception:
+            continue
+        if hasattr(mod, "_janus_home"):
+            monkeypatch.setattr(mod, "_janus_home", home, raising=False)
+    return home
 
 
 def _ensure_telegram_mock() -> None:
