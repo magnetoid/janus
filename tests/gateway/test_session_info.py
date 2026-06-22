@@ -1,9 +1,20 @@
 """Tests for GatewayRunner._format_session_info — session config surfacing."""
 
+import contextlib
+
 import pytest
 from unittest.mock import patch
 
 from gateway.run import GatewayRunner
+
+
+@contextlib.contextmanager
+def _patch_both_home(tmp_path):
+    """_format_session_info writes/reads via gateway.runner._janus_home but also
+    loads config through _load_gateway_config() in gateway.core — patch both."""
+    with patch("gateway.runner._janus_home", tmp_path), \
+         patch("gateway.core._janus_home", tmp_path):
+        yield
 
 
 @pytest.fixture()
@@ -18,9 +29,9 @@ def _patch_info(tmp_path, config_yaml, model, runtime):
     if config_yaml is not None:
         cfg_path.write_text(config_yaml)
     return (
-        patch("gateway.run._janus_home", tmp_path),
-        patch("gateway.run._resolve_gateway_model", return_value=model),
-        patch("gateway.run._resolve_runtime_agent_kwargs", return_value=runtime),
+        _patch_both_home(tmp_path),
+        patch("gateway.runner._resolve_gateway_model", return_value=model),
+        patch("gateway.runner._resolve_runtime_agent_kwargs", return_value=runtime),
     )
 
 
@@ -101,9 +112,9 @@ class TestFormatSessionInfo:
         """If runtime resolution raises, should still produce output."""
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text("model:\n  default: test-model\n  context_length: 4096\n")
-        with patch("gateway.run._janus_home", tmp_path), \
-             patch("gateway.run._resolve_gateway_model", return_value="test-model"), \
-             patch("gateway.run._resolve_runtime_agent_kwargs", side_effect=RuntimeError("no creds")):
+        with _patch_both_home(tmp_path), \
+             patch("gateway.runner._resolve_gateway_model", return_value="test-model"), \
+             patch("gateway.runner._resolve_runtime_agent_kwargs", side_effect=RuntimeError("no creds")):
             info = runner._format_session_info()
         assert "4K" in info
         assert "config" in info
