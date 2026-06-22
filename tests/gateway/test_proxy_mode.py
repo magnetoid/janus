@@ -97,7 +97,7 @@ class TestGetProxyUrl:
     def test_returns_none_when_not_configured(self, monkeypatch):
         monkeypatch.delenv("GATEWAY_PROXY_URL", raising=False)
         runner = _make_runner()
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             assert runner._get_proxy_url() is None
 
     def test_reads_from_env_var(self, monkeypatch):
@@ -114,20 +114,20 @@ class TestGetProxyUrl:
         monkeypatch.delenv("GATEWAY_PROXY_URL", raising=False)
         runner = _make_runner()
         cfg = {"gateway": {"proxy_url": "http://10.0.0.1:8642"}}
-        with patch("gateway.run._load_gateway_config", return_value=cfg):
+        with patch("gateway.runner._load_gateway_config", return_value=cfg):
             assert runner._get_proxy_url() == "http://10.0.0.1:8642"
 
     def test_env_var_overrides_config(self, monkeypatch):
         monkeypatch.setenv("GATEWAY_PROXY_URL", "http://env-host:8642")
         runner = _make_runner()
         cfg = {"gateway": {"proxy_url": "http://config-host:8642"}}
-        with patch("gateway.run._load_gateway_config", return_value=cfg):
+        with patch("gateway.runner._load_gateway_config", return_value=cfg):
             assert runner._get_proxy_url() == "http://env-host:8642"
 
     def test_empty_string_treated_as_unset(self, monkeypatch):
         monkeypatch.setenv("GATEWAY_PROXY_URL", "  ")
         runner = _make_runner()
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             assert runner._get_proxy_url() is None
 
 
@@ -209,7 +209,7 @@ class TestRunAgentProxyDispatch:
 
         runner._run_agent_via_proxy = AsyncMock()
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             try:
                 await runner._run_agent(
                     message="hi",
@@ -244,7 +244,7 @@ class TestRunAgentViaProxy:
         )
         session = _FakeSession(resp)
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with _patch_aiohttp(session):
                 with patch("aiohttp.ClientTimeout"):
                     result = await runner._run_agent_via_proxy(
@@ -290,7 +290,7 @@ class TestRunAgentViaProxy:
         resp = _FakeSSEResponse(status=401, error_text="Unauthorized: invalid API key")
         session = _FakeSession(resp)
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with _patch_aiohttp(session):
                 with patch("aiohttp.ClientTimeout"):
                     result = await runner._run_agent_via_proxy(
@@ -321,7 +321,7 @@ class TestRunAgentViaProxy:
             async def __aexit__(self, *args):
                 pass
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with patch("aiohttp.ClientSession", return_value=_ErrorSession()):
                 with patch("aiohttp.ClientTimeout"):
                     result = await runner._run_agent_via_proxy(
@@ -354,7 +354,7 @@ class TestRunAgentViaProxy:
             {"role": "assistant", "content": "Found results."},
         ]
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with _patch_aiohttp(session):
                 with patch("aiohttp.ClientTimeout"):
                     await runner._run_agent_via_proxy(
@@ -385,7 +385,7 @@ class TestRunAgentViaProxy:
         )
         session = _FakeSession(resp)
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with _patch_aiohttp(session):
                 with patch("aiohttp.ClientTimeout"):
                     result = await runner._run_agent_via_proxy(
@@ -424,7 +424,7 @@ class TestRunAgentViaProxy:
         )
         session = _FakeSession(resp)
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with _patch_aiohttp(session):
                 with patch("aiohttp.ClientTimeout"):
                     result = await runner._run_agent_via_proxy(
@@ -454,7 +454,7 @@ class TestRunAgentViaProxy:
         )
         session = _FakeSession(resp)
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with _patch_aiohttp(session):
                 with patch("aiohttp.ClientTimeout"):
                     await runner._run_agent_via_proxy(
@@ -480,7 +480,7 @@ class TestRunAgentViaProxy:
         )
         session = _FakeSession(resp)
 
-        with patch("gateway.run._load_gateway_config", return_value={}):
+        with patch("gateway.runner._load_gateway_config", return_value={}):
             with _patch_aiohttp(session):
                 with patch("aiohttp.ClientTimeout"):
                     await runner._run_agent_via_proxy(

@@ -72,8 +72,8 @@ async def test_compress_focus_topic_passed_to_agent():
         return 100
 
     with (
-        patch("gateway.run._resolve_runtime_agent_kwargs", return_value={"api_key": "***"}),
-        patch("gateway.run._resolve_gateway_model", return_value="test-model"),
+        patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={"api_key": "***"}),
+        patch("gateway.runner._resolve_gateway_model", return_value="test-model"),
         patch("run_agent.AIAgent", return_value=agent_instance),
         patch("agent.model_metadata.estimate_messages_tokens_rough", side_effect=_estimate),
     ):
@@ -99,8 +99,8 @@ async def test_compress_no_focus_passes_none():
     agent_instance._compress_context.return_value = (list(history), "")
 
     with (
-        patch("gateway.run._resolve_runtime_agent_kwargs", return_value={"api_key": "***"}),
-        patch("gateway.run._resolve_gateway_model", return_value="test-model"),
+        patch("gateway.runner._resolve_runtime_agent_kwargs", return_value={"api_key": "***"}),
+        patch("gateway.runner._resolve_gateway_model", return_value="test-model"),
         patch("run_agent.AIAgent", return_value=agent_instance),
         patch("agent.model_metadata.estimate_messages_tokens_rough", return_value=100),
     ):
