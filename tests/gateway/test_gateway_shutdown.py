@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import gateway.run as gateway_run
+import gateway.runner as gateway_run
 from gateway.config import HomeChannel, Platform
 from gateway.platforms.base import MessageEvent
 from gateway.restart import GATEWAY_SERVICE_RESTART_EXIT_CODE
@@ -136,9 +136,14 @@ async def test_gateway_stop_interrupts_after_drain_timeout():
 @pytest.mark.asyncio
 async def test_gateway_stop_systemd_service_restart_exits_cleanly(tmp_path, monkeypatch):
     monkeypatch.setattr(gateway_run, "_janus_home", tmp_path)
+    # .restart_pending.json is pathed via gateway.core._janus_home, not runner's.
+    monkeypatch.setattr("gateway.core._janus_home", tmp_path)
     runner, adapter = make_restart_runner()
     adapter.disconnect = AsyncMock()
     monkeypatch.setenv("INVOCATION_ID", "systemd-test")
+    # systemd is Linux: exit code 0 (clean) only applies off macOS. Without this
+    # the test takes the launchd/darwin branch (exit 75) on macOS dev machines.
+    monkeypatch.setattr("gateway.runner.sys.platform", "linux")
     runner._launch_systemd_restart_shortcut = MagicMock()
 
     with patch("gateway.status.remove_pid_file"), patch("gateway.status.write_runtime_status"):
@@ -155,7 +160,7 @@ async def test_gateway_stop_launchd_service_restart_keeps_nonzero_exit(tmp_path,
     runner, adapter = make_restart_runner()
     adapter.disconnect = AsyncMock()
 
-    with patch("gateway.run.sys.platform", "darwin"), patch(
+    with patch("gateway.runner.sys.platform", "darwin"), patch(
         "gateway.status.remove_pid_file"
     ), patch("gateway.status.write_runtime_status"):
         await runner.stop(restart=True, service_restart=True)
