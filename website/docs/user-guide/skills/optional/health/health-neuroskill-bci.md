@@ -17,7 +17,7 @@ Connect to a running NeuroSkill instance and incorporate the user's real-time co
 | Source | Optional — install with `janus skills install official/health/neuroskill-bci` |
 | Path | `optional-skills/health/neuroskill-bci` |
 | Version | `1.0.0` |
-| Author | Janus Agent + Imba Labs |
+| Author | Janus Agent + Cloud Industry |
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `BCI`, `neurofeedback`, `health`, `focus`, `EEG`, `cognitive-state`, `biometrics`, `neuroskill` |

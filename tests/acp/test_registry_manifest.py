@@ -34,7 +34,7 @@ def test_agent_json_matches_official_registry_required_fields():
     assert data["description"]
     assert data["repository"] == "https://github.com/magnetoid/janus"
     assert data["website"].startswith("https://github.com/magnetoid/janus")
-    assert data["authors"] == ["Imba Labs"]
+    assert data["authors"] == ["Cloud Industry"]
     assert data["license"] == "MIT"
     assert set(data["distribution"]) <= ALLOWED_DISTRIBUTIONS
 

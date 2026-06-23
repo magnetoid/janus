@@ -1,5 +1,5 @@
 {
-  description = "Janus Agent - AI agent framework by Imba Labs";
+  description = "Janus Agent - AI agent framework by Cloud Industry";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

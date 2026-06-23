@@ -2,10 +2,10 @@
   "id": "janus-agent",
   "name": "Janus Agent",
   "version": "0.16.0",
-  "description": "Self-improving open-source AI agent by Imba Labs with ACP editor integration, persistent memory, skills, and rich tool support.",
+  "description": "Self-improving open-source AI agent by Cloud Industry with ACP editor integration, persistent memory, skills, and rich tool support.",
   "repository": "https://github.com/magnetoid/janus",
   "website": "https://github.com/magnetoid/janus",
-  "authors": ["Imba Labs"],
+  "authors": ["Cloud Industry"],
   "license": "MIT",
   "distribution": {
     "uvx": {

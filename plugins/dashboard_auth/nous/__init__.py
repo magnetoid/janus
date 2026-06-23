@@ -154,7 +154,7 @@ class NousDashboardAuthProvider(DashboardAuthProvider):
     """Janus Portal OAuth via authorization-code + PKCE (S256)."""
 
     name = "nous"
-    display_name = "Imba Labs"
+    display_name = "Cloud Industry"
 
     def __init__(self, *, client_id: str, portal_url: str) -> None:
         if not client_id.startswith("agent:"):

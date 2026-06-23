@@ -130,7 +130,7 @@ DEFAULT_AGENT_IDENTITY = (
 )
 
 JANUS_AGENT_HELP_GUIDANCE = (
-    "You run on Janus Agent (by Imba Labs). When the user needs help with "
+    "You run on Janus Agent (by Cloud Industry). When the user needs help with "
     "Janus itself — configuring, setting up, using, extending, or troubleshooting "
     "it — or when you need to understand your own features, tools, or capabilities, "
     "the documentation at https://github.com/magnetoid/janus is your "

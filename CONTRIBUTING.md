@@ -45,7 +45,7 @@ Bundled skills (in `skills/`) ship with every Janus install. They should be **br
 
 If your skill is official and useful but not universally needed (e.g., a paid service integration, a heavyweight dependency), put it in **`optional-skills/`** — it ships with the repo but isn't activated by default. Users can discover it via `janus skills browse` (labeled "official") and install it with `janus skills install` (no third-party warning, built-in trust).
 
-If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a skills registry and share it in the [Imba Labs Discord](https://discord.gg/imbalabs). Users can install it with `janus skills install`.
+If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a skills registry and share it in the [Cloud Industry Discord](https://discord.gg/imbalabs). Users can install it with `janus skills install`.
 
 ---
 

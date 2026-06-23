@@ -157,4 +157,4 @@ GitHub: [github.com/magnetoid/janus](https://github.com/magnetoid/janus)
 
 ---
 
-*Janus Agent is built by [Imba Labs](https://imbalabs.com). Open source, model-agnostic, runs on your infrastructure.*
+*Janus Agent is built by [Cloud Industry](https://imbalabs.com). Open source, model-agnostic, runs on your infrastructure.*

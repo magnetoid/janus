@@ -2,7 +2,7 @@
 name: telephony
 description: Give Janus phone capabilities without core tool changes. Provision and persist a Twilio number, send and receive SMS/MMS, make direct calls, and place AI-driven outbound calls through Bland.ai or Vapi.
 version: 1.0.0
-author: Imba Labs
+author: Cloud Industry
 license: MIT
 platforms: [linux, macos, windows]
 metadata:

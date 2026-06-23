@@ -7,7 +7,7 @@
 ╚█████╔╝██║  ██║██║ ╚████║╚██████╔╝███████║
  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝
 </pre>
-<strong>The self-improving AI agent · by Imba Labs</strong>
+<strong>The self-improving AI agent · by Cloud Industry</strong>
 </div>
 
 # Janus Agent 
@@ -16,11 +16,11 @@
   <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Docs-GitHub-FFD700?style=for-the-badge" alt="Documentation"></a>
   <a href="https://discord.gg/imbalabs"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/magnetoid/janus/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Built%20by-Imba%20Labs-blueviolet?style=for-the-badge" alt="Built by Imba Labs"></a>
+  <a href="https://github.com/magnetoid/janus"><img src="https://img.shields.io/badge/Built%20by-Imba%20Labs-blueviolet?style=for-the-badge" alt="Built by Cloud Industry"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/Lang-中文-red?style=for-the-badge" alt="中文"></a>
 </p>
 
-**The self-improving AI agent built by [Imba Labs](https://github.com/magnetoid/janus).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
+**The self-improving AI agent built by [Cloud Industry](https://github.com/magnetoid/janus).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
 
 Use any model you want — [Janus Portal](https://portal.imbalabs.com), [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai) (AI-native cloud for Model API, Agent Sandbox, and GPU Cloud), [NVIDIA NIM](https://build.nvidia.com) (Nemotron), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch with `janus model` — no code changes, no lock-in.
 
@@ -38,7 +38,7 @@ Use any model you want — [Janus Portal](https://portal.imbalabs.com), [OpenRou
 
 ## Quick Install
 
-Janus installs from source. (Hosted one-line installers will follow once Imba Labs has install hosting.)
+Janus installs from source. (Hosted one-line installers will follow once Cloud Industry has install hosting.)
 
 ### Linux, macOS, WSL2, Termux
 
@@ -272,4 +272,4 @@ scripts/run_tests.sh
 
 MIT — see [LICENSE](LICENSE).
 
-Built by [Imba Labs](https://imbalabs.com).
+Built by [Cloud Industry](https://imbalabs.com).

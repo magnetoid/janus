@@ -19,7 +19,7 @@
 >   hook pending"* (#9) are **shipped**; *"24 nousresearch.com README URLs"* (#10/L2) is
 >   now **zero**; *"no public WebSocket/SSE API"* (#12) — one **exists**. These trace to a
 >   single stale `.torsor/active/context.md` note (2026-06-09).
-> - **Branding is retired:** "Imba Labs" → **Cloud Industry** (ADR 0004); C1's *"Nous
+> - **Branding is retired:** "Cloud Industry" → **Cloud Industry** (ADR 0004); C1's *"Nous
 >   Portal"* → **Janus Portal**; and C1 "Janus Cloud" is partly **already started** at
 >   cloud-industry.com (ADR 0005). Provider/model slugs (`nous`, Nous Hermes IDs) are
 >   correctly preserved — keep those.
@@ -41,7 +41,7 @@
 ## Executive Summary
 
 Janus is a sophisticated, model-agnostic, self-improving AI agent (~8,000 files, ~17k tests,
-MIT-licensed) built by Imba Labs. Its core differentiator
+MIT-licensed) built by Cloud Industry. Its core differentiator
 is a **closed learning loop** — autonomous skill mining, reflexion lessons, memory
 distillation, dialectic admission gates, and the ACE playbook that tunes its own learning
 prompts. The codebase is exceptionally well-engineered (strict dependency pinning, profile
@@ -95,7 +95,7 @@ monetization, and AI-native UX — without compromising its open-core / self-hos
 7. **`/memory` slash command is parked** (per `.torsor/active/context.md`); the memory surface is split across CLI subcommands (`memory`, `memory log`, `memory mine`) and slash variants with gaps.
 8. **Gateway dual-message-guard complexity** — `gateway/run.py` + base adapter must both bypass approval/control commands; documented foot-gun for new commands.
 9. **Auto-mining hook pending** — opt-in `memory.session_mining` is documented but the wiring is incomplete per active context.
-10. **Nous Research brand removal incomplete** — `hermes-agent.nousresearch.com` URLs still in 24 README locations; provider/model IDs intentionally preserved (so breaking the removal would break users).
+10. **Cloud Industry brand removal incomplete** — `hermes-agent.nousresearch.com` URLs still in 24 README locations; provider/model IDs intentionally preserved (so breaking the removal would break users).
 11. **ACP / Desktop / Dashboard are three parallel chat surfaces** — slash-command curation logic exists in three places (`acp_adapter`, `tui_gateway`, `apps/desktop/src/lib/desktop-slash-commands.ts`); risk of drift.
 12. **No first-class WebSocket/SSE streaming API for remote apps** — there is `janus_cli/web_server.py` for dashboard, but no public agent API; programmatic integration doc (`website/docs/guides/python-library.md`) is thin.
 13. **Eval suite is YAML + deterministic assertions** — strong for regression but not suited for human-judged quality or vision / multimodal evals.
@@ -273,7 +273,7 @@ Ten canonical, runnable examples: "Janus as a Slack bot," "Janus as a cron-drive
 | ID | Recommendation | Effort |
 |---|---|---|
 | L1 | Polish auto-mining hook (parked) and ship `/memory` slash command | 1 eng × 2 weeks |
-| L2 | Replace Nous Research URLs in README; preserve provider slugs | 0.5 eng × 1 week |
+| L2 | Replace Cloud Industry URLs in README; preserve provider slugs | 0.5 eng × 1 week |
 | L3 | Per-tool cost analytics (already in `usage_pricing.py`) surfaced in TUI as a real-time widget | 1 eng × 2 weeks |
 | L4 | Public changelog + per-release eval-trend delta in `eval_trend.py` | 0.5 eng × 2 weeks |
 | L5 | `janus doctor --fix` mode (auto-apply known fixes) | 1 eng × 1 month |

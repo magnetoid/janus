@@ -36,8 +36,8 @@
     "category": "DeveloperTool",
     "shortDescription": "Janus",
     "longDescription": "Installs Janus Agent on your machine. Drives scripts/install.ps1 (Windows) and scripts/install.sh (macOS/Linux).",
-    "publisher": "Imba Labs",
-    "copyright": "Copyright © 2026 Imba Labs",
+    "publisher": "Cloud Industry",
+    "copyright": "Copyright © 2026 Cloud Industry",
     "targets": [
       "app",
       "dmg",

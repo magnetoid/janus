@@ -1,6 +1,6 @@
 # Optional Skills
 
-Official skills maintained by Imba Labs that are **not activated by default**.
+Official skills maintained by Cloud Industry that are **not activated by default**.
 
 These skills ship with the janus-agent repository but are not copied to
 `~/.janus/skills/` during setup. They are discoverable via the Skills Hub:

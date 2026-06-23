@@ -17,7 +17,7 @@ description: "连接到运行中的 NeuroSkill 实例，将用户的实时认知
 | 来源 | 可选 — 通过 `janus skills install official/health/neuroskill-bci` 安装 |
 | 路径 | `optional-skills/health/neuroskill-bci` |
 | 版本 | `1.0.0` |
-| 作者 | Janus Agent + Imba Labs |
+| 作者 | Janus Agent + Cloud Industry |
 | 许可证 | MIT |
 | 平台 | linux, macos, windows |
 | 标签 | `BCI`, `neurofeedback`, `health`, `focus`, `EEG`, `cognitive-state`, `biometrics`, `neuroskill` |

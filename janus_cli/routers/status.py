@@ -95,7 +95,7 @@ async def get_status():
 
     # Dashboard auth gate (Phase 7): surface whether the gate is engaged
     # and which providers are registered so ``janus status`` and the
-    # SPA's StatusPage can show "OAuth gate ON via Imba Labs" or
+    # SPA's StatusPage can show "OAuth gate ON via Cloud Industry" or
     # "loopback only — no auth gate" with no extra round trips.
     auth_required = bool(getattr(web_server_mod.app.state, "auth_required", False))
     auth_providers: list[str] = []

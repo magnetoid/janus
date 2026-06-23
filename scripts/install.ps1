@@ -160,7 +160,7 @@ function Write-Banner {
     Write-Host "+---------------------------------------------------------+" -ForegroundColor Magenta
     Write-Host "|             * Janus Agent Installer                    |" -ForegroundColor Magenta
     Write-Host "+---------------------------------------------------------+" -ForegroundColor Magenta
-    Write-Host "|  An open source AI agent by Imba Labs.              |" -ForegroundColor Magenta
+    Write-Host "|  An open source AI agent by Cloud Industry.              |" -ForegroundColor Magenta
     Write-Host "+---------------------------------------------------------+" -ForegroundColor Magenta
     Write-Host ""
 }

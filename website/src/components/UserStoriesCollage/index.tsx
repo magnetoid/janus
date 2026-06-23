@@ -303,7 +303,7 @@ export default function UserStoriesCollage(): JSX.Element {
         </a>{' '}
         by editing <code>userStories.json</code>, or post it in the{' '}
         <a href="https://discord.gg/imbalabs" target="_blank" rel="noopener noreferrer">
-          Imba Labs Discord
+          Cloud Industry Discord
         </a>{' '}
         and we&apos;ll pick it up.
       </div>

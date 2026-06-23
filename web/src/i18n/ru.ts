@@ -55,7 +55,7 @@ export const ru: Translations = {
     closeNavigation: "Закрыть навигацию",
     closeModelTools: "Закрыть модель и инструменты",
     footer: {
-      org: "Imba Labs",
+      org: "Cloud Industry",
     },
     activeSessionsLabel: "Активные сессии:",
     gatewayStatusLabel: "Статус шлюза:",

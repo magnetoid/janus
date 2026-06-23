@@ -124,7 +124,7 @@ The content goes through:
 - prompt-injection scanning
 - truncation if it is too large
 
-If the file is empty, whitespace-only, or cannot be read, Janus falls back to a built-in default identity ("You are Janus Agent, an intelligent AI assistant created by Imba Labs..."). This fallback also applies when `skip_context_files` is set (e.g., in subagent/delegation contexts).
+If the file is empty, whitespace-only, or cannot be read, Janus falls back to a built-in default identity ("You are Janus Agent, an intelligent AI assistant created by Cloud Industry..."). This fallback also applies when `skip_context_files` is set (e.g., in subagent/delegation contexts).
 
 ## Security scanning
 

@@ -400,7 +400,7 @@ def do_browse(page: int = 1, page_size: int = 20, source: str = "all",
     c.print(f"\n[bold]Skills Hub — Browse {source_label}[/]"
             f"  [dim]({loaded_label}, page {page}/{total_pages})[/]")
     if official_count > 0 and page == 1:
-        c.print(f"[bright_cyan]★ {official_count} official optional skill(s) from Imba Labs[/]")
+        c.print(f"[bright_cyan]★ {official_count} official optional skill(s) from Cloud Industry[/]")
     c.print()
 
     # Build table
@@ -634,7 +634,7 @@ def do_install(identifier: str, category: str = "", force: bool = False,
         c.print()
         if bundle.source == "official":
             c.print(Panel(
-                "[bold bright_cyan]This is an official optional skill maintained by Imba Labs.[/]\n\n"
+                "[bold bright_cyan]This is an official optional skill maintained by Cloud Industry.[/]\n\n"
                 "It ships with janus-agent but is not activated by default.\n"
                 "Installing will copy it to your skills directory where the agent can use it.\n\n"
                 f"Files will be at: [cyan]{display_janus_home()}/skills/{category + '/' if category else ''}{bundle.name}/[/]",

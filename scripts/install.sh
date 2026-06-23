@@ -212,7 +212,7 @@ print_banner() {
     echo "┌─────────────────────────────────────────────────────────┐"
     echo "│             ⚕ Janus Agent Installer                    │"
     echo "├─────────────────────────────────────────────────────────┤"
-    echo "│  An open source AI agent by Imba Labs.              │"
+    echo "│  An open source AI agent by Cloud Industry.              │"
     echo "└─────────────────────────────────────────────────────────┘"
     echo -e "${NC}"
 }

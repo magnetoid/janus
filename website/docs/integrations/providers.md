@@ -61,7 +61,7 @@ In the `model:` config section, you can use either `default:` or `model:` as the
 
 ### Janus Portal
 
-[Janus Portal](https://portal.imbalabs.com) is Imba Labs's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, browser automation) plus [Nous Chat](https://chat.imbalabs.com) — billed against your Nous subscription instead of separate per-provider accounts.
+[Janus Portal](https://portal.imbalabs.com) is Cloud Industry's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, browser automation) plus [Nous Chat](https://chat.imbalabs.com) — billed against your Nous subscription instead of separate per-provider accounts.
 
 ```bash
 janus setup --portal     # fresh install — OAuth + provider + gateway in one command

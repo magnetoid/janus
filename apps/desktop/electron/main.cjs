@@ -443,7 +443,7 @@ app.setName(APP_NAME)
 app.setAboutPanelOptions({
   applicationName: APP_NAME,
   applicationVersion: resolveJanusVersion(),
-  copyright: 'Copyright © 2026 Imba Labs'
+  copyright: 'Copyright © 2026 Cloud Industry'
 })
 
 // Custom scheme for streaming local media (video/audio) into the renderer.
@@ -3396,7 +3396,7 @@ function installMediaPermissions() {
 // OAuth remote-gateway auth.
 //
 // Hosted Janus gateways gate the dashboard behind an OAuth provider (e.g.
-// Imba Labs) instead of a static session token. The auth model is
+// Cloud Industry) instead of a static session token. The auth model is
 // fundamentally different from the token path:
 //
 //   * REST is authed by HttpOnly session cookies (``janus_session_at``),
@@ -4107,7 +4107,7 @@ async function probeRemoteAuthMode(rawUrl) {
 
   if (authRequired) {
     // Best-effort: a gated gateway exposes the registered providers so the
-    // button can read "Sign in with Imba Labs" instead of a generic
+    // button can read "Sign in with Cloud Industry" instead of a generic
     // label, and so a username/password provider can be distinguished from
     // an OAuth-redirect one (``supports_password``). A failure here doesn't
     // change the auth mode, so swallow it.
@@ -5487,7 +5487,7 @@ function showAboutPanelFresh() {
   app.setAboutPanelOptions({
     applicationName: APP_NAME,
     applicationVersion: resolveJanusVersion(),
-    copyright: 'Copyright © 2026 Imba Labs'
+    copyright: 'Copyright © 2026 Cloud Industry'
   })
   app.showAboutPanel()
 }

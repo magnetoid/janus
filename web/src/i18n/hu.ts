@@ -55,7 +55,7 @@ export const hu: Translations = {
     closeNavigation: "Navigáció bezárása",
     closeModelTools: "Modell és eszközök bezárása",
     footer: {
-      org: "Imba Labs",
+      org: "Cloud Industry",
     },
     activeSessionsLabel: "Aktív munkamenetek:",
     gatewayStatusLabel: "Átjáró állapota:",

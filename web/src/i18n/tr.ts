@@ -55,7 +55,7 @@ export const tr: Translations = {
     closeNavigation: "Gezintiyi kapat",
     closeModelTools: "Modeli ve araçları kapat",
     footer: {
-      org: "Imba Labs",
+      org: "Cloud Industry",
     },
     activeSessionsLabel: "Aktif Oturumlar:",
     gatewayStatusLabel: "Ağ Geçidi Durumu:",

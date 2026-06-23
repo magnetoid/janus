@@ -6,7 +6,7 @@ description: "One subscription, 300+ frontier models, the Tool Gateway, and Nous
 
 # Janus Portal
 
-[Janus Portal](https://portal.imbalabs.com) is Imba Labs's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand.
+[Janus Portal](https://portal.imbalabs.com) is Cloud Industry's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand.
 
 If you only have time to set up one thing, set up this. The fastest path:
 
@@ -62,7 +62,7 @@ You can also enable just specific gateway tools (e.g. web search but not image g
 
 ### Nous Chat
 
-Your Portal account also covers [chat.imbalabs.com](https://chat.imbalabs.com) — Imba Labs's web chat interface with the same model catalog. Useful when you're away from your terminal, or for non-agent conversation work.
+Your Portal account also covers [chat.imbalabs.com](https://chat.imbalabs.com) — Cloud Industry's web chat interface with the same model catalog. Useful when you're away from your terminal, or for non-agent conversation work.
 
 ### No credentials in your dotfiles
 
@@ -74,7 +74,7 @@ Because everything routes through one OAuth-authenticated Portal session, you do
 
 ## A note on Hermes 4
 
-Imba Labs's own **Hermes 4** family (Hermes-4-70B, Hermes-4-405B) is available through the Portal at heavily discounted rates. These are **frontier hybrid-reasoning chat models** — strong at math, science, instruction following, schema adherence, roleplay, and long-form writing.
+Cloud Industry's own **Hermes 4** family (Hermes-4-70B, Hermes-4-405B) is available through the Portal at heavily discounted rates. These are **frontier hybrid-reasoning chat models** — strong at math, science, instruction following, schema adherence, roleplay, and long-form writing.
 
 They are **not recommended for use inside Janus Agent**, however. Hermes 4 is tuned for chat and reasoning, not the rapid-fire tool-calling loop the agent relies on. Use them for [Nous Chat](https://chat.imbalabs.com), for research workflows, or via the [subscription proxy](/user-guide/features/subscription-proxy) from other tooling — but for agent work, pick a frontier agentic model from the catalog instead:
 
@@ -85,7 +85,7 @@ They are **not recommended for use inside Janus Agent**, however. Hermes 4 is tu
 /model deepseek/deepseek-v4-pro        # cost-effective coder
 ```
 
-The Portal's own [model info page](https://portal.imbalabs.com/info) carries the same warning, so this isn't a Janus-side opinion — it's the official guidance from Imba Labs.
+The Portal's own [model info page](https://portal.imbalabs.com/info) carries the same warning, so this isn't a Janus-side opinion — it's the official guidance from Cloud Industry.
 
 ## Setup
 

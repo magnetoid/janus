@@ -524,7 +524,7 @@ The gate is on if and only if:
 
 If the gate would engage but **no** `DashboardAuthProvider` is registered (no Nous plugin, no custom plugin), `janus dashboard` refuses to bind with an explicit error message. There is no "default-deny but accept everything" fallback — a misconfigured gated dashboard never starts.
 
-### Default provider: Imba Labs
+### Default provider: Cloud Industry
 
 The bundled `plugins/dashboard_auth/nous` plugin is **always installed** and auto-loaded. It auto-registers a `DashboardAuthProvider` named `nous` when a client ID is configured.
 
@@ -584,7 +584,7 @@ Or pass --insecure to skip the auth gate (NOT recommended on untrusted
 networks).
 ```
 
-#### Worked example: Imba Labs
+#### Worked example: Cloud Industry
 
 From a logged-in Janus install to a Nous-gated dashboard in three steps.
 
@@ -603,7 +603,7 @@ janus dashboard register
 janus dashboard --host 0.0.0.0 --port 9119 --no-open
 ```
 
-**3. Log in.** Open `http://<host>:9119/`, you'll be bounced to `/login`. Click **Sign in with Imba Labs** → authenticate at the Portal → land back on the authenticated dashboard. Verify the gate from any machine:
+**3. Log in.** Open `http://<host>:9119/`, you'll be bounced to `/login`. Click **Sign in with Cloud Industry** → authenticate at the Portal → land back on the authenticated dashboard. Verify the gate from any machine:
 
 ```bash
 curl -s http://<host>:9119/api/status | jq '.auth_required, .auth_providers'
@@ -620,7 +620,7 @@ If you don't want to wire up an OAuth identity provider — a self-hosted "just 
 It plugs into the same gate as the OAuth provider: the gate engages on a non-loopback bind without `--insecure`, the login page renders a credential form for this provider (instead of a "Log in with X" button), and everything downstream of login — session cookies, transparent refresh, WS tickets, logout, the audit log — is identical to the OAuth path. Sessions are stateless HMAC-signed tokens the provider mints itself, so there's **no database and no external IDP**. Password hashing uses stdlib `scrypt` (no third-party dependency).
 
 :::warning Use this on trusted networks only — not the public internet
-The username/password provider is intended for self-hosted / on-prem / homelab dashboards on a **trusted network**, or reachable only over a **VPN**. It protects a single shared credential with no external identity provider, MFA, or per-user accounts behind it, so it is **not suitable for exposing a dashboard directly to the public internet**. For an internet-facing dashboard, use the [Imba Labs provider](#default-provider-nous-research) (or your own [self-hosted OIDC](#self-hosted-oidc-provider) / [custom OAuth](#custom-providers) provider) instead.
+The username/password provider is intended for self-hosted / on-prem / homelab dashboards on a **trusted network**, or reachable only over a **VPN**. It protects a single shared credential with no external identity provider, MFA, or per-user accounts behind it, so it is **not suitable for exposing a dashboard directly to the public internet**. For an internet-facing dashboard, use the [Cloud Industry provider](#default-provider-nous-research) (or your own [self-hosted OIDC](#self-hosted-oidc-provider) / [custom OAuth](#custom-providers) provider) instead.
 :::
 
 #### Configuration
@@ -690,7 +690,7 @@ curl -s http://<host>:9119/api/status | jq '.auth_required, .auth_providers'
 # ["basic"]
 ```
 
-`GET /api/auth/me` then returns the verified session (`provider: basic`). Keep this behind a VPN — see the warning above; for a public host use the [Imba Labs](#default-provider-nous-research) or [self-hosted OIDC](#self-hosted-oidc-provider) provider instead.
+`GET /api/auth/me` then returns the verified session (`provider: basic`). Keep this behind a VPN — see the warning above; for a public host use the [Cloud Industry](#default-provider-nous-research) or [self-hosted OIDC](#self-hosted-oidc-provider) provider instead.
 
 #### Writing your own password provider
 
@@ -852,7 +852,7 @@ Validation rejects values without `http://` / `https://` scheme, without a host,
 The provider implements the [Janus Portal OAuth contract v1](https://github.com/ImbaLabs/nous-account-service/blob/main/docs/agent-dashboard-oauth-contract.md) — authorization-code grant with PKCE (S256):
 
 1. User hits `/` without a session cookie → gate redirects to `/login`.
-2. Login page shows a "Continue with Imba Labs" button → `/auth/login?provider=nous`.
+2. Login page shows a "Continue with Cloud Industry" button → `/auth/login?provider=nous`.
 3. Server stashes PKCE state in a short-lived cookie, redirects user to `https://portal.imbalabs.com/oauth/authorize?…`.
 4. User authenticates with Portal, lands at `/auth/callback?code=…&state=…`.
 5. Server exchanges the code for an access token at `POST /api/oauth/token`, verifies the JWT signature against the Portal's JWKS (`/.well-known/jwks.json`), and sets the `janus_session_at` cookie.
@@ -930,9 +930,9 @@ The dashboard's React StatusPage shows the same fields under "Web server". A sid
 
 Janus Desktop can drive a Janus backend running on another machine (a VPS, a home server, a Mini behind Tailscale). In the app this lives under **Settings → Gateway → Remote gateway**, which asks for a **Remote URL** and a way to **Sign in**. (For the desktop app itself — install, settings, chat — see the [Janus Desktop](/user-guide/desktop) page.)
 
-You protect the remote dashboard with one of the bundled auth providers, and the desktop app signs in against whichever one the backend advertises. For a backend reachable beyond your own machine — a VPS, a public host, anything internet-facing — the recommended provider is **OAuth (Janus Portal)** (register it with [`janus dashboard register`](#registering-a-dashboard) and sign in with *Sign in with Imba Labs*). The bundled [username/password provider](#usernamepassword-provider-no-oauth-idp) is the quickest option when the backend is on a trusted LAN or reachable only over a VPN, but is **not suitable for direct public-internet exposure**. Binding the dashboard to a non-loopback address engages its auth gate; once signed in, Desktop reuses the session for the chat WebSocket automatically — there is no token to copy or paste.
+You protect the remote dashboard with one of the bundled auth providers, and the desktop app signs in against whichever one the backend advertises. For a backend reachable beyond your own machine — a VPS, a public host, anything internet-facing — the recommended provider is **OAuth (Janus Portal)** (register it with [`janus dashboard register`](#registering-a-dashboard) and sign in with *Sign in with Cloud Industry*). The bundled [username/password provider](#usernamepassword-provider-no-oauth-idp) is the quickest option when the backend is on a trusted LAN or reachable only over a VPN, but is **not suitable for direct public-internet exposure**. Binding the dashboard to a non-loopback address engages its auth gate; once signed in, Desktop reuses the session for the chat WebSocket automatically — there is no token to copy or paste.
 
-The recipe below uses the username/password path because it's the quickest to stand up on a trusted network; for the OAuth path see [Default provider: Imba Labs](#default-provider-nous-research).
+The recipe below uses the username/password path because it's the quickest to stand up on a trusted network; for the OAuth path see [Default provider: Cloud Industry](#default-provider-nous-research).
 
 ### On the backend (the remote machine)
 

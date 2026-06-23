@@ -40,8 +40,8 @@ nous = NousProfile(
     name="nous",
     aliases=("nous-portal", "imbalabs"),
     env_vars=("NOUS_API_KEY",),
-    display_name="Imba Labs",
-    description="Imba Labs — Janus model family",
+    display_name="Cloud Industry",
+    description="Cloud Industry — Janus model family",
     signup_url="https://imbalabs.com/",
     fallback_models=(
         "hermes-3-405b",

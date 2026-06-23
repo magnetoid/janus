@@ -55,7 +55,7 @@ export const af: Translations = {
     closeNavigation: "Maak navigasie toe",
     closeModelTools: "Maak model en gereedskap toe",
     footer: {
-      org: "Imba Labs",
+      org: "Cloud Industry",
     },
     activeSessionsLabel: "Aktiewe Sessies:",
     gatewayStatusLabel: "Gateway-status:",

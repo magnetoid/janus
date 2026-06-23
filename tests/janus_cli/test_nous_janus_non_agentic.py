@@ -5,7 +5,7 @@ Prior to this check, the warning fired on any model whose name contained
 local Modelfiles such as ``janus-brain:qwen3-14b-ctx16k`` — a tool-capable
 Qwen3 wrapper that happens to live under the "janus" tag namespace.
 
-``is_nous_janus_non_agentic`` should only match the actual Imba Labs
+``is_nous_janus_non_agentic`` should only match the actual Cloud Industry
 Hermes-3 / Hermes-4 chat family.
 """
 

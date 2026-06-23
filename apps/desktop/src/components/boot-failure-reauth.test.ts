@@ -58,20 +58,20 @@ describe('deriveProviderShape', () => {
   })
 
   it('OAuth shape when the provider is a redirect IDP', () => {
-    expect(deriveProviderShape([{ name: 'nous', displayName: 'Imba Labs', supportsPassword: false }])).toEqual({
+    expect(deriveProviderShape([{ name: 'nous', displayName: 'Cloud Industry', supportsPassword: false }])).toEqual({
       isPassword: false,
-      providerLabel: 'Imba Labs'
+      providerLabel: 'Cloud Industry'
     })
   })
 
   it('mixed deployment keeps generic OAuth copy (not every provider is password)', () => {
     const shape = deriveProviderShape([
       { name: 'basic', displayName: 'Username & Password', supportsPassword: true },
-      { name: 'nous', displayName: 'Imba Labs', supportsPassword: false }
+      { name: 'nous', displayName: 'Cloud Industry', supportsPassword: false }
     ])
 
     expect(shape.isPassword).toBe(false)
-    expect(shape.providerLabel).toBe('Username & Password / Imba Labs')
+    expect(shape.providerLabel).toBe('Username & Password / Cloud Industry')
   })
 
   it('falls back to name when displayName is empty', () => {
@@ -89,8 +89,8 @@ describe('signInLabel', () => {
   })
 
   it('OAuth gateway names the provider', () => {
-    expect(signInLabel({ url: 'x', isPassword: false, providerLabel: 'Imba Labs' })).toBe(
-      'Sign in with Imba Labs'
+    expect(signInLabel({ url: 'x', isPassword: false, providerLabel: 'Cloud Industry' })).toBe(
+      'Sign in with Cloud Industry'
     )
   })
 

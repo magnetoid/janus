@@ -51,13 +51,13 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _JANUS_MODEL_WARNING = (
-    "Imba Labs Hermes 3 & 4 models are NOT agentic and are not designed "
+    "Cloud Industry Hermes 3 & 4 models are NOT agentic and are not designed "
     "for use with Janus Agent. They lack the tool-calling capabilities "
     "required for agent workflows. Consider using an agentic model instead "
     "(Claude, GPT, Gemini, DeepSeek, etc.)."
 )
 
-# Match only the real Imba Labs Hermes 3 / Hermes 4 chat families.
+# Match only the real Cloud Industry Hermes 3 / Hermes 4 chat families.
 # ("Hermes" here is the Nous LLM model family — a third-party product — NOT the
 # Janus agent brand, so it must keep matching "hermes" and is exempt from the
 # Hermes->Janus rebrand.)

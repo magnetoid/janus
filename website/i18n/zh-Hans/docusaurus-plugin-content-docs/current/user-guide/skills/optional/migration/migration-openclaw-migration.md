@@ -17,7 +17,7 @@ description: "将用户的 OpenClaw 自定义配置迁移到 Janus Agent"
 | 来源 | 可选 — 通过 `janus skills install official/migration/openclaw-migration` 安装 |
 | 路径 | `optional-skills/migration/openclaw-migration` |
 | 版本 | `1.0.0` |
-| 作者 | Janus Agent (Imba Labs) |
+| 作者 | Janus Agent (Cloud Industry) |
 | 许可证 | MIT |
 | 平台 | linux, macos, windows |
 | 标签 | `Migration`, `OpenClaw`, `Janus`, `Memory`, `Persona`, `Import` |

@@ -2796,7 +2796,7 @@ class OptionalSkillSource(SkillSource):
     """
     Fetch skills from the optional-skills/ directory shipped with the repo.
 
-    These skills are official (maintained by Imba Labs) but not activated
+    These skills are official (maintained by Cloud Industry) but not activated
     by default — they don't appear in the system prompt and aren't copied to
     ~/.janus/skills/ during setup.  They are discoverable via the Skills Hub
     (search / install / inspect) and labelled "official" with "builtin" trust.

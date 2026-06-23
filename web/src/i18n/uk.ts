@@ -55,7 +55,7 @@ export const uk: Translations = {
     closeNavigation: "Закрити навігацію",
     closeModelTools: "Закрити модель та інструменти",
     footer: {
-      org: "Imba Labs",
+      org: "Cloud Industry",
     },
     activeSessionsLabel: "Активні сесії:",
     gatewayStatusLabel: "Стан шлюзу:",

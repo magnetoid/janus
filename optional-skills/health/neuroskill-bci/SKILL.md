@@ -8,7 +8,7 @@ description: >
   running locally.
 platforms: [linux, macos, windows]
 version: 1.0.0
-author: Janus Agent + Imba Labs
+author: Janus Agent + Cloud Industry
 license: MIT
 metadata:
   janus:

@@ -40,7 +40,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Hindsight Cloud memory, connected",
-    "quote": "Connect your Imba Labs Janus Agent to Hindsight Cloud, the best-performing AI Agent memory, in a few easy steps!",
+    "quote": "Connect your Cloud Industry Janus Agent to Hindsight Cloud, the best-performing AI Agent memory, in a few easy steps!",
     "size": "sm"
   },
   {
@@ -1008,7 +1008,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Firecrawl for scrape/search/browse",
-    "quote": "Janus Agent by Imba Labs can now scrape, search, and interact with the web using Firecrawl. Enable it during setup to give Janus the ability.",
+    "quote": "Janus Agent by Cloud Industry can now scrape, search, and interact with the web using Firecrawl. Enable it during setup to give Janus the ability.",
     "size": "sm"
   },
   {
@@ -1877,7 +1877,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Vessel Browser: agent-native browser born at the Janus hackathon",
-    "quote": "I recently participated in Imba Labs's Janus Agent Hackathon, which is where this project was born. Every tool out there assumes a human operator with automation bolted on. I wanted to flip that — make the agent the primary driver and give the human a supervisory role.",
+    "quote": "I recently participated in Cloud Industry's Janus Agent Hackathon, which is where this project was born. Every tool out there assumes a human operator with automation bolted on. I wanted to flip that — make the agent the primary driver and give the human a supervisory role.",
     "size": "md"
   },
   {

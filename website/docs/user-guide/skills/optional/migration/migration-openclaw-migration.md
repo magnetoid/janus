@@ -17,7 +17,7 @@ Migrate a user's OpenClaw customization footprint into Janus Agent. Imports Janu
 | Source | Optional — install with `janus skills install official/migration/openclaw-migration` |
 | Path | `optional-skills/migration/openclaw-migration` |
 | Version | `1.0.0` |
-| Author | Janus Agent (Imba Labs) |
+| Author | Janus Agent (Cloud Industry) |
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `Migration`, `OpenClaw`, `Janus`, `Memory`, `Persona`, `Import` |

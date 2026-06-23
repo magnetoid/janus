@@ -6,7 +6,7 @@ description: "Try NVIDIA Nemotron 3 Ultra on Janus Portal — free June 4–18 �
 
 # Run Nemotron 3 Ultra free in Janus Agent
 
-Imba Labs has been inducted into the **Nemotron Coalition** of leading AI labs working with **NVIDIA** to advance open frontier foundation models. In honor of this, we've partnered with **Nebius** to provide **Nemotron 3 Ultra** free on [Janus Portal](https://portal.imbalabs.com) for two weeks (**June 4th – June 18th**). Follow the instructions below to try the model in your Janus Agent today.
+Cloud Industry has been inducted into the **Nemotron Coalition** of leading AI labs working with **NVIDIA** to advance open frontier foundation models. In honor of this, we've partnered with **Nebius** to provide **Nemotron 3 Ultra** free on [Janus Portal](https://portal.imbalabs.com) for two weeks (**June 4th – June 18th**). Follow the instructions below to try the model in your Janus Agent today.
 
 :::info Limited-time offer
 The `nvidia/nemotron-3-ultra:free` tier is available from **June 4th to June 18th**. The `:free` tag is what keeps it on the no-cost plan — pick that exact variant.

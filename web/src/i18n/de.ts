@@ -55,7 +55,7 @@ export const de: Translations = {
     closeNavigation: "Navigation schließen",
     closeModelTools: "Modell und Werkzeuge schließen",
     footer: {
-      org: "Imba Labs",
+      org: "Cloud Industry",
     },
     activeSessionsLabel: "Aktive Sitzungen:",
     gatewayStatusLabel: "Gateway-Status:",
