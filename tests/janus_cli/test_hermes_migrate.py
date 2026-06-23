@@ -1,4 +1,4 @@
-"""Hermes Agent (~/.hermes) -> Janus (~/.janus) migration."""
+"""Legacy (~/.hermes) -> Janus (~/.janus) migration."""
 from pathlib import Path
 
 from janus_cli import hermes_migrate as hm

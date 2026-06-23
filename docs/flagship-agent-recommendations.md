@@ -1,7 +1,7 @@
 # Janus Flagship Agent — Codebase Audit & Strategic Recommendations
 
 > Status: Flagship strategy review · Owner: Product & Engineering · Last updated: 2026-06-20
-> Scope: End-to-end audit of the Janus codebase (formerly Hermes Agent) covering architecture,
+> Scope: End-to-end audit of the Janus codebase covering architecture,
 > capabilities, technical constraints, existing feature set, unmet requirements, and a
 > prioritized roadmap for a flagship agent product.
 
@@ -41,7 +41,7 @@
 ## Executive Summary
 
 Janus is a sophisticated, model-agnostic, self-improving AI agent (~8,000 files, ~17k tests,
-MIT-licensed, recently renamed from Hermes Agent) built by Imba Labs. Its core differentiator
+MIT-licensed) built by Imba Labs. Its core differentiator
 is a **closed learning loop** — autonomous skill mining, reflexion lessons, memory
 distillation, dialectic admission gates, and the ACE playbook that tunes its own learning
 prompts. The codebase is exceptionally well-engineered (strict dependency pinning, profile
@@ -319,7 +319,7 @@ Critical path: **C1 + C3 + M5 → C4 → M1**. The hosted runtime, observability
 | Hosted runtime creates a two-product company (OSS + SaaS) and splits engineering focus | Open-core charter: cloud uses OSS as dependency, never forks |
 | Self-hosted users feel second-class | Strict policy: every flagship feature ships OSS-first or dual-licensed |
 | Supply-chain attack (Mini Shai-Hulud precedent) | Continue exact pinning + lazy-install + CI audit; publish SBOM |
-| Brand confusion (Hermes → Janus rename half-done) | Land L2 immediately; pursue domain acquisition for janus.dev |
+| Brand consistency (ensure Janus naming is complete across surfaces) | Land L2 immediately; pursue domain acquisition for janus.dev |
 | Multi-tenant RBAC introduces privilege bugs | Threat-model first, ship single-tenant extensions (M5, M6) before RBAC |
 | OpenAI-compatible Agent API cannibalizes custom integrations | Publish it; it IS the integration |
 

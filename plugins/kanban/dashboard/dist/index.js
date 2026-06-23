@@ -1,5 +1,5 @@
 /**
- * Hermes Kanban — Dashboard Plugin
+ * Janus Kanban — Dashboard Plugin
  *
  * Board view for the multi-agent collaboration board backed by
  * ~/.hermes/kanban.db. Calls the plugin's backend at /api/plugins/kanban/
@@ -1476,8 +1476,8 @@
       target: "_blank",
       rel: "noopener noreferrer",
       className: "hermes-kanban-docs-link",
-      title: "Open Hermes Kanban docs in a new tab",
-      "aria-label": "Hermes Kanban documentation",
+      title: "Open Janus Kanban docs in a new tab",
+      "aria-label": "Janus Kanban documentation",
     }, "?");
   }
 
@@ -1579,7 +1579,7 @@
     // Mode pill — always visible (collapsed or expanded). One click flips
     // between Auto and Manual. Auto = dispatcher decomposes new triage tasks
     // every tick. Manual = pre-PR behavior, the user clicks ⚗ Decompose on
-    // each triage card (or runs `hermes kanban decompose <id>`) and tasks
+    // each triage card (or runs `janus kanban decompose <id>`) and tasks
     // stay in triage until then.
     const autoOn = !!(settings && settings.auto_decompose);
     const modePillTitle = settings === null
@@ -1994,7 +1994,7 @@
         ),
       ),
       h("div", { className: "flex flex-col gap-1",
-                 title: "Filter by assigned Hermes profile. Profiles are the named agent identities that claim and work on tasks." },
+                 title: "Filter by assigned Janus profile. Profiles are the named agent identities that claim and work on tasks." },
         h(Label, { className: "text-xs text-muted-foreground" }, tx(t, "assignee", "Assignee")),
         h(Select, Object.assign({
           value: props.assigneeFilter,
@@ -2124,7 +2124,7 @@
         }, tx(t, "setPriority", "Set priority")),
       ),
       h("div", { className: "hermes-kanban-bulk-reassign",
-                 title: "Reassign selected tasks to a different Hermes profile. Pick a profile (or unassign) and click Apply." },
+                 title: "Reassign selected tasks to a different Janus profile. Pick a profile (or unassign) and click Apply." },
         h(Select, Object.assign({
           value: assignee,
           className: "h-7 text-xs",
@@ -2525,7 +2525,7 @@
               }),
             ),
             h("span", { className: "hermes-kanban-card-id",
-                        title: `Task id: ${t.id}. Use this id with kanban_show, /kanban show, or hermes kanban show.` }, t.id),
+                        title: `Task id: ${t.id}. Use this id with kanban_show, /kanban show, or janus kanban show.` }, t.id),
             t.warnings && t.warnings.count > 0
               ? h("span", {
                   className: cn(
@@ -2571,7 +2571,7 @@
           h("div", { className: "hermes-kanban-card-row hermes-kanban-card-meta" },
             t.assignee
               ? h("span", { className: "hermes-kanban-assignee",
-                            title: `Assigned to Hermes profile @${t.assignee}` }, "@", t.assignee)
+                            title: `Assigned to Janus profile @${t.assignee}` }, "@", t.assignee)
               : h("span", { className: "hermes-kanban-unassigned",
                             title: needsAssignee
                               ? tx(i18n, "needsAssigneeHint", "Dependencies are satisfied, but the dispatcher skips this task until you assign a profile.")
@@ -2688,8 +2688,8 @@
             : tx(t, "assigneePlaceholder", "assignee"),
           className: "h-7 text-xs flex-1",
           title: props.columnName === "triage"
-            ? "Hermes profile that will spec this task (default: the dispatcher's configured specifier). Leave blank to let the dispatcher pick."
-            : "Hermes profile to assign. Leave blank and the dispatcher will pick from available profiles when the task is Ready.",
+            ? "Janus profile that will spec this task (default: the dispatcher's configured specifier). Leave blank to let the dispatcher pick."
+            : "Janus profile to assign. Leave blank and the dispatcher will pick from available profiles when the task is Ready.",
           style: { textTransform: "none" },
           autoCapitalize: "none",
           autoCorrect: "off",

@@ -13128,22 +13128,22 @@ def main():
     )
     migrate_xai.set_defaults(func=cmd_migrate_xai)
 
-    # migrate hermes — import a legacy Hermes Agent install (~/.hermes) into Janus
+    # migrate hermes — import a legacy ~/.hermes install into Janus
     from janus_cli.hermes_migrate import migrate_command as cmd_migrate_hermes
 
     migrate_hermes = migrate_subparsers.add_parser(
         "hermes",
-        help="Migrate a legacy Hermes Agent install (~/.hermes) into Janus",
+        help="Migrate a legacy ~/.hermes install into Janus",
         description=(
             "Copy config, memory, skills, sessions and learning data from a "
-            "legacy Hermes Agent home (~/.hermes or $HERMES_HOME) into the Janus "
+            "legacy ~/.hermes home (~/.hermes or $HERMES_HOME) into the Janus "
             "home. Non-destructive: shows a preview first, leaves the original in "
             "place, and offers to delete it after a successful import. Nous Hermes "
             "model IDs and the 'nous' provider slug are preserved."
         ),
     )
     migrate_hermes.add_argument(
-        "--source", help="Path to the Hermes home (default: ~/.hermes or $HERMES_HOME)"
+        "--source", help="Path to the legacy home (default: ~/.hermes or $HERMES_HOME)"
     )
     migrate_hermes.add_argument(
         "--dry-run", action="store_true", help="Preview only — make no changes"

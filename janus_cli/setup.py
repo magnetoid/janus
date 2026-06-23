@@ -2663,7 +2663,7 @@ def _print_migration_preview(report: dict):
 def _offer_hermes_migration(janus_home: Path) -> bool:
     """Detect a legacy ~/.hermes install and offer to import it on first-run.
 
-    Janus is the new name for Hermes Agent and the on-disk layout is identical,
+    The on-disk layout of a legacy ~/.hermes install is identical to Janus,
     so this is a non-destructive copy (with a preview + confirmation) that offers
     to delete the legacy home afterward. Returns True if data was imported.
     Best-effort — never raises into the wizard.
@@ -2681,12 +2681,12 @@ def _offer_hermes_migration(janus_home: Path) -> bool:
             return False  # nothing new to bring over
 
         print()
-        print_header("Hermes Agent Installation Detected")
-        print_info(f"Found a previous Hermes install at {src}")
-        print_info("Janus is the new name for Hermes Agent — your data is compatible.")
+        print_header("Previous Installation Detected")
+        print_info(f"Found a previous install at {src}")
+        print_info("Its data is compatible with Janus and can be imported.")
         print()
         if not prompt_yes_no(
-            "Import your Hermes config, memory, skills and sessions into Janus?", default=True
+            "Import your previous config, memory, skills and sessions into Janus?", default=True
         ):
             print_info("Skipping. You can run it later with: janus migrate hermes")
             return False
@@ -2697,9 +2697,9 @@ def _offer_hermes_migration(janus_home: Path) -> bool:
 
         res = migrate(src, janus_home, overwrite=False, apply=True)
         if not res["imported"]:
-            print_info("Nothing new to import from Hermes.")
+            print_info("Nothing new to import.")
             return False
-        print_success(f"Imported {len(res['imported'])} item(s) from Hermes.")
+        print_success(f"Imported {len(res['imported'])} item(s).")
         if res["rewritten"]:
             print_info("Rewrote home paths/env in: " + ", ".join(res["rewritten"]))
         if res["errors"]:
@@ -3173,7 +3173,7 @@ def run_setup_wizard(args):
             print()
 
         # Offer migration from a previous install before configuration begins:
-        # Hermes Agent (this package's former name) first, then OpenClaw.
+        # a legacy ~/.hermes home first, then OpenClaw.
         hermes_ran = _offer_hermes_migration(janus_home)
         migration_ran = _offer_openclaw_migration(janus_home) or hermes_ran
         if migration_ran:

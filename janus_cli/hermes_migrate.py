@@ -1,9 +1,9 @@
-"""Migrate a legacy Hermes Agent install (~/.hermes) into Janus (~/.janus).
+"""Migrate a legacy ``~/.hermes`` install into Janus (~/.janus).
 
-Janus was rebranded from 'Hermes Agent'; the on-disk layout is IDENTICAL
+A legacy ``~/.hermes`` home has an on-disk layout IDENTICAL to Janus
 (config.yaml, .env, memories/, skills/, sessions/, learning/, state DB, …), so
 this is a safe directory COPY — not a format translation — plus a targeted
-rewrite of two brand tokens inside config.yaml/.env: ``HERMES_HOME`` ->
+rewrite of two tokens inside config.yaml/.env: ``HERMES_HOME`` ->
 ``JANUS_HOME`` and filesystem paths ``.hermes`` -> ``.janus``.
 
 It deliberately does NOT touch Nous 'Hermes' model IDs (hermes-3-*, Hermes-4-*,
@@ -26,12 +26,12 @@ logger = logging.getLogger(__name__)
 
 # files whose CONTENTS get the brand-token rewrite (paths/env vars only)
 _REWRITE_FILES = ("config.yaml", ".env")
-# markers that a directory really is a Hermes/Janus home (avoid migrating junk)
+# markers that a directory really is a legacy ~/.hermes or Janus home (avoid migrating junk)
 _HOME_MARKERS = ("config.yaml", ".env", "memories", "skills", "sessions", "state.db")
 
 
 def default_legacy_dir() -> Optional[Path]:
-    r"""The legacy Hermes home: ``$HERMES_HOME``, else ``~/.hermes`` (or
+    r"""The legacy home: ``$HERMES_HOME``, else ``~/.hermes`` (or
     ``%LOCALAPPDATA%\hermes`` on Windows)."""
     env = os.environ.get("HERMES_HOME")
     if env:
@@ -49,7 +49,7 @@ def looks_like_home(path: Path) -> bool:
 
 
 def legacy_hermes_home() -> Optional[Path]:
-    """Return the legacy Hermes home if it exists and looks real, else None."""
+    """Return the legacy ~/.hermes home if it exists and looks real, else None."""
     d = default_legacy_dir()
     if d and looks_like_home(d):
         return d
@@ -175,7 +175,7 @@ def migrate(src: Path, dst: Path, *, overwrite: bool = False, apply: bool = True
 
 
 def remove_legacy(src: Path) -> bool:
-    """Delete the legacy Hermes home after a successful migration. Best-effort."""
+    """Delete the legacy ~/.hermes home after a successful migration. Best-effort."""
     try:
         shutil.rmtree(src)
         return True
@@ -198,8 +198,8 @@ def migrate_command(args) -> int:
     raw_source = getattr(args, "source", None)
     src = Path(raw_source).expanduser() if raw_source else legacy_hermes_home()
     if not src or not src.is_dir():
-        print_warning("No Hermes Agent install found (looked for ~/.hermes or $HERMES_HOME).")
-        print_info("Pass --source PATH if your Hermes data lives elsewhere.")
+        print_warning("No previous install found (looked for ~/.hermes or $HERMES_HOME).")
+        print_info("Pass --source PATH if your data lives elsewhere.")
         return 1
 
     dst = get_janus_home()
@@ -207,7 +207,7 @@ def migrate_command(args) -> int:
     yes = bool(getattr(args, "yes", False))
 
     plan = plan_migration(src, dst)
-    print_header("Hermes -> Janus migration preview")
+    print_header("Migration preview")
     print_info(f"From: {src}")
     print_info(f"To:   {dst}")
     if plan["import"]:
@@ -228,7 +228,7 @@ def migrate_command(args) -> int:
 
     res = migrate(src, dst, overwrite=overwrite, apply=True)
     if res["imported"]:
-        print_success(f"Imported {len(res['imported'])} item(s) from Hermes.")
+        print_success(f"Imported {len(res['imported'])} item(s).")
     if res["rewritten"]:
         print_info("Rewrote home paths/env in: " + ", ".join(res["rewritten"]))
     if res["skipped"]:
