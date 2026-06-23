@@ -1156,6 +1156,16 @@ def handle_function_call(
         except Exception as _hook_err:
             logger.debug("transform_tool_result hook error: %s", _hook_err)
 
+        # Token-saving compaction of large tool results (web scrapes, HTML,
+        # email bodies). Config-gated (default off), fail-open, and only ever
+        # shrinks the *new* result — never rewrites prior context, so prompt
+        # caching is unaffected. Runs last so plugins/hooks see the raw result.
+        try:
+            from tools.tool_output_compactor import maybe_compact_tool_result
+            result = maybe_compact_tool_result(result, function_name)
+        except Exception as _compact_err:
+            logger.debug("tool-output compaction error: %s", _compact_err)
+
         return result
 
     except Exception as e:

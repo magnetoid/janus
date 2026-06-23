@@ -1096,6 +1096,39 @@ DEFAULT_CONFIG = {
         "max_bytes": 50_000,
         "max_lines": 2000,
         "max_line_length": 2000,
+        # Semantic compaction of large tool results *before* they enter the
+        # model's context — distinct from the truncation caps above, which
+        # only clip head/tail. Targets web scrapes, HTML, and email bodies:
+        # base64 data: URIs become placeholders, embedded HTML is converted
+        # to compact Markdown (stdlib; uses `markdownify` only if already
+        # installed — never auto-installed), and blank-line/duplicate-line
+        # runs are collapsed. Only ever shrinks the new result (never grows
+        # it) and never rewrites prior context, so prompt caching is
+        # unaffected. Off by default — opt in per deployment.
+        "compaction": {
+            "enabled": False,
+            # Skip results smaller than this (chars); compaction has overhead
+            # and small payloads rarely benefit.
+            "min_chars": 4000,
+            # Convert embedded HTML to compact Markdown-ish text.
+            "html_to_markdown": True,
+            # Replace base64 data: URIs (inlined images/fonts) with a short
+            # placeholder — large, and useless to the model as raw text.
+            "strip_data_uris": True,
+            # Collapse 3+ blank lines and long runs of identical lines.
+            "collapse_repeats": True,
+            # Hard cap on the compacted result (chars). 0 = no cap.
+            "max_chars": 0,
+            # Inside a JSON result, only compact string leaves at least this
+            # long; shorter leaves (ids, keys, short fields) are left intact.
+            "min_leaf_chars": 200,
+            # Tools whose output must stay byte-exact (code/files) — never
+            # compacted regardless of size.
+            "exclude_tools": [
+                "read_file", "write_file", "patch", "search_files",
+                "execute_code", "terminal", "process",
+            ],
+        },
     },
 
     # Tool loop guardrails nudge models when they repeat failed or
