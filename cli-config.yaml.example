@@ -349,6 +349,34 @@ tool_loop_guardrails:
     idempotent_no_progress: 5
 
 # =============================================================================
+# Tool Output (truncation caps + semantic compaction)
+# =============================================================================
+tool_output:
+  # Hard truncation caps for raw tool output (keeps head/tail).
+  max_bytes: 50000          # terminal output cap, in chars (~12-15K tokens)
+  max_lines: 2000           # max read_file page size before clamping
+  max_line_length: 2000     # per-line cap in read_file's line-numbered view
+
+  # Semantic compaction of LARGE tool results before they enter the model's
+  # context — distinct from the caps above, which only clip head/tail.
+  # Targets web scrapes, HTML, and email bodies: base64 data: URIs become
+  # placeholders, embedded HTML is converted to compact Markdown (stdlib;
+  # `markdownify` used only if already installed — never auto-installed), and
+  # blank-line / duplicate-line runs are collapsed. Only ever SHRINKS the new
+  # result (never grows it), never touches prior context (so prompt caching is
+  # unaffected), and is fail-open (a compaction error returns the raw result).
+  compaction:
+    enabled: true           # on by default; set false to disable entirely
+    min_chars: 4000         # skip results smaller than this (chars)
+    html_to_markdown: true  # convert embedded HTML to compact Markdown-ish text
+    strip_data_uris: true   # replace base64 data: URIs with a short placeholder
+    collapse_repeats: true  # collapse 3+ blank lines and runs of identical lines
+    max_chars: 0            # hard cap on the compacted result; 0 = no cap
+    min_leaf_chars: 200     # in JSON results, only compact string leaves >= this
+    # Byte-fidelity tools (code/files) are never compacted:
+    exclude_tools: [read_file, write_file, patch, search_files, execute_code, terminal, process]
+
+# =============================================================================
 # Context Compression (Auto-shrinks long conversations)
 # =============================================================================
 # When conversation approaches model's context limit, middle turns are
