@@ -24,9 +24,12 @@ def _on(**overrides):
 # ── Gating ───────────────────────────────────────────────────────────────
 
 
-def test_disabled_by_default_is_passthrough():
+def test_pure_function_defaults_to_off():
+    # The pure helper's bare default stays conservative (off) so callers that
+    # invoke it without config don't compact unexpectedly. The *shipped*
+    # product default (DEFAULT_CONFIG.tool_output.compaction.enabled) is on
+    # and is exercised through maybe_compact_tool_result instead.
     big = "<div>" + "x " * 5000 + "</div>"
-    # No config → defaults → enabled=False → unchanged.
     assert compact_tool_result(big) == big
 
 

@@ -1104,9 +1104,10 @@ DEFAULT_CONFIG = {
         # installed — never auto-installed), and blank-line/duplicate-line
         # runs are collapsed. Only ever shrinks the new result (never grows
         # it) and never rewrites prior context, so prompt caching is
-        # unaffected. Off by default — opt in per deployment.
+        # unaffected. On by default; safe because every transform is
+        # bounded and fail-open. Set enabled=false to disable entirely.
         "compaction": {
-            "enabled": False,
+            "enabled": True,
             # Skip results smaller than this (chars); compaction has overhead
             # and small payloads rarely benefit.
             "min_chars": 4000,
