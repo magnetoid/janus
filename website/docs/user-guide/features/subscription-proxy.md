@@ -1,7 +1,7 @@
 ---
 sidebar_position: 15
 title: "Subscription Proxy"
-description: "Use your Janus Portal subscription (or other OAuth provider) as an OpenAI-compatible endpoint for external apps"
+description: "Use your Cloud Industry Portal subscription (or other OAuth provider) as an OpenAI-compatible endpoint for external apps"
 ---
 
 # Subscription Proxy
@@ -32,7 +32,7 @@ proxy when you just want **the model** through your subscription.
 janus portal
 ```
 
-This opens your browser for the Janus Portal OAuth flow. Janus stores
+This opens your browser for the Cloud Industry Portal OAuth flow. Janus stores
 the refresh token in `~/.janus/auth.json` — the same place all Janus
 provider logins live.
 
@@ -43,7 +43,7 @@ janus proxy start
 ```
 
 ```
-Starting Janus proxy for Janus Portal
+Starting Janus proxy for Cloud Industry Portal
   Listening on:  http://127.0.0.1:8645/v1
   Forwarding to: (resolved per-request from your subscription)
   Use any bearer token in the client — the proxy attaches your real credential.
@@ -72,7 +72,7 @@ automatically when the bearer approaches expiry.
 janus proxy providers
 ```
 
-Currently shipped: `nous` (Janus Portal) and `xai` (xAI / Grok). More
+Currently shipped: `nous` (Cloud Industry Portal) and `xai` (xAI / Grok). More
 OAuth providers can be added by implementing the `UpstreamAdapter`
 interface in `janus_cli/proxy/adapters/`.
 
@@ -85,7 +85,7 @@ janus proxy status
 ```
 Janus proxy upstream adapters
 
-  [nous    ] Janus Portal — ready (bearer expires 2026-05-15T06:43:21Z)
+  [nous    ] Cloud Industry Portal — ready (bearer expires 2026-05-15T06:43:21Z)
 ```
 
 If you see `not logged in`, run `janus portal`. If you see
@@ -142,7 +142,7 @@ openviking-server
 OpenViking's VLM calls now flow through your Portal subscription. The
 embedding model side still needs its own provider — Portal does serve
 `/v1/embeddings` but the model selection depends on what your tier
-supports; check `portal.imbalabs.com/models`.
+supports; check `portal.cloud-industry.com/models`.
 
 ## Configuring Karakeep (or any bookmark/summarizer app)
 
@@ -178,7 +178,7 @@ this beyond your trusted network.
 Your Portal tier's RPM/TPM limits apply across the whole proxy. The
 proxy doesn't fan out or pool — it's a single bearer with your full
 subscription quota. Monitor usage at
-[portal.imbalabs.com](https://portal.imbalabs.com).
+[portal.cloud-industry.com](https://portal.cloud-industry.com).
 
 ## Architecture
 

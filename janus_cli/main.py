@@ -710,7 +710,7 @@ def _has_any_provider_configured() -> bool:
     except Exception:
         pass
 
-    # Check for Janus Portal OAuth credentials
+    # Check for Cloud Industry Portal OAuth credentials
     auth_file = get_janus_home() / "auth.json"
     if auth_file.exists():
         try:
@@ -3070,7 +3070,7 @@ def _aux_config_menu() -> None:
         print("  Side tasks (vision, compression, web extraction, etc.) default")
         print('  to your main chat model.  "auto" means "use my main model" —')
         print("  Janus only falls back to a lightweight backend (OpenRouter,")
-        print("  Janus Portal) if the main model is unavailable.  Override a")
+        print("  Cloud Industry Portal) if the main model is unavailable.  Override a")
         print("  task below if you want it pinned to a specific provider/model.")
         print()
 
@@ -3398,7 +3398,7 @@ def _model_flow_openrouter(config, current_model=""):
 
 
 def _model_flow_nous(config, current_model="", args=None):
-    """Janus Portal provider: ensure logged in, then pick model."""
+    """Cloud Industry Portal provider: ensure logged in, then pick model."""
     from janus_cli.auth import (
         get_provider_auth_state,
         _prompt_model_selection,
@@ -3420,7 +3420,7 @@ def _model_flow_nous(config, current_model="", args=None):
 
     state = get_provider_auth_state("nous")
     if not state or not state.get("access_token"):
-        print("Not logged into Janus Portal. Starting login...")
+        print("Not logged into Cloud Industry Portal. Starting login...")
         print()
         try:
             mock_args = argparse.Namespace(
@@ -3463,7 +3463,7 @@ def _model_flow_nous(config, current_model="", args=None):
 
     model_ids = get_curated_nous_model_ids()
     if not model_ids:
-        print("No curated models available for Janus Portal.")
+        print("No curated models available for Cloud Industry Portal.")
         return
 
     # Verify credentials are still valid (catches expired sessions early)
@@ -3474,7 +3474,7 @@ def _model_flow_nous(config, current_model="", args=None):
         msg = format_auth_error(exc) if isinstance(exc, AuthError) else str(exc)
         if relogin:
             print(f"Session expired: {msg}")
-            print("Re-authenticating with Janus Portal...\n")
+            print("Re-authenticating with Cloud Industry Portal...\n")
             try:
                 mock_args = argparse.Namespace(
                     portal_url=None,
@@ -3561,7 +3561,7 @@ def _model_flow_nous(config, current_model="", args=None):
         )
 
     if not model_ids and not unavailable_models:
-        print("No models available for Janus Portal after filtering.")
+        print("No models available for Cloud Industry Portal after filtering.")
         return
 
     if free_tier and not model_ids:
@@ -3609,7 +3609,7 @@ def _model_flow_nous(config, current_model="", args=None):
             save_env_value("OPENAI_BASE_URL", "")
             save_env_value("OPENAI_API_KEY", "")
         save_config(config)
-        print(f"Default model set to: {selected} (via Janus Portal)")
+        print(f"Default model set to: {selected} (via Cloud Industry Portal)")
         # Offer Tool Gateway enablement for paid subscribers
         prompt_enable_tool_gateway(config)
     else:
@@ -12542,7 +12542,7 @@ def cmd_dashboard(args):
 
 
 def cmd_dashboard_register(args):
-    """Register a self-hosted dashboard OAuth client with Janus Portal."""
+    """Register a self-hosted dashboard OAuth client with Cloud Industry Portal."""
     from janus_cli.dashboard_register import cmd_dashboard_register as _impl
 
     _impl(args)
@@ -13361,7 +13361,7 @@ def main():
         help="Local OpenAI-compatible proxy to OAuth providers",
         description=(
             "Run a local HTTP server that forwards OpenAI-compatible requests "
-            "to an OAuth-authenticated provider (e.g. Janus Portal). External "
+            "to an OAuth-authenticated provider (e.g. Cloud Industry Portal). External "
             "apps can point at the proxy with any bearer token; the proxy "
             "attaches your real credentials."
         ),
@@ -13448,7 +13448,7 @@ def main():
     setup_parser.add_argument(
         "--portal",
         action="store_true",
-        help="One-shot Janus Portal setup: log in via OAuth, pick a Nous "
+        help="One-shot Cloud Industry Portal setup: log in via OAuth, pick a Nous "
         "model, set Nous as the inference provider, and opt into the Tool "
         "Gateway. Skips the rest of the wizard.",
     )
@@ -13928,7 +13928,7 @@ def main():
     webhook_parser.set_defaults(func=cmd_webhook)
 
     # =========================================================================
-    # portal command — Janus Portal status + Tool Gateway routing
+    # portal command — Cloud Industry Portal status + Tool Gateway routing
     # =========================================================================
     from janus_cli.portal_cli import add_parser as _add_portal_parser
     _add_portal_parser(subparsers)
@@ -16893,7 +16893,7 @@ Examples:
     dashboard_parser.set_defaults(func=cmd_dashboard)
 
     # `janus dashboard register` — register a self-hosted dashboard OAuth
-    # client with Janus Portal and write the client_id into ~/.janus/.env.
+    # client with Cloud Industry Portal and write the client_id into ~/.janus/.env.
     # Nested subparser so bare `janus dashboard` keeps launching the server
     # (set_defaults(func=cmd_dashboard) above remains the default).
     dashboard_subparsers = dashboard_parser.add_subparsers(
@@ -16901,7 +16901,7 @@ Examples:
     )
     dashboard_register_parser = dashboard_subparsers.add_parser(
         "register",
-        help="Register a self-hosted dashboard with Janus Portal (writes the OAuth client ID to .env)",
+        help="Register a self-hosted dashboard with Cloud Industry Portal (writes the OAuth client ID to .env)",
         description=(
             "Register this install as a self-hosted dashboard with your Nous "
             "Portal account. Creates an OAuth client, writes "
@@ -16928,7 +16928,7 @@ Examples:
         dest="portal_url",
         default=None,
         help=(
-            "Override the Janus Portal base URL for registration (default: the "
+            "Override the Cloud Industry Portal base URL for registration (default: the "
             "portal you logged into). The access token must be valid at this "
             "portal. Also settable via JANUS_DASHBOARD_PORTAL_URL. Mainly for "
             "testing against a staging/preview portal."

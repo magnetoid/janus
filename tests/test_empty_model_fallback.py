@@ -31,7 +31,7 @@ class TestGetDefaultModelForProvider:
         assert get_default_model_for_provider("some-random-custom") == ""
 
     def test_nous_silent_default_is_not_the_expensive_flagship(self):
-        """Janus Portal is a metered aggregator whose curated list is ordered
+        """Cloud Industry Portal is a metered aggregator whose curated list is ordered
         most-capable-first, so entry [0] is the priciest flagship
         (anthropic/claude-opus-4.8). The silent fallback (provider set, no model)
         must NOT escalate to it — otherwise an unconfigured profile silently

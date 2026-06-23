@@ -69,7 +69,7 @@ janus [global-options] <command> [subcommand/options]
 | `janus acp` | 将 Janus 作为 ACP 服务器运行，用于编辑器集成。 |
 | `janus mcp` | 管理 MCP 服务器配置，并将 Janus 作为 MCP 服务器运行。 |
 | `janus plugins` | 管理 Janus Agent plugin（安装、启用、禁用、删除）。 |
-| `janus portal` | Janus Portal 状态、订阅链接和 Tool Gateway 路由。参见 [Tool Gateway](../user-guide/features/tool-gateway.md)。 |
+| `janus portal` | Cloud Industry Portal 状态、订阅链接和 Tool Gateway 路由。参见 [Tool Gateway](../user-guide/features/tool-gateway.md)。 |
 | `janus tools` | 按平台配置已启用的工具。 |
 | `janus computer-use` | 安装或检查 cua-driver 后端（macOS Computer Use）。 |
 | `janus sessions` | 浏览、导出、修剪、重命名和删除会话。 |
@@ -159,7 +159,7 @@ janus model
 
 在以下情况使用此命令：
 - **添加新 provider**（OpenRouter、Anthropic、Copilot、DeepSeek、自定义等）
-- 登录基于 OAuth 的 provider（Anthropic、Copilot、Codex、Janus Portal）
+- 登录基于 OAuth 的 provider（Anthropic、Copilot、Codex、Cloud Industry Portal）
 - 输入或更新 API 密钥
 - 从 provider 特定的模型列表中选择
 - 配置自定义/自托管端点
@@ -279,7 +279,7 @@ janus setup [model|tts|terminal|gateway|tools|agent] [--non-interactive] [--rese
 | `--non-interactive` | 使用默认值/环境变量，不显示提示。 |
 | `--reset` | 在设置前将配置重置为默认值。 |
 | `--reconfigure` | 向后兼容别名——在已有安装上裸运行 `janus setup` 现在默认执行此操作。 |
-| `--portal` | 一键 Janus Portal 设置：通过 OAuth 登录，将 Nous 设为推理 provider，并选择加入 [Tool Gateway](../user-guide/features/tool-gateway.md)。跳过向导其余部分。 |
+| `--portal` | 一键 Cloud Industry Portal 设置：通过 OAuth 登录，将 Nous 设为推理 provider，并选择加入 [Tool Gateway](../user-guide/features/tool-gateway.md)。跳过向导其余部分。 |
 
 ## `janus portal`
 
@@ -287,12 +287,12 @@ janus setup [model|tts|terminal|gateway|tools|agent] [--non-interactive] [--rese
 janus portal [status|open|tools]
 ```
 
-检查 Janus Portal 认证、Tool Gateway 路由，并访问订阅页面。不带子命令时运行 `status`。
+检查 Cloud Industry Portal 认证、Tool Gateway 路由，并访问订阅页面。不带子命令时运行 `status`。
 
 | 子命令 | 说明 |
 |------------|-------------|
 | `status`（默认） | Portal 认证状态 + 每个工具的 Tool Gateway 路由摘要。不带子命令时也会显示。 |
-| `open` | 在默认浏览器中打开 `portal.imbalabs.com/manage-subscription`。 |
+| `open` | 在默认浏览器中打开 `portal.cloud-industry.com/manage-subscription`。 |
 | `tools` | 列出每个 Tool Gateway 合作伙伴（Firecrawl、FAL、OpenAI TTS、Browser Use、Modal）及哪些通过 Nous 路由。 |
 
 关于 gateway 本身的配置，请参阅 [Tool Gateway](../user-guide/features/tool-gateway.md)。关于一键设置路径，请参阅上方的 `janus setup --portal`。

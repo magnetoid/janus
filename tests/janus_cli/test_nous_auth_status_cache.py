@@ -2,7 +2,7 @@
 
 The cache avoids re-validating Nous credentials on every menu paint —
 `janus tools` → "All Platforms" used to fire ~31 OAuth refresh POSTs
-against portal.imbalabs.com during one render. The cache is keyed
+against portal.cloud-industry.com during one render. The cache is keyed
 on auth.json mtime so login/logout flows invalidate naturally; tests
 and other writers can also call invalidate_nous_auth_status_cache().
 """

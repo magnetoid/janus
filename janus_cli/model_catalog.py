@@ -2,7 +2,7 @@
 
 The Janus docs site hosts a JSON manifest of curated models for providers
 we want to update without shipping a release (currently OpenRouter and
-Janus Portal). This module fetches, validates, and caches that manifest,
+Cloud Industry Portal). This module fetches, validates, and caches that manifest,
 falling back to the in-repo hardcoded lists when the network is unavailable.
 
 Pipeline
@@ -341,7 +341,7 @@ def get_curated_openrouter_models() -> list[tuple[str, str]] | None:
 
 
 def get_curated_nous_models() -> list[str] | None:
-    """Return Janus Portal's curated list of model ids from the manifest.
+    """Return Cloud Industry Portal's curated list of model ids from the manifest.
 
     Returns ``None`` when the manifest is unavailable.
     """

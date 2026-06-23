@@ -63,7 +63,7 @@ def build_catalog() -> dict:
             },
             "nous": {
                 "metadata": {
-                    "display_name": "Janus Portal",
+                    "display_name": "Cloud Industry Portal",
                     "note": (
                         "Free-tier gating is determined live via Portal pricing "
                         "(partition_nous_models_by_tier), not this manifest."

@@ -4633,9 +4633,9 @@ class AIAgent:
 
         OpenRouter forwards unknown extra_body fields to upstream providers.
         Some providers/routes reject `reasoning` with 400s, so gate it to
-        known reasoning-capable model families and direct Janus Portal.
+        known reasoning-capable model families and direct Cloud Industry Portal.
         """
-        if base_url_host_matches(self._base_url_lower, "imbalabs.com"):
+        if base_url_host_matches(self._base_url_lower, "cloud-industry.com"):
             return True
         if (
             base_url_host_matches(self._base_url_lower, "models.github.ai")

@@ -75,7 +75,7 @@ Top-to-bottom, in order:
 10. **Runs `janus setup`** — the normal first-run wizard (model, provider, toolsets). Skip with `-SkipSetup`.
 
 :::tip Skip provider hunting on Windows
-On Windows, per-tool API key setup (Firecrawl, FAL, Browser Use, OpenAI TTS) is the highest-friction part of getting a useful agent. A [Janus Portal](/user-guide/features/tool-gateway) subscription covers the model **and** all of those tools through one OAuth login. After the installer finishes, run `janus setup --portal` to wire everything up.
+On Windows, per-tool API key setup (Firecrawl, FAL, Browser Use, OpenAI TTS) is the highest-friction part of getting a useful agent. A [Cloud Industry Portal](/user-guide/features/tool-gateway) subscription covers the model **and** all of those tools through one OAuth login. After the installer finishes, run `janus setup --portal` to wire everything up.
 :::
 
 ## Feature matrix

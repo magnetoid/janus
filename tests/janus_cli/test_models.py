@@ -138,7 +138,7 @@ class TestFetchOpenRouterModels:
     def test_permissive_when_supported_parameters_missing(self, monkeypatch):
         """Models missing the supported_parameters field keep appearing in the picker.
 
-        Some OpenRouter-compatible gateways (Janus Portal, private mirrors, older
+        Some OpenRouter-compatible gateways (Cloud Industry Portal, private mirrors, older
         catalog snapshots) don't populate supported_parameters. Treating missing
         as 'unknown → allow' prevents the picker from silently emptying on
         those gateways.
@@ -771,7 +771,7 @@ class TestNousRecommendedModels:
         mock_cm = self._mock_urlopen(self._SAMPLE_PAYLOAD)
         with patch("urllib.request.urlopen", return_value=mock_cm) as mock_urlopen:
             fetch_nous_recommended_models("https://portal.example.com")
-            fetch_nous_recommended_models("https://portal.staging-imbalabs.com")
+            fetch_nous_recommended_models("https://portal.staging-cloud-industry.com")
         assert mock_urlopen.call_count == 2  # different portals → separate fetches
 
     def test_fetch_returns_empty_on_network_failure(self):

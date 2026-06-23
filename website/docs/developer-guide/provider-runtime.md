@@ -43,7 +43,7 @@ That ordering matters because Janus treats the saved model/provider choice as th
 Current provider families include (see `plugins/model-providers/` for the complete bundled set):
 
 - OpenRouter
-- Janus Portal
+- Cloud Industry Portal
 - OpenAI Codex
 - Copilot / Copilot ACP
 - Anthropic (native)

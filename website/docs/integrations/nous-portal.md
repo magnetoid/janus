@@ -1,12 +1,12 @@
 ---
 sidebar_position: 1
-title: "Janus Portal"
+title: "Cloud Industry Portal"
 description: "One subscription, 300+ frontier models, the Tool Gateway, and Nous Chat — the recommended way to run Janus Agent"
 ---
 
-# Janus Portal
+# Cloud Industry Portal
 
-[Janus Portal](https://portal.imbalabs.com) is Cloud Industry's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand.
+[Cloud Industry Portal](https://portal.cloud-industry.com) is Cloud Industry's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand.
 
 If you only have time to set up one thing, set up this. The fastest path:
 
@@ -16,7 +16,7 @@ janus setup --portal
 
 That single command runs the Portal OAuth, lets you pick a Nous model, sets Nous as your inference provider in `config.yaml`, and turns on the Tool Gateway. You're ready to `janus chat` immediately after.
 
-Don't have a subscription yet? [portal.imbalabs.com/manage-subscription](https://portal.imbalabs.com/manage-subscription) — sign up, then come back and run the command above.
+Don't have a subscription yet? [portal.cloud-industry.com/manage-subscription](https://portal.cloud-industry.com/manage-subscription) — sign up, then come back and run the command above.
 
 ## What's in the subscription
 
@@ -62,7 +62,7 @@ You can also enable just specific gateway tools (e.g. web search but not image g
 
 ### Nous Chat
 
-Your Portal account also covers [chat.imbalabs.com](https://chat.imbalabs.com) — Cloud Industry's web chat interface with the same model catalog. Useful when you're away from your terminal, or for non-agent conversation work.
+Your Portal account also covers [chat.cloud-industry.com](https://chat.cloud-industry.com) — Cloud Industry's web chat interface with the same model catalog. Useful when you're away from your terminal, or for non-agent conversation work.
 
 ### No credentials in your dotfiles
 
@@ -76,7 +76,7 @@ Because everything routes through one OAuth-authenticated Portal session, you do
 
 Cloud Industry's own **Hermes 4** family (Hermes-4-70B, Hermes-4-405B) is available through the Portal at heavily discounted rates. These are **frontier hybrid-reasoning chat models** — strong at math, science, instruction following, schema adherence, roleplay, and long-form writing.
 
-They are **not recommended for use inside Janus Agent**, however. Hermes 4 is tuned for chat and reasoning, not the rapid-fire tool-calling loop the agent relies on. Use them for [Nous Chat](https://chat.imbalabs.com), for research workflows, or via the [subscription proxy](/user-guide/features/subscription-proxy) from other tooling — but for agent work, pick a frontier agentic model from the catalog instead:
+They are **not recommended for use inside Janus Agent**, however. Hermes 4 is tuned for chat and reasoning, not the rapid-fire tool-calling loop the agent relies on. Use them for [Nous Chat](https://chat.cloud-industry.com), for research workflows, or via the [subscription proxy](/user-guide/features/subscription-proxy) from other tooling — but for agent work, pick a frontier agentic model from the catalog instead:
 
 ```bash
 /model anthropic/claude-sonnet-4.6     # best general-purpose agentic model
@@ -85,7 +85,7 @@ They are **not recommended for use inside Janus Agent**, however. Hermes 4 is tu
 /model deepseek/deepseek-v4-pro        # cost-effective coder
 ```
 
-The Portal's own [model info page](https://portal.imbalabs.com/info) carries the same warning, so this isn't a Janus-side opinion — it's the official guidance from Cloud Industry.
+The Portal's own [model info page](https://portal.cloud-industry.com/info) carries the same warning, so this isn't a Janus-side opinion — it's the official guidance from Cloud Industry.
 
 ## Setup
 
@@ -97,14 +97,14 @@ janus setup --portal
 
 This runs the full setup in one shot:
 
-1. Opens your browser to portal.imbalabs.com for OAuth login
+1. Opens your browser to portal.cloud-industry.com for OAuth login
 2. Stores the refresh token at `~/.janus/auth.json`
 3. Lets you pick a Nous model from the curated list (or skip to keep your current one)
 4. Sets Nous as your inference provider in `~/.janus/config.yaml` (when you pick a model)
 5. Turns on the Tool Gateway (web, image, TTS, browser routing)
 6. Returns you to your terminal ready to `janus chat`
 
-If you don't have a subscription yet, sign up at [portal.imbalabs.com/manage-subscription](https://portal.imbalabs.com/manage-subscription) first.
+If you don't have a subscription yet, sign up at [portal.cloud-industry.com/manage-subscription](https://portal.cloud-industry.com/manage-subscription) first.
 
 ### Existing install — add Portal alongside other providers
 
@@ -112,7 +112,7 @@ If you already have Janus configured with OpenRouter, Anthropic, or any other pr
 
 ```bash
 janus model
-# pick "Janus Portal" from the provider list
+# pick "Cloud Industry Portal" from the provider list
 # browser opens, sign in, done
 ```
 
@@ -131,7 +131,7 @@ If you use [Janus profiles](/user-guide/profiles), the Portal refresh token is a
 ### Inspecting what's wired up
 
 ```bash
-janus portal            # log in to Janus Portal + set it up (one-shot onboarding)
+janus portal            # log in to Cloud Industry Portal + set it up (one-shot onboarding)
 janus portal info       # login status, subscription info, model + gateway routing
 janus portal status     # alias for `portal info`
 janus portal tools      # detailed Tool Gateway catalog with per-tool routing
@@ -143,18 +143,18 @@ janus portal open       # open the subscription management page in your browser
 `janus portal info` gives you the high-level overview:
 
 ```
-  Janus Portal
+  Cloud Industry Portal
   ───────────
   Auth:    ✓ logged in
-  Portal:  https://portal.imbalabs.com
+  Portal:  https://portal.cloud-industry.com
   Model:   ✓ using Nous as inference provider
 
   Tool Gateway
   ────────────
-  Web search & extract  via Janus Portal
-  Image generation      via Janus Portal
-  Text-to-speech        via Janus Portal
-  Browser automation    via Janus Portal
+  Web search & extract  via Cloud Industry Portal
+  Image generation      via Cloud Industry Portal
+  Text-to-speech        via Cloud Industry Portal
+  Browser automation    via Cloud Industry Portal
   Cloud terminal        not configured
 ```
 
@@ -193,13 +193,13 @@ janus tools
 # → TTS              → "Nous Subscription"
 ```
 
-The Tool Gateway is opt-in per tool, not all-or-nothing. The managed backends show up in `janus tools` whether or not you're logged into Janus Portal — if you pick "Nous Subscription" before authenticating, Janus runs the Portal login inline (it won't change your inference provider or touch your other tools). See the [Tool Gateway docs](/user-guide/features/tool-gateway) for the full per-tool configuration matrix.
+The Tool Gateway is opt-in per tool, not all-or-nothing. The managed backends show up in `janus tools` whether or not you're logged into Cloud Industry Portal — if you pick "Nous Subscription" before authenticating, Janus runs the Portal login inline (it won't change your inference provider or touch your other tools). See the [Tool Gateway docs](/user-guide/features/tool-gateway) for the full per-tool configuration matrix.
 
 ### Subscription management
 
 Manage your plan, view usage, or upgrade/cancel at any time:
 
-- **Web:** [portal.imbalabs.com/manage-subscription](https://portal.imbalabs.com/manage-subscription)
+- **Web:** [portal.cloud-industry.com/manage-subscription](https://portal.cloud-industry.com/manage-subscription)
 - **CLI shortcut:** `janus portal open` (opens the same page in your default browser)
 
 ## Configuration reference
@@ -210,7 +210,7 @@ After `janus setup --portal`, `~/.janus/config.yaml` will look like:
 model:
   provider: nous
   default: anthropic/claude-sonnet-4.6     # or whatever model you picked
-  base_url: https://inference-api.imbalabs.com/v1
+  base_url: https://inference-api.cloud-industry.com/v1
 ```
 
 The Tool Gateway settings live under their respective tool sections:
@@ -247,7 +247,7 @@ You haven't completed the OAuth flow, or your refresh token was wiped. Run:
 janus portal
 ```
 
-or use `janus model` and re-select Janus Portal.
+or use `janus model` and re-select Cloud Industry Portal.
 
 ### Got a "re-authentication required" message mid-session
 
@@ -265,7 +265,7 @@ If a model is genuinely missing, [open an issue](https://github.com/magnetoid/ja
 
 ### Bills not appearing on my Portal account
 
-Check `janus portal info` first — if it shows you're using a different provider (`Model: currently openrouter` instead of `using Nous as inference provider`), your local config has drifted. Run `janus model`, pick Janus Portal, and the next request will route through your subscription.
+Check `janus portal info` first — if it shows you're using a different provider (`Model: currently openrouter` instead of `using Nous as inference provider`), your local config has drifted. Run `janus model`, pick Cloud Industry Portal, and the next request will route through your subscription.
 
 ## See also
 

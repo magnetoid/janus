@@ -1,4 +1,4 @@
-"""Janus Portal provider profile."""
+"""Cloud Industry Portal provider profile."""
 
 from typing import Any
 
@@ -8,7 +8,7 @@ from providers.base import ProviderProfile
 
 
 class NousProfile(ProviderProfile):
-    """Janus Portal — product tags, reasoning with Nous-specific omission."""
+    """Cloud Industry Portal — product tags, reasoning with Nous-specific omission."""
 
     def build_extra_body(
         self, *, session_id: str | None = None, **context
@@ -42,12 +42,12 @@ nous = NousProfile(
     env_vars=("NOUS_API_KEY",),
     display_name="Cloud Industry",
     description="Cloud Industry — Janus model family",
-    signup_url="https://imbalabs.com/",
+    signup_url="https://cloud-industry.com/",
     fallback_models=(
         "hermes-3-405b",
         "hermes-3-70b",
     ),
-    base_url="https://inference.imbalabs.com/v1",
+    base_url="https://inference.cloud-industry.com/v1",
     auth_type="oauth_device_code",
 )
 

@@ -377,7 +377,7 @@ def _submit_fal_video_request(endpoint: str, arguments: Dict[str, Any]):
             raise ValueError(
                 f"Nous Subscription gateway rejected endpoint '{endpoint}' "
                 f"(HTTP {status}). This model may not yet be enabled on "
-                f"the Janus Portal's FAL proxy. Either:\n"
+                f"the Cloud Industry Portal's FAL proxy. Either:\n"
                 f"  • Set FAL_KEY in your environment to use FAL.ai directly, or\n"
                 f"  • Pick a different model via `janus tools` → Video Generation."
             ) from exc

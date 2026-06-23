@@ -164,11 +164,11 @@ const config: Config = {
           items: [
             { label: 'Desktop Download', href: 'https://github.com/magnetoid/janus' },
             { label: 'GitHub', href: 'https://github.com/magnetoid/janus' },
-            { label: 'Cloud Industry', href: 'https://imbalabs.com' },
+            { label: 'Cloud Industry', href: 'https://cloud-industry.com' },
           ],
         },
       ],
-      copyright: `Built by <a href="https://imbalabs.com">Cloud Industry</a> · MIT License · ${new Date().getFullYear()}`,
+      copyright: `Built by <a href="https://cloud-industry.com">Cloud Industry</a> · MIT License · ${new Date().getFullYear()}`,
     },
     prism: {
       theme: prismThemes.github,

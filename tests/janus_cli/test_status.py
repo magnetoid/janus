@@ -61,7 +61,7 @@ def test_show_status_reports_nous_auth_error(monkeypatch, capsys, tmp_path):
         "get_nous_auth_status",
         lambda: {
             "logged_in": False,
-            "portal_base_url": "https://portal.imbalabs.com",
+            "portal_base_url": "https://portal.cloud-industry.com",
             "access_expires_at": "2026-04-20T01:00:51+00:00",
             "agent_key_expires_at": "2026-04-20T04:54:24+00:00",
             "has_refresh_token": True,
@@ -77,7 +77,7 @@ def test_show_status_reports_nous_auth_error(monkeypatch, capsys, tmp_path):
     status_mod.show_status(SimpleNamespace(all=False, deep=False))
 
     output = capsys.readouterr().out
-    assert "Janus Portal   ✗ not logged in (run: janus portal)" in output
+    assert "Cloud Industry Portal   ✗ not logged in (run: janus portal)" in output
     assert "Error:      Refresh session has been revoked" in output
     assert "Access exp:" in output
     assert "Key exp:" in output
@@ -128,7 +128,7 @@ def test_show_status_reports_nous_inference_key_without_portal_login(monkeypatch
     status_mod.show_status(SimpleNamespace(all=False, deep=False))
 
     output = capsys.readouterr().out
-    assert "Janus Portal   ✗ not logged in (Nous inference key configured)" in output
+    assert "Cloud Industry Portal   ✗ not logged in (Nous inference key configured)" in output
     assert "Inference:  https://inference.example.com/v1" in output
     assert "Nous inference credentials are configured" in output
 
@@ -321,7 +321,7 @@ class TestShowStatusXaiOAuth:
         status_mod.show_status(SimpleNamespace(all=False, deep=False))
         out = capsys.readouterr().out
 
-        assert "Janus Portal" in out
+        assert "Cloud Industry Portal" in out
         assert "MiniMax OAuth" in out
 
     def test_status_function_exception_does_not_crash(self, monkeypatch, capsys, tmp_path):

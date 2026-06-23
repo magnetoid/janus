@@ -16,11 +16,11 @@
 > - **Stale "gaps" that are actually shipped:** the *"cron hard-interrupt at 3 minutes"*
 >   (#3) does **not exist** — cron uses a configurable ~600s *inactivity* timeout
 >   (`JANUS_CRON_TIMEOUT`, can run for hours); *"/memory parked"* (#7) and *"auto-mining
->   hook pending"* (#9) are **shipped**; *"24 nousresearch.com README URLs"* (#10/L2) is
+>   hook pending"* (#9) are **shipped**; *"24 cloud-industry.com README URLs"* (#10/L2) is
 >   now **zero**; *"no public WebSocket/SSE API"* (#12) — one **exists**. These trace to a
 >   single stale `.torsor/active/context.md` note (2026-06-09).
 > - **Branding is retired:** "Cloud Industry" → **Cloud Industry** (ADR 0004); C1's *"Nous
->   Portal"* → **Janus Portal**; and C1 "Janus Cloud" is partly **already started** at
+>   Portal"* → **Cloud Industry Portal**; and C1 "Janus Cloud" is partly **already started** at
 >   cloud-industry.com (ADR 0005). Provider/model slugs (`nous`, Nous Hermes IDs) are
 >   correctly preserved — keep those.
 > - **LOC figures are off:** `run_agent.py` is ~5.3k LOC (not 12k); `cli.py` is ~16.2k
@@ -95,7 +95,7 @@ monetization, and AI-native UX — without compromising its open-core / self-hos
 7. **`/memory` slash command is parked** (per `.torsor/active/context.md`); the memory surface is split across CLI subcommands (`memory`, `memory log`, `memory mine`) and slash variants with gaps.
 8. **Gateway dual-message-guard complexity** — `gateway/run.py` + base adapter must both bypass approval/control commands; documented foot-gun for new commands.
 9. **Auto-mining hook pending** — opt-in `memory.session_mining` is documented but the wiring is incomplete per active context.
-10. **Cloud Industry brand removal incomplete** — `hermes-agent.nousresearch.com` URLs still in 24 README locations; provider/model IDs intentionally preserved (so breaking the removal would break users).
+10. **Cloud Industry brand removal incomplete** — `cloud-industry.com` URLs still in 24 README locations; provider/model IDs intentionally preserved (so breaking the removal would break users).
 11. **ACP / Desktop / Dashboard are three parallel chat surfaces** — slash-command curation logic exists in three places (`acp_adapter`, `tui_gateway`, `apps/desktop/src/lib/desktop-slash-commands.ts`); risk of drift.
 12. **No first-class WebSocket/SSE streaming API for remote apps** — there is `janus_cli/web_server.py` for dashboard, but no public agent API; programmatic integration doc (`website/docs/guides/python-library.md`) is thin.
 13. **Eval suite is YAML + deterministic assertions** — strong for regression but not suited for human-judged quality or vision / multimodal evals.
@@ -136,7 +136,7 @@ Priorities use **Impact × Feasibility / Cost**:
 
 **Why critical:** The README is explicit that the only distribution is from source. There is no hosted option, no one-line installer, no try-before-install. Every competitor (OpenAI Operator, Anthropic Computer Use, Replit Agent, Devin, Manus, Genspark) ships a hosted URL. This is the single biggest acquisition bottleneck.
 
-**Scope:** Hosted `janus` runtime with persistent profiles, web UI (embed the existing dashboard), OAuth sign-in, pay-per-use LLM routing through Nous Portal as the default backend.
+**Scope:** Hosted `janus` runtime with persistent profiles, web UI (embed the existing dashboard), OAuth sign-in, pay-per-use LLM routing through Cloud Industry Portal as the default backend.
 
 **Implementation:** Wrap `tui_gateway` + `janus_cli/web_server.py` behind a stateless container service, persistent storage in Postgres / S3-compatible blob, signed JWT for cross-tab session resume. Reuse profile-isolation machinery.
 

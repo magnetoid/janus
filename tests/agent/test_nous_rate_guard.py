@@ -1,4 +1,4 @@
-"""Tests for agent/nous_rate_guard.py — cross-session Janus Portal rate limit guard."""
+"""Tests for agent/nous_rate_guard.py — cross-session Cloud Industry Portal rate limit guard."""
 
 import json
 import os
@@ -256,7 +256,7 @@ class TestAuxiliaryClientIntegration:
 class TestIsGenuineNousRateLimit:
     """Tell a real account-level 429 apart from an upstream-capacity 429.
 
-    Janus Portal multiplexes upstreams (DeepSeek, Kimi, MiMo, Janus).
+    Cloud Industry Portal multiplexes upstreams (DeepSeek, Kimi, MiMo, Janus).
     A 429 from an upstream out of capacity should NOT trip the
     cross-session breaker; a real user-quota 429 should.
     """

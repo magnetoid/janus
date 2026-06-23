@@ -8,10 +8,10 @@ sidebar_position: 2
 # Nous Tool Gateway（工具网关）
 
 :::tip 快速开始
-Tool Gateway 包含在付费 Janus Portal 订阅中。**[管理订阅 →](https://portal.imbalabs.com/manage-subscription)**
+Tool Gateway 包含在付费 Cloud Industry Portal 订阅中。**[管理订阅 →](https://portal.cloud-industry.com/manage-subscription)**
 :::
 
-**Tool Gateway** 让已付费的 [Janus Portal](https://portal.imbalabs.com) 用户通过同一份订阅，直接使用网页搜索、文生图、语音合成（TTS）与浏览器自动化，而**不必**再分别注册 Firecrawl、FAL、OpenAI、Browser Use 等服务的 API Key。
+**Tool Gateway** 让已付费的 [Cloud Industry Portal](https://portal.cloud-industry.com) 用户通过同一份订阅，直接使用网页搜索、文生图、语音合成（TTS）与浏览器自动化，而**不必**再分别注册 Firecrawl、FAL、OpenAI、Browser Use 等服务的 API Key。
 
 ## 包含能力
 
@@ -26,7 +26,7 @@ Tool Gateway 包含在付费 Janus Portal 订阅中。**[管理订阅 →](https
 
 ## 资格与账号
 
-Tool Gateway 仅对 **[付费](https://portal.imbalabs.com/manage-subscription)** Janus Portal 订阅开放；免费档不可用——请 [升级订阅](https://portal.imbalabs.com/manage-subscription) 后解锁。
+Tool Gateway 仅对 **[付费](https://portal.cloud-industry.com/manage-subscription)** Cloud Industry Portal 订阅开放；免费档不可用——请 [升级订阅](https://portal.cloud-industry.com/manage-subscription) 后解锁。
 
 检查当前状态：
 
@@ -40,7 +40,7 @@ janus status
 
 ### 在模型配置流程中
 
-运行 `janus model` 并选择 Janus Portal 作为提供商时，Janus 会主动询问是否启用 Tool Gateway：
+运行 `janus model` 并选择 Cloud Industry Portal 作为提供商时，Janus 会主动询问是否启用 Tool Gateway：
 
 ```
 Your Nous subscription includes the Tool Gateway.
@@ -102,7 +102,7 @@ browser:
 3. **TTS** — `text_to_speech` 走网关的 OpenAI Audio 端点  
 4. **浏览器** — `browser_navigate` 等走网关的 Browser Use 端点  
 
-网关使用 Janus Portal 凭据认证（在 `janus model` 完成后写入 `~/.janus/auth.json`）。
+网关使用 Cloud Industry Portal 凭据认证（在 `janus model` 完成后写入 `~/.janus/auth.json`）。
 
 ### 优先级
 
@@ -141,7 +141,7 @@ janus status
 
 ```
 ◆ Nous Tool Gateway
-  Janus Portal   ✓ managed tools available
+  Cloud Industry Portal   ✓ managed tools available
   Web tools       ✓ active via Nous subscription
   Image gen       ✓ active via Nous subscription
   TTS             ✓ active via Nous subscription
@@ -156,7 +156,7 @@ janus status
 若使用自建或自定义网关，可在 `~/.janus/.env` 中用环境变量覆盖端点：
 
 ```bash
-TOOL_GATEWAY_DOMAIN=imbalabs.com     # 网关路由基础域名
+TOOL_GATEWAY_DOMAIN=cloud-industry.com     # 网关路由基础域名
 TOOL_GATEWAY_SCHEME=https                 # http 或 https（默认 https）
 TOOL_GATEWAY_USER_TOKEN=your-token        # 鉴权 Token（通常由程序自动填充）
 FIRECRAWL_GATEWAY_URL=https://...         # 单独覆盖 Firecrawl 端点
@@ -176,7 +176,7 @@ FIRECRAWL_GATEWAY_URL=https://...         # 单独覆盖 Firecrawl 端点
 
 ### 订阅到期会怎样？
 
-经网关路由的工具会停止工作，直到你 [续订](https://portal.imbalabs.com/manage-subscription) 或通过 `janus tools` 改回直连 Key。
+经网关路由的工具会停止工作，直到你 [续订](https://portal.cloud-industry.com/manage-subscription) 或通过 `janus tools` 改回直连 Key。
 
 ### 与「消息网关」（各聊天平台）是否冲突？
 

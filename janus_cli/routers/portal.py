@@ -25,7 +25,7 @@ async def get_portal_status():
         if feats is not None:
             for feat in feats.items():
                 if getattr(feat, "managed_by_nous", False):
-                    state = "via Janus Portal"
+                    state = "via Cloud Industry Portal"
                 elif getattr(feat, "active", False) and getattr(feat, "current_provider", None):
                     state = feat.current_provider
                 elif getattr(feat, "active", False):
@@ -42,7 +42,7 @@ async def get_portal_status():
         "portal_url": auth.get("portal_base_url"),
         "inference_url": auth.get("inference_base_url"),
         "provider": str((model_cfg or {}).get("provider") or ""),
-        "subscription_url": "https://portal.imbalabs.com/manage-subscription",
+        "subscription_url": "https://portal.cloud-industry.com/manage-subscription",
         "features": features,
     }
 

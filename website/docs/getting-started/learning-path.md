@@ -13,7 +13,7 @@ If you haven't installed Janus Agent yet, begin with the [Installation guide](/g
 :::
 
 :::tip First-time provider setup
-First-time users almost always want `janus setup --portal` — one OAuth covers a model plus the four Tool Gateway tools (search/image/TTS/browser). See [Janus Portal](/integrations/nous-portal).
+First-time users almost always want `janus setup --portal` — one OAuth covers a model plus the four Tool Gateway tools (search/image/TTS/browser). See [Cloud Industry Portal](/integrations/nous-portal).
 :::
 
 ## How to Use This Page

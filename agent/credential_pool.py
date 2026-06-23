@@ -704,7 +704,7 @@ class CredentialPool:
         ``resolve_nous_runtime_credentials``, it writes fresh tokens to
         auth.json under ``_auth_store_lock``.  The pool entry's tokens
         become stale.  This method detects that and adopts the newer pair,
-        avoiding a "refresh token reuse" revocation on the Janus Portal.
+        avoiding a "refresh token reuse" revocation on the Cloud Industry Portal.
         """
         if self.provider != "nous" or entry.source != "device_code":
             return entry

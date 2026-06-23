@@ -21,7 +21,7 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
       </Typography>
 
       <a
-        href="https://imbalabs.com"
+        href="https://cloud-industry.com"
         target="_blank"
         rel="noopener noreferrer"
         className={cn(

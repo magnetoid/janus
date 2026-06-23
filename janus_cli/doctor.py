@@ -1003,9 +1003,9 @@ def run_doctor(args):
 
         nous_status = get_nous_auth_status()
         if nous_status.get("logged_in"):
-            check_ok("Janus Portal auth", "(logged in)")
+            check_ok("Cloud Industry Portal auth", "(logged in)")
         else:
-            check_warn("Janus Portal auth", "(not logged in)")
+            check_warn("Cloud Industry Portal auth", "(not logged in)")
 
         codex_status = get_codex_auth_status()
         if codex_status.get("logged_in"):

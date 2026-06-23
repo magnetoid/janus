@@ -296,7 +296,7 @@ export function ToolsetConfigDrawer({ toolset, onClose, onChanged }: Props) {
                       )}
                       {provider.requires_nous_auth && (
                         <Badge tone="outline" className="text-xs">
-                          Janus Portal
+                          Cloud Industry Portal
                         </Badge>
                       )}
                     </div>

@@ -218,7 +218,7 @@
     },
     "linux": {
       "category": "Development",
-      "maintainer": "Cloud Industry <support@imbalabs.com>",
+      "maintainer": "Cloud Industry <support@cloud-industry.com>",
       "synopsis": "Native desktop shell for Janus Agent.",
       "target": [
         "AppImage",

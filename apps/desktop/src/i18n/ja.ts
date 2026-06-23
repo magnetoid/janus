@@ -675,7 +675,7 @@ export const ja = defineLocale({
         'このツールセットにはプロバイダーのオプションがありません。有効にすれば現在の設定で動作します。',
       noProviders: '現在このツールセットに利用可能なプロバイダーがありません。',
       ready: '準備完了',
-      nousIncluded: 'Nous サブスクリプションに含まれています。有効にするには Janus Portal にサインインしてください。',
+      nousIncluded: 'Nous サブスクリプションに含まれています。有効にするには Cloud Industry Portal にサインインしてください。',
       noApiKeyRequired: 'API キーは不要です。',
       postSetupHint: step =>
         `このバックエンドは一度だけインストールが必要です (${step})。このマシン上で実行され、数分かかる場合があります。`,

@@ -8,9 +8,9 @@ scope for vulnerability reports.
 
 Report privately via [GitHub Security Advisories](https://github.com/magnetoid/janus/security/advisories/new)
 <<<<<<< Updated upstream
-or **security@imbamarketing.com**. Do not open public issues for
+or **security@cloud-industry.com**. Do not open public issues for
 =======
-or **security@imbalabs.com**. Do not open public issues for
+or **security@cloud-industry.com**. Do not open public issues for
 >>>>>>> Stashed changes
 security vulnerabilities. **Janus Agent does not operate a bug
 bounty program.**
@@ -345,6 +345,6 @@ that:
 - **Coordinated disclosure window:** 90 days from report, or until a
   fix is released, whichever comes first.
 - **Channel:** the GHSA thread or email correspondence with
-  security@imbalabs.com.
+  security@cloud-industry.com.
 - **Credit:** reporters are credited in release notes unless
   anonymity is requested.

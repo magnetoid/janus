@@ -174,7 +174,7 @@ describe('OAuth onboarding', () => {
         return {
           providers: [
             {
-              name: 'Janus Portal',
+              name: 'Cloud Industry Portal',
               slug: 'nous',
               models: [model]
             }
@@ -213,7 +213,7 @@ describe('OAuth onboarding', () => {
       baseState({
         flow: {
           status: 'awaiting_user',
-          provider: provider('nous', 'Janus Portal'),
+          provider: provider('nous', 'Cloud Industry Portal'),
           start: {
             auth_url: 'https://portal.example/auth',
             expires_in: 600,
@@ -223,7 +223,7 @@ describe('OAuth onboarding', () => {
           code: 'fresh-code'
         },
         reason:
-          'No access token found for Janus Portal login. setup.status reports configured credentials, but runtime resolution still failed.',
+          'No access token found for Cloud Industry Portal login. setup.status reports configured credentials, but runtime resolution still failed.',
         requested: true
       })
     )
@@ -234,7 +234,7 @@ describe('OAuth onboarding', () => {
     expect(state.reason).toBeNull()
     expect(state.flow.status).toBe('confirming_model')
     if (state.flow.status === 'confirming_model') {
-      expect(state.flow.label).toBe('Janus Portal')
+      expect(state.flow.label).toBe('Cloud Industry Portal')
       expect(state.flow.currentModel).toBe(model)
     }
     expect(calls.some(c => c.path === '/api/model/set')).toBe(true)

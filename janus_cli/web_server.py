@@ -903,7 +903,7 @@ class SleepPause(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Portal endpoint — Janus Portal auth + Tool Gateway routing status (read-only).
+# Portal endpoint — Cloud Industry Portal auth + Tool Gateway routing status (read-only).
 # ---------------------------------------------------------------------------
 
 
@@ -2174,10 +2174,10 @@ def _claude_code_only_status() -> Dict[str, Any]:
 _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
     {
         "id": "nous",
-        "name": "Janus Portal",
+        "name": "Cloud Industry Portal",
         "flow": "device_code",
         "cli_command": "janus auth add nous",
-        "docs_url": "https://portal.imbalabs.com",
+        "docs_url": "https://portal.cloud-industry.com",
         "status_fn": None,  # dispatched via auth.get_nous_auth_status
     },
     {
@@ -2256,7 +2256,7 @@ def _resolve_provider_status(provider_id: str, status_fn) -> Dict[str, Any]:
             return {
                 "logged_in": bool(raw.get("logged_in")),
                 "source": "nous_portal",
-                "source_label": raw.get("portal_base_url") or "Janus Portal",
+                "source_label": raw.get("portal_base_url") or "Cloud Industry Portal",
                 "token_preview": _truncate_token(raw.get("access_token")),
                 "expires_at": raw.get("access_expires_at"),
                 "has_refresh_token": bool(raw.get("has_refresh_token")),

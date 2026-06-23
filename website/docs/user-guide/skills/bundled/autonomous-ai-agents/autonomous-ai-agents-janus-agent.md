@@ -399,7 +399,7 @@ Full config reference: https://github.com/magnetoid/janus
 |----------|------|-------------|
 | OpenRouter | API key | `OPENROUTER_API_KEY` |
 | Anthropic | API key | `ANTHROPIC_API_KEY` |
-| Janus Portal | OAuth | `janus auth` |
+| Cloud Industry Portal | OAuth | `janus auth` |
 | OpenAI Codex | OAuth | `janus auth` |
 | GitHub Copilot | Token | `COPILOT_GITHUB_TOKEN` |
 | Google Gemini | API key | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |

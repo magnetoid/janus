@@ -305,12 +305,12 @@ def _web_requires_env() -> list[str]:
 DEFAULT_MIN_LENGTH_FOR_SUMMARIZATION = 5000
 
 def _is_nous_auxiliary_client(client: Any) -> bool:
-    """Return True when the resolved auxiliary backend is Janus Portal."""
+    """Return True when the resolved auxiliary backend is Cloud Industry Portal."""
     from urllib.parse import urlparse
 
     base_url = str(getattr(client, "base_url", "") or "")
     host = (urlparse(base_url).hostname or "").lower()
-    return host == "imbalabs.com" or host.endswith(".imbalabs.com")
+    return host == "cloud-industry.com" or host.endswith(".cloud-industry.com")
 
 
 def _resolve_web_extract_auxiliary(model: Optional[str] = None) -> tuple[Optional[Any], Optional[str], Dict[str, Any]]:
@@ -1257,7 +1257,7 @@ if __name__ == "__main__":
 
     if not nous_available:
         print("❌ No auxiliary model available for LLM content processing")
-        print("Set OPENROUTER_API_KEY, configure Janus Portal, or set OPENAI_BASE_URL + OPENAI_API_KEY")
+        print("Set OPENROUTER_API_KEY, configure Cloud Industry Portal, or set OPENAI_BASE_URL + OPENAI_API_KEY")
         print("⚠️  Without an auxiliary model, LLM content processing will be disabled")
     else:
         print(f"✅ Auxiliary model available: {default_summarizer_model}")

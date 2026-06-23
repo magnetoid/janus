@@ -142,7 +142,7 @@ AUTHOR_MAP = {
     "annguyenNous@users.noreply.github.com": "annguyenNous",
     "32201324+simpolism@users.noreply.github.com": "simpolism",
     "simpolism@gmail.com": "simpolism",
-    "jake@imbalabs.com": "simpolism",
+    "jake@cloud-industry.com": "simpolism",
     "mgongzai@gmail.com": "vKongv",
     "0x.badfriend@gmail.com": "discodirector",
     "altriatree@gmail.com": "TruaShamu",
@@ -202,7 +202,7 @@ AUTHOR_MAP = {
     "108427749+buntingszn@users.noreply.github.com": "buntingszn",
     "yanglongwei06@gmail.com": "Alex-yang00",
     "yanghongda@jackyun.com": "yangguangjin",
-    "teknium@imbalabs.com": "teknium1",
+    "teknium@cloud-industry.com": "teknium1",
     "markuscontasul@gmail.com": "Glucksberg",
     "80581902+Glucksberg@users.noreply.github.com": "Glucksberg",
     "piyushvp1@gmail.com": "thelumiereguy",
@@ -632,7 +632,7 @@ AUTHOR_MAP = {
     "samherring99@gmail.com": "samherring99",
     "desaiaum08@gmail.com": "Aum08Desai",
     "shannon.sands.1979@gmail.com": "shannonsands",
-    "shannon@imbalabs.com": "shannonsands",
+    "shannon@cloud-industry.com": "shannonsands",
     "abdi.moya@gmail.com": "AxDSan",
     "eri@plasticlabs.ai": "Erosika",
     "hjcpuro@gmail.com": "hjc-puro",
@@ -741,7 +741,7 @@ AUTHOR_MAP = {
     "shokatalishaikh95@gmail.com": "areu01or00",
     "bryan@intertwinesys.com": "bryanyoung",
     "christo.mitov@gmail.com": "christomitov",
-    "janus@imbalabs.com": "ImbaLabs",
+    "janus@cloud-industry.com": "ImbaLabs",
     "reginaldasr@gmail.com": "ReginaldasR",
     "ntconguit@gmail.com": "0xharryriddle",
     "agent@wildcat.local": "ericnicolaides",
@@ -796,7 +796,7 @@ AUTHOR_MAP = {
     "angelos@oikos.lan.home.malaiwah.com": "angelos",
     "aptx4561@gmail.com": "cokemine",
     "arilotter@gmail.com": "ethernet8023",
-    "ben@imbalabs.com": "benbarclay",
+    "ben@cloud-industry.com": "benbarclay",
     "birdiegyal@gmail.com": "yyovil",
     "boschi1997@gmail.com": "nicoloboschi",
     "chef.ya@gmail.com": "cherifya",
@@ -813,7 +813,7 @@ AUTHOR_MAP = {
     "dylan.socolobsky@lambdaclass.com": "dsocolobsky",
     "ignacio.avecilla@lambdaclass.com": "IAvecilla",
     "duerzy@gmail.com": "duerzy",
-    "emozilla@imbalabs.com": "emozilla",
+    "emozilla@cloud-industry.com": "emozilla",
     "fancydirty@gmail.com": "fancydirty",
     "farion1231@gmail.com": "farion1231",
     "floptopbot33@gmail.com": "flobo3",
@@ -829,8 +829,8 @@ AUTHOR_MAP = {
     "hmbown@gmail.com": "Hmbown",
     "iacobs@m0n5t3r.info": "m0n5t3r",
     "jiayuw794@gmail.com": "JiayuuWang",
-    "jonny@imbalabs.com": "yoniebans",
-    "jake@imbalabs.com": "simpolism",
+    "jonny@cloud-industry.com": "yoniebans",
+    "jake@cloud-industry.com": "simpolism",
     "juan.ovalle@mistral.ai": "jjovalle99",
     "julien.talbot@ergonomia.re": "Julientalbot",
     "kagura.chen28@gmail.com": "kagura-agent",
@@ -1331,7 +1331,7 @@ AUTHOR_MAP = {
     "al.bellemare@gmail.com": "Grogger",  # PR #27061 (windows console flash suppress)
     "7065068+Grogger@users.noreply.github.com": "Grogger",
     "18091625+Grogger@users.noreply.github.com": "Grogger",  # stale salvage commit alias (PR #28330)
-    "clement@imbalabs.com": "lemassykoi",  # PR #27042 (model-switch probe keyless providers)
+    "clement@cloud-industry.com": "lemassykoi",  # PR #27042 (model-switch probe keyless providers)
     "16377344+lemassykoi@users.noreply.github.com": "lemassykoi",
     "draplater@icloud.com": "draplater",  # PR #26707 (goal judge current time)
     "6349758+draplater@users.noreply.github.com": "draplater",
@@ -1731,7 +1731,7 @@ def parse_coauthors(body: str) -> list:
         return []
     # AI/bot emails to ignore in co-author trailers
     _ignored_emails = {"noreply@anthropic.com", "noreply@github.com",
-                       "cursoragent@cursor.com", "janus@imbalabs.com"}
+                       "cursoragent@cursor.com", "janus@cloud-industry.com"}
     _ignored_names = re.compile(r"^(Claude|Copilot|Cursor Agent|GitHub Actions?|dependabot|renovate)", re.IGNORECASE)
     pattern = re.compile(r"Co-authored-by:\s*(.+?)\s*<([^>]+)>", re.IGNORECASE)
     results = []

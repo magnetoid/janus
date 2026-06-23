@@ -263,7 +263,7 @@ class TestClassifyApiError:
                 "status": 402,
                 "message": (
                     "Your API key has run out of funds. Please go visit the "
-                    "portal to sort that out: https://portal.imbalabs.com"
+                    "portal to sort that out: https://portal.cloud-industry.com"
                 ),
             },
         )
@@ -291,7 +291,7 @@ class TestClassifyApiError:
                 "status": 404,
                 "message": (
                     "Model 'gpt-5' is not available on the Free Tier. "
-                    "Upgrade at https://portal.imbalabs.com or pick a free model."
+                    "Upgrade at https://portal.cloud-industry.com or pick a free model."
                 ),
             },
         )

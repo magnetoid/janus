@@ -94,7 +94,7 @@ class TestResolveRuntimeAgentKwargsAuthFallback:
                 raise RuntimeError("openrouter unavailable")
             return {
                 "api_key": "nous-key",
-                "base_url": "https://portal.imbalabs.com/v1",
+                "base_url": "https://portal.cloud-industry.com/v1",
                 "provider": "nous",
                 "api_mode": "chat_completions",
                 "command": None,

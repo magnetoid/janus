@@ -22,7 +22,7 @@
 
 **The self-improving AI agent built by [Cloud Industry](https://github.com/magnetoid/janus).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
 
-Use any model you want — [Janus Portal](https://portal.imbalabs.com), [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai) (AI-native cloud for Model API, Agent Sandbox, and GPU Cloud), [NVIDIA NIM](https://build.nvidia.com) (Nemotron), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch with `janus model` — no code changes, no lock-in.
+Use any model you want — [Cloud Industry Portal](https://portal.cloud-industry.com), [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai) (AI-native cloud for Model API, Agent Sandbox, and GPU Cloud), [NVIDIA NIM](https://build.nvidia.com) (Nemotron), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch with `janus model` — no code changes, no lock-in.
 
 <table>
 <tr><td><b>A real terminal interface</b></td><td>Full TUI with multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, and streaming tool output.</td></tr>
@@ -123,9 +123,9 @@ The slash variants (`/memory`, `/aspire`, `/interest`) work from the messaging g
 
 ---
 
-## Skip the API-key collection — Janus Portal
+## Skip the API-key collection — Cloud Industry Portal
 
-Janus works with whatever provider you want — that's not changing. But if you'd rather not collect five separate API keys for the model, web search, image generation, TTS, and a cloud browser, **[Janus Portal](https://portal.imbalabs.com)** covers all of them under one subscription:
+Janus works with whatever provider you want — that's not changing. But if you'd rather not collect five separate API keys for the model, web search, image generation, TTS, and a cloud browser, **[Cloud Industry Portal](https://portal.cloud-industry.com)** covers all of them under one subscription:
 
 - **300+ models** — pick any of them with `/model <name>`
 - **Tool Gateway** — web search (Firecrawl), image generation (FAL), text-to-speech (OpenAI), cloud browser (Browser Use), all routed through your sub. No extra accounts.
@@ -272,4 +272,4 @@ scripts/run_tests.sh
 
 MIT — see [LICENSE](LICENSE).
 
-Built by [Cloud Industry](https://imbalabs.com).
+Built by [Cloud Industry](https://cloud-industry.com).

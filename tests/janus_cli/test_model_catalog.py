@@ -42,7 +42,7 @@ def _valid_manifest() -> dict:
                 ],
             },
             "nous": {
-                "metadata": {"display_name": "Janus Portal"},
+                "metadata": {"display_name": "Cloud Industry Portal"},
                 "models": [
                     {"id": "anthropic/claude-opus-4.7"},
                     {"id": "moonshotai/kimi-k2.6"},

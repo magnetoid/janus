@@ -3409,7 +3409,7 @@ function installMediaPermissions() {
 //   * WebSocket upgrades require a single-use ``?ticket=`` minted at
 //     ``POST /api/auth/ws-ticket`` (cookie-authed). The legacy ``?token=``
 //     path is unconditionally rejected by gated gateways.
-//   * Janus Portal now issues a 24h ROTATING, reuse-detected refresh token
+//   * Cloud Industry Portal now issues a 24h ROTATING, reuse-detected refresh token
 //     alongside the ~15-min access token (Portal NAS #293 / janus #37247).
 //     Both are set as HttpOnly cookies (``janus_session_at`` ~15 min,
 //     ``janus_session_rt`` 24h). When the AT cookie lapses but the RT cookie

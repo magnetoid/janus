@@ -361,7 +361,7 @@ _URL_TO_PROVIDER: Dict[str, str] = {
     "portal.qwen.ai": "qwen-oauth",
     "openrouter.ai": "openrouter",
     "generativelanguage.googleapis.com": "gemini",
-    "inference-api.imbalabs.com": "nous",
+    "inference-api.cloud-industry.com": "nous",
     "api.deepseek.com": "deepseek",
     "api.githubcopilot.com": "copilot",
     "models.github.ai": "copilot",
@@ -1429,7 +1429,7 @@ def _resolve_nous_context_length(
     base_url: str = "",
     api_key: str = "",
 ) -> Tuple[Optional[int], str]:
-    """Resolve Janus Portal model context length.
+    """Resolve Cloud Industry Portal model context length.
 
     Tries the live Nous inference endpoint first (authoritative), then falls
     back to OpenRouter metadata with suffix/version matching.
@@ -1610,7 +1610,7 @@ def get_model_context_length(
                     model, base_url, f"{cached:,}",
                 )
                 _invalidate_cached_context_length(model, base_url)
-            # Janus Portal: the portal /v1/models endpoint is authoritative.
+            # Cloud Industry Portal: the portal /v1/models endpoint is authoritative.
             # Bypass the persistent cache so step 5b can always reconcile
             # against it — this corrects pre-fix entries seeded from the
             # OR catalog (the same OR underreport class that the Kimi/Qwen

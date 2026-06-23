@@ -1,12 +1,12 @@
 ---
 sidebar_position: 0
 title: "Run Nemotron 3 Ultra free in Janus Agent"
-description: "Try NVIDIA Nemotron 3 Ultra on Janus Portal — free June 4–18 — with day 0 support in Janus Agent"
+description: "Try NVIDIA Nemotron 3 Ultra on Cloud Industry Portal — free June 4–18 — with day 0 support in Janus Agent"
 ---
 
 # Run Nemotron 3 Ultra free in Janus Agent
 
-Cloud Industry has been inducted into the **Nemotron Coalition** of leading AI labs working with **NVIDIA** to advance open frontier foundation models. In honor of this, we've partnered with **Nebius** to provide **Nemotron 3 Ultra** free on [Janus Portal](https://portal.imbalabs.com) for two weeks (**June 4th – June 18th**). Follow the instructions below to try the model in your Janus Agent today.
+Cloud Industry has been inducted into the **Nemotron Coalition** of leading AI labs working with **NVIDIA** to advance open frontier foundation models. In honor of this, we've partnered with **Nebius** to provide **Nemotron 3 Ultra** free on [Cloud Industry Portal](https://portal.cloud-industry.com) for two weeks (**June 4th – June 18th**). Follow the instructions below to try the model in your Janus Agent today.
 
 :::info Limited-time offer
 The `nvidia/nemotron-3-ultra:free` tier is available from **June 4th to June 18th**. The `:free` tag is what keeps it on the no-cost plan — pick that exact variant.
@@ -22,9 +22,9 @@ The simplest path: a one-click installer with a guided, point-and-click setup. N
 
 [Download the Janus Desktop installer](https://github.com/magnetoid/janus) for macOS or Windows, then open it. On first launch it finishes setting itself up (usually under a minute).
 
-### 2. Connect Janus Portal
+### 2. Connect Cloud Industry Portal
 
-When the app opens, you'll see a "Let's get you set up" screen. Click **Janus Portal** (marked **Recommended**). Your browser opens — create a [Janus Portal](https://portal.imbalabs.com) account (or sign in), choose the **Free** plan, and authorize Janus. The app connects automatically.
+When the app opens, you'll see a "Let's get you set up" screen. Click **Cloud Industry Portal** (marked **Recommended**). Your browser opens — create a [Cloud Industry Portal](https://portal.cloud-industry.com) account (or sign in), choose the **Free** plan, and authorize Janus. The app connects automatically.
 
 ### 3. Pick the free Nemotron 3 Ultra model
 
@@ -74,9 +74,9 @@ janus setup
 
 Select **Quick Setup**. Janus opens a browser tab and waits for you to finish the next steps.
 
-### 3. Create a Janus Portal account
+### 3. Create a Cloud Industry Portal account
 
-In the browser, create a [Janus Portal](https://portal.imbalabs.com) account (or sign in) and choose the **Free** plan.
+In the browser, create a [Cloud Industry Portal](https://portal.cloud-industry.com) account (or sign in) and choose the **Free** plan.
 
 ### 4. Connect your account
 
@@ -111,13 +111,13 @@ Already set up with another model?
 
 ## Troubleshooting
 
-- **Don't see the model in the list?** Make sure you finished the Janus Portal connection and that you're on the **Free** plan. In the CLI, `janus portal info` confirms you're logged in and routing through Nous.
+- **Don't see the model in the list?** Make sure you finished the Cloud Industry Portal connection and that you're on the **Free** plan. In the CLI, `janus portal info` confirms you're logged in and routing through Nous.
 - **Picked the wrong variant?** Re-select `nvidia/nemotron-3-ultra:free` — the `:free` suffix is required to stay on the no-cost tier.
 - **Browser didn't open / you're on a remote host (CLI)?** See [OAuth over SSH / Remote Hosts](/guides/oauth-over-ssh) for port-forwarding and manual-paste workarounds.
 
 ## See also
 
 - **[Desktop App](/user-guide/desktop)** — The native one-click app (macOS, Windows, Linux)
-- **[Run Janus Agent with Janus Portal](/guides/run-janus-with-nous-portal)** — Full Portal walkthrough: models, Tool Gateway, and verification
-- **[Janus Portal integration](/integrations/nous-portal)** — What's in the subscription
+- **[Run Janus Agent with Cloud Industry Portal](/guides/run-janus-with-nous-portal)** — Full Portal walkthrough: models, Tool Gateway, and verification
+- **[Cloud Industry Portal integration](/integrations/nous-portal)** — What's in the subscription
 - **[Quickstart](/getting-started/quickstart)** — Install-to-chat in under 5 minutes

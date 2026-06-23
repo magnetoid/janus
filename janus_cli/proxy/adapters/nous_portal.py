@@ -1,4 +1,4 @@
-"""Janus Portal upstream adapter.
+"""Cloud Industry Portal upstream adapter.
 
 Reads the user's Nous OAuth state from ``~/.janus/auth.json`` through the
 shared runtime resolver, validates or refreshes the inference JWT, then exposes
@@ -28,7 +28,7 @@ from janus_cli.proxy.adapters.base import UpstreamAdapter, UpstreamCredential
 
 logger = logging.getLogger(__name__)
 
-# Endpoints inference-api.imbalabs.com actually serves. Anything else
+# Endpoints inference-api.cloud-industry.com actually serves. Anything else
 # the proxy will reject with 404 — keeps stray clients from leaking weird
 # requests to the upstream.
 _ALLOWED_PATHS: FrozenSet[str] = frozenset(
@@ -42,7 +42,7 @@ _ALLOWED_PATHS: FrozenSet[str] = frozenset(
 
 
 class NousPortalAdapter(UpstreamAdapter):
-    """Proxy upstream for the Janus Portal inference API."""
+    """Proxy upstream for the Cloud Industry Portal inference API."""
 
     def __init__(self) -> None:
         # Serialize proxy requests in this process; cross-process token refresh
@@ -55,7 +55,7 @@ class NousPortalAdapter(UpstreamAdapter):
 
     @property
     def display_name(self) -> str:
-        return "Janus Portal"
+        return "Cloud Industry Portal"
 
     @property
     def allowed_paths(self) -> FrozenSet[str]:
@@ -98,7 +98,7 @@ class NousPortalAdapter(UpstreamAdapter):
             state = self._read_state()
             if state is None:
                 raise RuntimeError(
-                    "Not logged into Janus Portal. Run `janus auth add nous` first."
+                    "Not logged into Cloud Industry Portal. Run `janus auth add nous` first."
                 )
 
             try:
@@ -118,17 +118,17 @@ class NousPortalAdapter(UpstreamAdapter):
                         quarantine_reason="proxy_refresh_failure",
                     )
                 raise RuntimeError(
-                    f"Failed to refresh Janus Portal credentials: {exc}"
+                    f"Failed to refresh Cloud Industry Portal credentials: {exc}"
                 ) from exc
             except Exception as exc:
                 raise RuntimeError(
-                    f"Failed to refresh Janus Portal credentials: {exc}"
+                    f"Failed to refresh Cloud Industry Portal credentials: {exc}"
                 ) from exc
 
             runtime_key = refreshed.get("api_key")
             if not runtime_key:
                 raise RuntimeError(
-                    "Janus Portal refresh did not return a usable inference JWT. "
+                    "Cloud Industry Portal refresh did not return a usable inference JWT. "
                     "Try `janus auth add nous` to re-authenticate."
                 )
 

@@ -374,7 +374,7 @@ class TestAllowPrivateUrlsIntegration:
         with patch("socket.getaddrinfo", return_value=[
             (2, 1, 6, "", ("198.18.23.183", 0)),
         ]):
-            assert is_safe_url("https://imbalabs.com") is True
+            assert is_safe_url("https://cloud-industry.com") is True
 
     def test_cgnat_allowed_when_toggle_on(self, monkeypatch):
         """CGNAT range (100.64.0.0/10) passes when toggle is on."""

@@ -77,7 +77,7 @@ def test_show_status_reports_managed_nous_features(monkeypatch, capsys, tmp_path
     )
     monkeypatch.setattr(status_mod, "resolve_requested_provider", lambda requested=None: "nous", raising=False)
     monkeypatch.setattr(status_mod, "resolve_provider", lambda requested=None, **kwargs: "nous", raising=False)
-    monkeypatch.setattr(status_mod, "provider_label", lambda provider: "Janus Portal", raising=False)
+    monkeypatch.setattr(status_mod, "provider_label", lambda provider: "Cloud Industry Portal", raising=False)
     monkeypatch.setattr(
         status_mod,
         "get_nous_subscription_features",
@@ -118,7 +118,7 @@ def test_show_status_hides_nous_subscription_section_when_feature_flag_is_off(mo
     )
     monkeypatch.setattr(status_mod, "resolve_requested_provider", lambda requested=None: "nous", raising=False)
     monkeypatch.setattr(status_mod, "resolve_provider", lambda requested=None, **kwargs: "nous", raising=False)
-    monkeypatch.setattr(status_mod, "provider_label", lambda provider: "Janus Portal", raising=False)
+    monkeypatch.setattr(status_mod, "provider_label", lambda provider: "Cloud Industry Portal", raising=False)
 
     status_mod.show_status(SimpleNamespace(all=False, deep=False))
 
@@ -168,7 +168,7 @@ def test_show_status_reports_exhausted_nous_credits(monkeypatch, capsys, tmp_pat
     monkeypatch.setattr(status_mod, "load_config", lambda: {"model": {"provider": "nous"}}, raising=False)
     monkeypatch.setattr(status_mod, "resolve_requested_provider", lambda requested=None: "nous", raising=False)
     monkeypatch.setattr(status_mod, "resolve_provider", lambda requested=None, **kwargs: "nous", raising=False)
-    monkeypatch.setattr(status_mod, "provider_label", lambda provider: "Janus Portal", raising=False)
+    monkeypatch.setattr(status_mod, "provider_label", lambda provider: "Cloud Industry Portal", raising=False)
 
     status_mod.show_status(SimpleNamespace(all=False, deep=False))
 

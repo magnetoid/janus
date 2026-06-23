@@ -655,8 +655,8 @@ def test_cmd_model_forwards_nous_login_tls_options(monkeypatch):
 
     janus_main.cmd_model(
         SimpleNamespace(
-            portal_url="https://portal.imbalabs.com",
-            inference_url="https://inference.imbalabs.com/v1",
+            portal_url="https://portal.cloud-industry.com",
+            inference_url="https://inference.cloud-industry.com/v1",
             client_id="janus-local",
             scope="openid profile",
             no_browser=True,
@@ -667,8 +667,8 @@ def test_cmd_model_forwards_nous_login_tls_options(monkeypatch):
     )
 
     assert captured == {
-        "portal_url": "https://portal.imbalabs.com",
-        "inference_url": "https://inference.imbalabs.com/v1",
+        "portal_url": "https://portal.cloud-industry.com",
+        "inference_url": "https://inference.cloud-industry.com/v1",
         "client_id": "janus-local",
         "scope": "openid profile",
         "no_browser": True,

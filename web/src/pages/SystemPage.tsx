@@ -792,7 +792,7 @@ export default function SystemPage() {
       {/* ── Portal ────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-3">
         <H2 variant="sm" className="flex items-center gap-2 text-muted-foreground">
-          <Globe className="h-4 w-4" /> Janus Portal
+          <Globe className="h-4 w-4" /> Cloud Industry Portal
         </H2>
         <Card>
           <CardContent className="flex flex-col gap-3 py-4">
@@ -806,7 +806,7 @@ export default function SystemPage() {
                 </span>
               )}
               <a
-                href={portal?.subscription_url || "https://portal.imbalabs.com/manage-subscription"}
+                href={portal?.subscription_url || "https://portal.cloud-industry.com/manage-subscription"}
                 target="_blank"
                 rel="noreferrer"
                 className="ml-auto text-xs text-primary underline"

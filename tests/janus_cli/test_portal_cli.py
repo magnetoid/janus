@@ -1,6 +1,6 @@
 """Tests for `janus portal` dispatch.
 
-`janus portal` (no subcommand) is the human-readable alias for the Janus Portal
+`janus portal` (no subcommand) is the human-readable alias for the Cloud Industry Portal
 one-shot onboarding (`janus auth add nous --type oauth` / `janus setup
 --portal`). The prior status default moved to `janus portal info`, with
 `status` retained as a back-compat alias.

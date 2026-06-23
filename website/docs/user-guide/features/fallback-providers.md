@@ -48,7 +48,7 @@ Each entry requires both `provider` and `model`. Entries missing either field ar
 | Provider | Value | Requirements |
 |----------|-------|-------------|
 | OpenRouter | `openrouter` | `OPENROUTER_API_KEY` |
-| Janus Portal | `nous` | `janus setup --portal` (fresh) or `janus auth add nous` (OAuth) |
+| Cloud Industry Portal | `nous` | `janus setup --portal` (fresh) or `janus auth add nous` (OAuth) |
 | OpenAI Codex | `openai-codex` | `janus model` (ChatGPT OAuth) |
 | GitHub Copilot | `copilot` | `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN` |
 | GitHub Copilot ACP | `copilot-acp` | External process (editor integration) |
@@ -133,7 +133,7 @@ fallback_providers:
     model: anthropic/claude-sonnet-4
 ```
 
-**Janus Portal as fallback for OpenRouter:**
+**Cloud Industry Portal as fallback for OpenRouter:**
 ```yaml
 model:
   provider: openrouter
@@ -200,14 +200,14 @@ When a task's provider is set to `"auto"` (the default), Janus tries providers i
 **For text tasks (compression, web extract, etc.):**
 
 ```text
-OpenRouter → Janus Portal → Custom endpoint → Codex OAuth →
+OpenRouter → Cloud Industry Portal → Custom endpoint → Codex OAuth →
 API-key providers (z.ai, Kimi, MiniMax, Xiaomi MiMo, Hugging Face, Anthropic) → give up
 ```
 
 **For vision tasks:**
 
 ```text
-Main provider (if vision-capable) → OpenRouter → Janus Portal →
+Main provider (if vision-capable) → OpenRouter → Cloud Industry Portal →
 Codex OAuth → Anthropic → Custom endpoint → give up
 ```
 
@@ -271,7 +271,7 @@ These options apply to `auxiliary:`, `compression:`, and `fallback_providers:` e
 |----------|-------------|-------------|
 | `"auto"` | Try providers in order until one works (default) | At least one provider configured |
 | `"openrouter"` | Force OpenRouter | `OPENROUTER_API_KEY` |
-| `"nous"` | Force Janus Portal | `janus auth` |
+| `"nous"` | Force Cloud Industry Portal | `janus auth` |
 | `"codex"` | Force Codex OAuth | `janus model` → Codex |
 | `"main"` | Use whatever provider the main agent uses (auxiliary tasks only) | Active main provider configured |
 | `"anthropic"` | Force Anthropic native | `ANTHROPIC_API_KEY` or Claude Code credentials |

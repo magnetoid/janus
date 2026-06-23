@@ -14,7 +14,7 @@ You need at least one way to connect to an LLM. Use `janus model` to switch prov
 
 | Provider | Setup |
 |----------|-------|
-| **Janus Portal** | `janus model` (OAuth, subscription-based) |
+| **Cloud Industry Portal** | `janus model` (OAuth, subscription-based) |
 | **OpenAI Codex** | `janus model` (ChatGPT OAuth, uses Codex models) |
 | **GitHub Copilot** | `janus model` (OAuth device code flow, `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `gh auth token`) |
 | **GitHub Copilot ACP** | `janus model` (spawns local `copilot --acp --stdio`) |
@@ -59,19 +59,19 @@ In the `model:` config section, you can use either `default:` or `model:` as the
 :::
 
 
-### Janus Portal
+### Cloud Industry Portal
 
-[Janus Portal](https://portal.imbalabs.com) is Cloud Industry's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, browser automation) plus [Nous Chat](https://chat.imbalabs.com) — billed against your Nous subscription instead of separate per-provider accounts.
+[Cloud Industry Portal](https://portal.cloud-industry.com) is Cloud Industry's unified subscription gateway and **the recommended way to run Janus Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, browser automation) plus [Nous Chat](https://chat.cloud-industry.com) — billed against your Nous subscription instead of separate per-provider accounts.
 
 ```bash
 janus setup --portal     # fresh install — OAuth + provider + gateway in one command
-janus model              # existing install — pick "Janus Portal" from the list
+janus model              # existing install — pick "Cloud Industry Portal" from the list
 janus portal info        # inspect login + routing at any time
 ```
 
-Don't have a subscription yet? Get one at [portal.imbalabs.com/manage-subscription](https://portal.imbalabs.com/manage-subscription).
+Don't have a subscription yet? Get one at [portal.cloud-industry.com/manage-subscription](https://portal.cloud-industry.com/manage-subscription).
 
-**For full details:** see the dedicated [Janus Portal integration page](/integrations/nous-portal) (what's in the subscription, model catalog, troubleshooting) and the step-by-step [Run Janus Agent with Janus Portal guide](/guides/run-janus-with-nous-portal).
+**For full details:** see the dedicated [Cloud Industry Portal integration page](/integrations/nous-portal) (what's in the subscription, model catalog, troubleshooting) and the step-by-step [Run Janus Agent with Cloud Industry Portal guide](/guides/run-janus-with-nous-portal).
 
 **Client identification.** Every Portal request from Janus Agent carries a `client=janus-client-v<version>` tag (e.g. `client=janus-client-v0.13.0`) auto-aligned to your installed release. This is sent on all Portal pathways — main chat loop, auxiliary calls, compression summarizer, web extraction — and lets Portal-side telemetry distinguish Janus traffic from other clients. No config required; the tag updates automatically when you `janus update`.
 
@@ -85,11 +85,11 @@ If a token refresh fails with a terminal error (HTTP 4xx, `invalid_grant`, revok
 :::
 
 :::warning
-Even when using Janus Portal, Codex, or a custom endpoint, some tools (vision, web summarization, MoA) use a separate "auxiliary" model. By default (`auxiliary.*.provider: "auto"`), Janus routes these tasks to your **main chat model** — the same model you picked in `janus model`. You can override each task individually to route it to a cheaper/faster model (e.g. Gemini Flash on OpenRouter) — see [Auxiliary Models](/user-guide/configuration#auxiliary-models).
+Even when using Cloud Industry Portal, Codex, or a custom endpoint, some tools (vision, web summarization, MoA) use a separate "auxiliary" model. By default (`auxiliary.*.provider: "auto"`), Janus routes these tasks to your **main chat model** — the same model you picked in `janus model`. You can override each task individually to route it to a cheaper/faster model (e.g. Gemini Flash on OpenRouter) — see [Auxiliary Models](/user-guide/configuration#auxiliary-models).
 :::
 
 :::tip Nous Tool Gateway
-Paid Janus Portal subscribers also get access to the **[Tool Gateway](/user-guide/features/tool-gateway)** — web search, image generation, TTS, and browser automation routed through your subscription. No extra API keys needed. On a fresh install, `janus setup --portal` logs you in, sets Nous as your provider, and turns the gateway on in one command. Existing users can enable it from `janus model` or per-tool from `janus tools`. Inspect routing at any time with `janus portal info`.
+Paid Cloud Industry Portal subscribers also get access to the **[Tool Gateway](/user-guide/features/tool-gateway)** — web search, image generation, TTS, and browser automation routed through your subscription. No extra API keys needed. On a fresh install, `janus setup --portal` logs you in, sets Nous as your provider, and turns the gateway on in one command. Existing users can enable it from `janus model` or per-tool from `janus tools`. Inspect routing at any time with `janus portal info`.
 :::
 
 ### Two Commands for Model Management
@@ -1195,7 +1195,7 @@ Janus uses a multi-source resolution chain to detect the correct context window 
 4. **Endpoint `/models`** — queries your server's API (local/custom endpoints)
 5. **Anthropic `/v1/models`** — queries Anthropic's API for `max_input_tokens` (API-key users only)
 6. **OpenRouter API** — live model metadata from OpenRouter
-7. **Janus Portal** — suffix-matches Nous model IDs against OpenRouter metadata
+7. **Cloud Industry Portal** — suffix-matches Nous model IDs against OpenRouter metadata
 8. **[models.dev](https://models.dev)** — community-maintained registry with provider-specific context lengths for 3800+ models across 100+ providers
 9. **Fallback defaults** — broad model family patterns (128K default)
 
@@ -1409,7 +1409,7 @@ model:
 
 | Use Case | Recommended |
 |----------|-------------|
-| **Just want it to work** | OpenRouter (default) or Janus Portal |
+| **Just want it to work** | OpenRouter (default) or Cloud Industry Portal |
 | **Local models, easy setup** | Ollama |
 | **Production GPU serving** | vLLM or SGLang |
 | **Mac / no GPU** | Ollama or llama.cpp |

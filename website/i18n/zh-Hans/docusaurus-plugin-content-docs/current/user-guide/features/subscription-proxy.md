@@ -1,7 +1,7 @@
 ---
 sidebar_position: 15
 title: "订阅代理"
-description: "将你的 Janus Portal 订阅（或其他 OAuth 提供商）用作外部应用的 OpenAI 兼容端点"
+description: "将你的 Cloud Industry Portal 订阅（或其他 OAuth 提供商）用作外部应用的 OpenAI 兼容端点"
 ---
 
 # 订阅代理
@@ -27,7 +27,7 @@ description: "将你的 Janus Portal 订阅（或其他 OAuth 提供商）用作
 janus portal
 ```
 
-这会打开浏览器进行 Janus Portal OAuth 流程。Janus 将刷新令牌存储在 `~/.janus/auth.json` 中——与所有 Janus 提供商登录信息存放在同一位置。
+这会打开浏览器进行 Cloud Industry Portal OAuth 流程。Janus 将刷新令牌存储在 `~/.janus/auth.json` 中——与所有 Janus 提供商登录信息存放在同一位置。
 
 ### 2. 启动代理
 
@@ -36,7 +36,7 @@ janus proxy start
 ```
 
 ```
-Starting Janus proxy for Janus Portal
+Starting Janus proxy for Cloud Industry Portal
   Listening on:  http://127.0.0.1:8645/v1
   Forwarding to: (resolved per-request from your subscription)
   Use any bearer token in the client — the proxy attaches your real credential.
@@ -62,7 +62,7 @@ Model:      Hermes-4-70B    # 或 Hermes-4.3-36B、Hermes-4-405B
 janus proxy providers
 ```
 
-当前已内置：`nous`（Janus Portal）。更多 OAuth 提供商可通过在 `janus_cli/proxy/adapters/` 中实现 `UpstreamAdapter` 接口来添加。
+当前已内置：`nous`（Cloud Industry Portal）。更多 OAuth 提供商可通过在 `janus_cli/proxy/adapters/` 中实现 `UpstreamAdapter` 接口来添加。
 
 ## 检查状态
 
@@ -73,14 +73,14 @@ janus proxy status
 ```
 Janus proxy upstream adapters
 
-  [nous    ] Janus Portal — ready (bearer expires 2026-05-15T06:43:21Z)
+  [nous    ] Cloud Industry Portal — ready (bearer expires 2026-05-15T06:43:21Z)
 ```
 
 如果显示 `not logged in`，请运行 `janus portal`。如果显示 `credentials need attention`，说明你的刷新令牌已被撤销（较少见——通常发生在你从 Portal Web UI 退出登录时）——重新运行 `janus portal` 即可。
 
 ## 允许的路径
 
-代理仅转发上游实际提供的路径。对于 Janus Portal：
+代理仅转发上游实际提供的路径。对于 Cloud Industry Portal：
 
 | 路径 | 用途 |
 |------|---------|
@@ -118,7 +118,7 @@ janus proxy start
 openviking-server
 ```
 
-OpenViking 的 VLM 调用现在将通过你的 Portal 订阅进行。Embedding 模型侧仍需要自己的提供商——Portal 确实提供 `/v1/embeddings`，但模型选择取决于你的套餐所支持的内容；请查看 `portal.imbalabs.com/models`。
+OpenViking 的 VLM 调用现在将通过你的 Portal 订阅进行。Embedding 模型侧仍需要自己的提供商——Portal 确实提供 `/v1/embeddings`，但模型选择取决于你的套餐所支持的内容；请查看 `portal.cloud-industry.com/models`。
 
 ## 配置 Karakeep（或任何书签/摘要应用）
 
@@ -145,7 +145,7 @@ janus proxy start --host 0.0.0.0 --port 8645
 
 ## 速率限制
 
-你的 Portal 套餐的 RPM/TPM 限制适用于整个代理。代理不进行扇出或连接池——它是单个 bearer，使用你的完整订阅配额。请在 [portal.imbalabs.com](https://portal.imbalabs.com) 监控使用情况。
+你的 Portal 套餐的 RPM/TPM 限制适用于整个代理。代理不进行扇出或连接池——它是单个 bearer，使用你的完整订阅配额。请在 [portal.cloud-industry.com](https://portal.cloud-industry.com) 监控使用情况。
 
 ## 架构
 

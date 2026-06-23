@@ -959,7 +959,7 @@ def test_unusable_access_token_refresh_uses_latest_rotated_refresh_token(tmp_pat
 
 
 class TestLoginNousSkipKeepsCurrent:
-    """When a user runs `janus model` → Janus Portal → Skip (keep current) after
+    """When a user runs `janus model` → Cloud Industry Portal → Skip (keep current) after
     a successful OAuth login, the prior provider and model MUST be preserved.
 
     Regression: previously, _update_config_for_provider was called
@@ -999,8 +999,8 @@ class TestLoginNousSkipKeepsCurrent:
         fake_auth_state = {
             "access_token": "fake-nous-token",
             "agent_key": "fake-agent-key",
-            "inference_base_url": "https://inference-api.imbalabs.com",
-            "portal_base_url": "https://portal.imbalabs.com",
+            "inference_base_url": "https://inference-api.cloud-industry.com",
+            "portal_base_url": "https://portal.cloud-industry.com",
             "refresh_token": "fake-refresh",
             "token_expires_at": 9999999999,
         }
@@ -1193,7 +1193,7 @@ def test_persist_nous_credentials_writes_both_pool_and_providers(tmp_path, monke
 
 def test_persist_nous_credentials_allows_recovery_from_401(tmp_path, monkeypatch):
     """End-to-end: after persisting via the helper, resolve_nous_runtime_credentials
-    must succeed (not raise "Janus is not logged into Janus Portal").
+    must succeed (not raise "Janus is not logged into Cloud Industry Portal").
 
     This is the exact path that run_agent.py's `_try_refresh_nous_client_credentials`
     calls after a Nous 401 — before the fix it would raise AuthError because
@@ -1216,7 +1216,7 @@ def test_persist_nous_credentials_allows_recovery_from_401(tmp_path, monkeypatch
 
     # Stub the network-touching steps so we don't actually contact the
     # portal — the point of this test is that state lookup succeeds and
-    # doesn't raise "Janus is not logged into Janus Portal".
+    # doesn't raise "Janus is not logged into Cloud Industry Portal".
     def _fake_refresh_access_token(*, client, portal_base_url, client_id, refresh_token):
         return {
             "access_token": new_jwt,
@@ -1385,7 +1385,7 @@ def test_persist_nous_credentials_no_label_uses_auto_derived(tmp_path, monkeypat
 def test_refresh_token_reuse_detection_surfaces_actionable_message():
     """Regression for #15099.
 
-    When the Janus Portal server returns ``invalid_grant`` with
+    When the Cloud Industry Portal server returns ``invalid_grant`` with
     ``error_description`` containing "reuse detected", Janus must surface an
     actionable message explaining that an external process consumed the
     refresh token.  The default opaque "Refresh token reuse detected; please
@@ -1411,7 +1411,7 @@ def test_refresh_token_reuse_detection_surfaces_actionable_message():
     with pytest.raises(AuthError) as exc_info:
         _refresh_access_token(
             client=_FakeClient(),
-            portal_base_url="https://portal.imbalabs.com",
+            portal_base_url="https://portal.cloud-industry.com",
             client_id="janus-cli",
             refresh_token="rt_consumed_elsewhere",
         )
@@ -1446,7 +1446,7 @@ def test_refresh_token_reuse_error_code_is_terminal():
     with pytest.raises(AuthError) as exc_info:
         auth_mod._refresh_access_token(
             client=_FakeClient(),
-            portal_base_url="https://portal.imbalabs.com",
+            portal_base_url="https://portal.cloud-industry.com",
             client_id="janus-cli",
             refresh_token="rt_consumed_elsewhere",
         )
@@ -1481,7 +1481,7 @@ def test_refresh_token_exchange_sends_refresh_token_header():
 
     payload = _refresh_access_token(
         client=client,
-        portal_base_url="https://portal.imbalabs.com",
+        portal_base_url="https://portal.cloud-industry.com",
         client_id="janus-cli",
         refresh_token="refresh-1",
     )
@@ -1522,7 +1522,7 @@ def test_refresh_non_reuse_error_keeps_original_description():
     with pytest.raises(AuthError) as exc_info:
         _refresh_access_token(
             client=_FakeClient(),
-            portal_base_url="https://portal.imbalabs.com",
+            portal_base_url="https://portal.cloud-industry.com",
             client_id="janus-cli",
             refresh_token="rt_anything",
         )

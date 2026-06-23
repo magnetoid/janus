@@ -10,7 +10,7 @@ upstream credential to the forwarded request. The credential is refreshed
 automatically when it approaches expiry.
 
 First-class adapter:
-  - ``nous`` — Janus Portal (https://inference-api.imbalabs.com/v1)
+  - ``nous`` — Cloud Industry Portal (https://inference-api.cloud-industry.com/v1)
 
 Future adapters can plug in by implementing ``UpstreamAdapter``.
 """

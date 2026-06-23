@@ -186,7 +186,7 @@ class TestTencentTokenhubCanonicalProvider:
 
 
 # =============================================================================
-# OpenRouter / Janus Portal curated lists
+# OpenRouter / Cloud Industry Portal curated lists
 # =============================================================================
 
 

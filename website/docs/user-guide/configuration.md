@@ -9,7 +9,7 @@ description: "Configure Janus Agent — config.yaml, providers, models, API keys
 All settings are stored in the `~/.janus/` directory for easy access.
 
 :::tip Easiest path to a working `config.yaml`
-Run `janus setup --portal` — one OAuth gets you a model provider and all four Tool Gateway tools without hand-editing YAML. Portal subscribers also get 10% off token-billed providers. See [Janus Portal](/integrations/nous-portal).
+Run `janus setup --portal` — one OAuth gets you a model provider and all four Tool Gateway tools without hand-editing YAML. Portal subscribers also get 10% off token-billed providers. See [Cloud Industry Portal](/integrations/nous-portal).
 :::
 
 ## Directory Structure
@@ -18,7 +18,7 @@ Run `janus setup --portal` — one OAuth gets you a model provider and all four 
 ~/.janus/
 ├── config.yaml     # Settings (model, terminal, TTS, compression, etc.)
 ├── .env            # API keys and secrets
-├── auth.json       # OAuth provider credentials (Janus Portal, etc.)
+├── auth.json       # OAuth provider credentials (Cloud Industry Portal, etc.)
 ├── SOUL.md         # Primary agent identity (slot #1 in system prompt)
 ├── memories/       # Persistent memory (MEMORY.md, USER.md)
 ├── skills/         # Agent-created skills (managed via skill_manage tool)
@@ -810,7 +810,7 @@ Options: `fill_first` (default), `round_robin`, `least_used`, `random`. See [Cre
 
 Janus turns on cross-session prompt caching automatically when the active provider supports it — no user config needed.
 
-For Claude on **native Anthropic**, **OpenRouter**, and **Janus Portal**, Janus attaches `cache_control` breakpoints with the 1-hour TTL (`ttl: "1h"`) on the system prompt and skill blocks. The first send within a fresh hour pays full input rates; subsequent sends across any session within the same hour pull from the cache at the discounted cached-read rate. This means the system prompt, loaded skill content, and the early portion of any long-context include get reused across `janus` sessions and across forked subagents for the first hour.
+For Claude on **native Anthropic**, **OpenRouter**, and **Cloud Industry Portal**, Janus attaches `cache_control` breakpoints with the 1-hour TTL (`ttl: "1h"`) on the system prompt and skill blocks. The first send within a fresh hour pays full input rates; subsequent sends across any session within the same hour pull from the cache at the discounted cached-read rate. This means the system prompt, loaded skill content, and the early portion of any long-context include get reused across `janus` sessions and across forked subagents for the first hour.
 
 The Qwen Cloud (Alibaba DashScope) upstream caps cache TTL at 5 minutes, so Janus uses the 5-minute breakpoint TTL there instead. Other Claude-via-third-party paths (AWS Bedrock, Azure Foundry) fall back to the provider's own caching defaults. xAI Grok uses a separate session-pinned conversation-id mechanism — see [xAI prompt caching](/integrations/providers#xai-grok--responses-api--prompt-caching).
 
@@ -821,7 +821,7 @@ No knob exists to disable this — caching is always-on and saves money even on 
 Janus uses "auxiliary" models for side tasks like image analysis, web page summarization, browser screenshot analysis, session-title generation, and context compression. By default (`auxiliary.*.provider: "auto"`), Janus routes every auxiliary task to your **main chat model** — the same provider/model you picked in `janus model`. You don't need to configure anything to get started, but be aware that on expensive reasoning models (Opus, MiniMax M2.7, etc.) auxiliary tasks add meaningful cost. If you want cheap-and-fast side tasks regardless of your main model, set `auxiliary.<task>.provider` and `auxiliary.<task>.model` explicitly (for example, Gemini Flash on OpenRouter for vision and web extraction).
 
 :::note Why "auto" uses your main model
-Earlier builds split aggregator users (OpenRouter, Janus Portal) onto a cheap provider-side default. That was surprising — users who paid for an aggregator subscription would see a different model handling their auxiliary traffic. `auto` now uses the main model for everyone, and per-task overrides in `config.yaml` still win (see [Full auxiliary config reference](#full-auxiliary-config-reference) below).
+Earlier builds split aggregator users (OpenRouter, Cloud Industry Portal) onto a cheap provider-side default. That was surprising — users who paid for an aggregator subscription would see a different model handling their auxiliary traffic. `auto` now uses the main model for everyone, and per-task overrides in `config.yaml` still win (see [Full auxiliary config reference](#full-auxiliary-config-reference) below).
 :::
 
 ### Configuring auxiliary models interactively
@@ -998,7 +998,7 @@ These options apply to **auxiliary task configs** (`auxiliary:`, `compression:`)
 |----------|-------------|-------------|
 | `"auto"` | Best available (default). Vision tries OpenRouter → Nous → Codex. | — |
 | `"openrouter"` | Force OpenRouter — routes to any model (Gemini, GPT-4o, Claude, etc.) | `OPENROUTER_API_KEY` |
-| `"nous"` | Force Janus Portal | `janus auth` |
+| `"nous"` | Force Cloud Industry Portal | `janus auth` |
 | `"codex"` | Force Codex OAuth (ChatGPT account). Supports vision (gpt-5.3-codex). | `janus model` → Codex |
 | `"minimax-oauth"` | Force MiniMax OAuth (browser login, no API key). Uses MiniMax-M2.7-highspeed for auxiliary tasks. | `janus model` → MiniMax (OAuth) |
 | `"xai-oauth"` | Force xAI Grok OAuth (browser login for SuperGrok or X Premium+ subscribers, no API key). Same OAuth token covers chat, TTS, image, video, and transcription. | `janus model` → xAI Grok OAuth (SuperGrok / Premium+) |
