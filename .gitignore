@@ -9,3 +9,6 @@ node_modules/
 .pytest-cache/
 .pytest_cache/
 pytest-of-*/
+
+# torsor agent memory / decision log — local-only, not shipped
+.torsor/
