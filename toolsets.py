@@ -48,6 +48,7 @@ _JANUS_CORE_TOOLS = [
     "text_to_speech",
     # Planning & memory
     "todo", "memory", "recall_memory", "recall_lessons",
+    "pin_agreement", "recall_agreements",
     # Session history search
     "session_search",
     # Agentic RAG over a registered corpus (gated on a corpus existing via check_fn)
@@ -216,7 +217,7 @@ TOOLSETS = {
     
     "memory": {
         "description": "Persistent memory across sessions (personal notes + user profile)",
-        "tools": ["memory", "recall_memory", "recall_lessons"],
+        "tools": ["memory", "recall_memory", "recall_lessons", "pin_agreement", "recall_agreements"],
         "includes": []
     },
 

@@ -111,6 +111,17 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
     if getattr(agent, "_task_completion_guidance", True) and agent.valid_tool_names:
         stable_parts.append(TASK_COMPLETION_GUIDANCE)
 
+    # Standing agreements: a static, cache-safe directive — restate the relevant
+    # standing agreement + plan before acting; never rush past a prior commitment
+    # (agent/agreements.py; gated by config agreements.enabled, default on).
+    try:
+        from agent.agreements import directive as _agreements_directive
+        _agreements_text = _agreements_directive()
+        if _agreements_text:
+            stable_parts.append(_agreements_text)
+    except Exception:
+        pass
+
     # Tool-aware behavioral guidance: only inject when the tools are loaded
     tool_guidance = []
     if "memory" in agent.valid_tool_names:

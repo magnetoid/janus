@@ -1787,6 +1787,17 @@ DEFAULT_CONFIG = {
         },
     },
 
+    # Standing agreements (agent/agreements.py) — keep working agreements alive
+    # across a long session so the agent stops forgetting prior commitments or
+    # rushing past them. Adds a static "restate the standing agreement + plan
+    # before acting" directive to the system prompt (cache-safe, set once at
+    # session start) plus pin_agreement / recall_agreements tools backed by a
+    # persistent per-session store (survives context compression). On by default
+    # — it's a cheap, cache-safe UX fix.
+    "agreements": {
+        "enabled": True,
+    },
+
     # Measurable self-improvement (docs/superpowers/specs/2026-06-15-...).
     # The eval spine runs the $JANUS_HOME/evals/ suite on a schedule and records
     # a pass-rate learning curve; autopin drafts a regression-pin eval from a
