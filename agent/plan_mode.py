@@ -74,6 +74,26 @@ def consume_forced(session: Any) -> bool:
     return bool(_forced.pop(str(session), False))
 
 
+_PLAN_REQUEST_PREFIX = (
+    "[Plan requested] Propose a step-by-step plan for the following and WAIT for my "
+    "approval (reply 'go') before executing:\n\n"
+)
+
+
+def maybe_plan_prefix(user_message: str, *, task_id: Any = None, session_id: Any = None) -> str:
+    """If ``/plan`` armed this session (matched by ``task_id`` or ``session_id``),
+    prepend a one-shot planning request to ``user_message``; otherwise return it
+    unchanged. Consumed once. Cache-safe (mutates only the new turn) + best-effort.
+    """
+    try:
+        for key in (task_id, session_id):
+            if key and consume_forced(key):
+                return _PLAN_REQUEST_PREFIX + str(user_message)
+    except Exception as exc:
+        logger.debug("maybe_plan_prefix failed: %s", exc)
+    return user_message
+
+
 # --- per-session plan store -------------------------------------------------
 
 def _store_path(session: Any) -> Path:

@@ -6122,11 +6122,13 @@ class GatewayRunner:
             # /fast and /reasoning are config-only and take effect next
             # message, so they fall through to the catch-all busy response
             # below — users should wait and set them between turns.
-            if _cmd_def_inner and _cmd_def_inner.name in {"yolo", "verbose"}:
+            if _cmd_def_inner and _cmd_def_inner.name in {"yolo", "verbose", "plan"}:
                 if _cmd_def_inner.name == "yolo":
                     return await self._handle_yolo_command(event)
                 if _cmd_def_inner.name == "verbose":
                     return await self._handle_verbose_command(event)
+                if _cmd_def_inner.name == "plan":
+                    return await self._handle_plan_command(event)
                 if _cmd_def_inner.name == "footer":
                     return await self._handle_footer_command(event)
 
@@ -6424,6 +6426,9 @@ class GatewayRunner:
 
         if canonical == "verbose":
             return await self._handle_verbose_command(event)
+
+        if canonical == "plan":
+            return await self._handle_plan_command(event)
 
         if canonical == "footer":
             return await self._handle_footer_command(event)
@@ -11270,6 +11275,24 @@ class GatewayRunner:
         else:
             enable_session_yolo(session_key)
             return EphemeralReply(t("gateway.yolo.enabled"))
+
+    async def _handle_plan_command(self, event: MessageEvent) -> Union[str, EphemeralReply]:
+        """Handle /plan — arm plan mode so the next task is proposed for approval first."""
+        from agent import plan_mode
+
+        session_key = self._session_key_for_source(event.source)
+        plan_mode.set_forced(session_key)
+        # The loop consumes the flag by the conversation session_id; set that too so
+        # the gateway's session-key indirection doesn't miss it.
+        try:
+            entry = self.session_store._entries.get(session_key)
+            if entry and getattr(entry, "session_id", None):
+                plan_mode.set_forced(entry.session_id)
+        except Exception:
+            pass
+        return EphemeralReply(
+            "📋 Plan mode armed — I'll propose a step-by-step plan and wait for your "
+            "approval before acting on your next task.")
 
     async def _handle_verbose_command(self, event: MessageEvent) -> str:
         """Handle /verbose command — cycle tool progress display mode.

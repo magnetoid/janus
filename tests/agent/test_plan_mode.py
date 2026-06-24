@@ -53,6 +53,24 @@ def test_sessions_isolated():
     assert pm.load_plan("sB") == []
 
 
+def test_maybe_plan_prefix_consumes_and_prefixes():
+    pm.set_forced("sess-x")
+    out = pm.maybe_plan_prefix("deploy the app", task_id="sess-x")
+    assert out.startswith("[Plan requested]") and "deploy the app" in out
+    # one-shot: the flag is now cleared
+    assert pm.maybe_plan_prefix("deploy the app", task_id="sess-x") == "deploy the app"
+
+
+def test_maybe_plan_prefix_matches_either_key():
+    pm.set_forced("the-session-id")
+    out = pm.maybe_plan_prefix("x", task_id="other", session_id="the-session-id")
+    assert out.startswith("[Plan requested]")
+
+
+def test_maybe_plan_prefix_noop_when_not_armed():
+    assert pm.maybe_plan_prefix("hello", task_id="nope") == "hello"
+
+
 def test_best_effort_never_raises():
     assert isinstance(pm.directive(None), str)
     assert isinstance(pm.should_plan("", {}), bool)

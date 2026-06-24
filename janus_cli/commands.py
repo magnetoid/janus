@@ -106,6 +106,8 @@ COMMAND_REGISTRY: list[CommandDef] = [
                aliases=("q",), args_hint="<prompt>"),
     CommandDef("steer", "Inject a message after the next tool call without interrupting", "Session",
                args_hint="<prompt>"),
+    CommandDef("plan", "Plan the next task before executing (propose a plan + wait for approval)",
+               "Session", args_hint="[task]"),
     CommandDef("goal", "Set a standing goal Janus works on across turns until achieved", "Session",
                args_hint="[text | pause | resume | clear | status]"),
     CommandDef("subgoal", "Add or manage extra criteria on the active goal", "Session",

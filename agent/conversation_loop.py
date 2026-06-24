@@ -574,7 +574,14 @@ def run_conversation(
             _should_review_memory = True
             agent._turns_since_memory = 0
 
-    # Add user message
+    # Add user message. Plan mode: if /plan armed this session, prepend a one-shot
+    # planning request to THIS turn (cache-safe — only the new message changes).
+    try:
+        from agent.plan_mode import maybe_plan_prefix
+        user_message = maybe_plan_prefix(
+            user_message, task_id=task_id, session_id=getattr(agent, "session_id", None))
+    except Exception:
+        pass
     user_msg = {"role": "user", "content": user_message}
     messages.append(user_msg)
     current_turn_user_idx = len(messages) - 1

@@ -9174,6 +9174,19 @@ class JanusCLI:
             self._handle_agents_command()
         elif canonical == "background":
             self._handle_background_command(cmd_original)
+        elif canonical == "plan":
+            # Force the next task to plan-before-execute (one-shot). The loop hook
+            # (agent/plan_mode.maybe_plan_prefix) consumes this flag and prepends a
+            # planning request to that turn. With a task argument, submit it now.
+            from agent import plan_mode
+            parts = cmd_original.split(None, 1)
+            task = parts[1].strip() if len(parts) > 1 else ""
+            plan_mode.set_forced(self.session_id)
+            if task:
+                self._pending_input.put(task)
+                _cprint(f"  📋 Plan mode: I'll propose a plan, then execute — {task[:70]}{'...' if len(task) > 70 else ''}")
+            else:
+                _cprint("  📋 Plan mode armed — your next message will be planned before execution.")
         elif canonical == "queue":
             # Extract prompt after "/queue " or "/q "
             parts = cmd_original.split(None, 1)
