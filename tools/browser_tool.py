@@ -2288,6 +2288,32 @@ def _truncate_snapshot(snapshot_text: str, max_chars: int = 8000) -> str:
 # Browser Tool Functions
 # ============================================================================
 
+def _apply_pagemem(url: str, result: str) -> str:
+    """Best-effort PageMem hook: capture the page's stable interactive elements and,
+    when the site has saved task playbooks, append a recall block to the navigate
+    result. Pure augmentation of tool OUTPUT (cache-safe) — never blocks navigation."""
+    try:
+        from agent.page_memory import capture, enabled, format_recall, recall
+        if not enabled():
+            return result
+        data = json.loads(result)
+        if not isinstance(data, dict) or not data.get("success"):
+            return result
+        snap = data.get("snapshot")
+        if not isinstance(snap, str) or not snap:
+            return result
+        capture(url, snap)
+        rec = recall(url)
+        block = format_recall(rec) if rec.get("playbooks") else ""
+        if block:
+            data["snapshot"] = snap + "\n\n" + block
+            return json.dumps(data, ensure_ascii=False)
+        return result
+    except Exception as exc:
+        logger.debug("pagemem augment failed: %s", exc)
+        return result
+
+
 def browser_navigate(url: str, task_id: Optional[str] = None) -> str:
     """
     Navigate to a URL in the browser.
@@ -2368,7 +2394,7 @@ def browser_navigate(url: str, task_id: Optional[str] = None) -> str:
     # Camofox backend — delegate after safety checks pass
     if _is_camofox_mode():
         from tools.browser_camofox import camofox_navigate
-        return camofox_navigate(url, task_id)
+        return _apply_pagemem(url, camofox_navigate(url, task_id))
 
     if auto_local_this_nav:
         logger.info(
@@ -2488,7 +2514,7 @@ def browser_navigate(url: str, task_id: Optional[str] = None) -> str:
         except Exception as e:
             logger.debug("Auto-snapshot after navigate failed: %s", e)
 
-        return json.dumps(response, ensure_ascii=False)
+        return _apply_pagemem(url, json.dumps(response, ensure_ascii=False))
     else:
         return json.dumps({
             "success": False,

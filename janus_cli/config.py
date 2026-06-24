@@ -1819,6 +1819,18 @@ DEFAULT_CONFIG = {
         "max_iterations": 30,
     },
 
+    # PageMem: persistent per-site page memory for the browser agent. On navigate,
+    # captures stable interactive elements + recalls past task playbooks so repeat
+    # visits are faster/more reliable. Local-only, secrets scrubbed, prunable.
+    # docs/superpowers/specs/2026-06-24-page-memory-design.md
+    "page_memory": {
+        "enabled": True,
+        "max_domains": 200,
+        "max_elements": 60,
+        "max_playbooks": 12,
+        "decay_fails": 3,
+    },
+
     # Measurable self-improvement (docs/superpowers/specs/2026-06-15-...).
     # The eval spine runs the $JANUS_HOME/evals/ suite on a schedule and records
     # a pass-rate learning curve; autopin drafts a regression-pin eval from a
