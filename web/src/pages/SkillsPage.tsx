@@ -37,23 +37,23 @@ import type {
   SkillHubScan,
 } from "@/lib/api";
 import { ToolsetConfigDrawer } from "@/components/ToolsetConfigDrawer";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Switch } from "@nous-research/ui/ui/components/switch";
+import { useToast } from "@/hooks/use-toast";
+import { Toast } from "@/components/ui/toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ListItem } from "@/components/ui/list-item";
+import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@nous-research/ui/ui/components/dialog";
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Input } from "@nous-research/ui/ui/components/input";
+import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";

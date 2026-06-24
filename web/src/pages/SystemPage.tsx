@@ -26,18 +26,18 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
-import { ConfirmDialog } from "@nous-research/ui/ui/components/confirm-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { H2 } from "@/components/ui/typography/h2";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectOption } from "@/components/ui/select";
+import { Toast } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { cn, themedBody } from "@/lib/utils";

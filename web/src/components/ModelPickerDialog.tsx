@@ -1,9 +1,9 @@
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListItem } from "@/components/ui/list-item";
+import { Spinner } from "@/components/ui/spinner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { GatewayClient } from "@/lib/gatewayClient";
 import { Check, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";

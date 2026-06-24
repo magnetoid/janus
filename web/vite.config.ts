@@ -60,15 +60,7 @@ function janusDevToken(): Plugin {
 export default defineConfig({
   plugins: [react(), tailwindcss(), janusDevToken()],
   resolve: {
-    // @nous-research/ui (the local design-language package) is being removed —
-    // its subpaths now resolve to local shadcn replacements. Most-specific finds
-    // first; "@" only matches "@/…" so it never catches "@nous-research/…".
-    alias: [
-      { find: "@nous-research/ui/ui/components", replacement: path.resolve(__dirname, "./src/components/ui") },
-      { find: "@nous-research/ui/hooks", replacement: path.resolve(__dirname, "./src/hooks") },
-      { find: "@nous-research/ui/assets", replacement: path.resolve(__dirname, "./src/assets") },
-      { find: "@", replacement: path.resolve(__dirname, "./src") },
-    ],
+    alias: [{ find: "@", replacement: path.resolve(__dirname, "./src") }],
     // Dedupe the shared 3D/graphics deps to a single copy (now that the DS is gone
     // they're plain direct deps; deduping is harmless and avoids any stray copies).
     dedupe: [

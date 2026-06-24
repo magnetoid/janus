@@ -40,17 +40,17 @@ import type {
 import { timeAgo } from "@/lib/utils";
 import { Markdown } from "@/components/Markdown";
 import { PlatformsCard } from "@/components/PlatformsCard";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Segmented } from "@nous-research/ui/ui/components/segmented";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
+import { Toast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ListItem } from "@/components/ui/list-item";
+import { Segmented } from "@/components/ui/segmented";
+import { Spinner } from "@/components/ui/spinner";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
-import { Input } from "@nous-research/ui/ui/components/input";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -58,9 +58,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@nous-research/ui/ui/components/dialog";
+} from "@/components/ui/dialog";
 import { useSystemActions } from "@/contexts/useSystemActions";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";

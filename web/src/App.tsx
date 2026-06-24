@@ -52,15 +52,15 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { SelectionSwitcher } from "@nous-research/ui/ui/components/selection-switcher";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Typography } from "@nous-research/ui/ui/components/typography/index";
+import { Button } from "@/components/ui/button";
+import { SelectionSwitcher } from "@/components/ui/selection-switcher";
+import { Spinner } from "@/components/ui/spinner";
+import { Typography } from "@/components/ui/typography/index";
 import { cn } from "@/lib/utils";
 import { Backdrop } from "@/components/Backdrop";
 import { SidebarFooter } from "@/components/SidebarFooter";
 import { SidebarStatusStrip, gatewayLine } from "@/components/SidebarStatusStrip";
-import { useBelowBreakpoint } from "@nous-research/ui/hooks/use-below-breakpoint";
+import { useBelowBreakpoint } from "@/hooks/use-below-breakpoint";
 import { useSidebarStatus } from "@/hooks/useSidebarStatus";
 import { AuthWidget } from "@/components/AuthWidget";
 import { PageHeaderProvider } from "@/contexts/PageHeaderProvider";

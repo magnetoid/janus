@@ -1,6 +1,6 @@
-import { useGpuTier } from "@nous-research/ui/hooks/use-gpu-tier";
+import { useGpuTier } from "@/hooks/use-gpu-tier";
 
-import fillerBgUrl from "@nous-research/ui/assets/filler-bg0.webp";
+import fillerBgUrl from "@/assets/filler-bg0.webp";
 
 /**
  * Replicates the visual layer stack of `<Overlays dark />` from

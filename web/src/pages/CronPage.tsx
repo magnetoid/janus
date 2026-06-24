@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { Clock, Pause, Pencil, Play, Trash2, X, Zap } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectOption } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { H2 } from "@/components/ui/typography/h2";
 import { api } from "@/lib/api";
 import type { CronJob, CronDeliveryTarget, ProfileInfo } from "@/lib/api";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
@@ -19,13 +19,13 @@ import {
   type ScheduleBuilderState,
   type ScheduleDescribeStrings,
 } from "@/lib/schedule";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
+import { useToast } from "@/hooks/use-toast";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
+import { Toast } from "@/components/ui/toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";

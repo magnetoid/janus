@@ -23,9 +23,9 @@
  * terminal pane keeps working unimpaired.
  */
 
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Card } from "@nous-research/ui/ui/components/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 import { ModelPickerDialog } from "@/components/ModelPickerDialog";
 import { ToolCall, type ToolEntry } from "@/components/ToolCall";
