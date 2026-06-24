@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from typing import Any, Callable, Dict, List, Optional
 
@@ -22,10 +23,13 @@ logger = logging.getLogger(__name__)
 
 # Deterministic check types we accept — the eval framework's verifiable assertions.
 # Anything else (e.g. an LLM-judge) is rejected: the reward must be deterministic.
+# NOTE: ``regex`` is deliberately excluded — a model-generated pattern is untrusted
+# and could trigger catastrophic backtracking (ReDoS) in the offline sleep cycle.
 _CHECK_TYPES = frozenset({
-    "contains", "not_contains", "regex", "min_length", "max_length",
+    "contains", "not_contains", "min_length", "max_length",
     "tool_called", "tool_not_called",
 })
+_LENGTH_CHECKS = frozenset({"min_length", "max_length"})
 
 _GEN_SYSTEM = (
     "You design ONE small, self-contained practice task to help an AI coding agent "
@@ -33,9 +37,10 @@ _GEN_SYSTEM = (
     "DETERMINISTICALLY — never by human or model judgment. Return ONLY JSON: "
     '{"instruction": "<the task for the agent>", "checks": [{"type": "...", '
     '"value": "..."}]}. Allowed check types (pick what verifies success): '
-    "contains, not_contains, regex, min_length, max_length, tool_called, "
-    "tool_not_called. Provide at least one check. The instruction must be solvable "
-    "in a sandbox without network or secrets."
+    "contains, not_contains, min_length, max_length, tool_called, tool_not_called. "
+    "String-valued checks (contains/not_contains/tool_called/tool_not_called) need a "
+    "non-empty value; length checks need a non-negative integer. Provide at least one "
+    "check. The instruction must be solvable in a sandbox without network or secrets."
 )
 
 
@@ -78,17 +83,29 @@ def _extract_json(text: str) -> Optional[Dict[str, Any]]:
 
 
 def _valid_checks(checks: Any) -> Optional[List[Dict[str, Any]]]:
-    """Keep only deterministic, well-formed checks. None if there are none usable."""
+    """Keep only deterministic, well-formed checks; None if any entry is malformed.
+
+    Any malformed entry disqualifies the WHOLE task (we never silently drop checks —
+    a partial check set would weaken the verifiable reward). Rejects: non-dict items,
+    unknown/subjective types, missing values, EMPTY string values (an empty
+    ``contains`` matches everything → false-positive pass), and non-integer lengths.
+    """
     if not isinstance(checks, list):
         return None
     out: List[Dict[str, Any]] = []
     for c in checks:
         if not isinstance(c, dict):
-            continue
+            return None
         ctype = c.get("type")
         if ctype not in _CHECK_TYPES or "value" not in c:
-            return None  # an unknown/subjective check type disqualifies the task
-        out.append({"type": ctype, "value": c["value"],
+            return None
+        value = c.get("value")
+        if ctype in _LENGTH_CHECKS:
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                return None
+        elif not (isinstance(value, str) and value.strip()):
+            return None  # empty/whitespace string would trivially always pass/fail
+        out.append({"type": ctype, "value": value,
                     "case_sensitive": bool(c.get("case_sensitive", False))})
     return out or None
 
@@ -111,12 +128,13 @@ def generate_challenge(
         if why:
             prompt += f"\nWhy it keeps failing: {why}"
         kwargs: Dict[str, Any] = {
+            "task": "self_challenge_generation",
             "messages": [{"role": "system", "content": _GEN_SYSTEM},
                          {"role": "user", "content": prompt}],
             "temperature": 0.4,
+            "provider": provider,
+            "model": model,
         }
-        if model:
-            kwargs["model"] = model
         resp = llm_caller(**kwargs)
         content = resp.choices[0].message.content
         data = _extract_json(content)
@@ -242,21 +260,34 @@ def _default_attempt_runner(instruction: str, *, config: Optional[Dict[str, Any]
             "execution (set terminal.backend to %s, or self_challenge.sandbox, or "
             "inject an attempt_runner).", "/".join(sorted(_ISOLATED_SANDBOXES)))
         return {"final_response": "", "messages": []}
+    # The terminal tool selects its backend from the TERMINAL_ENV env var (default
+    # 'local'), NOT from the config dict — so gating on config alone is not enough.
+    # Pin it to the resolved isolated backend for the duration of the attempt (then
+    # restore), or the subagent would execute on the host despite the safety check.
+    _prev_env = os.environ.get("TERMINAL_ENV")
     try:
+        os.environ["TERMINAL_ENV"] = backend
         from run_agent import AIAgent
         agent = AIAgent(
             model=model or "",
             enabled_toolsets="development",
+            # max_iterations bounds turns; a hard wall-clock timeout needs a sandbox
+            # that enforces it (signal-based timeouts aren't thread/Windows-safe).
             max_iterations=int(_cfg(config, "max_iterations", 30)),
             quiet_mode=True,
             save_trajectories=False,
-        )  # the agent's terminal tool runs in the configured (isolated) backend
+        )
         out = agent.run_conversation(str(instruction))
         return {"final_response": out.get("final_response", ""),
                 "messages": out.get("messages", [])}
     except Exception as exc:
         logger.debug("_default_attempt_runner unavailable (%s) — self-challenge no-op", exc)
         return {"final_response": "", "messages": []}
+    finally:
+        if _prev_env is None:
+            os.environ.pop("TERMINAL_ENV", None)
+        else:
+            os.environ["TERMINAL_ENV"] = _prev_env
 
 
 def run_self_challenge(

@@ -1,5 +1,6 @@
 """Tests for Self-Challenge (agent/self_challenge.py)."""
 import json
+import os
 from types import SimpleNamespace
 
 from agent import self_challenge as sc
@@ -34,6 +35,54 @@ def test_generate_rejects_when_no_deterministic_checks():
 def test_generate_rejects_subjective_check_types():
     reply = json.dumps({"instruction": "do x", "checks": [{"type": "llm_judge", "value": "good"}]})
     assert sc.generate_challenge({"topic": "t"}, llm_caller=_llm(reply)) is None
+
+
+def test_generate_rejects_empty_value_checks():
+    # Empty 'contains' would match ANY response -> false-positive pass. Must reject.
+    reply = json.dumps({"instruction": "x", "checks": [{"type": "contains", "value": "  "}]})
+    assert sc.generate_challenge({"topic": "t"}, llm_caller=_llm(reply)) is None
+
+
+def test_generate_rejects_non_dict_check_item():
+    reply = json.dumps({"instruction": "x", "checks": ["nope", {"type": "contains", "value": "ok"}]})
+    assert sc.generate_challenge({"topic": "t"}, llm_caller=_llm(reply)) is None
+
+
+def test_generate_rejects_regex_check_type():
+    # regex is excluded from the allowlist (ReDoS via model-generated patterns).
+    reply = json.dumps({"instruction": "x", "checks": [{"type": "regex", "value": ".*"}]})
+    assert sc.generate_challenge({"topic": "t"}, llm_caller=_llm(reply)) is None
+
+
+def test_generate_rejects_bad_length_value():
+    reply = json.dumps({"instruction": "x", "checks": [{"type": "min_length", "value": "ten"}]})
+    assert sc.generate_challenge({"topic": "t"}, llm_caller=_llm(reply)) is None
+
+
+def test_generate_accepts_valid_length_check():
+    reply = json.dumps({"instruction": "write a long answer",
+                        "checks": [{"type": "min_length", "value": 50}]})
+    ch = sc.generate_challenge({"topic": "t"}, llm_caller=_llm(reply))
+    assert ch is not None and ch["checks"][0]["value"] == 50
+
+
+def test_default_runner_pins_terminal_env_to_isolated_backend(monkeypatch):
+    # The terminal backend comes from $TERMINAL_ENV, so the runner MUST set it to the
+    # resolved isolated backend (else execution falls back to host 'local').
+    seen = {}
+
+    class _FakeAgent:
+        def __init__(self, **kw):
+            seen["env"] = os.environ.get("TERMINAL_ENV")
+
+        def run_conversation(self, instr):
+            return {"final_response": "", "messages": []}
+
+    monkeypatch.setenv("TERMINAL_ENV", "local")
+    monkeypatch.setattr("run_agent.AIAgent", _FakeAgent)
+    sc._default_attempt_runner("do it", config={"self_challenge": {"sandbox": "docker"}})
+    assert seen["env"] == "docker"
+    assert os.environ.get("TERMINAL_ENV") == "local"  # restored afterwards
 
 
 def test_verify_result_deterministic():

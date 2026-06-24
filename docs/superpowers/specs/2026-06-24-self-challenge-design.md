@@ -16,8 +16,11 @@ model (quarantine + verifiable reward + dialectic admission gate).
    struggles. (No gaps → no-op.)
 2. **Generate** — `generate_challenge(gap, *, llm_caller)` → a Code-as-Task
    `{instruction, checks}` where `checks` are DETERMINISTIC assertion specs reusing
-   the eval framework's check types (final_contains / tool_used / equals / regex —
-   never subjective). One aux model call.
+   the eval framework's check types (contains / not_contains / min_length /
+   max_length / tool_called / tool_not_called — never subjective). `regex` is
+   excluded: a model-generated pattern is untrusted and could trigger ReDoS in the
+   offline cycle. Any malformed/empty-valued check disqualifies the whole task. One
+   aux model call.
 3. **Attempt** — `attempt_runner(instruction)` runs the task as a RESTRICTED
    sandboxed subagent. INJECTABLE: tests inject a fake. The production default
    (`_default_attempt_runner`) is **safe-by-default** — executing a self-generated
