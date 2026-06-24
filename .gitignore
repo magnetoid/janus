@@ -12,3 +12,4 @@ pytest-of-*/
 
 # torsor agent memory / decision log — local-only, not shipped
 .torsor/
+janus_cli/web_dist/
