@@ -1798,6 +1798,16 @@ DEFAULT_CONFIG = {
         "enabled": True,
     },
 
+    # Plan mode (agent/plan_mode.py) — for HARD, multi-step, state-changing tasks
+    # the agent proposes a step-by-step plan and waits for your approval before
+    # executing (complexity auto-detected, free + local; simple tasks stay instant).
+    # `/plan` forces planning for the next message. Pairs with standing agreements
+    # to stop the agent rushing. On by default, cache-safe.
+    "plan_mode": {
+        "enabled": True,
+        "min_complexity": "hard",
+    },
+
     # Measurable self-improvement (docs/superpowers/specs/2026-06-15-...).
     # The eval spine runs the $JANUS_HOME/evals/ suite on a schedule and records
     # a pass-rate learning curve; autopin drafts a regression-pin eval from a

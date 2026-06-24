@@ -122,6 +122,16 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
     except Exception:
         pass
 
+    # Plan mode: static, cache-safe directive — propose a plan and wait for approval
+    # before hard, state-changing work (agent/plan_mode.py; config plan_mode.enabled).
+    try:
+        from agent.plan_mode import directive as _plan_directive
+        _plan_text = _plan_directive()
+        if _plan_text:
+            stable_parts.append(_plan_text)
+    except Exception:
+        pass
+
     # Tool-aware behavioral guidance: only inject when the tools are loaded
     tool_guidance = []
     if "memory" in agent.valid_tool_names:
