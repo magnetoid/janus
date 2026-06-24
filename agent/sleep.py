@@ -182,7 +182,8 @@ def run_sleep_cycle(
     """
     report: Dict[str, Any] = {
         "dry_run": dry_run, "graduated_facts": 0, "graduated_skills": 0,
-        "reconciled": [], "pruned": [], "lessons": [], "error": None,
+        "reconciled": [], "pruned": [], "lessons": [], "self_challenge": None,
+        "error": None,
     }
     try:
         # 2. GRADUATE — distill recent sessions into facts + skill drafts.
@@ -237,6 +238,19 @@ def run_sleep_cycle(
                         "\n".join(str(s) for s in session_summaries), llm_caller=llm_caller)
             except Exception as exc:
                 logger.debug("sleep playbook curation failed: %s", exc)
+
+        # 7. SELF-CHALLENGE: generate verifiable practice tasks targeting known
+        # weaknesses, attempt them in a sandboxed subagent, and draft a QUARANTINED
+        # skill from each deterministically-verified success. Off by default
+        # (self_challenge.enabled); best-effort — never breaks the cycle.
+        if not dry_run:
+            try:
+                from agent.self_challenge import enabled as _sc_enabled, run_self_challenge
+                if _sc_enabled():
+                    report["self_challenge"] = run_self_challenge(
+                        llm_caller=llm_caller, provider=provider, model=model)
+            except Exception as exc:
+                logger.debug("sleep self-challenge failed: %s", exc)
 
         if not dry_run:
             state = load_sleep_state()

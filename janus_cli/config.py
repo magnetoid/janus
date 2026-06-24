@@ -1808,6 +1808,17 @@ DEFAULT_CONFIG = {
         "min_complexity": "hard",
     },
 
+    # Self-Challenge: verifiable self-play during the sleep cycle. Janus generates
+    # practice tasks for its known weaknesses, attempts them sandboxed, and drafts a
+    # QUARANTINED skill from each deterministically-verified success. Default OFF
+    # (it runs real self-play). See docs/superpowers/specs/2026-06-24-self-challenge.
+    "self_challenge": {
+        "enabled": False,
+        "max_per_cycle": 2,
+        "sandbox": "auto",
+        "max_iterations": 30,
+    },
+
     # Measurable self-improvement (docs/superpowers/specs/2026-06-15-...).
     # The eval spine runs the $JANUS_HOME/evals/ suite on a schedule and records
     # a pass-rate learning curve; autopin drafts a regression-pin eval from a

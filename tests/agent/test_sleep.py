@@ -14,6 +14,23 @@ def _fake_llm(reply: str):
     return _caller
 
 
+def test_sleep_runs_self_challenge_only_when_enabled(monkeypatch):
+    store = MemoryStore(); store.load_from_disk()
+    calls = {"n": 0}
+    monkeypatch.setattr("agent.self_challenge.run_self_challenge",
+                        lambda **k: (calls.__setitem__("n", calls["n"] + 1), {"attempted": 1})[1])
+
+    # disabled -> step is skipped
+    monkeypatch.setattr("agent.self_challenge.enabled", lambda *a, **k: False)
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert calls["n"] == 0 and rep["self_challenge"] is None
+
+    # enabled -> step runs and its report is attached
+    monkeypatch.setattr("agent.self_challenge.enabled", lambda *a, **k: True)
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert calls["n"] == 1 and rep["self_challenge"] == {"attempted": 1}
+
+
 def test_importance_scoring_formula():
     # (1-decay)*0.5 + reuse*0.3 + length_norm*0.2
     assert sleep.importance_score(0.0, 1.0, 1.0) == 1.0
