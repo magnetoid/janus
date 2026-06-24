@@ -93,6 +93,51 @@ def test_caps_respected():
     assert len(pm.recall("https://site-g.com")["profile_elements"]) <= 10
 
 
+def test_parse_elements_handles_embedded_escaped_quotes():
+    snap = '- button "Download \\"cv.pdf\\"" [e1]'
+    els = pm._parse_elements(snap)
+    assert els and 'cv.pdf' in els[0]["name"]      # not truncated at the inner quote
+
+
+def test_scrub_bearer_token_with_space():
+    pm.record_playbook("https://api-site.com", "auth",
+                       [{"action": "type", "target": 'textbox "Authorization"',
+                         "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payloadpart"}])
+    val = pm.recall("https://api-site.com")["playbooks"][0]["steps"][0]["value"]
+    assert val == "[scrubbed]"
+
+
+def test_scrub_token_in_target_and_drops_extra_keys():
+    pm.record_playbook("https://api-site2.com", "x",
+                       [{"action": "type", "target": "ghp_0123456789abcdefgh0123456789abcdefABCD",
+                         "value": "ok", "note": "AKIAIOSFODNN7EXAMPLEKEY1234567890"}])
+    step = pm.recall("https://api-site2.com")["playbooks"][0]["steps"][0]
+    assert step["target"] == "[scrubbed]"      # token in target scrubbed
+    assert "note" not in step                  # extra key dropped (could smuggle secrets)
+
+
+def test_normal_target_not_scrubbed():
+    pm.record_playbook("https://normal.com", "x",
+                       [{"action": "click", "target": 'button "Sign in"'}])
+    assert pm.recall("https://normal.com")["playbooks"][0]["steps"][0]["target"] == 'button "Sign in"'
+
+
+def test_max_domains_enforced():
+    for i in range(5):
+        pm.capture(f"https://dom{i}.com", '- button "X" [e1]',
+                   config={"page_memory": {"max_domains": 3}})
+    from janus_constants import get_janus_home
+    files = list((get_janus_home() / "page_memory").glob("*.json"))
+    assert len(files) <= 3
+
+
+def test_task_capped_and_newlines_stripped():
+    pid = pm.record_playbook("https://t.com", "line1\nline2 " + "x" * 500,
+                             [{"action": "click", "target": 'button "B"'}])
+    task = pm.recall("https://t.com")["playbooks"][0]["task"]
+    assert "\n" not in task and len(task) <= 200
+
+
 def test_best_effort_never_raises():
     assert pm._parse_elements(None) == []
     assert pm.recall("not a url") == {"profile_elements": [], "playbooks": []}

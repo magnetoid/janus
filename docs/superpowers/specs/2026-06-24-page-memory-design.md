@@ -31,7 +31,9 @@ is per-snapshot/ephemeral; the **stable** identity is `role` + accessible-name
 - `note_outcome(url, playbook_id, ok)` → bump counters; drop a playbook after N
   consecutive failures (staleness decay).
 - Store: `get_janus_home()/page_memory/<domain>.json`. Caps: max elements/domain,
-  max playbooks/domain, max domains. Pruned at sleep.
+  max playbooks/domain. `max_domains` is enforced EAGERLY (oldest-by-mtime domain
+  files deleted on each capture/record); playbooks self-prune via `note_outcome`
+  decay. (No separate sleep step needed.)
 
 ### 2. Browser-tool hook (`tools/browser_tool.py` `browser_navigate`)
 After a successful navigate, best-effort + gated: `capture(url, snapshot)` (write)
@@ -43,8 +45,9 @@ The agent records a winning playbook for the current site after it succeeds.
 Explicit beats fuzzy success-detection. Registered in `toolsets.py` (`browser` +
 `_JANUS_CORE_TOOLS` if appropriate).
 
-### 4. Sleep prune (optional, gated)
-Decay stale/unused domains + failed playbooks — reuse the existing prune pattern.
+### 4. Bounding (eager, not sleep)
+`max_domains` is capped on every write (oldest domain files dropped); failing
+playbooks decay via `note_outcome`. No separate sleep step.
 
 ## Staleness (load-bearing)
 Structure is re-captured (merged) every navigate → always fresh. `role`+name

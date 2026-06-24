@@ -53,6 +53,19 @@ def test_navigate_hook_no_playbook_no_injection_but_captures():
     assert any(e["name"] == "Find" for e in pm.recall(url)["profile_elements"])  # but captured
 
 
+def test_navigate_hook_injects_additive_elements_without_playbook():
+    from tools.browser_tool import _apply_pagemem
+    url = "https://additive.com"
+    # first visit captures two elements
+    _apply_pagemem(url, json.dumps({"success": True,
+                                    "snapshot": '- button "Menu" [e1]\n- link "Help" [e2]'}))
+    # later visit shows only Menu — Help is remembered-but-absent → additive recall
+    out = json.loads(_apply_pagemem(url, json.dumps({"success": True,
+                                                     "snapshot": '- button "Menu" [e9]'})))
+    assert "PageMem" in out["snapshot"] and "Help" in out["snapshot"]
+    assert out["snapshot"].count("Menu") == 1  # visible element not re-injected
+
+
 def test_navigate_hook_passthrough_on_failure():
     from tools.browser_tool import _apply_pagemem
     fail = json.dumps({"success": False, "error": "nope"})

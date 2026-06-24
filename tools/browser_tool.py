@@ -2293,7 +2293,7 @@ def _apply_pagemem(url: str, result: str) -> str:
     when the site has saved task playbooks, append a recall block to the navigate
     result. Pure augmentation of tool OUTPUT (cache-safe) — never blocks navigation."""
     try:
-        from agent.page_memory import capture, enabled, format_recall, recall
+        from agent.page_memory import _parse_elements, capture, enabled, format_recall, recall
         if not enabled():
             return result
         data = json.loads(result)
@@ -2304,7 +2304,15 @@ def _apply_pagemem(url: str, result: str) -> str:
             return result
         capture(url, snap)
         rec = recall(url)
-        block = format_recall(rec) if rec.get("playbooks") else ""
+        # Surface saved playbooks, plus remembered elements NOT already visible in
+        # THIS snapshot (additive recall) — avoids first-visit/duplicate noise.
+        current = {(e["role"], e["name"]) for e in _parse_elements(snap)}
+        extra = [e for e in rec.get("profile_elements", [])
+                 if isinstance(e, dict) and (e.get("role"), e.get("name")) not in current]
+        pbs = rec.get("playbooks", [])
+        if not pbs and not extra:
+            return result
+        block = format_recall({"profile_elements": extra, "playbooks": pbs})
         if block:
             data["snapshot"] = snap + "\n\n" + block
             return json.dumps(data, ensure_ascii=False)
