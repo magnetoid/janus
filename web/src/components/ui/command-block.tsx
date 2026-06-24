@@ -22,16 +22,19 @@ function CopyButton({
 }: CopyButtonProps) {
   const [copied, setCopied] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = React.useRef(true);
 
-  React.useEffect(
-    () => () => {
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    },
-    [],
-  );
+    };
+  }, []);
 
   const handleCopy = React.useCallback(() => {
     void navigator.clipboard.writeText(text).then(() => {
+      if (!mountedRef.current) return; // guard against post-unmount setState
       setCopied(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => setCopied(false), resetDelayMs ?? 1500);

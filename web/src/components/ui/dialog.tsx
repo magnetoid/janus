@@ -49,6 +49,15 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
   ({ className, children, showCloseButton = true, ...props }, ref) => {
     const { open, onOpenChange } = useDialog();
 
+    React.useEffect(() => {
+      if (!open) return;
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onOpenChange(false);
+      };
+      document.addEventListener("keydown", onKey);
+      return () => document.removeEventListener("keydown", onKey);
+    }, [open, onOpenChange]);
+
     if (!open || typeof document === "undefined") return null;
 
     return createPortal(
