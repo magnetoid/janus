@@ -40,18 +40,21 @@ const DEFAULT_LAYOUT: ThemeLayout = {
 
 export const defaultTheme: DashboardTheme = {
   name: "default",
-  label: "Janus Teal",
-  description: "Classic dark teal — the canonical Janus look",
+  label: "Cloud Industry",
+  description: "Clean neutral slate with a cloud-cyan accent",
   palette: {
-    background: { hex: "#041c1c", alpha: 1 },
-    midground: { hex: "#ffe6cb", alpha: 1 },
+    // Clean shadcn neutral: a near-neutral dark slate canvas + neutral light-gray
+    // midground (drives card/muted/border surfaces). The cyan accent is global
+    // (--brand-base), so this reads as neutral surfaces + one accent.
+    background: { hex: "#0b0e14", alpha: 1 },
+    midground: { hex: "#e7e9ee", alpha: 1 },
     foreground: { hex: "#ffffff", alpha: 0 },
-    warmGlow: "rgba(255, 189, 56, 0.35)",
-    noiseOpacity: 1,
+    warmGlow: "rgba(56, 189, 248, 0.16)",
+    noiseOpacity: 0,
   },
   typography: DEFAULT_TYPOGRAPHY,
   layout: DEFAULT_LAYOUT,
-  terminalBackground: "#000000",
+  terminalBackground: "#0b0e14",
 };
 
 export const midnightTheme: DashboardTheme = {

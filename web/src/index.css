@@ -1,11 +1,7 @@
 @import 'tailwindcss';
-/* `fonts.css` must come BEFORE `globals.css`: as of @nous-research/ui 0.14.x,
-   `globals.css` only declares the `--font-*` CSS variables (Collapse, Rules
-   Compressed/Expanded, Mondwest). The `@font-face` registrations live in
-   `fonts.css`, so without this import the DS variables resolve to font
-   families the browser never loads and components fall back to a system
-   stack (Tabs, Segmented, Typography, Buttons, etc. all look unstyled). */
-@import './styles/fonts.css';
+/* Clean shadcn redesign: the Collapse/Rules/Mondwest display faces are dropped, so
+   the @font-face registrations (formerly ./styles/fonts.css) are gone — everything
+   renders in the theme's clean sans/mono stack. */
 @import './styles/globals.css';
 
 /* ------------------------------------------------------------------ */
@@ -178,8 +174,10 @@ code { font-size: 0.875rem; }
      sites that use `text-muted-foreground` get a readable color
      instead of the old 55%-transparent default. */
   --color-muted-foreground: var(--color-text-secondary);
-  /* Hover/selected surfaces carry a subtle cyan tint for a branded feel. */
-  --color-accent: color-mix(in srgb, var(--brand-base) 14%, var(--background-base));
+  /* Clean shadcn: hover/selected surfaces are a neutral gray (derived from the
+     midground), not an accent tint — keeps the UI calm; the accent stays reserved
+     for primary actions, links, and focus rings. */
+  --color-accent: color-mix(in srgb, var(--midground-base) 10%, var(--background-base));
   --color-accent-foreground: var(--midground);
   --color-destructive: #fb2c36;
   --color-destructive-foreground: #ffffff;

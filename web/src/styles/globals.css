@@ -159,11 +159,15 @@
   --foreground: color-mix(in srgb, #fff 100%, transparent);
   --foreground-base: #fff;
   --foreground-alpha: 1;
-  --font-sans: 'Collapse', sans-serif;
-  --font-mono: 'Courier Prime', monospace;
-  --font-rules-compressed: 'Rules Compressed', sans-serif;
-  --font-rules-expanded: 'Rules Expanded', sans-serif;
-  --font-mondwest: 'Mondwest', sans-serif;
+  /* Clean shadcn redesign: the distinctive display faces (Collapse, Rules,
+     Mondwest) are dropped — every font token now resolves to the theme's clean
+     sans/mono stack, so the ~154 font-mondwest/font-display/font-rules call sites
+     render in clean sans without edits. */
+  --font-sans: var(--theme-font-sans);
+  --font-mono: var(--theme-font-mono);
+  --font-rules-compressed: var(--theme-font-sans);
+  --font-rules-expanded: var(--theme-font-sans);
+  --font-mondwest: var(--theme-font-sans);
   --vsq: calc(0.5vw + 0.5vh);
 }
 
