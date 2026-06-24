@@ -6914,6 +6914,21 @@ def _gateway_prompt(prompt_text: str, default: str = "", timeout: float = 300.0)
     return default
 
 
+def _write_web_ui_build_stamp(web_dir: Path) -> None:
+    """Record the checkout fingerprint the web UI was just built from, so the next
+    ``_web_ui_build_needed`` call can detect a changed source revision regardless of
+    file mtimes. Best-effort. Mirrors ``_write_*_stamp`` for the bundled skills."""
+    try:
+        project_root = web_dir.parent.parent if web_dir.parent.name == "apps" else web_dir.parent
+        fingerprint = _read_git_revision_fingerprint(project_root)
+        if not fingerprint:
+            return
+        (project_root / "janus_cli" / "web_dist" / ".build-stamp").write_text(
+            fingerprint + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
 def _web_ui_build_needed(web_dir: Path) -> bool:
     """Return True if the web UI dist is missing or stale.
 
@@ -6927,6 +6942,21 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
     """
     project_root = web_dir.parent.parent if web_dir.parent.name == "apps" else web_dir.parent
     dist_dir = project_root / "janus_cli" / "web_dist"
+    # Revision-stamp check FIRST — robust to the mtime skew that `git pull` / pip
+    # extraction / Docker bind-mounts introduce (those reset source mtimes to
+    # checkout/extract time, not commit time, so the mtime walk below can falsely
+    # decide a freshly-pulled redesign is "not newer" than a stale prebuilt dist and
+    # skip the rebuild). If the dist was built from a different checkout than the one
+    # present now, rebuild regardless of mtimes. Mirrors the bundled-skills stamp
+    # pattern (_termux_bundled_skills_*).
+    fingerprint = _read_git_revision_fingerprint(project_root)
+    if fingerprint:
+        stamp = dist_dir / ".build-stamp"
+        try:
+            if not stamp.exists() or stamp.read_text(encoding="utf-8").strip() != fingerprint:
+                return True
+        except OSError:
+            return True
     sentinel = dist_dir / ".vite" / "manifest.json"
     if not sentinel.exists():
         sentinel = dist_dir / "index.html"
@@ -6938,7 +6968,7 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
         dirnames[:] = [d for d in dirnames if d not in skip]
         for fn in filenames:
             if fn.endswith((".ts", ".tsx", ".js", ".jsx", ".css", ".html", ".vue")):
-                if os.path.getmtime(os.path.join(dirpath, fn)) > dist_mtime:
+                if os.path.getmtime(os.path.join(dirpath, fn)) >= dist_mtime:
                     return True
     for meta in (
         "package.json",
@@ -6948,11 +6978,11 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
         "vite.config.js",
     ):
         mp = web_dir / meta
-        if mp.exists() and mp.stat().st_mtime > dist_mtime:
+        if mp.exists() and mp.stat().st_mtime >= dist_mtime:
             return True
     # Workspace root lockfile (single package-lock.json covers all workspaces).
     root_lock = project_root / "package-lock.json"
-    if root_lock.exists() and root_lock.stat().st_mtime > dist_mtime:
+    if root_lock.exists() and root_lock.stat().st_mtime >= dist_mtime:
         return True
     return False
 
@@ -7215,6 +7245,7 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
             _say("  Run manually:  npm install --workspace web && npm run build -w web")
         return False
     _say("  ✓ Web UI built")
+    _write_web_ui_build_stamp(web_dir)
     return True
 
 

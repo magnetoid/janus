@@ -284,3 +284,41 @@ class TestBuildWebUIRetryAndStaleFallback:
         assert "Web UI build failed" in out
         assert "vite ENOMEM" in out
         assert "Run manually" in out
+
+
+class TestWebUIBuildStamp:
+    """Revision-stamp gate — robust to mtime skew (git pull / pip extract / mounts)."""
+
+    _FP = "janus_cli.main._read_git_revision_fingerprint"
+
+    def test_rebuild_when_stamp_missing_even_if_mtime_fresh(self, tmp_path):
+        web_dir, dist_dir = _make_web_dir(tmp_path)
+        _touch(web_dir / "src" / "App.tsx", offset=-10)
+        _touch(dist_dir / ".vite" / "manifest.json")  # mtime says fresh
+        with patch(self._FP, return_value="abc123"):
+            assert _web_ui_build_needed(web_dir) is True  # no stamp -> rebuild
+
+    def test_no_rebuild_when_stamp_matches_and_mtime_fresh(self, tmp_path):
+        web_dir, dist_dir = _make_web_dir(tmp_path)
+        _touch(web_dir / "src" / "App.tsx", offset=-10)
+        _touch(dist_dir / ".vite" / "manifest.json")
+        (dist_dir / ".build-stamp").write_text("abc123\n")
+        with patch(self._FP, return_value="abc123"):
+            assert _web_ui_build_needed(web_dir) is False
+
+    def test_rebuild_when_stamp_differs_even_if_mtime_fresh(self, tmp_path):
+        # The reported bug: source revision changed (git pull) but the prebuilt dist's
+        # mtime is >= the source mtime, so the mtime walk alone would skip the rebuild.
+        web_dir, dist_dir = _make_web_dir(tmp_path)
+        _touch(web_dir / "src" / "App.tsx", offset=-10)  # source OLDER than dist
+        _touch(dist_dir / ".vite" / "manifest.json")     # dist newer (mtime "fresh")
+        (dist_dir / ".build-stamp").write_text("OLD_REVISION\n")
+        with patch(self._FP, return_value="NEW_REVISION"):
+            assert _web_ui_build_needed(web_dir) is True
+
+    def test_falls_back_to_mtime_when_no_git(self, tmp_path):
+        web_dir, dist_dir = _make_web_dir(tmp_path)
+        _touch(web_dir / "src" / "App.tsx", offset=-10)
+        _touch(dist_dir / ".vite" / "manifest.json")
+        with patch(self._FP, return_value=None):
+            assert _web_ui_build_needed(web_dir) is False  # no git -> mtime governs
