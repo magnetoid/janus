@@ -100,6 +100,23 @@ def test_draft_skill_real_path_writes_quarantined_draft():
     assert Path(path).exists()
 
 
+def test_default_runner_refuses_without_isolated_sandbox():
+    # Safe-by-default: no isolated backend -> never executes self-generated code.
+    assert sc._default_attempt_runner("rm -rf /", config={}) == {"final_response": "", "messages": []}
+    assert sc._default_attempt_runner("x", config={"self_challenge": {"sandbox": "local"}})["final_response"] == ""
+    assert sc._default_attempt_runner("x", config={"terminal": {"backend": "local"}})["final_response"] == ""
+
+
+def test_resolve_sandbox_backend():
+    assert sc._resolve_sandbox_backend({"self_challenge": {"sandbox": "docker"}}) == "docker"
+    assert sc._resolve_sandbox_backend({"self_challenge": {"sandbox": "none"}}) is None
+    # auto defers to terminal.backend, only when isolated
+    assert sc._resolve_sandbox_backend(
+        {"self_challenge": {"sandbox": "auto"}, "terminal": {"backend": "modal"}}) == "modal"
+    assert sc._resolve_sandbox_backend(
+        {"self_challenge": {"sandbox": "auto"}, "terminal": {"backend": "local"}}) is None
+
+
 def test_best_effort_never_raises():
     assert isinstance(sc.run_self_challenge(config={}), dict)
 

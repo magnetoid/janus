@@ -19,10 +19,14 @@ model (quarantine + verifiable reward + dialectic admission gate).
    the eval framework's check types (final_contains / tool_used / equals / regex —
    never subjective). One aux model call.
 3. **Attempt** — `attempt_runner(instruction)` runs the task as a RESTRICTED
-   sandboxed subagent. INJECTABLE: the production default delegates to a constrained
-   subagent (limited toolset, capped iterations, no secrets/network by default,
-   honors approval + path-security); tests inject a fake. Returns
-   `{final_response, tools_used, ...}`.
+   sandboxed subagent. INJECTABLE: tests inject a fake. The production default
+   (`_default_attempt_runner`) is **safe-by-default** — executing a self-generated
+   task is only safe inside an isolated environment (the offline sleep cycle has no
+   human to approve a shell command), so it runs ONLY when an isolated execution
+   backend is configured (`terminal.backend` = docker/modal/daytona/singularity/ssh,
+   or an explicit `self_challenge.sandbox`); on `local` it REFUSES (returns an empty,
+   non-passing result — the round drafts nothing). Returns `{final_response,
+   messages}`.
 4. **Verify** — `verify_result(result, checks)` → bool. Deterministic only (the
    verifiable reward). No model call.
 5. **Promote** — on PASS: draft a QUARANTINED skill from the winning trajectory
@@ -40,9 +44,10 @@ playbook curation), wired with the real `attempt_runner`. Capped at
 
 ## Safety (load-bearing)
 - Default **OFF** (`self_challenge.enabled`).
-- **Sandboxed** attempt: restricted toolset; prefer an isolated env (Docker/
-  ephemeral) when configured (`sandbox: "auto"`), else a constrained local subagent;
-  no network/secret access by default; approval + path-security still apply.
+- **Sandboxed** attempt: the default backend executes ONLY inside an isolated
+  environment (`terminal.backend` docker/modal/daytona/singularity/ssh). `sandbox:
+  "auto"` defers to that backend and refuses on `local` — it never runs
+  self-generated commands on the host. Approval + path-security still apply.
 - **Verifiable reward only** — deterministic checks, never LLM-as-judge.
 - **All output quarantined** — drafts to `.drafts/`, never auto-applied; pass the
   existing dialectic + verifiable-reward gate before promotion.

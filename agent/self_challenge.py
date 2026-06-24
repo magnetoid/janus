@@ -199,16 +199,49 @@ def _record_fail_lesson(challenge: Dict[str, Any], result: Any) -> None:
         logger.debug("_record_fail_lesson failed: %s", exc)
 
 
+# Execution backends that actually isolate a self-generated task from the host.
+_ISOLATED_SANDBOXES = frozenset({"docker", "modal", "daytona", "singularity", "ssh", "e2b"})
+
+
+def _resolve_sandbox_backend(config: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The isolated execution backend to use, or None if none is safe.
+
+    ``self_challenge.sandbox`` of an isolated name forces it; ``none``/``off``
+    disables; ``auto`` (default) defers to the configured ``terminal.backend`` and
+    only permits execution when that backend is isolated (never ``local``).
+    """
+    sandbox = str(_cfg(config, "sandbox", "auto")).lower()
+    if sandbox in _ISOLATED_SANDBOXES:
+        return sandbox
+    if sandbox in ("none", "off", "local"):
+        return None
+    try:
+        backend = str(((config or {}).get("terminal", {}) or {}).get("backend", "local")).lower()
+    except Exception:
+        backend = "local"
+    return backend if backend in _ISOLATED_SANDBOXES else None
+
+
 def _default_attempt_runner(instruction: str, *, config: Optional[Dict[str, Any]] = None,
                             provider: Optional[str] = None, model: Optional[str] = None,
                             **_: Any) -> Dict[str, Any]:
-    """Production attempt: run the task in a constrained, sandboxed subagent.
+    """Safe-by-default attempt backend.
 
-    Best-effort — builds an ``AIAgent`` with a restricted toolset and capped
-    iterations, honoring the configured environment (``sandbox: auto`` prefers an
-    isolated env when one is set). Degrades to a non-passing empty result if a model
-    runtime can't be resolved, so self-challenge simply no-ops rather than crashing.
+    Tool-using self-play means executing a SELF-GENERATED task — only safe inside an
+    isolated environment (the offline sleep cycle has no human to approve a shell
+    command). Unless an isolated execution backend is configured (``terminal.backend``
+    = docker/modal/daytona/… or an explicit ``self_challenge.sandbox``), this REFUSES
+    to run rather than execute self-generated commands on the host: it returns a
+    non-passing empty result (the round drafts nothing). To enable real self-play,
+    configure an isolated backend or inject your own ``attempt_runner``.
     """
+    backend = _resolve_sandbox_backend(config)
+    if not backend:
+        logger.info(
+            "self-challenge: no isolated execution backend configured — skipping "
+            "execution (set terminal.backend to %s, or self_challenge.sandbox, or "
+            "inject an attempt_runner).", "/".join(sorted(_ISOLATED_SANDBOXES)))
+        return {"final_response": "", "messages": []}
     try:
         from run_agent import AIAgent
         agent = AIAgent(
@@ -217,7 +250,7 @@ def _default_attempt_runner(instruction: str, *, config: Optional[Dict[str, Any]
             max_iterations=int(_cfg(config, "max_iterations", 30)),
             quiet_mode=True,
             save_trajectories=False,
-        )
+        )  # the agent's terminal tool runs in the configured (isolated) backend
         out = agent.run_conversation(str(instruction))
         return {"final_response": out.get("final_response", ""),
                 "messages": out.get("messages", [])}
@@ -241,6 +274,12 @@ def run_self_challenge(
     report: Dict[str, Any] = {"attempted": 0, "passed": 0, "drafted": [],
                               "lessons": 0, "error": None}
     try:
+        if config is None:
+            try:
+                from janus_cli.config import load_config
+                config = load_config()
+            except Exception:
+                config = {}
         if not enabled(config):
             return report
         max_per = int(_cfg(config, "max_per_cycle", 2))
