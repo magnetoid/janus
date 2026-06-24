@@ -19,5 +19,15 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // `_`-prefixed identifiers are intentionally unused (e.g. props destructured
+      // only to strip them from a DOM spread).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      // shadcn pattern: components co-export their `cva` variants (a constant).
+      'react-refresh/only-export-components': ['error', { allowConstantExport: true }],
+    },
   },
 ])

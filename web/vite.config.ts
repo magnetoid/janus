@@ -60,18 +60,17 @@ function janusDevToken(): Plugin {
 export default defineConfig({
   plugins: [react(), tailwindcss(), janusDevToken()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-    // When @nous-research/ui is symlinked via `file:../../design-language`,
-    // Node's module resolution would pick up shared deps from
-    // design-language/node_modules/*, giving us two copies + breaking
-    // hooks (useRef-of-null), webgl contexts, etc. Force everything that
-    // exists in BOTH places to use the dashboard's copy.
-    //
-    // Don't list packages here that only exist in the DS (nanostores,
-    // @nanostores/react) — Vite dedupe errors out when it can't find
-    // them at the project root.
+    // @nous-research/ui (the local design-language package) is being removed —
+    // its subpaths now resolve to local shadcn replacements. Most-specific finds
+    // first; "@" only matches "@/…" so it never catches "@nous-research/…".
+    alias: [
+      { find: "@nous-research/ui/ui/components", replacement: path.resolve(__dirname, "./src/components/ui") },
+      { find: "@nous-research/ui/hooks", replacement: path.resolve(__dirname, "./src/hooks") },
+      { find: "@nous-research/ui/assets", replacement: path.resolve(__dirname, "./src/assets") },
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+    ],
+    // Dedupe the shared 3D/graphics deps to a single copy (now that the DS is gone
+    // they're plain direct deps; deduping is harmless and avoids any stray copies).
     dedupe: [
       "react",
       "react-dom",

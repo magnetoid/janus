@@ -19,7 +19,10 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@nous-research/ui/ui/components/*": ["./src/components/ui/*"],
+      "@nous-research/ui/hooks/*": ["./src/hooks/*"],
+      "@nous-research/ui/assets/*": ["./src/assets/*"]
     },
 
     /* Linting */

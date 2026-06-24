@@ -3,7 +3,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const badgeVariants = cva(
+// eslint-disable-next-line react-refresh/only-export-components -- shadcn cva export
+export const badgeVariants = cva(
   "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
@@ -22,10 +23,11 @@ const badgeVariants = cva(
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <span className={cn(badgeVariants({ variant }), className)} {...props} />;
+    VariantProps<typeof badgeVariants> {
+  /** nous-compat alias for `variant`. */
+  tone?: "default" | "destructive" | "outline" | "secondary" | "success" | "warning";
 }
 
-export { Badge, badgeVariants };
+export function Badge({ className, variant, tone, ...props }: BadgeProps) {
+  return <span className={cn(badgeVariants({ variant: tone ?? variant }), className)} {...props} />;
+}

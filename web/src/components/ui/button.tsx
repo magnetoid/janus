@@ -3,7 +3,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
+// eslint-disable-next-line react-refresh/only-export-components -- shadcn cva export
+export const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
@@ -18,6 +19,7 @@ const buttonVariants = cva(
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
+        xs: "h-7 rounded-md px-2 text-xs",
         lg: "h-10 rounded-md px-6",
         icon: "h-9 w-9",
       },
@@ -26,15 +28,41 @@ const buttonVariants = cva(
   },
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+type Variant = NonNullable<VariantProps<typeof buttonVariants>["variant"]>;
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => (
-    <button ref={ref} className={cn(buttonVariants({ variant, size, className }))} {...props} />
-  ),
+export interface ButtonProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "prefix">,
+    VariantProps<typeof buttonVariants> {
+  /** nous-compat boolean variant shortcuts (override `variant`). */
+  ghost?: boolean;
+  destructive?: boolean;
+  outlined?: boolean;
+  invert?: boolean;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+}
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    { className, variant, size, ghost, destructive, outlined, invert, prefix, suffix, children, ...props },
+    ref,
+  ) => {
+    const resolved: Variant = destructive
+      ? "destructive"
+      : ghost
+        ? "ghost"
+        : outlined
+          ? "outline"
+          : invert
+            ? "secondary"
+            : (variant ?? "default");
+    return (
+      <button ref={ref} className={cn(buttonVariants({ variant: resolved, size, className }))} {...props}>
+        {prefix}
+        {children}
+        {suffix}
+      </button>
+    );
+  },
 );
 Button.displayName = "Button";
-
-export { Button, buttonVariants };
