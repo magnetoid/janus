@@ -236,13 +236,23 @@ def _resolve_skill_dir(skill_name: str) -> Optional[Path]:
     return None
 
 
-def assess_promotability(skill_name: str, *, skill_dir: Optional[Path] = None) -> Dict[str, Any]:
+def assess_promotability(
+    skill_name: str,
+    *,
+    skill_dir: Optional[Path] = None,
+    min_uses: Optional[int] = None,
+    promo_thr: Optional[float] = None,
+) -> Dict[str, Any]:
     """Verifiable-reward assessment (no LLM). Combines the static self-test with
-    the outcome trajectory. Returns promotable/refinement_needed + the signals."""
+    the outcome trajectory. Returns promotable/refinement_needed + the signals.
+
+    ``min_uses`` / ``promo_thr`` override the ``graph.*`` config defaults — the
+    governor passes tightened values under CAUTION so promotion bars rise when
+    the learning loop looks shaky, without duplicating this logic."""
     from agent.outcome_tracker import skill_success_trajectory
 
-    min_uses = int(_graph_cfg("min_uses_for_promotion", 3))
-    promo_thr = float(_graph_cfg("promotion_success_threshold", 0.75))
+    min_uses = int(_graph_cfg("min_uses_for_promotion", 3)) if min_uses is None else int(min_uses)
+    promo_thr = float(_graph_cfg("promotion_success_threshold", 0.75)) if promo_thr is None else float(promo_thr)
     refine_thr = float(_graph_cfg("refinement_failure_threshold", 0.35))
 
     if skill_dir is None:
@@ -289,6 +299,172 @@ def promote_skill(skill_name: str) -> Dict[str, Any]:
     node["refinement_flagged"] = False
     save_graph(graph)
     return {"ok": True, "promotion_level": node["promotion_level"]}
+
+
+def auto_promote_drafts(
+    *,
+    llm_caller: Optional[Any] = None,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """Verifiable, graduated-trust promotion of quarantined draft skills.
+
+    A draft under ``skills/.drafts/`` graduates to the active library ONLY when
+    it passes every gate: the governor is not FROZEN, the static self-test
+    passes, the outcome trajectory clears the (governor-scaled) success
+    threshold over enough uses, and — if the dialectic gate is on — the
+    red-team admits it. Anything short of that stays drafted (never deleted).
+
+    Returns a summary dict. Best-effort and never raises into the caller. All
+    work is offline (sleep cron) — nothing here touches the live conversation.
+    """
+    summary: Dict[str, Any] = {
+        "checked": 0, "promoted": [], "skipped": [], "blocked_by_governor": False,
+    }
+    try:
+        from agent.self_improvement_governor import admission_allowed, promotion_thresholds
+
+        if not admission_allowed():
+            summary["blocked_by_governor"] = True
+            return summary
+
+        overrides = promotion_thresholds() or {}
+
+        from janus_constants import get_janus_home
+        drafts_dir = get_janus_home() / "skills" / ".drafts"
+        if not drafts_dir.is_dir():
+            return summary
+
+        from agent.skill_utils import parse_frontmatter
+
+        # Active skill names, for red-team "existing" context + collision checks.
+        active_names = set()
+        try:
+            from tools.skills_tool import _find_all_skills
+            active_names = {s.get("name") for s in _find_all_skills() if s.get("name")}
+        except Exception:
+            pass
+
+        candidates = sorted(p for p in drafts_dir.iterdir() if (p / "SKILL.md").is_file())
+        if not candidates:
+            return summary
+
+        snapshotted = False
+        for draft_dir in candidates:
+            summary["checked"] += 1
+            try:
+                meta, _body = parse_frontmatter((draft_dir / "SKILL.md").read_text(encoding="utf-8"))
+            except Exception:
+                summary["skipped"].append({"skill": draft_dir.name, "reason": "unreadable SKILL.md"})
+                continue
+            name = (meta.get("name") or draft_dir.name).strip()
+
+            assessment = assess_promotability(
+                name, skill_dir=draft_dir,
+                min_uses=overrides.get("min_uses"), promo_thr=overrides.get("promo_thr"),
+            )
+            if not assessment.get("promotable"):
+                summary["skipped"].append({"skill": name, "reason": assessment.get("reason", "not promotable")})
+                continue
+
+            # Red-team admission gate (fail-open on infra error).
+            objection = _red_team_promotion(name, meta, draft_dir, active_names, llm_caller)
+            if objection is not None:
+                summary["skipped"].append({"skill": name, "reason": f"red-team reject: {objection}"})
+                continue
+
+            if dry_run:
+                summary["promoted"].append({"skill": name, "reason": assessment.get("reason"), "dry_run": True})
+                continue
+
+            # Snapshot once, lazily, before the first real mutation so
+            # `janus curator rollback` can undo the whole promotion batch.
+            if not snapshotted:
+                try:
+                    from agent.curator_backup import snapshot_skills
+                    snapshot_skills(reason="pre-auto-promote")
+                except Exception:
+                    logger.debug("pre-promote snapshot failed (continuing)", exc_info=True)
+                snapshotted = True
+
+            moved = _activate_draft(draft_dir, name, meta, active_names)
+            if moved is None:
+                summary["skipped"].append({"skill": name, "reason": "activation move failed"})
+                continue
+            active_names.add(moved)
+            try:
+                build_graph_from_skills()
+                promote_skill(moved)
+            except Exception:
+                logger.debug("graph registration after promote failed", exc_info=True)
+            summary["promoted"].append({"skill": moved, "reason": assessment.get("reason")})
+    except Exception:
+        logger.debug("auto_promote_drafts failed", exc_info=True)
+    return summary
+
+
+def _red_team_promotion(name, meta, draft_dir, active_names, llm_caller) -> Optional[str]:
+    """Return the skeptic's objection if the red-team REJECTS the skill, else None.
+
+    Fails OPEN: when the gate is off or an infra error occurs, returns None
+    (admit), matching skill_miner._red_team_proposals. Mirrors that caller's use
+    of the deliberation API exactly (``existing`` is a newline-joined string;
+    verdicts carry ``verdict`` in {accept,reject,revise} + ``skeptic_objection``)."""
+    try:
+        from agent.deliberation import dialectic_enabled, red_team_claims
+        if not dialectic_enabled("skills"):
+            return None
+        content = (draft_dir / "SKILL.md").read_text(encoding="utf-8")[:4000]
+        claim = {
+            "id": name, "kind": "skill",
+            "content": f"Promote skill '{name}': {meta.get('description', '')}\n{content}",
+        }
+        result = red_team_claims(
+            [claim],
+            existing="\n".join(sorted(n for n in active_names if n)),
+            llm_caller=llm_caller,
+        )
+        if result.get("error"):
+            return None  # infra error → fail open
+        verdict = (result.get("verdicts") or {}).get(name) or {}
+        if verdict.get("verdict") == "reject":
+            return verdict.get("skeptic_objection") or verdict.get("crux") or "rejected"
+        return None
+    except Exception:
+        logger.debug("red-team promotion gate errored — failing open", exc_info=True)
+        return None
+
+
+def _activate_draft(draft_dir: Path, name: str, meta: Dict[str, Any], active_names) -> Optional[str]:
+    """Move a draft dir out of .drafts/ into the active tree. Non-clobbering.
+
+    Returns the activated skill name (possibly suffixed on collision), or None
+    on failure. Never overwrites an existing active skill (archive-not-delete)."""
+    try:
+        import shutil
+        from janus_constants import get_janus_home
+
+        category = ""
+        try:
+            category = str(((meta.get("metadata") or {}).get("janus") or {}).get("category")
+                           or meta.get("category") or "").strip()
+        except Exception:
+            category = ""
+        base_root = get_janus_home() / "skills"
+        parent = base_root / category if category else base_root
+
+        target_name = name
+        target = parent / target_name
+        n = 2
+        while target.exists() or target_name in active_names:
+            target_name = f"{name}-{n}"
+            target = parent / target_name
+            n += 1
+        parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(draft_dir), str(target))
+        return target_name
+    except Exception:
+        logger.debug("draft activation move failed for %s", name, exc_info=True)
+        return None
 
 
 def flag_refinement_needed(skill_name: str, reason: str = "") -> bool:

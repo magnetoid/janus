@@ -155,6 +155,15 @@ def recent_success_rate(window: int = 20) -> Optional[float]:
 # These are PROXIES: they sharpen as task descriptions and skills recur; with a
 # handful of one-off sessions they correctly return None ("insufficient data").
 
+# Warning thresholds — the single source of truth. learning_metrics() turns
+# these into the human-readable "warnings" list, and the self-improvement
+# governor (agent/self_improvement_governor.py) imports the SAME constants so
+# the two can never drift. Don't re-hardcode these numbers elsewhere.
+FORGETTING_WARN = 0.2          # forgetting above this = some skills regressing
+DIVERSITY_TREND_WARN = -0.15   # diversity dropping faster = model-collapse early warning
+FORWARD_TRANSFER_WARN = -0.1   # lifetime success declining
+INSUFFICIENT_DATA_SESSIONS = 6  # below this many sessions, metrics aren't honest yet
+
 
 def _rate(records: List[Dict[str, Any]]) -> Optional[float]:
     if not records:
@@ -296,14 +305,14 @@ def learning_metrics(window: int = 20) -> Dict[str, Any]:
     overall = overall_stats()
 
     warnings: List[str] = []
-    if fgt is not None and fgt > 0.2:
+    if fgt is not None and fgt > FORGETTING_WARN:
         warnings.append("forgetting detected — some skills are regressing")
-    if dtrend is not None and dtrend < -0.15:
+    if dtrend is not None and dtrend < DIVERSITY_TREND_WARN:
         warnings.append("skill diversity dropping — possible over-narrowing / model collapse")
-    if fwt is not None and fwt < -0.1:
+    if fwt is not None and fwt < FORWARD_TRANSFER_WARN:
         warnings.append("success rate declining over the agent's lifetime")
 
-    if overall["sessions"] < 6:
+    if overall["sessions"] < INSUFFICIENT_DATA_SESSIONS:
         summary = f"Insufficient data ({overall['sessions']} sessions) — metrics sharpen with use."
     elif warnings:
         summary = "; ".join(warnings)

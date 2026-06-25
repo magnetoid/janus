@@ -1716,6 +1716,20 @@ DEFAULT_CONFIG = {
             "skills": True,     # flag mined skill drafts
             "outcomes": True,   # two-judge quorum for success/failure labels
         },
+        # Self-improvement governor (agent/self_improvement_governor.py): the
+        # consumer of the continual-learning health metrics. It classifies the
+        # loop as OK / CAUTION / FROZEN and gates autonomous skill promotion on
+        # that — pausing self-modification when forgetting or skill-diversity
+        # collapse is detected. The warning thresholds themselves live in
+        # agent/outcome_tracker.py (FORGETTING_WARN etc.) and are NOT redeclared
+        # here so the two can't drift; the knobs below only scale behavior.
+        "governor": {
+            "enabled": False,        # read-only assessment + gating (inspect via `janus learning governor`)
+            "auto_promote": False,   # verifiable graduated-trust promotion of .drafts skills
+            "caution_ratio": 0.6,    # soft-band multiplier on the freeze thresholds → CAUTION
+            "caution_extra_uses": 2,         # CAUTION raises graph.min_uses_for_promotion by this
+            "caution_success_floor": 0.85,   # CAUTION raises graph.promotion_success_threshold to ≥ this
+        },
     },
 
     # Skill graph + verifiable-reward promotion (agent/skill_graph.py). Skills

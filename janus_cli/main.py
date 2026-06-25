@@ -15374,6 +15374,16 @@ Examples:
         "gaps", help="Identify knowledge gaps from repeated failures")
     _l_gaps.add_argument(
         "--adopt", action="store_true", help="Track each gap as an interest (researched by the discovery cron)")
+    learning_sub.add_parser(
+        "governor",
+        help="Show the self-improvement admission state (OK/CAUTION/FROZEN)",
+        description=(
+            "The governor reads the continual-learning health metrics and gates "
+            "autonomous skill promotion on them. For graduated-trust self-improvement, "
+            "set learning.track_outcomes, learning.governor.enabled, and "
+            "learning.governor.auto_promote to true."
+        ),
+    )
 
     def cmd_learning(args):
         from agent import outcome_tracker as ot
@@ -15418,6 +15428,31 @@ Examples:
                     adopt_gap_as_interest(g["topic"])
             if getattr(args, "adopt", False):
                 print("  ✓ Tracking these as interests; the discovery cron will research them.")
+            print()
+            return
+        if sub == "governor":
+            from agent import self_improvement_governor as gov
+            assessment = gov.assess_admission_state()
+            state = assessment.get("state", "ok")
+            icon = {"ok": "✓", "caution": "⚠", "frozen": "✕"}.get(state, "•")
+            print(f"\n  Self-improvement governor: {icon} {state.upper()}")
+            for r in assessment.get("reasons", []):
+                print(f"    • {r}")
+            if not gov.governor_enabled():
+                print("\n  (governor disabled — set learning.governor.enabled=true to activate gating)")
+            print(f"  Auto-promote drafts:   {'on' if gov.auto_promote_enabled() else 'off'}"
+                  f"  (learning.governor.auto_promote)")
+            thr = gov.promotion_thresholds()
+            if thr is None:
+                print("  Promotion:             PAUSED (frozen)")
+            elif thr:
+                print(f"  Promotion thresholds:  tightened (min_uses={thr.get('min_uses')}, "
+                      f"success≥{thr.get('promo_thr')})")
+            else:
+                print("  Promotion thresholds:  graph.* defaults")
+            m = assessment.get("metrics") or {}
+            if m.get("summary"):
+                print(f"  Metrics:               {m['summary']}")
             print()
             return
         # stats (default)
