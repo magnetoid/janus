@@ -5,7 +5,7 @@ this keeps it from ACTING before alignment. For tasks the agent judges hard +
 multi-step + state-changing, a static (cache-safe) system-prompt directive tells it
 to call ``propose_plan`` FIRST and wait for the user's "go". ``should_plan()`` is the
 programmatic gate (reusing the free local complexity classifier) used by the
-``/plan`` force flag. Config-gated (default on, hard-only), best-effort, never raises.
+``/plan`` force flag. Config-gated (default OFF — opt-in; hard-only), best-effort, never raises.
 """
 from __future__ import annotations
 
@@ -30,15 +30,15 @@ _forced: Dict[str, bool] = {}
 
 
 def enabled(config: Optional[Dict[str, Any]] = None) -> bool:
-    """True when Plan mode is on (default on)."""
+    """True when Plan mode is on (default OFF — opt-in via plan_mode.enabled)."""
     try:
         if config is None:
             from janus_cli.config import load_config
             config = load_config()
         pm = (config.get("plan_mode", {}) or {}) if isinstance(config, dict) else {}
-        return bool(pm.get("enabled", True))
+        return bool(pm.get("enabled", False))
     except Exception:
-        return True
+        return False
 
 
 def directive(config: Optional[Dict[str, Any]] = None) -> str:

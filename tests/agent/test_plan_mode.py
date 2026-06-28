@@ -2,26 +2,32 @@
 from agent import plan_mode as pm
 
 
-def test_enabled_default_on_and_gated():
-    assert pm.enabled({}) is True
-    assert pm.enabled({"plan_mode": {"enabled": False}}) is False
+def test_enabled_default_off_and_gated():
+    # Opt-in: plan mode is OFF unless explicitly enabled, so the agent does not
+    # ask for "go" on every state-changing task by default.
+    assert pm.enabled({}) is False
+    assert pm.enabled({"plan_mode": {"enabled": True}}) is True
 
 
 def test_directive_gated():
-    assert "plan" in pm.directive({}).lower()
-    assert pm.directive({"plan_mode": {"enabled": False}}) == ""
+    # No directive injected by default (opt-in); present only when enabled.
+    assert pm.directive({}) == ""
+    assert "plan" in pm.directive({"plan_mode": {"enabled": True}}).lower()
+
+
+_ON = {"plan_mode": {"enabled": True}}  # plan mode is opt-in, so enable it explicitly
 
 
 def test_should_plan_hard_only(monkeypatch):
     monkeypatch.setattr("agent.task_complexity.classify_complexity", lambda p, **k: "hard")
-    assert pm.should_plan("design and prove a distributed lock", {}) is True
+    assert pm.should_plan("design and prove a distributed lock", _ON) is True
     monkeypatch.setattr("agent.task_complexity.classify_complexity", lambda p, **k: "simple")
-    assert pm.should_plan("what time is it", {}) is False
+    assert pm.should_plan("what time is it", _ON) is False
 
 
 def test_should_plan_forced_overrides_complexity(monkeypatch):
     monkeypatch.setattr("agent.task_complexity.classify_complexity", lambda p, **k: "simple")
-    assert pm.should_plan("anything", {}, forced=True) is True
+    assert pm.should_plan("anything", _ON, forced=True) is True
 
 
 def test_should_plan_disabled_even_when_forced():

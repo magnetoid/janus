@@ -1801,10 +1801,11 @@ DEFAULT_CONFIG = {
     # Plan mode (agent/plan_mode.py) — for HARD, multi-step, state-changing tasks
     # the agent proposes a step-by-step plan and waits for your approval before
     # executing (complexity auto-detected, free + local; simple tasks stay instant).
-    # `/plan` forces planning for the next message. Pairs with standing agreements
-    # to stop the agent rushing. On by default, cache-safe.
+    # `/plan` forces planning for the next message regardless of this setting.
+    # OFF by default (opt-in) so the agent doesn't ask for "go" on routine work;
+    # set enabled: true to have it plan hard tasks. Cache-safe.
     "plan_mode": {
-        "enabled": True,
+        "enabled": False,
         "min_complexity": "hard",
     },
 
