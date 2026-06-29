@@ -5024,6 +5024,14 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+def _resolve_insights_mode(*, learning: bool, usage: bool) -> str:
+    if learning and not usage:
+        return "learning"
+    if usage and not learning:
+        return "usage"
+    return "both"
+
+
 def _current_reasoning_effort(config) -> str:
     agent_cfg = config.get("agent")
     if isinstance(agent_cfg, dict):
@@ -16383,17 +16391,29 @@ Examples:
     insights_parser.add_argument(
         "--source", help="Filter by platform (cli, telegram, discord, etc.)"
     )
+    insights_parser.add_argument("--json", action="store_true", dest="as_json",
+                                 help="Emit the report as JSON (usage + learning)")
+    insights_parser.add_argument("--learning", action="store_true",
+                                 help="Show only the learning-loop metrics")
+    insights_parser.add_argument("--usage", action="store_true",
+                                 help="Show only the usage metrics")
 
     def cmd_insights(args):
         try:
             from janus_state import SessionDB
             from agent.insights import InsightsEngine
+            from agent.learning_insights import generate_learning_report, render_insights
 
             db = SessionDB()
             engine = InsightsEngine(db)
-            report = engine.generate(days=args.days, source=args.source)
-            print(engine.format_terminal(report))
+            usage_report = engine.generate(days=args.days, source=args.source)
+            usage_text = engine.format_terminal(usage_report)
             db.close()
+            learning_report = generate_learning_report(days=args.days)
+            mode = _resolve_insights_mode(learning=args.learning, usage=args.usage)
+            print(render_insights(usage_report=usage_report, usage_text=usage_text,
+                                  learning_report=learning_report, mode=mode,
+                                  as_json=args.as_json))
         except Exception as e:
             print(f"Error generating insights: {e}")
 
