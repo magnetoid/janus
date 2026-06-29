@@ -224,18 +224,27 @@ class StreamingContextScrubber:
             self._at_block_boundary = self._at_block_boundary and text.strip() == ""
 
 
+# Protective floor on how much prefetched memory rides in EVERY turn's user
+# message (after the cache breakpoint → paid on every call). Well-behaved
+# providers cap themselves; this guards against a verbose one (e.g. raw CLI
+# stdout) flooding the context. See docs/token-optimization-audit.md [37].
+_MAX_MEMORY_CONTEXT_CHARS = 6000
+
+
 def build_memory_context_block(raw_context: str) -> str:
-    """Wrap prefetched memory in a fenced block with system note."""
+    """Wrap prefetched memory in a fenced block with a short framing note."""
     if not raw_context or not raw_context.strip():
         return ""
     clean = sanitize_context(raw_context)
     if clean != raw_context:
         logger.warning("memory provider returned pre-wrapped context; stripped")
+    if len(clean) > _MAX_MEMORY_CONTEXT_CHARS:
+        cut = clean.rfind(" ", 0, _MAX_MEMORY_CONTEXT_CHARS)
+        clean = clean[: cut if cut > 0 else _MAX_MEMORY_CONTEXT_CHARS].rstrip() + " …[memory truncated]"
+        logger.debug("memory context truncated to ~%d chars", _MAX_MEMORY_CONTEXT_CHARS)
     return (
         "<memory-context>\n"
-        "[System note: The following is recalled memory context, "
-        "NOT new user input. Treat as authoritative reference data — "
-        "this is the agent's persistent memory and should inform all responses.]\n\n"
+        "[Recalled memory — reference, NOT new user input; let it inform your response.]\n\n"
         f"{clean}\n"
         "</memory-context>"
     )
