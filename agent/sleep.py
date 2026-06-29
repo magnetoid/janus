@@ -205,8 +205,8 @@ def run_sleep_cycle(
     """
     report: Dict[str, Any] = {
         "dry_run": dry_run, "graduated_facts": 0, "graduated_skills": 0,
-        "reconciled": [], "pruned": [], "lessons": [], "self_challenge": None,
-        "error": None,
+        "promote": None, "reconciled": [], "pruned": [], "lessons": [],
+        "self_challenge": None, "error": None,
     }
     try:
         # 2. GRADUATE — distill recent sessions into facts + skill drafts.
@@ -225,6 +225,17 @@ def run_sleep_cycle(
                     report["graduated_skills"] += len(ms.get("written", []))
                 except Exception as exc:
                     logger.debug("sleep graduate-skills failed: %s", exc)
+
+        # 2b. PROMOTE — graduated-trust verifiable promotion of draft skills.
+        # Opt-in (learning.governor.auto_promote) and gated by the governor's
+        # admission state; keeps drafts drafted when the loop looks unhealthy.
+        try:
+            from agent.self_improvement_governor import auto_promote_enabled
+            if auto_promote_enabled():
+                from agent.skill_graph import auto_promote_drafts
+                report["promote"] = auto_promote_drafts(llm_caller=llm_caller, dry_run=dry_run)
+        except Exception as exc:
+            logger.debug("sleep promote-drafts failed: %s", exc)
 
         # 3. RECONCILE contradictions.
         try:
