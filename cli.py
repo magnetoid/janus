@@ -10803,38 +10803,22 @@ class JanusCLI:
         return True
 
     def _show_insights(self, command: str = "/insights"):
-        """Show usage insights and analytics from session history."""
-        # Parse optional --days flag
-        parts = command.split()
-        days = 30
-        source = None
-        i = 1
-        while i < len(parts):
-            if parts[i] == "--days" and i + 1 < len(parts):
-                try:
-                    days = int(parts[i + 1])
-                except ValueError:
-                    print(f"  Invalid --days value: {parts[i + 1]}")
-                    return
-                i += 2
-            elif parts[i] == "--source" and i + 1 < len(parts):
-                source = parts[i + 1]
-                i += 2
-            elif parts[i].isdigit():
-                days = int(parts[i])
-                i += 1
-            else:
-                i += 1
-
+        """Show usage + learning insights from session history."""
+        opts = _parse_insights_command(command)
         try:
             from janus_state import SessionDB
             from agent.insights import InsightsEngine
+            from agent.learning_insights import generate_learning_report, render_insights
 
             db = SessionDB()
             engine = InsightsEngine(db)
-            report = engine.generate(days=days, source=source)
-            print(engine.format_terminal(report))
+            usage_report = engine.generate(days=opts["days"], source=opts["source"])
+            usage_text = engine.format_terminal(usage_report)
             db.close()
+            learning_report = generate_learning_report(days=opts["days"])
+            print(render_insights(usage_report=usage_report, usage_text=usage_text,
+                                  learning_report=learning_report, mode=opts["mode"],
+                                  as_json=opts["as_json"]))
         except Exception as e:
             print(f"  Error generating insights: {e}")
 
@@ -15765,6 +15749,32 @@ def _run_kanban_goal_loop_q(cli: "JanusCLI", first_response: str) -> None:
         first_response=first_response or "",
         log=lambda m: logger.info("%s", m),
     )
+
+
+def _parse_insights_command(command: str) -> dict:
+    """Parse `/insights [days] [--json] [--learning] [--usage] [--source X]`."""
+    parts = command.split()
+    opts = {"days": 30, "source": None, "mode": "both", "as_json": False}
+    learning = usage = False
+    i = 1
+    while i < len(parts):
+        tok = parts[i]
+        if tok == "--days" and i + 1 < len(parts) and parts[i + 1].isdigit():
+            opts["days"] = int(parts[i + 1]); i += 2
+        elif tok == "--source" and i + 1 < len(parts):
+            opts["source"] = parts[i + 1]; i += 2
+        elif tok == "--json":
+            opts["as_json"] = True; i += 1
+        elif tok == "--learning":
+            learning = True; i += 1
+        elif tok == "--usage":
+            usage = True; i += 1
+        elif tok.isdigit():
+            opts["days"] = int(tok); i += 1
+        else:
+            i += 1
+    opts["mode"] = "learning" if (learning and not usage) else "usage" if (usage and not learning) else "both"
+    return opts
 
 
 def main(
