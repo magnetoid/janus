@@ -43,3 +43,39 @@ def test_empty_stores_never_raise():
     rep = li.generate_learning_report(days=30)
     assert rep["eval"]["runs"] == 0 and rep["eval"]["points"] == []
     assert rep["outcomes"]["all_time"]["sessions"] == 0
+
+
+def test_mining_section_sums_sleep_log_within_window():
+    from agent import sleep
+    p = sleep.sleep_log_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(
+        json.dumps({"ts": "2026-06-01T00:00:00", "graduated_facts": 2,
+                    "graduated_skills": 1, "lessons": 1, "pruned": 0}) + "\n"
+        + json.dumps({"ts": "2026-06-02T00:00:00", "graduated_facts": 3,
+                      "graduated_skills": 0, "lessons": 2, "pruned": 4}) + "\n",
+        encoding="utf-8")
+    rep = li.generate_learning_report(days=3650)
+    mn = rep["mining"]
+    assert mn["cycles"] == 2
+    assert mn["graduated_facts"] == 5 and mn["graduated_skills"] == 1
+    assert mn["lessons"] == 3 and mn["pruned"] == 4
+
+
+def test_knowledge_counts_active_vs_draft_skills():
+    from janus_constants import get_janus_home
+    home = get_janus_home()
+    (home / "skills" / "alpha").mkdir(parents=True, exist_ok=True)
+    (home / "skills" / "alpha" / "SKILL.md").write_text("x", encoding="utf-8")
+    (home / "skills" / ".drafts" / "beta").mkdir(parents=True, exist_ok=True)
+    (home / "skills" / ".drafts" / "beta" / "SKILL.md").write_text("y", encoding="utf-8")
+    rep = li.generate_learning_report(days=30)
+    kn = rep["knowledge"]
+    assert kn["active_skills"] == 1
+    assert kn["draft_skills"] == 1
+
+
+def test_mining_and_knowledge_empty_never_raise():
+    rep = li.generate_learning_report(days=30)
+    assert rep["mining"]["cycles"] == 0 and rep["mining"]["points"] == []
+    assert rep["knowledge"]["active_skills"] == 0 and rep["knowledge"]["draft_skills"] == 0
