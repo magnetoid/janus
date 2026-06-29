@@ -79,3 +79,37 @@ def test_mining_and_knowledge_empty_never_raise():
     rep = li.generate_learning_report(days=30)
     assert rep["mining"]["cycles"] == 0 and rep["mining"]["points"] == []
     assert rep["knowledge"]["active_skills"] == 0 and rep["knowledge"]["draft_skills"] == 0
+
+
+def test_format_learning_terminal_contains_key_labels():
+    rep = li.generate_learning_report(days=30)
+    text = li.format_learning_terminal(rep)
+    assert "Learning" in text
+    assert "Eval pass-rate" in text
+    assert "Success rate" in text
+    assert "drafts" in text.lower()
+
+
+def test_render_insights_json_round_trips_and_respects_mode():
+    usage = {"overview": {"x": 1}}
+    learning = li.generate_learning_report(days=30)
+    out = li.render_insights(usage_report=usage, usage_text="USAGE-TEXT",
+                             learning_report=learning, mode="both", as_json=True)
+    parsed = json.loads(out)
+    assert parsed["usage"] == usage
+    assert parsed["learning"]["outcomes"]["all_time"]["sessions"] == 0
+
+    only = json.loads(li.render_insights(usage_report=usage, usage_text="U",
+                                         learning_report=learning, mode="learning", as_json=True))
+    assert "usage" not in only and "learning" in only
+
+
+def test_render_insights_terminal_respects_mode():
+    learning = li.generate_learning_report(days=30)
+    both = li.render_insights(usage_report={}, usage_text="USAGE-TEXT",
+                              learning_report=learning, mode="both", as_json=False)
+    assert "USAGE-TEXT" in both and "Learning" in both
+
+    usage_only = li.render_insights(usage_report={}, usage_text="USAGE-TEXT",
+                                    learning_report=learning, mode="usage", as_json=False)
+    assert "USAGE-TEXT" in usage_only and "Learning" not in usage_only

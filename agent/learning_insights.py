@@ -163,3 +163,58 @@ def generate_learning_report(days: int = 30, *, now: Optional[float] = None) -> 
         "mining": _mining_section(days, now),
         "knowledge": _knowledge_section(),
     }
+
+
+def _fmt_rate(v: Optional[float]) -> str:
+    return "—" if v is None else f"{v * 100:.0f}%"
+
+
+def format_learning_terminal(report: Dict[str, Any]) -> str:
+    ev, oc = report.get("eval", {}), report.get("outcomes", {})
+    mn, kn = report.get("mining", {}), report.get("knowledge", {})
+    lines = ["", "=== Learning ===" ]
+    delta = ev.get("delta")
+    arrow = "" if not delta else (f"  ▲ +{delta:.2f}" if delta > 0 else f"  ▼ {delta:.2f}")
+    lines.append(f"  Eval pass-rate: {_fmt_rate(ev.get('latest'))} "
+                 f"({ev.get('runs', 0)} runs){arrow}")
+    at = oc.get("all_time", {})
+    lines.append(f"  Success rate: {_fmt_rate(at.get('success_rate'))} "
+                 f"({at.get('successes', 0)}/{at.get('sessions', 0)} sessions, "
+                 f"recent {_fmt_rate(oc.get('recent'))})")
+    lines.append(f"  Mining yield ({report.get('days')}d): "
+                 f"{mn.get('graduated_facts', 0)} facts, "
+                 f"{mn.get('graduated_skills', 0)} skills, "
+                 f"{mn.get('lessons', 0)} lessons over {mn.get('cycles', 0)} cycles")
+    lines.append(f"  Knowledge base: {kn.get('active_skills', 0)} skills, "
+                 f"{kn.get('draft_skills', 0)} drafts awaiting review, "
+                 f"{kn.get('lessons', 0)} lessons, "
+                 f"{kn.get('playbook_entries', 0)} playbook entries")
+    return "\n".join(lines)
+
+
+def format_learning_gateway(report: Dict[str, Any]) -> str:
+    ev, oc = report.get("eval", {}), report.get("outcomes", {})
+    kn = report.get("knowledge", {})
+    at = oc.get("all_time", {})
+    return ("📈 *Learning*\n"
+            f"• Eval pass-rate: {_fmt_rate(ev.get('latest'))}\n"
+            f"• Success rate: {_fmt_rate(at.get('success_rate'))}\n"
+            f"• {kn.get('active_skills', 0)} skills, {kn.get('draft_skills', 0)} drafts")
+
+
+def render_insights(*, usage_report: Dict[str, Any], usage_text: str,
+                    learning_report: Dict[str, Any], mode: str = "both",
+                    as_json: bool = False) -> str:
+    if as_json:
+        payload: Dict[str, Any] = {}
+        if mode in ("both", "usage"):
+            payload["usage"] = usage_report
+        if mode in ("both", "learning"):
+            payload["learning"] = learning_report
+        return json.dumps(payload, indent=2, ensure_ascii=False, default=str)
+    parts: List[str] = []
+    if mode in ("both", "usage"):
+        parts.append(usage_text)
+    if mode in ("both", "learning"):
+        parts.append(format_learning_terminal(learning_report))
+    return "\n".join(p for p in parts if p)
