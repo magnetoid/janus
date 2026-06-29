@@ -113,3 +113,34 @@ def test_render_insights_terminal_respects_mode():
     usage_only = li.render_insights(usage_report={}, usage_text="USAGE-TEXT",
                                     learning_report=learning, mode="usage", as_json=False)
     assert "USAGE-TEXT" in usage_only and "Learning" not in usage_only
+
+
+def test_render_insights_json_mode_usage_excludes_learning():
+    usage = {"overview": {"x": 1}}
+    learning = li.generate_learning_report(days=30)
+    out = li.render_insights(usage_report=usage, usage_text="U",
+                             learning_report=learning, mode="usage", as_json=True)
+    parsed = json.loads(out)
+    assert "usage" in parsed
+    assert "learning" not in parsed
+
+
+def test_render_insights_terminal_mode_learning_excludes_usage_text():
+    learning = li.generate_learning_report(days=30)
+    out = li.render_insights(usage_report={}, usage_text="USAGE-TEXT",
+                             learning_report=learning, mode="learning", as_json=False)
+    assert "Learning" in out
+    assert "USAGE-TEXT" not in out
+
+
+def test_format_learning_terminal_negative_delta_shows_magnitude():
+    report = {
+        "eval": {
+            "latest": 0.6, "first": 0.9, "delta": -0.3,
+            "runs": 2, "points": [], "per_eval_latest": {}
+        },
+        "outcomes": {}, "mining": {}, "knowledge": {}
+    }
+    out = li.format_learning_terminal(report)
+    assert "▼ 0.30" in out
+    assert "-0.30" not in out

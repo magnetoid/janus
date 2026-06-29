@@ -174,7 +174,7 @@ def format_learning_terminal(report: Dict[str, Any]) -> str:
     mn, kn = report.get("mining", {}), report.get("knowledge", {})
     lines = ["", "=== Learning ===" ]
     delta = ev.get("delta")
-    arrow = "" if not delta else (f"  ▲ +{delta:.2f}" if delta > 0 else f"  ▼ {delta:.2f}")
+    arrow = "" if not delta else (f"  ▲ +{delta:.2f}" if delta > 0 else f"  ▼ {abs(delta):.2f}")
     lines.append(f"  Eval pass-rate: {_fmt_rate(ev.get('latest'))} "
                  f"({ev.get('runs', 0)} runs){arrow}")
     at = oc.get("all_time", {})
