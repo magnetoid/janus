@@ -6,6 +6,7 @@ import { PageLoader } from '@/components/page-loader'
 import { Button } from '@/components/ui/button'
 import { SearchField } from '@/components/ui/search-field'
 import { SegmentedControl } from '@/components/ui/segmented-control'
+import { useI18n } from '@/i18n'
 import {
   getActionStatus,
   getLogs,
@@ -15,7 +16,6 @@ import {
   updateJanus
 } from '@/janus'
 import type { ActionStatusResponse, AnalyticsResponse, StatusResponse } from '@/janus'
-import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import { Activity, AlertCircle, BarChart3, Pin } from '@/lib/icons'
 import { exportSession } from '@/lib/session-export'

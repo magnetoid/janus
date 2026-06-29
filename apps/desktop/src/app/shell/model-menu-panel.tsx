@@ -15,9 +15,9 @@ import {
   DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useI18n } from '@/i18n'
 import type { JanusGateway } from '@/janus'
 import { getGlobalModelOptions } from '@/janus'
-import { useI18n } from '@/i18n'
 import { displayModelName, modelDisplayParts, reasoningEffortLabel } from '@/lib/model-status-label'
 import { cn } from '@/lib/utils'
 import {

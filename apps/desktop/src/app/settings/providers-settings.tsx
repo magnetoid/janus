@@ -9,8 +9,8 @@ import {
   sortProviders
 } from '@/components/desktop-onboarding-overlay'
 import { Button } from '@/components/ui/button'
-import { listOAuthProviders } from '@/janus'
 import { useI18n } from '@/i18n'
+import { listOAuthProviders } from '@/janus'
 import { ChevronDown, KeyRound } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { $desktopOnboarding, startManualProviderOAuth } from '@/store/onboarding'

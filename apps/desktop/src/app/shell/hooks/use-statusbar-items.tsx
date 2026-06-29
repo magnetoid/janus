@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react'
 
 import type { CommandCenterSection } from '@/app/command-center'
 import { GatewayMenuPanel } from '@/app/shell/gateway-menu-panel'
+import { useI18n } from '@/i18n'
 import {
   Activity,
   AlertCircle,
@@ -16,7 +17,6 @@ import {
   Zap,
   ZapFilled
 } from '@/lib/icons'
-import { useI18n } from '@/i18n'
 import { formatModelStatusLabel } from '@/lib/model-status-label'
 import type { RuntimeReadinessResult } from '@/lib/runtime-readiness'
 import { contextBarLabel, LiveDuration, usageContextLabel } from '@/lib/statusbar'

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { useI18n } from '@/i18n'
 import {
   createProfile,
   deleteProfile,
@@ -23,7 +24,6 @@ import {
   renameProfile,
   updateProfileSoul
 } from '@/janus'
-import { useI18n } from '@/i18n'
 import { AlertTriangle, Pencil, Save, Terminal, Trash2, Users } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { notify, notifyError } from '@/store/notifications'

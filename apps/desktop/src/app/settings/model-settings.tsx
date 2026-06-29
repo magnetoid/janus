@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useI18n } from '@/i18n'
 import {
   getAuxiliaryModels,
   getGlobalModelInfo,
@@ -12,7 +13,6 @@ import {
   setModelAssignment
 } from '@/janus'
 import type { AuxiliaryModelsResponse, ModelOptionProvider, StaleAuxAssignment } from '@/janus'
-import { useI18n } from '@/i18n'
 import { AlertTriangle, Cpu, Loader2 } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { startManualProviderOAuth } from '@/store/onboarding'

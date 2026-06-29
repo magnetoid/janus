@@ -1,8 +1,8 @@
 import { type QueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 
-import { getGlobalModelInfo, setGlobalModel } from '@/janus'
 import { useI18n } from '@/i18n'
+import { getGlobalModelInfo, setGlobalModel } from '@/janus'
 import { notifyError } from '@/store/notifications'
 import { $currentModel, $currentProvider, setCurrentModel, setCurrentProvider } from '@/store/session'
 import type { ModelOptionsResponse } from '@/types/janus'
@@ -22,6 +22,7 @@ interface ModelControlsOptions {
 export function useModelControls({ activeSessionId, queryClient, requestGateway }: ModelControlsOptions) {
   const { t } = useI18n()
   const copy = t.desktop
+
   const updateModelOptionsCache = useCallback(
     (provider: string, model: string, includeGlobal: boolean) => {
       const patch = (prev: ModelOptionsResponse | undefined) => ({ ...(prev ?? {}), provider, model })

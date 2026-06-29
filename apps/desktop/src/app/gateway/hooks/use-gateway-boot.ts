@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 
 import type { JanusConnection } from '@/global'
-import { JanusGateway } from '@/janus'
 import { translateNow } from '@/i18n'
+import { JanusGateway } from '@/janus'
 import { isGatewayReauthRequired, resolveGatewayWsUrl } from '@/lib/gateway-ws-url'
 import {
   $desktopBoot,

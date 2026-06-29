@@ -6,9 +6,9 @@ import { BrailleSpinner } from '@/components/ui/braille-spinner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
+import { useI18n } from '@/i18n'
 import type { JanusGateway } from '@/janus'
 import { getGlobalModelOptions } from '@/janus'
-import { useI18n } from '@/i18n'
 import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
 import {
   $visibleModels,

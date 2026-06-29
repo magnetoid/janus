@@ -1,8 +1,8 @@
 import type { AppendMessage, ThreadMessage } from '@assistant-ui/react'
 import { type MutableRefObject, useCallback } from 'react'
 
-import { getProfiles, transcribeAudio } from '@/janus'
 import { translateNow, type Translations, useI18n } from '@/i18n'
+import { getProfiles, transcribeAudio } from '@/janus'
 import { branchGroupForUser, type ChatMessage, chatMessageText, textPart } from '@/lib/chat-messages'
 import {
   attachmentDisplayText,

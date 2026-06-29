@@ -21,6 +21,7 @@ interface TerminalTabProps {
 
 export function TerminalTab({ cwd, onAddSelectionToChat }: TerminalTabProps) {
   const { t } = useI18n()
+
   const { addSelectionToChat, hostRef, selection, selectionStyle, shellName, status } = useTerminalSession({
     cwd,
     onAddSelectionToChat

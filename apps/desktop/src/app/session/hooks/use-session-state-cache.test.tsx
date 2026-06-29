@@ -16,6 +16,7 @@ interface HarnessProps {
 
 function Harness({ activeSessionId, onReady, selectedStoredSessionId }: HarnessProps) {
   const busyRef: MutableRefObject<boolean> = { current: false }
+
   const cache = useSessionStateCache({
     activeSessionId,
     busyRef,

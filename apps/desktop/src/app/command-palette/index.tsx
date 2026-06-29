@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import { getJanusConfigRecord, listSessions } from '@/janus'
 import { useI18n } from '@/i18n'
+import { getJanusConfigRecord, listSessions } from '@/janus'
 import { sessionTitle } from '@/lib/chat-runtime'
 import {
   Activity,
@@ -194,10 +194,12 @@ export function CommandPalette() {
   }, [open])
 
   const go = useCallback((path: string) => () => navigate(path), [navigate])
+
   const settingsSectionLabel = useCallback(
     (section: (typeof SECTIONS)[number]) => t.settings.sections[section.id] ?? section.label,
     [t.settings.sections]
   )
+
   const configFieldLabel = useCallback(
     (key: string) =>
       fieldCopyForSchemaKey(t.settings.fieldLabels, key) ??

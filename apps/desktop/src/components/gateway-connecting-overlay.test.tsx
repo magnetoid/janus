@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { $desktopBoot } from '@/store/boot'
 import { $desktopOnboarding } from '@/store/onboarding'
-import { $gatewayState, setGatewayState } from '@/store/session'
+import { setGatewayState } from '@/store/session'
 
 import { BootFailureOverlay } from './boot-failure-overlay'
 import { GatewayConnectingOverlay } from './gateway-connecting-overlay'
@@ -53,6 +53,7 @@ afterEach(cleanup)
 // "Lost connection…" copy doesn't read as a false positive.
 const isConnectingShown = () =>
   screen.queryAllByText((_, el) => /^CONN[/\\|\-_=+<>~:*A-Z]*$/.test(el?.textContent?.trim() ?? '')).length > 0
+
 const isRecoveryShown = () =>
   Boolean(screen.queryByText(/use local gateway/i) || screen.queryByText(/retry/i) || screen.queryByText(/sign in/i))
 
@@ -77,12 +78,14 @@ describe('connecting overlay vs recovery surface', () => {
   it('REPRO: remote socket drops AFTER a successful boot → stuck on CONNECTING, no recovery, no settings', () => {
     // 1. Initial boot succeeded: gateway opened, boot completed (no error).
     setGatewayState('open')
+
     const { rerender } = render(
       <>
         <GatewayConnectingOverlay />
         <BootFailureOverlay />
       </>
     )
+
     expect(isConnectingShown()).toBe(false)
 
     // 2. The remote VPS socket drops (sleep/wake, remote restart, network).
