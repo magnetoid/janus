@@ -1476,6 +1476,84 @@ def convert_tools_to_anthropic(tools: List[Dict]) -> List[Dict]:
     return result
 
 
+def _find_active_cache_marker(system: Any, messages: List[Dict]) -> Optional[Dict[str, Any]]:
+    """Return the cache_control marker already in use on this request, or None.
+
+    Reused so a tools breakpoint matches the messages' TTL, and as the signal
+    that message-level caching is active for this call (don't cache tools on an
+    uncached one-shot — there is no warm prefix to amortise it against).
+    """
+    if isinstance(system, list):
+        for b in system:
+            if isinstance(b, dict) and isinstance(b.get("cache_control"), dict):
+                return b["cache_control"]
+    for m in messages:
+        if not isinstance(m, dict):
+            continue
+        cc = m.get("cache_control")
+        if isinstance(cc, dict):
+            return cc
+        content = m.get("content")
+        if isinstance(content, list) and content and isinstance(content[-1], dict):
+            cc = content[-1].get("cache_control")
+            if isinstance(cc, dict):
+                return cc
+    return None
+
+
+def _maybe_cache_tools_array(tools: Optional[List[Dict]], system: Any, messages: List[Dict]) -> None:
+    """Place a cache_control breakpoint on the last tool (native Anthropic path).
+
+    Anthropic caches the request prefix up to each breakpoint; tools come first,
+    so a breakpoint on the final tool caches the entire (large, session-stable)
+    tools schema across turns. The toolset is fixed for a session by the
+    prompt-caching invariant, so the tools prefix is byte-stable and cache-safe.
+
+    Only acts when message-level caching is already active (a marker exists to
+    reuse). Anthropic permits at most 4 cache breakpoints per request
+    (tools + system + messages); if the messages already spend the budget, drop
+    the OLDEST message breakpoint to make room — caching the big stable tools
+    prefix is worth more than one extra recent-message breakpoint.
+    Mutates ``tools`` / ``messages`` in place. See docs/token-optimization-audit.md [T1].
+    """
+    if not tools:
+        return
+    marker = _find_active_cache_marker(system, messages)
+    if marker is None:
+        return
+
+    sys_breakpoints = 0
+    if isinstance(system, list):
+        sys_breakpoints = sum(
+            1 for b in system
+            if isinstance(b, dict) and isinstance(b.get("cache_control"), dict)
+        )
+
+    # Removers for each message breakpoint, in conversation order (oldest first).
+    removers: List[Any] = []
+    for m in messages:
+        if not isinstance(m, dict):
+            continue
+        if isinstance(m.get("cache_control"), dict):
+            removers.append(lambda mm=m: mm.pop("cache_control", None))
+            continue
+        content = m.get("content")
+        if (
+            isinstance(content, list) and content
+            and isinstance(content[-1], dict)
+            and isinstance(content[-1].get("cache_control"), dict)
+        ):
+            removers.append(lambda bb=content[-1]: bb.pop("cache_control", None))
+
+    # Budget: tools(1) + system + messages <= 4. Reserve one slot for tools and
+    # evict the oldest message breakpoints beyond what remains.
+    allowed_msg_breakpoints = max(0, 4 - 1 - sys_breakpoints)
+    for i in range(max(0, len(removers) - allowed_msg_breakpoints)):
+        removers[i]()
+
+    tools[-1]["cache_control"] = dict(marker)
+
+
 def _image_source_from_openai_url(url: str) -> Dict[str, str]:
     """Convert an OpenAI-style image URL/data URL into Anthropic image source."""
     url = str(url or "").strip()
@@ -2220,6 +2298,11 @@ def build_anthropic_kwargs(
         elif isinstance(tool_choice, str):
             # Specific tool name
             kwargs["tool_choice"] = {"type": "tool", "name": tool_choice}
+
+    # Cache the tools array when message-level caching is active, so the large
+    # session-stable tool schemas aren't re-sent uncached on every turn. Stays
+    # within Anthropic's 4-breakpoint budget. See docs/token-optimization-audit.md [T1].
+    _maybe_cache_tools_array(kwargs.get("tools"), kwargs.get("system"), anthropic_messages)
 
     # Map reasoning_config to Anthropic's thinking parameter.
     # Claude 4.6+ models use adaptive thinking + output_config.effort.

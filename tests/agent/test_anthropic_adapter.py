@@ -10,6 +10,8 @@ import pytest
 
 from agent.prompt_caching import apply_anthropic_cache_control
 from agent.anthropic_adapter import (
+    _find_active_cache_marker,
+    _maybe_cache_tools_array,
     _is_azure_anthropic_endpoint,
     _is_oauth_token,
     _refresh_oauth_token,
@@ -2090,3 +2092,137 @@ class TestConvertToolsToAnthropicDedup:
 
     def test_none_tools_returns_empty(self):
         assert convert_tools_to_anthropic(None) == []
+
+
+def _ephemeral_block(text, marker=None):
+    blk = {"type": "text", "text": text}
+    if marker is not None:
+        blk["cache_control"] = marker
+    return blk
+
+
+def _count_breakpoints(system, messages, tools):
+    n = 0
+    if isinstance(system, list):
+        n += sum(1 for b in system if isinstance(b, dict) and b.get("cache_control"))
+    for m in messages:
+        if isinstance(m.get("cache_control"), dict):
+            n += 1
+        c = m.get("content")
+        if isinstance(c, list):
+            n += sum(1 for b in c if isinstance(b, dict) and b.get("cache_control"))
+    if tools:
+        n += sum(1 for t in tools if isinstance(t, dict) and t.get("cache_control"))
+    return n
+
+
+class TestToolsArrayCaching:
+    """T1: cache the Anthropic tools array within the 4-breakpoint budget."""
+
+    def _tools(self, n=3):
+        return [
+            {"name": f"t{i}", "description": "d", "input_schema": {"type": "object", "properties": {}}}
+            for i in range(n)
+        ]
+
+    def test_not_cached_without_active_marker(self):
+        # One-shot call (no message caching) → tools must NOT be cached.
+        tools = self._tools()
+        messages = [{"role": "user", "content": "hi"}]
+        _maybe_cache_tools_array(tools, None, messages)
+        assert all("cache_control" not in t for t in tools)
+
+    def test_cached_when_message_marker_present(self):
+        tools = self._tools()
+        messages = [{"role": "user", "content": [_ephemeral_block("hi", {"type": "ephemeral"})]}]
+        _maybe_cache_tools_array(tools, None, messages)
+        # Only the LAST tool carries the breakpoint (caches the whole prefix).
+        assert tools[-1]["cache_control"] == {"type": "ephemeral"}
+        assert all("cache_control" not in t for t in tools[:-1])
+
+    def test_ttl_reused_from_existing_marker(self):
+        tools = self._tools()
+        marker = {"type": "ephemeral", "ttl": "1h"}
+        messages = [{"role": "user", "content": [_ephemeral_block("hi", marker)]}]
+        _maybe_cache_tools_array(tools, None, messages)
+        assert tools[-1]["cache_control"] == {"type": "ephemeral", "ttl": "1h"}
+
+    def test_never_exceeds_four_breakpoints_and_drops_oldest(self):
+        # system + 3 message markers + tools would be 5 → must end at 4,
+        # with the OLDEST message breakpoint evicted.
+        tools = self._tools()
+        system = [_ephemeral_block("sys", {"type": "ephemeral"})]
+        messages = [
+            {"role": "user", "content": [_ephemeral_block("m1", {"type": "ephemeral"})]},
+            {"role": "assistant", "content": [_ephemeral_block("m2", {"type": "ephemeral"})]},
+            {"role": "user", "content": [_ephemeral_block("m3", {"type": "ephemeral"})]},
+        ]
+        _maybe_cache_tools_array(tools, system, messages)
+        assert _count_breakpoints(system, messages, tools) == 4
+        assert "cache_control" not in messages[0]["content"][0]  # oldest dropped
+        assert messages[1]["content"][0]["cache_control"] == {"type": "ephemeral"}
+        assert messages[2]["content"][0]["cache_control"] == {"type": "ephemeral"}
+        assert tools[-1]["cache_control"] == {"type": "ephemeral"}
+
+    def test_no_eviction_when_budget_has_room(self):
+        # system + 1 message + tools = 3 ≤ 4 → nothing evicted.
+        tools = self._tools()
+        system = [_ephemeral_block("sys", {"type": "ephemeral"})]
+        messages = [{"role": "user", "content": [_ephemeral_block("m1", {"type": "ephemeral"})]}]
+        _maybe_cache_tools_array(tools, system, messages)
+        assert messages[0]["content"][0]["cache_control"] == {"type": "ephemeral"}
+        assert tools[-1]["cache_control"] == {"type": "ephemeral"}
+        assert _count_breakpoints(system, messages, tools) == 3
+
+    def test_tool_role_top_level_marker_counted(self):
+        # Native-Anthropic tool messages carry a top-level cache_control; it must
+        # count toward the budget and be evictable as the oldest.
+        tools = self._tools()
+        system = [_ephemeral_block("sys", {"type": "ephemeral"})]
+        messages = [
+            {"role": "tool", "content": "r1", "cache_control": {"type": "ephemeral"}},
+            {"role": "assistant", "content": [_ephemeral_block("m2", {"type": "ephemeral"})]},
+            {"role": "user", "content": [_ephemeral_block("m3", {"type": "ephemeral"})]},
+        ]
+        _maybe_cache_tools_array(tools, system, messages)
+        assert _count_breakpoints(system, messages, tools) == 4
+        assert "cache_control" not in messages[0]  # oldest tool-role marker dropped
+
+    def test_noop_on_empty_or_none_tools(self):
+        marker_msg = [{"role": "user", "content": [_ephemeral_block("x", {"type": "ephemeral"})]}]
+        _maybe_cache_tools_array([], None, marker_msg)  # no crash
+        _maybe_cache_tools_array(None, None, [])  # no crash
+
+    def test_find_marker_prefers_system(self):
+        system = [_ephemeral_block("sys", {"type": "ephemeral", "ttl": "1h"})]
+        messages = [{"role": "user", "content": [_ephemeral_block("m", {"type": "ephemeral"})]}]
+        assert _find_active_cache_marker(system, messages) == {"type": "ephemeral", "ttl": "1h"}
+
+    def test_integration_through_build_anthropic_kwargs(self):
+        # End-to-end: OpenAI messages → cache control applied → build kwargs.
+        # The tools array ends up cached and total breakpoints stay ≤ 4.
+        api_messages = [
+            {"role": "system", "content": "system prompt"},
+            {"role": "user", "content": "first"},
+            {"role": "assistant", "content": "ok"},
+            {"role": "user", "content": "second"},
+            {"role": "assistant", "content": "sure"},
+            {"role": "user", "content": "third"},
+        ]
+        cached = apply_anthropic_cache_control(api_messages, native_anthropic=True)
+        tools = [
+            {"function": {"name": f"tool{i}", "description": "d",
+                          "parameters": {"type": "object", "properties": {}}}}
+            for i in range(4)
+        ]
+        kwargs = build_anthropic_kwargs(
+            model="claude-opus-4-6",
+            messages=cached,
+            tools=tools,
+            max_tokens=1024,
+            reasoning_config=None,
+        )
+        out_tools = kwargs.get("tools")
+        assert out_tools and out_tools[-1].get("cache_control")  # tools cached
+        total = _count_breakpoints(kwargs.get("system"), kwargs["messages"], out_tools)
+        assert total <= 4
