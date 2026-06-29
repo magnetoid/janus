@@ -39,12 +39,35 @@ def get_sleep_state_path() -> Path:
     return get_janus_home() / "learning" / "sleep_state.json"
 
 
+def sleep_log_path() -> Path:
+    from janus_constants import get_janus_home
+    return get_janus_home() / "learning" / "sleep_log.jsonl"
+
+
 def _now_iso() -> str:
     try:
         from janus_time import now as _now
         return _now().isoformat()
     except Exception:
         return ""
+
+
+def _append_sleep_log(report: Dict[str, Any]) -> None:
+    """Append one line summarizing a completed (non-dry-run) cycle. Guarded."""
+    try:
+        rec = {
+            "ts": _now_iso(),
+            "graduated_facts": int(report.get("graduated_facts", 0) or 0),
+            "graduated_skills": int(report.get("graduated_skills", 0) or 0),
+            "lessons": len(report.get("lessons") or []),
+            "pruned": len(report.get("pruned") or []),
+        }
+        p = sleep_log_path()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception as exc:  # never break the cycle over a log line
+        logger.debug("sleep-log append failed: %s", exc)
 
 
 def load_sleep_state() -> Dict[str, Any]:
@@ -258,6 +281,7 @@ def run_sleep_cycle(
             state["last_report"] = {k: (len(v) if isinstance(v, list) else v)
                                     for k, v in report.items() if k != "error"}
             save_sleep_state(state)
+            _append_sleep_log(report)
     except Exception as exc:  # a consolidation failure must never break anything
         logger.debug("sleep cycle failed: %s", exc)
         report["error"] = str(exc)

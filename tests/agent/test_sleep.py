@@ -126,3 +126,21 @@ def test_synthesize_best_effort_on_failure():
     def boom(**kw):
         raise RuntimeError("down")
     assert sleep.synthesize_cross_session_lessons(["s1", "s2"], llm_caller=boom) == []
+
+
+def test_sleep_cycle_appends_one_sleep_log_line():
+    store = MemoryStore()
+    sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    p = sleep.sleep_log_path()
+    assert p.is_file()
+    lines = [l for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert len(lines) == 1
+    rec = json.loads(lines[0])
+    assert set(rec) >= {"ts", "graduated_facts", "graduated_skills", "lessons", "pruned"}
+    assert isinstance(rec["graduated_facts"], int)
+
+
+def test_sleep_dry_run_writes_no_sleep_log():
+    store = MemoryStore()
+    sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"), dry_run=True)
+    assert not sleep.sleep_log_path().is_file()
