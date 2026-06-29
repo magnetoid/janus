@@ -273,12 +273,9 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
         active_profile = "default"
     if active_profile == "default":
         stable_parts.append(
-            "Active Janus profile: default. Other profiles (if any) live "
-            "under ~/.janus/profiles/<name>/. Each profile has its own "
-            "skills/, plugins/, cron/, and memories/ that affect a different "
-            "session than this one. Do not modify another profile's "
-            "skills/plugins/cron/memories unless the user explicitly directs "
-            "you to."
+            "Active Janus profile: default. Other profiles live under "
+            "~/.janus/profiles/<name>/ with their own skills/plugins/cron/memories — "
+            "don't modify another profile's data unless the user explicitly directs you to."
         )
     else:
         stable_parts.append(

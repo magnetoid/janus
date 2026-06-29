@@ -798,18 +798,11 @@ Important safety rule: cron-run sessions should not recursively schedule more cr
                 "type": "boolean",
                 "default": False,
                 "description": (
-                    "Default: False (LLM-driven job — the agent runs the prompt each tick). "
-                    "Set True to skip the LLM entirely: the scheduler just runs ``script`` on schedule and delivers its stdout verbatim. No tokens, no agent loop, no model override honoured. "
-                    "\n\n"
-                    "REQUIREMENTS when True: ``script`` MUST be set (``prompt`` and ``skills`` are ignored). "
-                    "\n\n"
-                    "DELIVERY SEMANTICS when True: "
-                    "(a) non-empty stdout is sent verbatim as the message; "
-                    "(b) EMPTY stdout means SILENT — nothing is sent to the user and they won't see anything happened, so design your script to stay quiet when there's nothing to report (the watchdog pattern); "
-                    "(c) non-zero exit / timeout sends an error alert so a broken watchdog can't fail silently. "
-                    "\n\n"
-                    "WHEN TO USE True: recurring script-only pings where the script itself produces the exact message text (memory/disk/GPU watchdogs, threshold alerts, heartbeats, CI notifications, API pollers with a fixed output shape). "
-                    "WHEN TO USE False (default): anything that needs reasoning — summarize a feed, draft a daily briefing, pick interesting items, rephrase data for a human, follow conditional logic based on content."
+                    "Default False (LLM-driven: the agent runs the prompt each tick). "
+                    "True skips the LLM entirely — the scheduler runs ``script`` on schedule and delivers its stdout verbatim (no tokens, no agent loop, no model override). "
+                    "Requires ``script`` set (``prompt``/``skills`` ignored). "
+                    "Delivery when True: non-empty stdout is sent verbatim; EMPTY stdout = SILENT (nothing is sent — design the script to stay quiet when there's nothing to report, the watchdog pattern); non-zero exit/timeout sends an error alert so a broken watchdog can't fail silently. "
+                    "Use True for script-only pings whose output IS the message (watchdogs, threshold alerts, heartbeats, pollers with a fixed output shape); False for anything needing reasoning (summaries, briefings, conditional logic)."
                 ),
             },
             "context_from": {
@@ -832,11 +825,11 @@ Important safety rule: cron-run sessions should not recursively schedule more cr
             },
             "workdir": {
                 "type": "string",
-                "description": "Optional absolute path to run the job from. When set, AGENTS.md / CLAUDE.md / .cursorrules from that directory are injected into the system prompt, and the terminal/file/code_exec tools use it as their working directory — useful for running a job inside a specific project repo. Must be an absolute path that exists. When unset (default), preserves the original behaviour: no project context files, tools use the scheduler's cwd. On update, pass an empty string to clear. Jobs with workdir run sequentially (not parallel) to keep per-job directories isolated."
+                "description": "Optional absolute path (must exist) to run the job from: injects that directory's AGENTS.md/CLAUDE.md/.cursorrules into the system prompt and points the terminal/file/code_exec tools at it — for running inside a specific project repo. Unset (default) = no project context files, tools use the scheduler's cwd. Empty string clears on update. Jobs with workdir run sequentially (not parallel) to keep per-job directories isolated."
             },
             "profile": {
                 "type": "string",
-                "description": "Optional Janus profile name to run the job under. When set, the scheduler resolves that profile, applies a context-local Janus home override, loads that profile's config/.env for the run, and bridges JANUS_HOME into subprocesses. Any temporary process-environment changes from profile .env loading are restored after the job exits. Use 'default' for the root Janus profile. Named profiles must already exist. When unset (default), preserves the scheduler's existing profile. On update, pass an empty string to clear. Jobs with profile run sequentially (not parallel) to keep profile-scoped runtime state isolated."
+                "description": "Optional Janus profile name to run the job under: resolves the profile, applies a context-local Janus home override, loads its config/.env for the run (restored after the job exits), and bridges JANUS_HOME into subprocesses. Use 'default' for the root profile; named profiles must already exist. Unset (default) preserves the scheduler's existing profile. Empty string clears on update. Jobs with profile run sequentially (not parallel) to keep profile-scoped runtime state isolated."
             },
         },
         "required": ["action"]

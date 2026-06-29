@@ -127,14 +127,18 @@ class TestDelegateRequirements(unittest.TestCase):
 
 class TestChildSystemPrompt(unittest.TestCase):
     def test_goal_only(self):
+        # The goal is delivered as the child's user_message, NOT duplicated in
+        # the system prompt (token optimization [28]); the prompt is framing only.
         prompt = _build_child_system_prompt("Fix the tests")
-        self.assertIn("Fix the tests", prompt)
-        self.assertIn("YOUR TASK", prompt)
+        self.assertNotIn("Fix the tests", prompt)
+        self.assertIn("focused subagent", prompt)
         self.assertNotIn("CONTEXT", prompt)
 
     def test_goal_with_context(self):
+        # Goal still absent from the system prompt; context IS embedded (it is
+        # up-front framing the worker needs, not redelivered as a user turn).
         prompt = _build_child_system_prompt("Fix the tests", "Error: assertion failed in test_foo.py line 42")
-        self.assertIn("Fix the tests", prompt)
+        self.assertNotIn("Fix the tests", prompt)
         self.assertIn("CONTEXT", prompt)
         self.assertIn("assertion failed", prompt)
 

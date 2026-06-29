@@ -617,10 +617,12 @@ def _build_child_system_prompt(
     The depth note is literal truth (grounded in the passed config) so
     the LLM doesn't confabulate nesting capabilities that don't exist.
     """
+    # The goal is delivered as the child's user_message (run_conversation
+    # user_message=goal); do not duplicate it here. Embedding it a second time
+    # cost one full copy of the goal per subagent. See docs/token-optimization-audit.md [28].
     parts = [
         "You are a focused subagent working on a specific delegated task.",
-        "",
-        f"YOUR TASK:\n{goal}",
+        "Your task is delivered as the user message — read it carefully and complete it.",
     ]
     if context and context.strip():
         parts.append(f"\nCONTEXT:\n{context}")
@@ -1148,7 +1150,11 @@ def _build_child_agent(
         max_iterations=max_iterations,
         max_tokens=getattr(parent_agent, "max_tokens", None),
         reasoning_config=child_reasoning,
-        prefill_messages=getattr(parent_agent, "prefill_messages", None),
+        # Subagents get their framing from ephemeral_system_prompt + the goal
+        # user_message; inheriting the parent's conversation-priming
+        # prefill_messages would re-inject that whole block (500-2000 tok) into
+        # every child API call for no benefit. See docs/token-optimization-audit.md [27].
+        prefill_messages=None,
         fallback_model=parent_fallback,
         enabled_toolsets=child_toolsets,
         quiet_mode=True,
@@ -2775,7 +2781,7 @@ DELEGATE_TASK_SCHEMA = {
                         "toolsets": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": f"Toolsets for this specific task. Available: {_TOOLSET_LIST_STR}. Use 'web' for network access, 'terminal' for shell, 'browser' for web interaction.",
+                            "description": "Toolsets for this specific task — same names as the top-level 'toolsets' parameter. Use 'web' for network access, 'terminal' for shell, 'browser' for web interaction.",
                         },
                         "acp_command": {
                             "type": "string",
