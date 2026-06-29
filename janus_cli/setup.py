@@ -691,6 +691,31 @@ def _prompt_container_resources(config: dict):
 
 
 
+def _verify_provider_credentials(provider: str) -> None:
+    """Live-check the just-configured provider credential and report plainly."""
+    from janus_cli.provider_check import INVALID, OK, live_check_provider
+
+    print()
+    print_info(f"Verifying {provider} credentials with a live request...")
+    result = live_check_provider(provider)
+    if result.status == OK:
+        latency = f" in {result.latency_ms}ms" if result.latency_ms is not None else ""
+        print_success(f"{provider} responded{latency} — credentials verified")
+    elif result.status == INVALID:
+        print_error(
+            f"{provider} rejected the credential ({result.detail}). "
+            "Double-check the key and re-run `janus model` — the agent "
+            "will not work until this is fixed."
+        )
+    else:
+        # unreachable / skip — verification is best-effort, never a blocker
+        detail = f" ({result.detail})" if result.detail else ""
+        print_info(
+            f"Could not verify {provider} right now{detail} — "
+            "continuing; `janus doctor` re-checks connectivity anytime."
+        )
+
+
 def setup_model_provider(config: dict, *, quick: bool = False):
     """Configure the inference provider and default model.
 
@@ -737,6 +762,13 @@ def setup_model_provider(config: dict, *, quick: bool = False):
     _m = config.get("model")
     if isinstance(_m, dict):
         selected_provider = _m.get("provider")
+
+    # Live credential check — a wrong key should fail here, at paste time,
+    # not on the user's first real conversation. Best-effort: only a
+    # provider-confirmed rejection is surfaced as an error; network trouble
+    # or providers without a checkable endpoint never block setup.
+    if selected_provider:
+        _verify_provider_credentials(selected_provider)
 
     # Credential rotation, vision-backend selection, and TTS provider are no
     # longer prompted here. They have safe defaults (rotation off, vision
@@ -1670,19 +1702,60 @@ def _setup_telegram_auto() -> str | None:
     return result.token if result else None
 
 
-def _prompt_telegram_bot_token() -> str | None:
-    print_info("Create a bot via @BotFather on Telegram")
+def _verify_telegram_token_interactive(token: str) -> tuple[bool, str | None]:
+    """Live-check a token against Telegram's getMe and report plainly.
+
+    Returns ``(accepted, bot_username)``. ``accepted`` is False only when
+    Telegram itself rejected the token — network trouble never blocks setup.
+    """
+    from janus_cli.provider_check import INVALID, OK, verify_telegram_token
+
+    status, info = verify_telegram_token(token)
+    if status == OK:
+        username = info.get("username")
+        if username:
+            print_success(
+                f"Token verified — your bot is @{username} (https://t.me/{username})"
+            )
+        else:
+            print_success("Token verified with Telegram")
+        return True, username
+    if status == INVALID:
+        print_error(
+            "Telegram rejected this token. Open @BotFather, send /token, "
+            "pick your bot, and paste the fresh token."
+        )
+        return False, None
+    print_info(
+        "⚠️  Couldn't reach the Telegram API to verify (offline?). "
+        "Saving anyway — `janus doctor` re-checks connectivity anytime."
+    )
+    return True, None
+
+
+def _prompt_telegram_bot_token() -> tuple[str | None, str | None]:
+    """Walk the user through BotFather and return ``(token, bot_username)``."""
+    print_info("Creating a bot takes about a minute, all inside Telegram:")
+    print_info("  1. Open Telegram and message @BotFather")
+    print_info("  2. Send: /newbot")
+    print_info('  3. Pick a display name (e.g. "My Janus")')
+    print_info("  4. Pick a username ending in 'bot' (e.g. my_janus_bot)")
+    print_info("  5. BotFather replies with a token like 123456789:ABC... — paste it below")
+    print()
     while True:
-        token = prompt("Telegram bot token", password=True)
+        token = prompt("Telegram bot token (Enter to skip)", password=True)
         if not token:
-            return None
+            return None, None
         if not _is_valid_telegram_bot_token(token):
             print_error(
                 "Invalid token format. Expected: <numeric_id>:<alphanumeric_hash> "
                 "(e.g., 123456789:ABCdefGHI-jklMNOpqrSTUvwxYZ)"
             )
             continue
-        return token
+        accepted, username = _verify_telegram_token_interactive(token)
+        if not accepted:
+            continue
+        return token, username
 
 
 def _setup_telegram():
@@ -1716,6 +1789,7 @@ def _setup_telegram():
     choice = prompt("Choice [1/2]", default="1")
     token = None
     setup_result = None
+    bot_username = None
 
     if choice.strip() == "1":
         setup_result = _setup_telegram_auto_result()
@@ -1725,6 +1799,13 @@ def _setup_telegram():
                 print_error("Automatic setup returned an invalid Telegram bot token.")
                 token = None
                 setup_result = None
+            else:
+                # Verify even the managed token — and learn the @username for
+                # the handoff message at the end of this flow.
+                accepted, bot_username = _verify_telegram_token_interactive(token)
+                if not accepted:
+                    token = None
+                    setup_result = None
         else:
             token = None
         if not token:
@@ -1733,7 +1814,7 @@ def _setup_telegram():
             print()
 
     if not token:
-        token = _prompt_telegram_bot_token()
+        token, bot_username = _prompt_telegram_bot_token()
     if not token:
         return
 
@@ -1793,6 +1874,23 @@ def _setup_telegram():
         home_channel = prompt("Home channel ID (leave empty to set later)")
         if home_channel:
             save_env_value("TELEGRAM_HOME_CHANNEL", home_channel)
+
+    # Handoff: tell the user exactly what happens next, while it's fresh.
+    print()
+    if bot_username:
+        print_success(
+            f"Telegram is ready. Open https://t.me/{bot_username} and press Start — "
+            "when the gateway starts, Janus will introduce itself there."
+        )
+    else:
+        print_success(
+            "Telegram is ready. Open your bot and press Start — when the "
+            "gateway starts, Janus will introduce itself there."
+        )
+    print_info(
+        "If someone NOT on the allowlist messages the bot, they get a pairing "
+        "code instead of access — approve them with: janus pairing approve <code>"
+    )
 
 
 def _setup_slack():
