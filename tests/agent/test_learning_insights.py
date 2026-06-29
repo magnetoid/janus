@@ -144,3 +144,10 @@ def test_format_learning_terminal_negative_delta_shows_magnitude():
     out = li.format_learning_terminal(report)
     assert "▼ 0.30" in out
     assert "-0.30" not in out
+
+
+def test_gateway_block_is_compact_and_labeled():
+    rep = li.generate_learning_report(days=30)
+    block = li.format_learning_gateway(rep)
+    assert "Learning" in block
+    assert block.count("\n") <= 4  # stays compact for chat platforms

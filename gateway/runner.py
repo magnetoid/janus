@@ -12580,6 +12580,12 @@ class GatewayRunner:
                 engine = InsightsEngine(db)
                 report = engine.generate(days=days, source=source)
                 result = engine.format_gateway(report)
+                from agent.learning_insights import generate_learning_report, format_learning_gateway
+                try:
+                    _lrep = generate_learning_report(days=days)
+                    result = result + "\n\n" + format_learning_gateway(_lrep)
+                except Exception as _exc:
+                    logger.debug("gateway insights learning block failed: %s", _exc)
                 db.close()
                 return result
 
