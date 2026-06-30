@@ -119,3 +119,28 @@ def test_maybe_run_trend_runs_when_due_then_skips():
     first = et.maybe_run_trend(agent_runner=lambda spec: {"final_response": "x", "messages": []})
     assert first is not None and first.get("pass_rate") == 1.0
     assert et.maybe_run_trend(agent_runner=lambda spec: {"final_response": "x", "messages": []}) is None
+
+
+# --- regression gate (B-PR3) ------------------------------------------------
+
+def test_regression_gate_fails_on_regression(monkeypatch):
+    monkeypatch.setattr(et, "learning_curve", lambda window=None: {
+        "regressed": ["a"], "learned": [], "points": [{"pass_rate": 0.5}], "suite_hash": "h"})
+    g = et.regression_gate()
+    assert g["ok"] is False
+    assert g["regressed"] == ["a"]
+    assert "REGRESSION" in g["message"]
+
+
+def test_regression_gate_ok_when_clean(monkeypatch):
+    monkeypatch.setattr(et, "learning_curve", lambda window=None: {
+        "regressed": [], "learned": ["b"],
+        "points": [{"pass_rate": 0.9}, {"pass_rate": 1.0}], "suite_hash": "h"})
+    g = et.regression_gate()
+    assert g["ok"] is True and g["pass_rate"] == 1.0
+
+
+def test_regression_gate_ok_without_history(monkeypatch):
+    monkeypatch.setattr(et, "learning_curve", lambda window=None: {
+        "regressed": [], "learned": [], "points": [], "suite_hash": None})
+    assert et.regression_gate()["ok"] is True

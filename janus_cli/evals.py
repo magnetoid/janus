@@ -140,6 +140,22 @@ def _cmd_trend(args) -> int:
     return 0
 
 
+def _cmd_gate(args) -> int:
+    """Exit non-zero if the eval suite regressed — a CI/cron regression gate."""
+    from agent import eval_trend as et
+
+    if getattr(args, "run", False):
+        rec = et.run_trend(path=_resolve_path(args))
+        if rec.get("error"):
+            print(f"evals: trend run failed — {rec['error']}", file=sys.stderr)
+            return 2
+    gate = et.regression_gate(window=getattr(args, "window", None))
+    print(gate["message"])
+    if gate.get("pass_rate") is not None:
+        print(f"  pass_rate={gate['pass_rate']} suite={gate.get('suite_hash')}")
+    return 0 if gate["ok"] else 1
+
+
 def _cmd_ab(args) -> int:
     from agent import eval_trend as et
 
@@ -200,6 +216,15 @@ def register_cli(parent: argparse.ArgumentParser) -> None:
     p_trend = subs.add_parser("trend", help="Run the suite and record a learning-curve point")
     p_trend.add_argument("--path", help="Spec file or directory (default $JANUS_HOME/evals/)")
     p_trend.set_defaults(func=_cmd_trend)
+
+    p_gate = subs.add_parser(
+        "gate", help="Exit non-zero if the eval suite regressed — for CI / cron")
+    p_gate.add_argument("--run", action="store_true",
+                        help="Run the suite first (record a trend point), then gate")
+    p_gate.add_argument("--path", help="Spec file or directory (default $JANUS_HOME/evals/)")
+    p_gate.add_argument("--window", type=int, default=None,
+                        help="Only compare the last N trend points")
+    p_gate.set_defaults(func=_cmd_gate)
 
     p_ab = subs.add_parser("ab", help="A/B a feature flag: suite pass-rate ON vs OFF")
     p_ab.add_argument("flag", help="section.key flag, e.g. memory.write_time_reconcile")

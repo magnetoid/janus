@@ -236,3 +236,33 @@ def learning_curve(window: Optional[int] = None) -> Dict[str, Any]:
         "regressed": sorted(regressed),
         "suite_hash": latest_hash,
     }
+
+
+def regression_gate(window: Optional[int] = None) -> Dict[str, Any]:
+    """CI / cron regression check over the eval learning curve.
+
+    ``ok`` is False when any eval regressed (pass→fail) within the latest
+    ``suite_hash`` window — the signal a CI step or scheduled alert fails on
+    (``janus evals gate`` exits non-zero). Best-effort: on no data / error,
+    ``ok`` is True (nothing to gate). Reuses ``learning_curve`` (and the same
+    suite_hash partitioning) — it does NOT introduce a second source of truth;
+    the governor's freeze signal (Increment 3.2) reads the same curve.
+    """
+    try:
+        lc = learning_curve(window=window)
+        regressed = lc.get("regressed") or []
+        learned = lc.get("learned") or []
+        points = lc.get("points") or []
+        pass_rate = points[-1]["pass_rate"] if points else None
+        ok = not regressed
+        if not ok:
+            msg = f"REGRESSION — {len(regressed)} eval(s) went pass→fail: {', '.join(regressed)}"
+        elif len(points) < 2:
+            msg = "OK — not enough eval history to compare yet"
+        else:
+            msg = f"OK — no regressions ({len(learned)} learned)"
+        return {"ok": ok, "regressed": regressed, "learned": learned,
+                "pass_rate": pass_rate, "suite_hash": lc.get("suite_hash"), "message": msg}
+    except Exception as exc:
+        return {"ok": True, "regressed": [], "learned": [], "pass_rate": None,
+                "suite_hash": None, "message": f"gate skipped (error: {exc})"}
