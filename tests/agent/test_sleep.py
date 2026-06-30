@@ -122,10 +122,55 @@ def test_load_save_state(tmp_path, monkeypatch):
     assert sleep.load_sleep_state()["last_run"] == "2026-06-10T00:00:00"
 
 
+def _fake_synth_llm(*, merged="Validate inputs and run migrations before deploying.", verdict="accept"):
+    """Dispatch by task: synthesis call returns the merged lesson; the dialectic
+    arbiter returns the given verdict; advocate/skeptic return filler."""
+    def _caller(**kwargs):
+        task = kwargs.get("task", "")
+        if task == "sleep_synthesis":
+            content = merged
+        elif task == "dialectic_arbiter":
+            content = f'[{{"id": "syn-0", "verdict": "{verdict}", "confidence": "high"}}]'
+        else:
+            content = "case"
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))])
+    return _caller
+
+
+def test_synthesize_collapses_cluster_when_admitted():
+    from agent import lessons
+    for i in range(3):
+        lessons.record_lesson(f"deploy variant {i}: forgot to run migrations", task_type="deploy")
+    written = sleep.synthesize_cross_session_lessons(llm_caller=_fake_synth_llm())
+    assert len(written) == 1
+    assert written[0]["source"] == "synthesis"
+    assert written[0]["task_type"] == "deploy"
+    assert any(r.get("source") == "synthesis" for r in lessons.load())
+
+
+def test_synthesize_redteam_rejection_writes_nothing():
+    from agent import lessons
+    for i in range(3):
+        lessons.record_lesson(f"deploy variant {i}", task_type="deploy")
+    written = sleep.synthesize_cross_session_lessons(llm_caller=_fake_synth_llm(verdict="reject"))
+    assert written == []
+    assert not any(r.get("source") == "synthesis" for r in lessons.load())
+
+
+def test_synthesize_skips_small_clusters():
+    from agent import lessons
+    lessons.record_lesson("one deploy lesson", task_type="deploy")
+    lessons.record_lesson("a second deploy lesson", task_type="deploy")  # 2 < min_cluster (3)
+    assert sleep.synthesize_cross_session_lessons(llm_caller=_fake_synth_llm()) == []
+
+
 def test_synthesize_best_effort_on_failure():
+    from agent import lessons
+    for i in range(3):
+        lessons.record_lesson(f"deploy lesson {i}", task_type="deploy")
     def boom(**kw):
         raise RuntimeError("down")
-    assert sleep.synthesize_cross_session_lessons(["s1", "s2"], llm_caller=boom) == []
+    assert sleep.synthesize_cross_session_lessons(llm_caller=boom) == []
 
 
 def test_sleep_cycle_appends_one_sleep_log_line():

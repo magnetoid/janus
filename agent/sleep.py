@@ -144,47 +144,108 @@ def prune_low_salience(
 # --- LLM-backed steps -------------------------------------------------------
 
 _SYNTH_SYSTEM = (
-    "You distill HIGHER-LEVEL lessons that span MULTIPLE work sessions — patterns, "
-    "recurring preferences, durable conventions — that no single session makes "
-    "obvious. Be terse and only output genuinely cross-session insights."
+    "You consolidate several overlapping lessons — learned from repeated failures on the "
+    "SAME kind of task — into ONE higher-level lesson naming the shared root cause and the "
+    "corrective action. Be terse and concrete. Output a single sentence, no list."
 )
 
+_SYNTH_MIN_CLUSTER = 3  # only collapse a task_type with at least this many lessons
 
-def synthesize_cross_session_lessons(
-    sessions_text: List[str], *, llm_caller: Optional[Callable[..., Any]] = None,
-    provider: Optional[str] = None, model: Optional[str] = None, max_lessons: int = 5,
-) -> List[str]:
-    """Distill lessons spanning many sessions. Best-effort; [] on failure."""
+
+def _synthesize_one(
+    task_type: str, items: List[str], *,
+    llm_caller: Optional[Callable[..., Any]] = None,
+    provider: Optional[str] = None, model: Optional[str] = None,
+) -> str:
+    """LLM-merge N overlapping lessons into one sentence. "" on failure."""
     try:
-        joined = "\n\n---\n\n".join(s for s in sessions_text if s.strip())
+        joined = "\n".join(f"- {it}" for it in items if it.strip())
         if not joined.strip():
-            return []
+            return ""
         if llm_caller is None:
             from agent.auxiliary_client import call_llm as llm_caller
         prompt = (
-            "Across these recent session summaries, return a JSON array of "
-            "higher-level lessons that span MULTIPLE sessions (not one). Each a "
-            "concise sentence. If none, return []. Return ONLY the JSON array."
-            f"\n\nSESSIONS:\n{joined[:12000]}"
+            f"These {len(items)} lessons were learned from failures on '{task_type}' tasks "
+            "and overlap. Distill them into ONE concise lesson capturing the shared root "
+            "cause and corrective action. Return ONLY the single lesson sentence.\n\n"
+            f"{joined[:8000]}"
         )
         response = llm_caller(
             task="sleep_synthesis", provider=provider, model=model,
             messages=[{"role": "system", "content": _SYNTH_SYSTEM},
                       {"role": "user", "content": prompt}],
-            temperature=0.2, max_tokens=500,
+            temperature=0.2, max_tokens=300,
         )
-        import re
-        raw = response.choices[0].message.content or ""
-        m = re.search(r"\[.*\]", raw, re.DOTALL)
-        if not m:
-            return []
-        data = json.loads(m.group(0))
-        if not isinstance(data, list):
-            return []
-        return [str(x).strip() for x in data if str(x).strip()][:max_lessons]
+        out = (response.choices[0].message.content or "").strip()
+        return out.lstrip("-*• ").strip().strip('"').strip()
+    except Exception as exc:
+        logger.debug("lesson synthesis call failed: %s", exc)
+        return ""
+
+
+def _redteam_admits_synthesis(
+    content: str, task_type: str, *, existing: str = "",
+    llm_caller: Optional[Callable[..., Any]] = None,
+) -> bool:
+    """Gate a synthesized lesson through the dialectic red-team. Fails CLOSED:
+    write only on an explicit ACCEPT; infra error or reject → False."""
+    try:
+        from agent.deliberation import apply_verdicts, red_team_claims
+        claims = [{"id": "syn-0", "kind": "fact", "content": content,
+                   "context": f"synthesized {task_type} lesson"}]
+        rt = red_team_claims(claims, existing=existing, llm_caller=llm_caller)
+        if rt.get("error") is not None:
+            return False  # fail closed — do not write an unverified synthesis
+        split = apply_verdicts(claims, rt.get("verdicts", {}))
+        return len(split.get("accepted", [])) >= 1
+    except Exception as exc:
+        logger.debug("synthesis red-team failed: %s", exc)
+        return False
+
+
+def synthesize_cross_session_lessons(
+    *, llm_caller: Optional[Callable[..., Any]] = None,
+    provider: Optional[str] = None, model: Optional[str] = None,
+    max_lessons: int = 5, min_cluster: int = _SYNTH_MIN_CLUSTER,
+) -> List[Dict[str, Any]]:
+    """Collapse near-duplicate failure lessons (same task_type) into one
+    higher-level lesson each, gated by the dialectic red-team (fails closed).
+
+    Reads the lessons store and writes each accepted synthesis via
+    ``lessons.record_lesson(source="synthesis")``. Additive — the originals are
+    kept; recency ranking (Increment 2.1) lets the broader synthesis surface
+    first. Best-effort; returns the written records (``[]`` on failure / nothing
+    to collapse).
+    """
+    written: List[Dict[str, Any]] = []
+    try:
+        from agent import lessons as _lessons
+        groups: Dict[str, List[str]] = {}
+        for r in _lessons.load():
+            if str(r.get("source", "")) == "synthesis":
+                continue  # never re-synthesize a synthesis
+            tt = str(r.get("task_type", "general")) or "general"
+            txt = str(r.get("lesson", "")).strip()
+            if txt:
+                groups.setdefault(tt, []).append(txt)
+        for tt, items in groups.items():
+            if len(items) < min_cluster:
+                continue
+            merged = _synthesize_one(tt, items, llm_caller=llm_caller, provider=provider, model=model)
+            if not merged:
+                continue
+            if not _redteam_admits_synthesis(
+                merged, tt, existing="\n".join(items), llm_caller=llm_caller
+            ):
+                continue
+            rec = _lessons.record_lesson(merged, task_type=tt, source="synthesis")
+            if rec:
+                written.append(rec)
+            if len(written) >= max_lessons:
+                break
     except Exception as exc:
         logger.debug("cross-session synthesis failed: %s", exc)
-        return []
+    return written
 
 
 # --- the cycle --------------------------------------------------------------
@@ -250,16 +311,16 @@ def run_sleep_cycle(
             store, threshold=prune_threshold, keep_min=keep_min,
             scores=prune_scores, apply=not dry_run)
 
-        # 5. SYNTHESIZE cross-session lessons.
-        if not dry_run and session_summaries:
-            lessons = synthesize_cross_session_lessons(
-                session_summaries, llm_caller=llm_caller, provider=provider, model=model)
-            report["lessons"] = lessons
-            for lesson in lessons:
-                try:
-                    store.add("memory", lesson)
-                except Exception:
-                    pass
+        # 5. SYNTHESIZE: collapse near-duplicate failure lessons (same task_type)
+        # into higher-level ones, dialectic-gated, written to the lessons store
+        # (not memory). Cache-safe (offline). See plans/self-improvement-roadmap.md 2.2.
+        if not dry_run:
+            try:
+                synth = synthesize_cross_session_lessons(
+                    llm_caller=llm_caller, provider=provider, model=model)
+                report["lessons"] = [r.get("lesson", "") for r in synth]
+            except Exception as exc:
+                logger.debug("sleep synthesize failed: %s", exc)
 
         # 6. ACE PLAYBOOK: improve the learning loop's OWN prompts. From this
         # cycle's activity, propose guidance, red-team it (fails closed), and
