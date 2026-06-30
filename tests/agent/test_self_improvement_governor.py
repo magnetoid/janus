@@ -134,3 +134,41 @@ def test_freeze_boundary_pinned_to_shared_constant(monkeypatch):
         _metrics(forgetting=ot.FORGETTING_WARN - 0.01, forward_transfer=0.05))
     assert just_over["state"] == gov.STATE_FROZEN
     assert just_under["state"] != gov.STATE_FROZEN
+
+
+# ── eval-trend as a second freeze signal (Increment 3.2) ─────────────────────
+
+def test_eval_regression_freezes_even_with_healthy_metrics(monkeypatch):
+    _enable(monkeypatch)
+    monkeypatch.setattr(gov, "_eval_trend_freeze_reason",
+                        lambda: "eval suite regressed: 3 eval(s) pass→fail vs 0 learned")
+    r = gov.assess_admission_state(_metrics())  # outcome metrics are healthy
+    assert r["state"] == gov.STATE_FROZEN
+    assert "regressed" in r["reasons"][0]
+
+
+def test_eval_decline_cautions(monkeypatch):
+    _enable(monkeypatch)
+    monkeypatch.setattr(gov, "_eval_trend_caution_reason",
+                        lambda *a, **k: "eval pass-rate declining (0.80 → 0.60)")
+    r = gov.assess_admission_state(_metrics())
+    assert r["state"] == gov.STATE_CAUTION
+    assert any("declining" in x for x in r["reasons"])
+
+
+def test_eval_decline_cautions_even_with_insufficient_sessions(monkeypatch):
+    _enable(monkeypatch)
+    monkeypatch.setattr(gov, "_eval_trend_caution_reason",
+                        lambda *a, **k: "eval pass-rate declining (0.9 → 0.7)")
+    r = gov.assess_admission_state(_metrics(sessions=2))  # outcome data insufficient
+    assert r["state"] == gov.STATE_CAUTION
+
+
+def test_eval_trend_freeze_reason_reads_curve(monkeypatch):
+    # net regression (more pass→fail than fail→pass) → a reason; net improvement → None
+    monkeypatch.setattr("agent.eval_trend.learning_curve",
+                        lambda *a, **k: {"regressed": ["a", "b"], "learned": ["c"], "points": []})
+    assert gov._eval_trend_freeze_reason() is not None
+    monkeypatch.setattr("agent.eval_trend.learning_curve",
+                        lambda *a, **k: {"regressed": ["a"], "learned": ["b", "c"], "points": []})
+    assert gov._eval_trend_freeze_reason() is None

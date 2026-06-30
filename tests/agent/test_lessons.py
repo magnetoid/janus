@@ -132,6 +132,38 @@ def test_auto_mine_writes_lesson_on_failure(monkeypatch):
     assert any("Run tests before deploying." in r["lesson"] for r in stored)
 
 
+def test_auto_mine_records_live_model_strength_on_success(monkeypatch):
+    """A classified-success session attributes the outcome to the model that ran
+    it via model_strengths.record(source="live") — the live routing signal [A-PR4]."""
+    import yaml
+    from janus_constants import get_janus_home
+    from agent import auto_mine, outcome_tracker, model_strengths
+
+    home = get_janus_home()
+    home.mkdir(parents=True, exist_ok=True)
+    (home / "config.yaml").write_text(
+        yaml.safe_dump({"learning": {"track_outcomes": True}}), encoding="utf-8")
+    monkeypatch.setattr(outcome_tracker, "classify_session", lambda *a, **k: True)
+    rec: dict = {}
+    monkeypatch.setattr(
+        model_strengths, "record",
+        lambda *, task, model, source="", score=None, **k: rec.update(
+            task=task, model=model, source=source, score=score),
+    )
+    msgs = [
+        {"role": "user", "content": "Build a CSV parser.", "session_id": "sess-2"},
+        {"role": "assistant", "content": "ok"},
+        {"role": "user", "content": "does it handle quotes?"},
+        {"role": "assistant", "content": "yes"},
+        {"role": "user", "content": "great"},
+        {"role": "assistant", "content": "done"},
+    ]
+    auto_mine.maybe_automine(msgs, run_in_thread=False, model="anthropic/claude-opus-4-8")
+    assert rec.get("source") == "live"
+    assert rec.get("model") == "anthropic/claude-opus-4-8"
+    assert rec.get("score") == 1.0
+
+
 # --- recency-weighted recall (Increment 2.1) --------------------------------
 
 def _utc(y=2026, mo=6, d=30):

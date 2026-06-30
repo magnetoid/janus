@@ -74,6 +74,43 @@ def auto_promote_enabled() -> bool:
     return bool(_gov_cfg("auto_promote", _DEFAULTS["auto_promote"]))
 
 
+def _eval_trend_freeze_reason() -> Optional[str]:
+    """Net regression on the deterministic eval suite → a strong 'getting worse'
+    signal that warrants a freeze. Best-effort; None when unavailable. Only the
+    latest ``suite_hash`` is compared, so editing evals can't phantom-freeze.
+    See plans/self-improvement-roadmap.md 3.2.
+    """
+    try:
+        from agent.eval_trend import learning_curve
+
+        lc = learning_curve()
+        regressed = lc.get("regressed") or []
+        learned = lc.get("learned") or []
+        if len(regressed) > len(learned) and len(regressed) >= 1:
+            return (f"eval suite regressed: {len(regressed)} eval(s) pass→fail vs "
+                    f"{len(learned)} learned")
+    except Exception:
+        logger.debug("governor eval-trend freeze read failed", exc_info=True)
+    return None
+
+
+def _eval_trend_caution_reason(min_drop: float = 0.05) -> Optional[str]:
+    """A sustained downward eval pass-rate (without a net regression) → caution.
+    Best-effort; None when unavailable / fewer than two points."""
+    try:
+        from agent.eval_trend import learning_curve
+
+        points = (learning_curve().get("points") or [])
+        if len(points) >= 2:
+            first = float(points[0].get("pass_rate", 0.0))
+            last = float(points[-1].get("pass_rate", 0.0))
+            if last < first - min_drop:
+                return f"eval pass-rate declining ({first:.2f} → {last:.2f})"
+    except Exception:
+        logger.debug("governor eval-trend caution read failed", exc_info=True)
+    return None
+
+
 def assess_admission_state(metrics: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Classify the learning loop's health into OK / CAUTION / FROZEN.
 
@@ -91,8 +128,18 @@ def assess_admission_state(metrics: Optional[Dict[str, Any]] = None) -> Dict[str
             metrics = learning_metrics()
         metrics = metrics or {}
 
+        # Eval-trend (deterministic benchmark) is an independent health signal,
+        # applied regardless of the outcome-metric session count: a net regression
+        # freezes; a milder sustained decline cautions. See roadmap 3.2.
+        eval_freeze = _eval_trend_freeze_reason()
+        if eval_freeze:
+            return {"state": STATE_FROZEN, "reasons": [eval_freeze], "metrics": metrics}
+        eval_caution = _eval_trend_caution_reason()
+
         sessions = metrics.get("sessions")
         if not isinstance(sessions, (int, float)) or sessions < INSUFFICIENT_DATA_SESSIONS:
+            if eval_caution:
+                return {"state": STATE_CAUTION, "reasons": [eval_caution], "metrics": metrics}
             return {
                 "state": STATE_OK,
                 "reasons": [f"insufficient data ({sessions} sessions)"],
@@ -124,6 +171,8 @@ def assess_admission_state(metrics: Optional[Dict[str, Any]] = None) -> Dict[str
             reasons.append(f"forgetting {fgt:.2f} approaching freeze threshold")
         if isinstance(dtrend, (int, float)) and dtrend < DIVERSITY_TREND_WARN * ratio:
             reasons.append(f"diversity trend {dtrend:.2f} approaching freeze threshold")
+        if eval_caution:
+            reasons.append(eval_caution)
         if reasons:
             return {"state": STATE_CAUTION, "reasons": reasons, "metrics": metrics}
 

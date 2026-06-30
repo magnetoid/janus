@@ -2935,7 +2935,8 @@ class AIAgent:
         # all route through commit_memory_session.
         try:
             from agent.auto_mine import maybe_automine
-            maybe_automine(messages or [], active_persona=getattr(self, "_active_persona", None))
+            maybe_automine(messages or [], active_persona=getattr(self, "_active_persona", None),
+                           model=getattr(self, "model", None))
         except Exception:
             pass
 

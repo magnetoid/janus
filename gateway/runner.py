@@ -8362,7 +8362,8 @@ class GatewayRunner:
                 from agent.auto_mine import maybe_automine
                 _old_msgs = self._session_db.get_messages_as_conversation(old_entry.session_id)
                 if _old_msgs:
-                    maybe_automine(_old_msgs, active_persona=old_entry.active_persona)
+                    maybe_automine(_old_msgs, active_persona=old_entry.active_persona,
+                                   model=getattr(old_entry, "model", None))
             except Exception as exc:
                 logger.debug("Failed to invoke auto-mine on session reset: %s", exc)
 

@@ -27,7 +27,7 @@ def _flag(section: str, key: str, *, default: bool = False) -> bool:
 
 def maybe_automine(
     messages: List[Dict[str, Any]], *, run_in_thread: bool = True,
-    active_persona: Optional[str] = None,
+    active_persona: Optional[str] = None, model: Optional[str] = None,
 ) -> Optional[threading.Thread]:
     """Mine the just-ended session for memory/skills if opted in.
 
@@ -70,6 +70,16 @@ def maybe_automine(
                                        skills=skills_used_in(snapshot), note=topic,
                                        active_persona=active_persona,
                                        tool_failure_rate=tool_failure_rate(snapshot))
+                        # Live model-strengths signal: attribute this session's
+                        # outcome to the model that ran it, so learned routing draws
+                        # on real performance, not just web-seeded research. (3.x / Track D seed)
+                        if model:
+                            try:
+                                from agent.model_strengths import record as _record_strength
+                                _record_strength(task=topic or "general", model=model,
+                                                 source="live", score=(1.0 if verdict else 0.0))
+                            except Exception as exc:
+                                logger.debug("model_strengths live sink failed: %s", exc)
                         # Reflexion write-back: a failed session becomes a
                         # retrievable "do X instead" lesson keyed to the task
                         # type, so the next similar attempt starts smarter.
