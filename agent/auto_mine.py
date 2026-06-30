@@ -52,6 +52,7 @@ def maybe_automine(
                 try:
                     from agent.outcome_tracker import (
                         classify_session, record_outcome, skills_used_in,
+                        tool_failure_rate,
                     )
                     verdict = classify_session(snapshot)
                     if verdict is not None:  # skip UNCLEAR sessions
@@ -63,9 +64,12 @@ def maybe_automine(
                              if m.get("role") == "user" and str(m.get("content", "")).strip()),
                             "",
                         )
+                        # Secondary reward penalty: a success reached only after
+                        # many failed tool calls is a weaker positive signal.
                         record_outcome(session_id, verdict,
                                        skills=skills_used_in(snapshot), note=topic,
-                                       active_persona=active_persona)
+                                       active_persona=active_persona,
+                                       tool_failure_rate=tool_failure_rate(snapshot))
                         # Reflexion write-back: a failed session becomes a
                         # retrievable "do X instead" lesson keyed to the task
                         # type, so the next similar attempt starts smarter.

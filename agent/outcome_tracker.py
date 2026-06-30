@@ -53,21 +53,38 @@ def _save(records: List[Dict[str, Any]]) -> None:
     path.write_text(json.dumps(records, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+# A SUCCESS reached only after many failed tool calls is a weaker positive
+# signal than a clean run — apply it as a SECONDARY penalty on the reward, never
+# flipping the primary success verdict. See plans/self-improvement-roadmap.md 3.1.
+_TOOL_FAILURE_PENALTY = 0.5
+
+
 def record_outcome(
     session_id: str, success: bool, *, skills: Optional[List[str]] = None,
     note: str = "", active_persona: Optional[str] = None,
+    tool_failure_rate: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Record a session's outcome attributed to the skills it used.
 
     ``active_persona`` (when given) attributes the outcome to the persona that
     was active — the signal the persona optimizer learns from.
+
+    ``tool_failure_rate`` (0..1, optional) applies a secondary penalty to the
+    stored ``reward``: a session that only succeeded after many failed tool
+    calls scores lower than a clean one. The boolean ``success`` is unchanged
+    (so ``skill_success_trajectory`` stays back-compatible); the penalised
+    ``reward`` is exposed via ``skill_reward_trajectory``.
     """
+    tfr = max(0.0, min(1.0, float(tool_failure_rate))) if tool_failure_rate is not None else 0.0
+    reward = round(max(0.0, (1.0 if success else 0.0) - _TOOL_FAILURE_PENALTY * tfr), 4)
     rec = {
         "session_id": session_id or "",
         "success": bool(success),
         "skills": sorted({s for s in (skills or []) if s}),
         "note": note,
         "persona": active_persona or "",
+        "tool_failure_rate": tfr,
+        "reward": reward,
         "ts": _now_iso(),
     }
     records = load()
@@ -83,6 +100,38 @@ def skill_success_trajectory(skill_name: str, window: int = 20) -> List[bool]:
     """
     out = [bool(r.get("success")) for r in load() if skill_name in r.get("skills", [])]
     return out[-window:]
+
+
+def skill_reward_trajectory(skill_name: str, window: int = 20) -> List[float]:
+    """Recent penalised REWARDS (oldest→newest) for sessions that used ``skill_name``.
+
+    Like ``skill_success_trajectory`` but continuous: a clean success scores 1.0,
+    a tool-failure-riddled success scores lower (see ``record_outcome``). Records
+    written before the reward field default to their boolean success.
+    """
+    out = [
+        float(r["reward"]) if "reward" in r else (1.0 if r.get("success") else 0.0)
+        for r in load() if skill_name in r.get("skills", [])
+    ]
+    return out[-window:]
+
+
+def tool_failure_rate(snapshot: List[Dict[str, Any]]) -> float:
+    """Fraction of tool results in ``snapshot`` that look like errors (cheap heuristic).
+
+    Tool handlers signal failure via ``tool_error()`` → a JSON object beginning
+    ``{"error": ...}``. Returns 0.0 when the snapshot has no tool results.
+    """
+    total = failed = 0
+    for m in snapshot or []:
+        if not isinstance(m, dict) or m.get("role") != "tool":
+            continue
+        total += 1
+        c = str(m.get("content", "")).lstrip()
+        cl = c.lower()
+        if c.startswith('{"error"') or cl.startswith("error:") or '"error":' in cl[:200]:
+            failed += 1
+    return round(failed / total, 4) if total else 0.0
 
 
 _SKILL_VIEW = re.compile(r"skill_view\s*\(\s*name\s*=\s*['\"]([\w./-]+)['\"]", re.I)

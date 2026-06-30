@@ -59,3 +59,38 @@ def test_classify_best_effort_on_failure():
     def boom(**kw):
         raise RuntimeError("down")
     assert ot.classify_session(msgs, llm_caller=boom) is None
+
+
+# --- tool-failure reward penalty (Increment 3.1) ----------------------------
+
+def test_tool_failure_rate_counts_error_results():
+    snap = [
+        {"role": "user", "content": "go"},
+        {"role": "tool", "content": '{"error": "boom"}'},
+        {"role": "tool", "content": '{"error": "again"}'},
+        {"role": "tool", "content": '{"error": "thrice"}'},
+        {"role": "tool", "content": '{"error": "four"}'},
+        {"role": "tool", "content": '{"ok": true}'},
+    ]
+    assert ot.tool_failure_rate(snap) == 0.8                                  # 4 of 5
+    assert ot.tool_failure_rate([{"role": "tool", "content": '{"ok": 1}'}]) == 0.0
+    assert ot.tool_failure_rate([]) == 0.0                                    # no tool results
+
+
+def test_reward_penalised_by_tool_failures():
+    clean = ot.record_outcome("s1", True, skills=["x"], tool_failure_rate=0.0)
+    noisy = ot.record_outcome("s2", True, skills=["x"], tool_failure_rate=0.8)
+    assert clean["reward"] == 1.0
+    assert noisy["reward"] < clean["reward"]      # secondary penalty applied
+    assert noisy["success"] is True               # primary verdict unchanged
+    assert noisy["tool_failure_rate"] == 0.8
+
+
+def test_skill_reward_trajectory_uses_reward_with_back_compat(monkeypatch):
+    ot.record_outcome("s1", True, skills=["deploy"], tool_failure_rate=0.0)   # reward 1.0
+    ot.record_outcome("s2", True, skills=["deploy"], tool_failure_rate=1.0)   # reward 0.5
+    assert ot.skill_reward_trajectory("deploy") == [1.0, 0.5]
+    # a pre-reward record falls back to its boolean success
+    recs = ot.load() + [{"session_id": "old", "success": True, "skills": ["deploy"]}]
+    monkeypatch.setattr(ot, "load", lambda: recs)
+    assert ot.skill_reward_trajectory("deploy")[-1] == 1.0

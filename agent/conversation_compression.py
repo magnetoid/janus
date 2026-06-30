@@ -268,6 +268,26 @@ def replay_compression_warning(agent: Any) -> None:
             pass
 
 
+def _route_precompress_insight_to_lessons(insight: Any, session_id: str = "") -> bool:
+    """Persist a pre-compression distilled insight into the lessons store so it
+    isn't lost when compression discards the context (previously the
+    ``on_pre_compress`` return value was dropped). Best-effort and cache-safe:
+    a file write done AFTER the sanctioned compression mutation, never touching
+    the live conversation / system prompt / toolset. Returns True if written.
+    See plans/self-improvement-roadmap.md 2.3.
+    """
+    text = str(insight or "").strip()
+    if not text:
+        return False
+    try:
+        from agent.lessons import record_lesson
+        rec = record_lesson(text[:600], source="compression", session_id=session_id or "")
+        return rec is not None
+    except Exception as exc:
+        logger.debug("compression learning sink failed: %s", exc)
+        return False
+
+
 def compress_context(
     agent: Any,
     messages: list,
@@ -425,12 +445,15 @@ def compress_context(
             except Exception as _rel_err:
                 logger.debug("compression lock release failed: %s", _rel_err)
 
-    # Notify external memory provider before compression discards context
+    # Notify external memory provider before compression discards context, and
+    # CAPTURE its distilled insight so we can persist it post-compression (the
+    # return value was previously dropped). See plans/self-improvement-roadmap.md 2.3.
+    _precompress_insight = ""
     if agent._memory_manager:
         try:
-            agent._memory_manager.on_pre_compress(messages)
+            _precompress_insight = agent._memory_manager.on_pre_compress(messages) or ""
         except Exception:
-            pass
+            _precompress_insight = ""
 
     try:
         compressed = agent.context_compressor.compress(messages, current_tokens=approx_tokens, focus_topic=focus_topic, force=force)
@@ -463,6 +486,11 @@ def compress_context(
             _existing_sp = agent._build_system_prompt(system_message)
         _release_lock()  # compression aborted — no rotation will happen
         return messages, _existing_sp
+
+    # Compression committed (not aborted): route the captured pre-compression
+    # insight into the durable lessons store now — cache-safe (post-mutation).
+    _route_precompress_insight_to_lessons(
+        _precompress_insight, session_id=getattr(agent, "session_id", "") or "")
 
     summary_error = getattr(agent.context_compressor, "_last_summary_error", None)
     if summary_error:
