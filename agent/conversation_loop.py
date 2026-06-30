@@ -56,6 +56,7 @@ from agent.prompt_caching import apply_anthropic_cache_control
 from agent.retry_utils import jittered_backoff
 from agent.trajectory import has_incomplete_scratchpad
 from agent.usage_pricing import estimate_usage_cost, normalize_usage
+from agent import cost_ledger
 from janus_constants import PARTIAL_STREAM_STUB_ID
 from janus_logging import set_session_context
 from tools.skill_provenance import set_current_write_origin
@@ -838,6 +839,10 @@ def run_conversation(
             should_review_memory=_should_review_memory,
         )
 
+    # B-PR2: per-session USD ceiling (None = unlimited). Read once; enforced at
+    # the turn boundary below — halting only, never a mid-turn prompt/toolset change.
+    _cost_limit_usd = cost_ledger.session_cost_limit_usd()
+
     while (api_call_count < agent.max_iterations and agent.iteration_budget.remaining > 0) or agent._budget_grace_call:
         # Reset per-turn checkpoint dedup so each iteration can take one snapshot
         agent._checkpoint_mgr.new_turn()
@@ -850,6 +855,18 @@ def run_conversation(
                 agent._safe_print("\n⚡ Breaking out of tool loop due to interrupt...")
             break
         
+        # Cost budget: halt at the turn boundary once this session's accumulated
+        # spend reaches the configured ceiling. Cache-safe — the loop just stops
+        # earlier; nothing about the prompt / system message / toolset changes.
+        if cost_ledger.over_session_budget(agent.session_estimated_cost_usd, _cost_limit_usd):
+            _turn_exit_reason = "cost_budget_exhausted"
+            if not agent.quiet_mode:
+                agent._safe_print(
+                    f"\n⚠️  Cost budget exhausted "
+                    f"(${agent.session_estimated_cost_usd:.4f} / ${_cost_limit_usd:.2f}). "
+                    "Raise budget.session_cost_usd in config, or /new for a fresh session.")
+            break
+
         api_call_count += 1
         agent._api_call_count = api_call_count
         agent._touch_activity(f"starting API call #{api_call_count}")
@@ -2026,6 +2043,16 @@ def run_conversation(
                         agent.session_estimated_cost_usd += float(cost_result.amount_usd)
                     agent.session_cost_status = cost_result.status
                     agent.session_cost_source = cost_result.source
+
+                    # B-PR2: append this turn to the persistent cost ledger.
+                    cost_ledger.record_turn(
+                        agent.session_id, agent.model,
+                        input_tokens=canonical_usage.input_tokens,
+                        output_tokens=canonical_usage.output_tokens,
+                        cache_read_tokens=canonical_usage.cache_read_tokens,
+                        cost_usd=float(cost_result.amount_usd) if cost_result.amount_usd is not None else 0.0,
+                        status=cost_result.status,
+                    )
 
                     # Persist token counts to session DB for /insights.
                     # Do this for every platform with a session_id so non-CLI

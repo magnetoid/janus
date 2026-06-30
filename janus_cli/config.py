@@ -1750,6 +1750,15 @@ DEFAULT_CONFIG = {
         "daily_lookback_days": 7,
     },
 
+    # Spend budget (agent/cost_ledger.py). Every API turn is appended to a
+    # per-turn cost ledger ($JANUS_HOME/learning/cost_ledger.jsonl). When
+    # session_cost_usd > 0, a session that reaches that estimated USD spend is
+    # halted at the next turn boundary (cache-safe — the loop just stops; nothing
+    # mid-conversation changes). 0 = unlimited (default).
+    "budget": {
+        "session_cost_usd": 0,
+    },
+
     # Self-learning reinforcement. When track_outcomes is on, each ended
     # session is classified success/failure (cheap aux model) and attributed to
     # the skills it used — the reward signal the curator/learning loop uses to
