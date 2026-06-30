@@ -203,6 +203,22 @@ class TestDelegateTask(unittest.TestCase):
         mock_run.assert_called_once()
 
     @patch("tools.delegate_tool._run_single_child")
+    def test_single_delegation_fires_on_delegation(self, mock_run):
+        # A SINGLE delegate_task must notify the parent's memory provider, same
+        # as a batch — the on_delegation loop runs after the single/batch branch,
+        # not only in the batch path. See plans/self-improvement-roadmap.md 2.4.
+        mock_run.return_value = {
+            "task_index": 0, "status": "completed",
+            "summary": "Fixed", "api_calls": 1, "duration_seconds": 1.0,
+        }
+        parent = _make_mock_parent()
+        json.loads(delegate_task(goal="Fix the failing test", parent_agent=parent))
+        parent._memory_manager.on_delegation.assert_called_once()
+        _, kwargs = parent._memory_manager.on_delegation.call_args
+        self.assertEqual(kwargs.get("task"), "Fix the failing test")
+        self.assertEqual(kwargs.get("result"), "Fixed")
+
+    @patch("tools.delegate_tool._run_single_child")
     def test_batch_mode(self, mock_run):
         mock_run.side_effect = [
             {"task_index": 0, "status": "completed", "summary": "Result A", "api_calls": 2, "duration_seconds": 3.0},

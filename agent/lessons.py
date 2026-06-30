@@ -177,16 +177,58 @@ def reflect_on_failure(
 
 # --- recall (lesson retrieval) ----------------------------------------------
 
+# Recency: a lesson's lexical score is multiplied by a half-life decay on its
+# age, so a freshly-learned lesson outranks an equally-relevant stale one. The
+# half-life (days) is configurable via learning.lessons.recency_half_life_days;
+# 0 disables decay (pure lexical). See plans/self-improvement-roadmap.md 2.1.
+_RECENCY_HALF_LIFE_DAYS = 30.0
 
-def recall_lessons(query: str, *, n: int = 3) -> List[Dict[str, Any]]:
+
+def _recency_half_life_days(config: Optional[Dict[str, Any]] = None) -> float:
+    """Read the recency half-life (days) from config; default 30, 0 disables."""
+    try:
+        if config is None:
+            from janus_cli.config import load_config
+            config = load_config()
+        lessons = (config.get("learning", {}) or {}).get("lessons", {}) if isinstance(config, dict) else {}
+        v = lessons.get("recency_half_life_days", _RECENCY_HALF_LIFE_DAYS)
+        return float(v) if v is not None else _RECENCY_HALF_LIFE_DAYS
+    except Exception:
+        return _RECENCY_HALF_LIFE_DAYS
+
+
+def _recency_decay(ts: str, *, now=None, half_life_days: float = _RECENCY_HALF_LIFE_DAYS) -> float:
+    """Multiplicative recency weight in (0, 1]. 1.0 for now / unparseable / decay-off."""
+    if not ts or half_life_days <= 0:
+        return 1.0
+    try:
+        from datetime import datetime
+        t = datetime.fromisoformat(ts)
+        if now is None:
+            from janus_time import now as _jnow
+            now = _jnow()
+        age_days = (now - t).total_seconds() / 86400.0
+        if age_days <= 0:
+            return 1.0
+        return 0.5 ** (age_days / half_life_days)
+    except Exception:
+        return 1.0
+
+
+def recall_lessons(
+    query: str, *, n: int = 3, now=None, half_life_days: Optional[float] = None
+) -> List[Dict[str, Any]]:
     """Return up to ``n`` past lessons most relevant to ``query``, ranked.
 
-    Lexical token overlap over the lesson text and its task type, with an
-    optional semantic re-rank when an embedding backend is installed.
+    Lexical token overlap over the lesson text and its task type, decayed by a
+    recency half-life so newer lessons win ties, with an optional semantic
+    re-rank when an embedding backend is installed. ``now`` / ``half_life_days``
+    are injectable for testing.
     """
     qt = _tokens(query)
     if not qt:
         return []
+    hl = _recency_half_life_days() if half_life_days is None else half_life_days
     scored: List[Dict[str, Any]] = []
     for rec in load():
         text = str(rec.get("lesson", ""))
@@ -196,12 +238,14 @@ def recall_lessons(query: str, *, n: int = 3) -> List[Dict[str, Any]]:
         overlap = len(qt & et)
         if overlap == 0:
             continue
-        score = round(overlap / (len(et) ** 0.5), 4)
+        score = (overlap / (len(et) ** 0.5)) * _recency_decay(
+            rec.get("ts", ""), now=now, half_life_days=hl
+        )
         scored.append({
             "lesson": text,
             "task_type": rec.get("task_type", "general"),
             "ts": rec.get("ts", ""),
-            "score": score,
+            "score": round(score, 4),
         })
     scored.sort(key=lambda x: x["score"], reverse=True)
     try:

@@ -130,3 +130,56 @@ def test_auto_mine_writes_lesson_on_failure(monkeypatch):
 
     stored = lessons.load()
     assert any("Run tests before deploying." in r["lesson"] for r in stored)
+
+
+# --- recency-weighted recall (Increment 2.1) --------------------------------
+
+def _utc(y=2026, mo=6, d=30):
+    from datetime import datetime, timezone
+    return datetime(y, mo, d, tzinfo=timezone.utc)
+
+
+def test_recency_decay_halves_each_half_life():
+    from datetime import timedelta
+    now = _utc()
+    iso = lambda days: (now - timedelta(days=days)).isoformat()
+    assert lessons._recency_decay(iso(0), now=now, half_life_days=30) == 1.0
+    assert abs(lessons._recency_decay(iso(30), now=now, half_life_days=30) - 0.5) < 1e-9
+    assert abs(lessons._recency_decay(iso(60), now=now, half_life_days=30) - 0.25) < 1e-9
+
+
+def test_recency_decay_safe_defaults():
+    now = _utc()
+    assert lessons._recency_decay("", now=now) == 1.0                       # no ts
+    assert lessons._recency_decay("not-a-date", now=now) == 1.0             # unparseable
+    assert lessons._recency_decay("2099-01-01T00:00:00+00:00", now=now) == 1.0  # future
+    # half_life 0 disables decay even for an old timestamp
+    assert lessons._recency_decay("2020-01-01T00:00:00+00:00", now=now, half_life_days=0) == 1.0
+
+
+def test_recency_half_life_from_config():
+    assert lessons._recency_half_life_days({"learning": {"lessons": {"recency_half_life_days": 7}}}) == 7.0
+    assert lessons._recency_half_life_days({}) == 30.0                       # default
+    assert lessons._recency_half_life_days({"learning": {"lessons": {"recency_half_life_days": 0}}}) == 0.0
+
+
+def test_recall_newer_lesson_outranks_equal_overlap_older(monkeypatch):
+    from datetime import timedelta
+    now = _utc()
+    old_ts = (now - timedelta(days=120)).isoformat()
+    new_ts = (now - timedelta(days=1)).isoformat()
+    # Identical text → identical lexical overlap; only recency differs.
+    recs = [
+        {"lesson": "tune the postgres connection pool", "task_type": "db", "ts": old_ts},
+        {"lesson": "tune the postgres connection pool", "task_type": "db", "ts": new_ts},
+    ]
+    monkeypatch.setattr(lessons, "load", lambda: recs)
+    # Force the lexical path so the assertion is independent of an embedding backend.
+    def _no_embed(*a, **k):
+        raise RuntimeError("no embeddings in test")
+    monkeypatch.setattr("agent.embeddings.hybrid_rerank", _no_embed)
+
+    hits = lessons.recall_lessons("tune postgres pool", now=now, half_life_days=30)
+    assert len(hits) == 2
+    assert hits[0]["ts"] == new_ts                  # newer wins the tie
+    assert hits[0]["score"] > hits[1]["score"]

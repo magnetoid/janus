@@ -1763,6 +1763,13 @@ DEFAULT_CONFIG = {
         # mistakes compound into improvement. Effective only when track_outcomes
         # is on (it needs the success/failure signal); on by default once it is.
         "reflexion": True,
+        # Reflexion lesson recall (agent/lessons.py): recalled lessons are
+        # ranked by lexical overlap × a recency half-life, so a freshly-learned
+        # lesson outranks an equally-relevant stale one. Half-life in days;
+        # 0 disables decay (pure lexical). See plans/self-improvement-roadmap.md 2.1.
+        "lessons": {
+            "recency_half_life_days": 30,
+        },
         # Dialectic red-team gate on the learning loop (see
         # plans/dialectic-learning-gate.md): before mined facts/skills are
         # committed and session outcomes labeled, an advocate/skeptic/arbiter
