@@ -1,0 +1,10 @@
+name: otlp
+version: "1.0.0"
+description: "Optional OpenTelemetry (OTLP) metrics export for Janus — LLM tokens/cost/latency and tool calls/latency, so the agent and its learning loop can be measured. Opt-in via `janus plugins enable observability/otlp`; set OTEL_EXPORTER_OTLP_ENDPOINT. Needs opentelemetry-sdk + opentelemetry-exporter-otlp."
+author: Cloud Industry
+requires_env:
+  - OTEL_EXPORTER_OTLP_ENDPOINT
+hooks:
+  - post_api_request
+  - pre_tool_call
+  - post_tool_call
