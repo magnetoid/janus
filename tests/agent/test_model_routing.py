@@ -62,10 +62,27 @@ def test_simple_never_ensembles_even_when_enabled(monkeypatch):
     assert d["ensemble"] is False and d["members"] == []
 
 
-def test_consensus_members_reuses_kb(monkeypatch):
+def test_consensus_members_falls_back_to_seeded_kb(monkeypatch):
+    # No live outcome data -> falls back to the curated best_models_for.
+    monkeypatch.setattr("agent.model_strengths.best_value_models",
+                        lambda *a, **k: [])
     monkeypatch.setattr("agent.model_strengths.best_models_for",
                         lambda task, available=None, n=4: ["x", "y"])
     assert mr.consensus_members("math", n=2) == ["x", "y"]
+
+
+def test_consensus_members_prefers_live_value(monkeypatch):
+    # When live cost-aware data exists, it wins over the seeded KB, and the
+    # task is canonicalized so both sides key the same way.
+    seen = {}
+    def _live(cat, available=None, n=3, cost_weight=0.0):
+        seen["cat"] = cat
+        return ["live-A", "live-B"]
+    monkeypatch.setattr("agent.model_strengths.best_value_models", _live)
+    monkeypatch.setattr("agent.model_strengths.best_models_for",
+                        lambda *a, **k: ["seeded"])
+    assert mr.consensus_members("fix the python bug", n=2) == ["live-A", "live-B"]
+    assert seen["cat"] == "coding"      # canonicalized
 
 
 def test_route_best_effort_on_bad_config():

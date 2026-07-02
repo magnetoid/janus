@@ -2005,6 +2005,11 @@ DEFAULT_CONFIG = {
         # extra model call — that would defeat the token savings). Set to
         # "model" to use a cheap aux model for ambiguous cases.
         "complexity_mode": "heuristic",   # "heuristic" | "model"
+        # Cost-awareness for LEARNED ensemble membership: when live outcome data
+        # exists, members are ranked by success rate minus cost_weight * mean USD
+        # per session (HAL doctrine — an improvement that doubles spend isn't
+        # one). 0 = quality-only; raise to prefer cheaper models of similar skill.
+        "cost_weight": 0.0,
         # Model tiers: provider:model per complexity band. Empty model = inherit
         # the agent's configured main model for that tier.
         "model_tiers": {

@@ -40,6 +40,38 @@ def _norm_task(task: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", str(task).strip().lower()).strip("-") or "general"
 
 
+# Canonical task categories the routing layer queries. The live outcome sink
+# MUST record under one of these (not raw first-message text) or routing —
+# which asks best_models_for("coding") etc. — never finds the learned signal.
+CATEGORIES = ("coding", "math", "writing", "research", "reasoning", "general")
+_CATEGORY_KEYWORDS: Dict[str, set] = {
+    "coding": {"code", "coding", "bug", "debug", "function", "python", "javascript",
+               "typescript", "rust", "compile", "refactor", "api", "git", "test",
+               "class", "import", "stacktrace", "exception", "regex", "sql", "build"},
+    "math": {"math", "calculate", "equation", "integral", "derivative", "probability",
+             "solve", "arithmetic", "theorem", "algebra", "geometry", "matrix", "proof"},
+    "writing": {"write", "essay", "draft", "email", "story", "copy", "blog", "article",
+                "rephrase", "rewrite", "summarize", "summary", "paragraph", "headline"},
+    "research": {"research", "find", "search", "sources", "cite", "citation", "paper",
+                 "study", "lookup", "investigate", "compare", "survey"},
+    "reasoning": {"why", "explain", "reason", "logic", "analyze", "plan", "strategy",
+                  "decide", "tradeoff", "diagnose", "evaluate", "assess"},
+}
+
+
+def canonical_category(text: str) -> str:
+    """Classify free text into one of ``CATEGORIES`` by keyword overlap — cheap,
+    deterministic, no model call. Falls back to "general". This is the key the
+    live outcome sink records under so routing can retrieve it."""
+    tokens = set(re.findall(r"[a-z]+", str(text).lower()))
+    best, best_n = "general", 0
+    for cat, kws in _CATEGORY_KEYWORDS.items():
+        n = len(tokens & kws)
+        if n > best_n:
+            best, best_n = cat, n
+    return best
+
+
 def load() -> Dict[str, List[Dict[str, Any]]]:
     path = get_strengths_path()
     if not path.is_file():
@@ -87,14 +119,17 @@ def record(task: str, model: str, *, note: str = "", source: str = "", score: Op
 
 
 def record_outcome(task: str, model: str, success: bool, *,
-                   source: str = "", alpha: float = 0.3) -> Dict[str, Any]:
+                   source: str = "", alpha: float = 0.3,
+                   cost: Optional[float] = None) -> Dict[str, Any]:
     """Fold one success/failure observation into ``(task, model)``.
 
     Unlike ``record`` (a curated score SET — each call replaces the score),
     this maintains a running exponentially-weighted success rate in ``score``
     plus a ``samples`` count, so repeated live outcomes accumulate instead of
-    overwriting each other. Used by consumers that observe real task results
-    (e.g. routed delegation subtasks). Returns the updated entry.
+    overwriting each other. ``cost`` (this observation's USD, if known) folds a
+    running ``mean_cost`` so routing can weigh quality against price. Used by
+    consumers that observe real task results (routed delegation subtasks, the
+    live session-outcome sink). Returns the updated entry.
     """
     model = str(model).strip()
     if not model:
@@ -107,6 +142,8 @@ def record_outcome(task: str, model: str, success: bool, *,
     if entry is None:
         entry = {"model": model, "note": "", "source": source, "score": outcome,
                  "samples": 1, "updated_at": _now_iso()}
+        if cost is not None:
+            entry["mean_cost"] = round(float(cost), 6)
         entries.append(entry)
     else:
         prior = entry.get("score")
@@ -117,6 +154,12 @@ def record_outcome(task: str, model: str, success: bool, *,
             # First OUTCOME for an entry that only had a curated/seeded score:
             # start the running rate from the observation, not the seed.
             entry["score"] = outcome
+        if cost is not None:
+            prior_cost = entry.get("mean_cost")
+            if isinstance(prior_cost, (int, float)) and samples > 0:
+                entry["mean_cost"] = round((1 - alpha) * float(prior_cost) + alpha * float(cost), 6)
+            else:
+                entry["mean_cost"] = round(float(cost), 6)
         entry["samples"] = samples + 1
         if source:
             entry["source"] = source
@@ -140,6 +183,37 @@ def outcome_score(task: str, model: str) -> tuple[Optional[float], int]:
                 return float(score), samples
             return None, 0
     return None, 0
+
+
+def best_value_models(task: str, available: Optional[List[str]] = None, n: int = 3, *,
+                      cost_weight: float = 0.0, min_samples: int = 2) -> List[str]:
+    """Models ranked by learned VALUE for ``task`` — success rate with an optional
+    cost penalty (HAL doctrine: an improvement that doubles spend isn't one).
+
+    Only models with >= ``min_samples`` accumulated live outcomes qualify, so a
+    seeded-but-unproven model can't win. ``cost_weight`` (>=0) subtracts
+    ``cost_weight * mean_cost`` from the success rate; 0 = quality-only. Filters
+    by ``available`` (substring match, like best_models_for). Falls back to []
+    when nothing has enough live data.
+    """
+    task = _norm_task(task)
+    scored = []
+    for e in load().get(task, []):
+        samples = int(e.get("samples") or 0)
+        score = e.get("score")
+        if samples < min_samples or not isinstance(score, (int, float)):
+            continue
+        model = e.get("model")
+        if not model:
+            continue
+        value = float(score) - cost_weight * float(e.get("mean_cost") or 0.0)
+        scored.append((value, model))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    names = [m for _, m in scored]
+    if available is not None:
+        avail = list(available)
+        names = [m for m in names if any(m in a or a in m for a in avail)]
+    return names[:n]
 
 
 def best_models_for(

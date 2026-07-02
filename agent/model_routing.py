@@ -51,9 +51,24 @@ def _tier_model(cfg: Dict[str, Any], tier_name: str,
 
 def consensus_members(task: Optional[str] = None, n: int = 3,
                       available: Optional[List[str]] = None) -> List[str]:
-    """Strong models to ensemble for a hard task, from the model-strengths KB."""
+    """Strong models to ensemble for a hard task, from the model-strengths KB.
+
+    Prefers the LIVE cost-aware signal (best_value_models over the canonical
+    task category the outcome sink records under) so real performance drives
+    ensembling; falls back to the curated/seeded best_models_for when there is
+    not yet enough live data. This is what makes learned routing non-fiction:
+    both sides key on the same canonical category.
+    """
     try:
-        from agent.model_strengths import best_models_for
+        from agent.model_strengths import (
+            best_models_for, best_value_models, canonical_category,
+        )
+        cat = canonical_category(task or "general")
+        cost_weight = float(_consensus_config().get("cost_weight", 0.0) or 0.0)
+        live = best_value_models(cat, available=available, n=max(1, n),
+                                 cost_weight=cost_weight)
+        if live:
+            return live[:n]
         models = best_models_for(task or "general", available=available, n=max(1, n))
         return list(models)[:n]
     except Exception as exc:

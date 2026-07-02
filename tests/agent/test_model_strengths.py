@@ -95,3 +95,39 @@ def test_outcome_score_ignores_curated_entries():
 
 def test_outcome_score_unknown_model():
     assert ms.outcome_score("delegation-mid", "never-seen") == (None, 0)
+
+
+# --- canonical taxonomy + cost-joined value ranking (move 6-remainder) -------
+
+def test_canonical_category_classifies():
+    assert ms.canonical_category("fix the python bug in my api") == "coding"
+    assert ms.canonical_category("write me an essay about dogs") == "writing"
+    assert ms.canonical_category("solve this integral equation") == "math"
+    assert ms.canonical_category("research the sources and cite them") == "research"
+    assert ms.canonical_category("hello there") == "general"       # no keywords
+    assert ms.canonical_category("") == "general"
+
+
+def test_record_outcome_tracks_mean_cost_ewma():
+    e = ms.record_outcome("coding", "m1", True, cost=0.10)
+    assert e["mean_cost"] == 0.10
+    e = ms.record_outcome("coding", "m1", True, cost=0.20, alpha=0.5)
+    assert e["mean_cost"] == 0.15                                   # 0.5*0.10 + 0.5*0.20
+
+
+def test_best_value_models_quality_vs_cost():
+    for _ in range(3):
+        ms.record_outcome("coding", "cheap-A", True, cost=0.01)
+        ms.record_outcome("coding", "pricey-B", True, cost=0.50)
+    ms.record_outcome("coding", "cheap-A", False, cost=0.01)        # A slightly worse
+    assert ms.best_value_models("coding", cost_weight=0.0)[0] == "pricey-B"   # quality wins
+    assert ms.best_value_models("coding", cost_weight=1.0)[0] == "cheap-A"    # cost flips it
+
+
+def test_best_value_models_requires_min_samples_and_filters_available():
+    for _ in range(3):
+        ms.record_outcome("math", "proven", True, cost=0.02)
+    ms.record_outcome("math", "unproven", True, cost=0.02)          # only 1 sample
+    assert ms.best_value_models("math", min_samples=2) == ["proven"]
+    # availability filter
+    assert ms.best_value_models("math", available=["openrouter/other"], min_samples=2) == []

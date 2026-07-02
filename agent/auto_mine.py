@@ -77,12 +77,25 @@ def maybe_automine(
                                        tool_failure_rate=tool_failure_rate(snapshot))
                         # Live model-strengths signal: attribute this session's
                         # outcome to the model that ran it, so learned routing draws
-                        # on real performance, not just web-seeded research. (3.x / Track D seed)
+                        # on real performance, not just web-seeded research.
+                        # Move 6-remainder: key by the CANONICAL task category
+                        # routing actually queries (not raw first-message text),
+                        # accumulate via record_outcome (EWMA, not a clobbering
+                        # set), and join the session's cost so routing can weigh
+                        # quality against price.
                         if model:
                             try:
-                                from agent.model_strengths import record as _record_strength
-                                _record_strength(task=topic or "general", model=model,
-                                                 source="live", score=(1.0 if verdict else 0.0))
+                                from agent.model_strengths import (
+                                    record_outcome as _record_outcome, canonical_category,
+                                )
+                                _cost = None
+                                try:
+                                    from agent.cost_ledger import session_total_usd
+                                    _cost = session_total_usd(session_id) if session_id else None
+                                except Exception:
+                                    _cost = None
+                                _record_outcome(canonical_category(topic), model, bool(verdict),
+                                                source="live", cost=_cost)
                             except Exception as exc:
                                 logger.debug("model_strengths live sink failed: %s", exc)
                         # Reflexion write-back: a failed session becomes a
