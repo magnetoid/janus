@@ -2028,6 +2028,26 @@ def tick(verbose: bool = True, adapters=None, loop=None, sync: bool = True) -> i
     Returns:
         Number of jobs executed (0 if another tick is already running)
     """
+    # Safety floor (move 3): if autonomy is frozen or a rolling USD spend cap is
+    # hit, skip the ENTIRE tick cleanly — before advancing next_run_at, running
+    # any job, or marking anything. This is checked at the PROCESS (ambient) home
+    # so a single `janus autonomy freeze` is a global kill switch that stops all
+    # cron LLM work regardless of a job's per-profile home; and it is a benign
+    # skip (jobs stay due for the next tick), NOT a failure — so it never delivers
+    # a "failed" alert, burns a repeat quota, or auto-deletes a limited-repeat job.
+    # Zero-cost no_agent script jobs are also paused while frozen; unfreeze to
+    # resume. The per-agent-turn per-session ceiling (B-PR2) still bounds any job
+    # already in flight when the freeze/cap engaged.
+    try:
+        from agent.autonomy_guard import blocked_reason
+        _blocked = blocked_reason()
+    except Exception:
+        _blocked = None
+    if _blocked:
+        if verbose:
+            logger.warning("Cron tick skipped — %s (autonomy safety floor).", _blocked)
+        return 0
+
     lock_dir, lock_file = _get_lock_paths()
     lock_dir.mkdir(parents=True, exist_ok=True)
 

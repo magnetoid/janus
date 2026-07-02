@@ -1764,6 +1764,27 @@ DEFAULT_CONFIG = {
     # mid-conversation changes). 0 = unlimited (default).
     "budget": {
         "session_cost_usd": 0,
+        # Rolling cross-session USD caps (agent/cost_ledger). Unlike the
+        # per-session ceiling, these sum spend across ALL sessions over a
+        # trailing window, so they bound unattended fan-out — the many cheap
+        # cron/kanban/delegate sessions that each stay under the per-session
+        # ceiling but together run away. Gate NEW work at the cron tick and
+        # kanban/delegate spawn; in-flight work still completes. Caps bound
+        # PRICED spend only (a model the pricing layer can't price logs $0).
+        # 0 = unlimited.
+        "daily_usd": 0,      # trailing 24h
+        "monthly_usd": 0,    # trailing 30d
+    },
+
+    # Master safety floor for unattended operation (agent/autonomy_guard).
+    # `frozen: true` — or, more reliably, the $JANUS_HOME/AUTONOMY_FROZEN
+    # sentinel written by `janus autonomy freeze` — refuses NEW autonomous work
+    # (cron ticks, kanban/delegate spawns). In-flight work finishes. The sentinel
+    # file is the dependable global kill switch: it survives a config reload or a
+    # corrupt config (which would fail-open this flag). A control that lives
+    # outside the agent's own decision loop.
+    "autonomy": {
+        "frozen": False,
     },
 
     # Self-learning reinforcement. When track_outcomes is on, each ended

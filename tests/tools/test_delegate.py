@@ -188,6 +188,27 @@ class TestDelegateTask(unittest.TestCase):
         result = json.loads(delegate_task(tasks=[{"context": "no goal here"}], parent_agent=parent))
         self.assertIn("error", result)
 
+    def test_refuses_when_autonomy_blocked(self):
+        # Safety floor (move 3): frozen / over-budget -> new fan-out refused
+        # before any child is built.
+        parent = _make_mock_parent()
+        with patch("agent.autonomy_guard.blocked_reason",
+                   return_value="rolling 24h spend $9.00 has reached the $5.00 cap"):
+            result = json.loads(delegate_task(goal="do work", parent_agent=parent))
+        self.assertIn("error", result)
+        self.assertIn("refused", result["error"].lower())
+        self.assertIn("cap", result["error"])
+
+    def test_allows_when_guard_clear(self):
+        # Guard returning None must not block delegation (regression guard on
+        # the new check — a truthy-None bug would break all delegation).
+        parent = _make_mock_parent()
+        with patch("agent.autonomy_guard.blocked_reason", return_value=None):
+            result = json.loads(delegate_task(goal="  ", parent_agent=parent))
+        # falls through to the normal empty-goal error, NOT the guard refusal
+        self.assertIn("error", result)
+        self.assertNotIn("refused", result["error"].lower())
+
     @patch("tools.delegate_tool._run_single_child")
     def test_single_task_mode(self, mock_run):
         mock_run.return_value = {

@@ -114,3 +114,95 @@ def session_total_usd(session_id: str) -> float:
         )
     except Exception:
         return 0.0
+
+
+# --- rolling spend windows (move 3: safety floor) ---------------------------
+
+_PERIOD_SECONDS = {"day": 86400.0, "month": 2592000.0}  # trailing 24h / 30d
+
+
+def _parse_ts(ts: Any) -> Optional[float]:
+    """ISO-8601 string → epoch seconds. None on anything unparseable."""
+    if not ts:
+        return None
+    try:
+        from datetime import datetime
+        return datetime.fromisoformat(str(ts)).timestamp()
+    except Exception:
+        return None
+
+
+def spend_since(cutoff_epoch: float, *, rows: Optional[List[Dict[str, Any]]] = None) -> float:
+    """Sum ``cost_usd`` across ALL sessions for rows at/after ``cutoff_epoch``.
+
+    Rows with an unparseable/missing ts are EXCLUDED. Counting them would be
+    monotonic and unbounded — a handful of empty-ts rows (``_now_iso`` returns
+    "" when janus_time hiccups) would pin every rolling window over the cap
+    forever, permanently blocking autonomy with no recovery. Ledger-write access
+    already defeats any ledger-based cap (you could delete the file), so this
+    trades a non-defense against a real self-inflicted lockout.
+    """
+    try:
+        rows = load_ledger() if rows is None else rows
+        total = 0.0
+        for r in rows:
+            rt = _parse_ts(r.get("ts"))
+            if rt is not None and rt >= cutoff_epoch:
+                total += float(r.get("cost_usd", 0.0) or 0.0)
+        return round(total, 6)
+    except Exception:
+        return 0.0
+
+
+def rolling_spend(period: str, *, now_ts: Optional[float] = None) -> float:
+    """Total spend over the trailing ``period`` ("day" = 24h, "month" = 30d)."""
+    window = _PERIOD_SECONDS.get(period)
+    if window is None:
+        return 0.0
+    if now_ts is None:
+        import time
+        now_ts = time.time()
+    return spend_since(now_ts - window)
+
+
+def rolling_caps(config: Optional[Dict[str, Any]] = None) -> Dict[str, float]:
+    """Configured rolling USD caps ``{"day": x, "month": y}`` (0 = unlimited)."""
+    try:
+        if config is None:
+            from janus_cli.config import load_config
+            config = load_config()
+        budget = (config.get("budget", {}) or {}) if isinstance(config, dict) else {}
+        out: Dict[str, float] = {}
+        for period, key in (("day", "daily_usd"), ("month", "monthly_usd")):
+            try:
+                v = float(budget.get(key, 0) or 0)
+            except (TypeError, ValueError):
+                v = 0.0
+            if v > 0:
+                out[period] = v
+        return out
+    except Exception:
+        return {}
+
+
+def spend_cap_exceeded(config: Optional[Dict[str, Any]] = None, *,
+                       now_ts: Optional[float] = None) -> Optional[str]:
+    """Reason string if any rolling cap is met/exceeded, else None. Best-effort.
+
+    This spans ALL sessions (unlike the per-session ceiling), so it is the cap
+    that bounds unattended fan-out — many cheap cron/kanban/delegate sessions
+    that individually stay under the per-session ceiling but together run away.
+    """
+    try:
+        caps = rolling_caps(config)
+        if not caps:
+            return None
+        for period, cap in caps.items():
+            spent = rolling_spend(period, now_ts=now_ts)
+            if spent >= cap:
+                label = "24h" if period == "day" else "30d"
+                return (f"rolling {label} spend ${spent:.2f} has reached the "
+                        f"${cap:.2f} cap (budget.{'daily_usd' if period == 'day' else 'monthly_usd'})")
+        return None
+    except Exception:
+        return None

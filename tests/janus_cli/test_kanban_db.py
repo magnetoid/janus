@@ -1547,6 +1547,25 @@ def test_dispatch_promotes_ready_and_spawns(kanban_home, all_assignees_spawnable
         assert kb.get_task(conn, c).status == "running"
 
 
+def test_dispatch_safety_floor_blocks_new_spawns(kanban_home, all_assignees_spawnable, monkeypatch):
+    """Move 3: when autonomy is frozen / over budget, no new workers spawn —
+    but reclaim + promote still run and the task stays claimable."""
+    spawns = []
+
+    def fake_spawn(task, workspace):
+        spawns.append(task.id)
+
+    monkeypatch.setattr("agent.autonomy_guard.blocked_reason",
+                        lambda *a, **k: "autonomy is frozen (kill switch engaged)")
+    with kb.connect() as conn:
+        t = kb.create_task(conn, title="work", assignee="alice")
+        res = kb.dispatch_once(conn, spawn_fn=fake_spawn)
+        # No worker spawned; task NOT claimed (still ready for when unfrozen).
+        assert spawns == []
+        assert res.spawn_blocked_reason and "frozen" in res.spawn_blocked_reason
+        assert kb.get_task(conn, t).status == "ready"
+
+
 def test_dispatch_spawn_failure_releases_claim(kanban_home, all_assignees_spawnable):
     def boom(task, workspace):
         raise RuntimeError("spawn failed")

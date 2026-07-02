@@ -2008,6 +2008,22 @@ def delegate_task(
             "(`p` in /agents) or the `delegation.pause` RPC before retrying."
         )
 
+    # Safety floor (move 3): delegation is the cost-multiplier vector (one call
+    # can spawn a whole tree), so the master autonomy freeze and the rolling
+    # USD spend caps gate new fan-out here — never interrupting already-running
+    # children, only refusing NEW spawns.
+    try:
+        from agent.autonomy_guard import blocked_reason
+        _blocked = blocked_reason()
+    except Exception:
+        _blocked = None
+    if _blocked:
+        return tool_error(
+            f"Delegation refused — {_blocked}. Raise the cap in config "
+            f"(budget.daily_usd / budget.monthly_usd) or clear the freeze "
+            f"(`janus autonomy unfreeze`) before retrying."
+        )
+
     # Normalise the top-level role once; per-task overrides re-normalise.
     top_role = _normalize_role(role)
 

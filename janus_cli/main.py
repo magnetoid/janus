@@ -15658,6 +15658,59 @@ Examples:
     learning_parser.set_defaults(func=cmd_learning)
 
     # =========================================================================
+    # autonomy command — the safety floor: kill switch + rolling spend view
+    # =========================================================================
+    autonomy_parser = subparsers.add_parser(
+        "autonomy",
+        help="Safety floor for unattended operation: freeze switch + spend caps",
+    )
+    autonomy_sub = autonomy_parser.add_subparsers(dest="autonomy_command")
+    autonomy_sub.add_parser("status", help="Show freeze state + rolling spend vs caps")
+    _a_frz = autonomy_sub.add_parser(
+        "freeze", help="Halt all autonomous action now (cron/kanban/delegate fan-out)")
+    _a_frz.add_argument("reason", nargs="?", default="", help="why (recorded in the sentinel)")
+    autonomy_sub.add_parser("unfreeze", help="Release the freeze sentinel")
+
+    def cmd_autonomy(args):
+        from agent import autonomy_guard as ag
+        from agent import cost_ledger as cl
+        sub = getattr(args, "autonomy_command", None)
+        if sub == "freeze":
+            ok = ag.freeze(getattr(args, "reason", "") or "manual")
+            print(f"\n  {'✓ Autonomy FROZEN' if ok else '⚠ could not write freeze sentinel'} "
+                  f"— new cron/kanban/delegate work will refuse until unfrozen.\n"
+                  f"    (in-flight work finishes; `janus autonomy unfreeze` to resume)\n")
+            return 0 if ok else 1
+        if sub == "unfreeze":
+            ag.unfreeze()
+            still = ag.frozen()
+            print("\n  ✓ Freeze sentinel cleared." +
+                  ("\n  ⚠ Still frozen via autonomy.frozen in config — edit config to fully release.\n"
+                   if still else "\n"))
+            return 0
+        # status (default)
+        frozen = ag.frozen()
+        caps = cl.rolling_caps()
+        print(f"\n  Autonomy: {'🛑 FROZEN' if frozen else '● active'}")
+        if frozen:
+            rt = ag.freeze_reason_text()
+            if rt:
+                print(f"    reason: {rt}")
+        if caps:
+            for period, cap in caps.items():
+                spent = cl.rolling_spend(period)
+                label = "24h " if period == "day" else "30d "
+                bar = "OVER" if spent >= cap else "ok"
+                print(f"    {label}spend: ${spent:.2f} / ${cap:.2f} cap  [{bar}]")
+        else:
+            print("    rolling spend caps: unset (budget.daily_usd / budget.monthly_usd = 0)")
+        blocked = ag.blocked_reason()
+        print(f"\n  New autonomous work: {'BLOCKED — ' + blocked if blocked else 'allowed'}\n")
+        return 0
+
+    autonomy_parser.set_defaults(func=cmd_autonomy)
+
+    # =========================================================================
     # team command — shared team memory (common knowledge across assistants)
     # =========================================================================
     team_parser = subparsers.add_parser(

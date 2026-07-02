@@ -4866,6 +4866,10 @@ class DispatchResult:
 
     reclaimed: int = 0
     promoted: int = 0
+    spawn_blocked_reason: Optional[str] = None
+    """Set when the safety floor (move 3) halted spawning this tick — autonomy
+    frozen or a rolling USD spend cap hit. Reclaim/promote still ran; no new
+    workers were started."""
     spawned: list[tuple[str, str, str]] = field(default_factory=list)
     """List of ``(task_id, assignee, workspace_path)`` triples."""
     skipped_unassigned: list[str] = field(default_factory=list)
@@ -6092,6 +6096,21 @@ def dispatch_once(
         result.rate_limited.extend(_crash_rate_limited)
     result.timed_out = enforce_max_runtime(conn)
     result.promoted = recompute_ready(conn, failure_limit=failure_limit)
+
+    # Safety floor (move 3): when autonomy is frozen or a rolling USD spend cap
+    # is hit, spawn NO new workers this tick — but only after the reclaim/
+    # promote steps above, so stale cleanup still runs and already-running
+    # workers finish. dry_run still previews (it spends nothing).
+    if not dry_run:
+        try:
+            from agent.autonomy_guard import blocked_reason
+            _blocked = blocked_reason()
+        except Exception:
+            _blocked = None
+        if _blocked:
+            result.spawn_blocked_reason = _blocked
+            _log.warning("kanban dispatch: no new workers spawned — %s", _blocked)
+            return result
 
     # Count tasks already running so max_spawn enforces concurrency rather
     # than a per-tick spawn budget. See the docstring above for the full

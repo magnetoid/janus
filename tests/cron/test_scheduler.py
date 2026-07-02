@@ -2736,3 +2736,30 @@ class TestCronDeliveryTargets:
         monkeypatch.setattr(gateway_config, "load_gateway_config", _boom)
 
         assert cron_delivery_targets() == []
+
+
+def test_tick_skipped_cleanly_when_autonomy_blocked(monkeypatch):
+    """Safety floor (move 3): a frozen / over-budget tick is skipped as a whole,
+    BEFORE listing due jobs, advancing next_run_at, or running anything — so it
+    never delivers a "failed" alert, burns a repeat quota, or auto-deletes a
+    limited-repeat job. Checked at the process (ambient) home, so one freeze is
+    global across job profiles."""
+    import cron.scheduler as sched
+    seen = {"due": False, "ran": False}
+
+    def _due():
+        seen["due"] = True
+        return [{"id": "j1", "name": "x", "prompt": "p"}]
+
+    def _run(job):
+        seen["ran"] = True
+        return (True, "", "", None)
+
+    monkeypatch.setattr("agent.autonomy_guard.blocked_reason",
+                        lambda *a, **k: "autonomy is frozen (kill switch engaged)")
+    monkeypatch.setattr(sched, "get_due_jobs", _due)
+    monkeypatch.setattr(sched, "run_job", _run)
+
+    assert sched.tick(verbose=False) == 0
+    assert seen["ran"] is False   # nothing ran
+    assert seen["due"] is False   # skipped before due-list / advance_next_run
