@@ -1836,6 +1836,17 @@ DEFAULT_CONFIG = {
             "enabled": False,       # master switch
             "max_entries": 40,      # hard cap (prevents prompt bloat / collapse)
         },
+        # Governed self-improvement / DGM-lite (agent/self_improve.py): the agent
+        # proposes variants of its OWN artifacts (skill drafts, prompt fragments,
+        # lesson-curation policies — NEVER core code) and promotes the ones that
+        # measurably help. Every promotion is gated by an eval that didn't
+        # regress the suite, the governor not being frozen, the autonomy safety
+        # floor, AND human approval. OFF by default; this is the agent editing
+        # itself, so it stays behind an explicit switch and a human.
+        "self_improve": {
+            "enabled": False,               # master switch
+            "require_human_approval": True,  # graduate to False only with earned trust
+        },
         # Self-improvement governor (agent/self_improvement_governor.py): the
         # consumer of the continual-learning health metrics. It classifies the
         # loop as OK / CAUTION / FROZEN and gates autonomous skill promotion on

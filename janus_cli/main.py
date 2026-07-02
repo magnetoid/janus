@@ -15711,6 +15711,87 @@ Examples:
     autonomy_parser.set_defaults(func=cmd_autonomy)
 
     # =========================================================================
+    # self-improve command — human-in-the-loop review of the agent's proposed
+    # variants of its own skills/prompts/policies (DGM-lite, move 9)
+    # =========================================================================
+    si_parser = subparsers.add_parser(
+        "self-improve",
+        help="Review + gate the agent's proposed self-modifications (skills/prompts)",
+        description=(
+            "The agent can propose variants of its own artifacts (skill drafts, "
+            "prompt fragments, lesson policies — never core code). Each is "
+            "eval-gated and needs your approval before it is applied. Enable with "
+            "learning.self_improve.enabled=true."
+        ),
+    )
+    si_sub = si_parser.add_subparsers(dest="si_command")
+    si_sub.add_parser("list", help="List proposals and their status")
+    _si_show = si_sub.add_parser("show", help="Show one proposal (with lineage + diff)")
+    _si_show.add_argument("id")
+    _si_ap = si_sub.add_parser("approve", help="Approve an evaluated proposal")
+    _si_ap.add_argument("id")
+    _si_pr = si_sub.add_parser("promote", help="Apply an approved+gated proposal")
+    _si_pr.add_argument("id")
+    _si_rj = si_sub.add_parser("reject", help="Reject a proposal")
+    _si_rj.add_argument("id")
+    _si_rb = si_sub.add_parser("rollback", help="Undo a promoted proposal (restore backup)")
+    _si_rb.add_argument("id")
+
+    def cmd_self_improve(args):
+        from agent import self_improve as si
+        sub = getattr(args, "si_command", None)
+        if sub in ("approve", "promote", "reject", "rollback"):
+            pid = args.id
+            if sub == "approve":
+                r = si.approve(pid)
+                print(f"\n  {'✓ approved ' + pid if r else '⚠ cannot approve (must be evaluated first)'}\n")
+            elif sub == "promote":
+                res = si.promote(pid)
+                if res.get("promoted"):
+                    print(f"\n  ✓ promoted {pid} → {res['target']}"
+                          f"{' (backup saved)' if res.get('backup') else ''}\n")
+                else:
+                    print(f"\n  ⚠ refused: {res.get('reason')}\n")
+            elif sub == "reject":
+                si.reject(pid); print(f"\n  ✓ rejected {pid}\n")
+            else:
+                res = si.rollback(pid)
+                print(f"\n  {'✓ rolled back ' + pid if res.get('rolled_back') else '⚠ ' + str(res.get('reason'))}\n")
+            return 0
+        if sub == "show":
+            rec = si.get(args.id)
+            if not rec:
+                print(f"\n  no such proposal: {args.id}\n"); return 1
+            print(f"\n  {rec['id']}  [{rec['status']}]  kind={rec['kind']}")
+            print(f"    target:    {rec['target']}")
+            print(f"    rationale: {rec.get('rationale') or '—'}")
+            print(f"    eval:      before={rec.get('score_before')} after={rec.get('score_after')} "
+                  f"gate_ok={rec.get('gate_ok')}")
+            ok, reason = si.can_promote(args.id)
+            print(f"    promotable: {ok} ({reason})")
+            chain = si.lineage(args.id)
+            if len(chain) > 1:
+                print(f"    lineage:   {' → '.join(c['id'] for c in chain)}")
+            print(f"\n    --- proposed content ---\n{rec.get('content','')[:1200]}\n")
+            return 0
+        # list (default)
+        rows = si.load_archive()
+        if not rows:
+            print("\n  No self-improvement proposals yet "
+                  "(enable with learning.self_improve.enabled=true).\n")
+            return 0
+        print(f"\n  {len(rows)} proposal(s):")
+        for r in rows:
+            score = ""
+            if r.get("score_before") is not None:
+                score = f"  {r.get('score_before')}→{r.get('score_after')}"
+            print(f"    {r['id']:8s} {r['status']:10s} {r['kind']:14s} {r['target']}{score}")
+        print("\n  Review one: janus self-improve show <id>\n")
+        return 0
+
+    si_parser.set_defaults(func=cmd_self_improve)
+
+    # =========================================================================
     # team command — shared team memory (common knowledge across assistants)
     # =========================================================================
     team_parser = subparsers.add_parser(
