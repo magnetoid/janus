@@ -164,11 +164,20 @@ def test_eval_decline_cautions_even_with_insufficient_sessions(monkeypatch):
     assert r["state"] == gov.STATE_CAUTION
 
 
-def test_eval_trend_freeze_reason_reads_curve(monkeypatch):
-    # net regression (more pass→fail than fail→pass) → a reason; net improvement → None
-    monkeypatch.setattr("agent.eval_trend.learning_curve",
-                        lambda *a, **k: {"regressed": ["a", "b"], "learned": ["c"], "points": []})
-    assert gov._eval_trend_freeze_reason() is not None
-    monkeypatch.setattr("agent.eval_trend.learning_curve",
-                        lambda *a, **k: {"regressed": ["a"], "learned": ["b", "c"], "points": []})
+def test_eval_trend_freeze_reason_delegates_to_gate(monkeypatch):
+    # The governor freezes exactly when the regression gate fails: any
+    # consistent regression-kind flip (noise-floored) or a suspicious jump.
+    # It no longer nets regressions against learned evals — with the noise
+    # floor, a consistent pass→fail flip is a real signal on its own.
+    monkeypatch.setattr("agent.eval_trend.regression_gate",
+                        lambda *a, **k: {"ok": False, "message": "REGRESSION — 1 eval(s)"})
+    reason = gov._eval_trend_freeze_reason()
+    assert reason is not None and "REGRESSION" in reason
+    monkeypatch.setattr("agent.eval_trend.regression_gate",
+                        lambda *a, **k: {"ok": True, "message": "OK"})
+    assert gov._eval_trend_freeze_reason() is None
+    # A jump is advisory (gate stays ok=True), so it must NOT freeze the loop —
+    # a genuine win should never lock out self-improvement.
+    monkeypatch.setattr("agent.eval_trend.regression_gate",
+                        lambda *a, **k: {"ok": True, "message": "OK — no regressions  [!] pass rate rose +40% ..."})
     assert gov._eval_trend_freeze_reason() is None

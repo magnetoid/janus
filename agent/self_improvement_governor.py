@@ -75,20 +75,20 @@ def auto_promote_enabled() -> bool:
 
 
 def _eval_trend_freeze_reason() -> Optional[str]:
-    """Net regression on the deterministic eval suite → a strong 'getting worse'
-    signal that warrants a freeze. Best-effort; None when unavailable. Only the
+    """A failing regression gate → a strong 'getting worse' signal that
+    warrants a freeze. Delegates to ``eval_trend.regression_gate`` — the same
+    noise-floored, kind-aware signal CI fails on — so the governor also
+    freezes on the reward-hacking signature (a suspicious one-point pass-rate
+    jump), not just on declines. Best-effort; None when unavailable. Only the
     latest ``suite_hash`` is compared, so editing evals can't phantom-freeze.
     See plans/self-improvement-roadmap.md 3.2.
     """
     try:
-        from agent.eval_trend import learning_curve
+        from agent.eval_trend import regression_gate
 
-        lc = learning_curve()
-        regressed = lc.get("regressed") or []
-        learned = lc.get("learned") or []
-        if len(regressed) > len(learned) and len(regressed) >= 1:
-            return (f"eval suite regressed: {len(regressed)} eval(s) pass→fail vs "
-                    f"{len(learned)} learned")
+        gate = regression_gate()
+        if not gate.get("ok", True):
+            return f"eval gate failing: {gate.get('message')}"
     except Exception:
         logger.debug("governor eval-trend freeze read failed", exc_info=True)
     return None

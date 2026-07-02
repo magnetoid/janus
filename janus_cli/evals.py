@@ -144,15 +144,19 @@ def _cmd_gate(args) -> int:
     """Exit non-zero if the eval suite regressed — a CI/cron regression gate."""
     from agent import eval_trend as et
 
+    fail_closed = bool(getattr(args, "fail_closed", False))
     if getattr(args, "run", False):
         rec = et.run_trend(path=_resolve_path(args))
         if rec.get("error"):
             print(f"evals: trend run failed — {rec['error']}", file=sys.stderr)
             return 2
-    gate = et.regression_gate(window=getattr(args, "window", None))
+    gate = et.regression_gate(window=getattr(args, "window", None),
+                              fail_closed=fail_closed)
     print(gate["message"])
     if gate.get("pass_rate") is not None:
-        print(f"  pass_rate={gate['pass_rate']} suite={gate.get('suite_hash')}")
+        jump = gate.get("jump")
+        jump_s = f" jump={jump:+.4f}" if isinstance(jump, (int, float)) else ""
+        print(f"  pass_rate={gate['pass_rate']} suite={gate.get('suite_hash')}{jump_s}")
     return 0 if gate["ok"] else 1
 
 
@@ -224,6 +228,8 @@ def register_cli(parent: argparse.ArgumentParser) -> None:
     p_gate.add_argument("--path", help="Spec file or directory (default $JANUS_HOME/evals/)")
     p_gate.add_argument("--window", type=int, default=None,
                         help="Only compare the last N trend points")
+    p_gate.add_argument("--fail-closed", action="store_true", dest="fail_closed",
+                        help="Also fail on missing history or gate errors (CI mode)")
     p_gate.set_defaults(func=_cmd_gate)
 
     p_ab = subs.add_parser("ab", help="A/B a feature flag: suite pass-rate ON vs OFF")

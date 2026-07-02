@@ -17339,9 +17339,13 @@ Examples:
         cmd_chat(args)
         return
 
-    # Execute the command
+    # Execute the command. Handlers that return a nonzero int are exit codes —
+    # `janus evals gate` in CI depends on this propagating (bool is excluded:
+    # a handler returning True must not read as exit 1).
     if hasattr(args, "func"):
-        args.func(args)
+        rc = args.func(args)
+        if isinstance(rc, int) and not isinstance(rc, bool) and rc != 0:
+            raise SystemExit(rc)
     else:
         parser.print_help()
 

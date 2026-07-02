@@ -39,6 +39,27 @@ def test_register_adds_gate():
     assert ns.window == 5 and hasattr(ns, "func")
 
 
+def test_gate_exit_code_propagates_through_real_cli(tmp_path):
+    # Regression: main.py used to discard args.func's return value, so the
+    # gate printed FAIL but the PROCESS exited 0 — invisible to in-process
+    # tests, fatal for CI. Drive the real entry point in a subprocess.
+    import os
+    import subprocess
+    import sys as _sys
+    home = tmp_path / ".janus"
+    home.mkdir(parents=True)
+    env = dict(os.environ, JANUS_HOME=str(home))
+    r = subprocess.run(
+        [_sys.executable, "-m", "janus_cli.main", "evals", "gate", "--fail-closed"],
+        capture_output=True, text=True, env=env, timeout=120)
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "FAIL-CLOSED" in r.stdout
+    r = subprocess.run(
+        [_sys.executable, "-m", "janus_cli.main", "evals", "gate"],
+        capture_output=True, text=True, env=env, timeout=120)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
 def test_cmd_gate_exit_codes(monkeypatch, capsys):
     # regression → exit 1 (CI fails)
     monkeypatch.setattr(et, "regression_gate", lambda **k: {

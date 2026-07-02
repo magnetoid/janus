@@ -68,6 +68,12 @@ class EvalSpec:
     use_memory: bool = False
     use_context_files: bool = False
     source_file: Optional[str] = None
+    # "regression" (default): behavior that must not break — the hard signal
+    # `janus evals gate` and the governor freeze on. "capability": an ability
+    # being pursued — tracked on the curve and reported, but its churn never
+    # fails the gate. Defaulting to regression preserves gate semantics for
+    # suites that predate the field.
+    kind: str = "regression"
 
 
 def evals_dir() -> Path:
@@ -106,6 +112,12 @@ def _spec_from_dict(raw: Dict[str, Any], source_file: str = "") -> EvalSpec:
     if toolsets is not None and not isinstance(toolsets, list):
         toolsets = [str(toolsets)]
 
+    kind = str(raw.get("kind", "regression")).strip().lower() or "regression"
+    if kind not in ("regression", "capability"):
+        raise ValueError(
+            f"eval '{name}': kind must be 'regression' or 'capability', got {kind!r}"
+        )
+
     return EvalSpec(
         name=name,
         prompt=prompt,
@@ -118,6 +130,7 @@ def _spec_from_dict(raw: Dict[str, Any], source_file: str = "") -> EvalSpec:
         use_memory=bool(raw.get("use_memory", False)),
         use_context_files=bool(raw.get("use_context_files", False)),
         source_file=source_file,
+        kind=kind,
     )
 
 

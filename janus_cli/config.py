@@ -1885,6 +1885,12 @@ DEFAULT_CONFIG = {
         "trend": {
             "enabled": False,
             "interval_hours": 24,   # at most once a day automatically
+            # Trials per eval per trend point. Single-run pass@1 is noisy even
+            # at temperature 0; an eval only counts as passed when it passes
+            # ALL trials (pass^k), and learned/regressed flips need consistent
+            # movement, so trend points measure reliability, not luck. Set 1
+            # to restore the cheap single-run behavior.
+            "trials": 3,
         },
         "autopin": False,           # failed session -> draft regression-pin eval
     },
