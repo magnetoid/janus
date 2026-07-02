@@ -17,6 +17,7 @@ function is best-effort and never raises.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -26,6 +27,7 @@ from typing import Any, Callable, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 _MAX_LESSONS = 300  # keep the most recent; oldest are dropped on write
+_MAX_RECALL_SESSIONS = 1000  # cap the pending recall→outcome join state
 
 _STOP = {
     "the", "a", "an", "is", "are", "was", "were", "be", "to", "of", "and", "or",
@@ -48,13 +50,32 @@ def _now_iso() -> str:
         return ""
 
 
+def _lesson_id(text: str) -> str:
+    """Stable id for a lesson — a hash of its normalized text, so the same
+    lesson always maps to the same id (aligns with dedup) and survives reloads."""
+    return hashlib.sha256(str(text).strip().lower().encode("utf-8")).hexdigest()[:12]
+
+
+def _migrate(rec: Dict[str, Any]) -> Dict[str, Any]:
+    """Fill move-4 fields (id + efficacy counters) on an older record. In-memory
+    only — persisted the next time something writes the record back."""
+    if isinstance(rec, dict):
+        rec.setdefault("helpful", 0)
+        rec.setdefault("harmful", 0)
+        if not rec.get("id") and rec.get("lesson"):
+            rec["id"] = _lesson_id(rec["lesson"])
+    return rec
+
+
 def load() -> List[Dict[str, Any]]:
     path = get_lessons_path()
     if not path.is_file():
         return []
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return data if isinstance(data, list) else []
+        if not isinstance(data, list):
+            return []
+        return [_migrate(r) for r in data]
     except (ValueError, OSError):
         return []
 
@@ -86,10 +107,13 @@ def record_lesson(
     if any(str(r.get("lesson", "")).lower() == norm for r in records):
         return None  # already learned this
     rec = {
+        "id": _lesson_id(lesson),
         "lesson": lesson,
         "task_type": _slug(task_type) if task_type else "general",
         "session_id": session_id or "",
         "source": source,
+        "helpful": 0,   # sessions that recalled this and then SUCCEEDED
+        "harmful": 0,   # sessions that recalled this and then FAILED
         "ts": _now_iso(),
     }
     records.append(rec)
@@ -97,6 +121,115 @@ def record_lesson(
         records = records[-_MAX_LESSONS:]
     _save(records)
     return rec
+
+
+# --- efficacy: join recalled lessons to the outcome they rode with ----------
+
+def get_recall_state_path() -> Path:
+    from janus_constants import get_janus_home
+    return get_janus_home() / "learning" / "lesson_recall.json"
+
+
+def _load_recall_state() -> Dict[str, List[str]]:
+    p = get_recall_state_path()
+    if not p.is_file():
+        return {}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (ValueError, OSError):
+        return {}
+
+
+def _save_recall_state(state: Dict[str, List[str]]) -> None:
+    # Cap to the most recent sessions so an un-reconciled backlog can't grow
+    # without bound (dicts preserve insertion order → drop the oldest).
+    if len(state) > _MAX_RECALL_SESSIONS:
+        state = dict(list(state.items())[-_MAX_RECALL_SESSIONS:])
+    p = get_recall_state_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+
+
+def _outcome_tracking_on() -> bool:
+    """True when learning.track_outcomes is set — the only path that reconciles
+    the recall log. Gate logging on it so a default install (recall injection on,
+    outcome tracking off) doesn't pay per-turn IO to accumulate state nothing reads."""
+    try:
+        from janus_cli.config import load_config
+        return bool(((load_config().get("learning") or {}).get("track_outcomes")))
+    except Exception:
+        return False
+
+
+def log_recall(session_id: str, lesson_ids: List[str]) -> None:
+    """Record that ``lesson_ids`` were surfaced to ``session_id`` this turn, so a
+    later outcome can credit/debit them. No-op unless outcome tracking is on (the
+    reconcile side). Best-effort; accumulates across a session's turns."""
+    try:
+        ids = [i for i in (lesson_ids or []) if i]
+        if not session_id or not ids or not _outcome_tracking_on():
+            return
+        state = _load_recall_state()
+        merged = sorted(set(state.get(session_id, [])) | set(ids))
+        # Re-insert at the end so an actively-recalling long session stays fresh
+        # against the insertion-order LRU cap (dicts drop oldest-inserted first).
+        state.pop(session_id, None)
+        state[session_id] = merged
+        _save_recall_state(state)
+    except Exception as exc:
+        logger.debug("log_recall failed: %s", exc)
+
+
+def reconcile_lesson_outcomes(session_id: str, success: bool) -> int:
+    """Credit (success) or debit (failure) every lesson recalled in ``session_id``.
+
+    Idempotent: the session's recall record is POPPED, so a second call is a
+    no-op. Returns how many lessons were updated. Best-effort — this is the
+    signal recall ranking and pruning use to demote lessons that don't help.
+    """
+    try:
+        if not session_id:
+            return 0
+        state = _load_recall_state()
+        ids = state.pop(session_id, None)
+        if not ids:
+            return 0
+        _save_recall_state(state)  # pop first → idempotent even if crediting fails
+        records = load()
+        by_id = {r.get("id"): r for r in records if r.get("id")}
+        field = "helpful" if success else "harmful"
+        n = 0
+        for lid in ids:
+            r = by_id.get(lid)
+            if r is not None:
+                r[field] = int(r.get(field, 0) or 0) + 1
+                n += 1
+        if n:
+            _save(records)
+        return n
+    except Exception as exc:
+        logger.debug("reconcile_lesson_outcomes failed: %s", exc)
+        return 0
+
+
+def _efficacy_multiplier(rec: Dict[str, Any]) -> float:
+    """Laplace-smoothed success rate → a gentle recall-score multiplier in
+    [0.75, 1.25]. Unknown (no outcomes) is neutral (1.0); a lesson that keeps
+    riding with failed sessions sinks toward 0.75, a helpful one rises toward
+    1.25 — a soft nudge that never overwhelms lexical relevance.
+
+    CAVEAT (why this is only a soft RANKING signal, never a delete criterion):
+    the signal is confounded. A lesson is credited/debited for the WHOLE session
+    outcome with no relevance/used check, so a lesson recalled on inherently-hard
+    tasks tracks the task's base failure rate, not its own value. Demoting such a
+    lesson in ranking is self-correcting (a genuinely useful one still surfaces
+    when strongly relevant); DELETING it on this signal would remove correct
+    guidance for exactly the hardest tasks — so we deliberately do not.
+    """
+    h = int(rec.get("helpful", 0) or 0)
+    harm = int(rec.get("harmful", 0) or 0)
+    return 0.75 + 0.5 * (h + 1) / (h + harm + 2)
 
 
 # --- reflection (failure -> lesson) -----------------------------------------
@@ -221,9 +354,10 @@ def recall_lessons(
     """Return up to ``n`` past lessons most relevant to ``query``, ranked.
 
     Lexical token overlap over the lesson text and its task type, decayed by a
-    recency half-life so newer lessons win ties, with an optional semantic
-    re-rank when an embedding backend is installed. ``now`` / ``half_life_days``
-    are injectable for testing.
+    recency half-life so newer lessons win ties, and scaled by demonstrated
+    EFFICACY (move 4) — a lesson that keeps riding with failed sessions sinks,
+    a helpful one rises — with an optional semantic re-rank when an embedding
+    backend is installed. ``now`` / ``half_life_days`` are injectable for testing.
     """
     qt = _tokens(query)
     if not qt:
@@ -240,8 +374,9 @@ def recall_lessons(
             continue
         score = (overlap / (len(et) ** 0.5)) * _recency_decay(
             rec.get("ts", ""), now=now, half_life_days=hl
-        )
+        ) * _efficacy_multiplier(rec)
         scored.append({
+            "id": rec.get("id", ""),
             "lesson": text,
             "task_type": rec.get("task_type", "general"),
             "ts": rec.get("ts", ""),
@@ -288,7 +423,7 @@ _LESSON_FENCE_RE = re.compile(
 _MAX_LESSONS_CONTEXT_CHARS = 4000
 
 
-def recall_context_for_turn(query: str, *, n: int = 3) -> str:
+def recall_context_for_turn(query: str, *, n: int = 3, session_id: str = "") -> str:
     """Fenced lessons block for per-turn user-message injection, or ``""``.
 
     The push half of reflexion: instead of waiting for the model to call the
@@ -296,13 +431,19 @@ def recall_context_for_turn(query: str, *, n: int = 3) -> str:
     lessons into the current turn's user message (API-call-time only, never
     persisted, never the system prompt). Pure local-file read — no aux calls.
     Empty when disabled, the query is blank, or nothing relevant is stored.
+
+    When ``session_id`` is given, the surfaced lesson ids are logged so the
+    session's eventual outcome can credit/debit them (move 4 efficacy loop).
     """
     try:
         if not str(query or "").strip() or not recall_injection_enabled():
             return ""
-        block = format_lessons_for_prompt(recall_lessons(query, n=n))
+        hits = recall_lessons(query, n=n)
+        block = format_lessons_for_prompt(hits)
         if not block:
             return ""
+        if session_id:
+            log_recall(session_id, [h.get("id", "") for h in hits])
         block = _LESSON_FENCE_RE.sub("", block)
         if len(block) > _MAX_LESSONS_CONTEXT_CHARS:
             cut = block.rfind("\n", 0, _MAX_LESSONS_CONTEXT_CHARS)

@@ -90,6 +90,13 @@ def record_outcome(
     records = load()
     records.append(rec)
     _save(records)
+    # Close the move-4 efficacy loop: credit/debit the lessons this session
+    # recalled based on whether it succeeded. Best-effort; idempotent per session.
+    try:
+        from agent.lessons import reconcile_lesson_outcomes
+        reconcile_lesson_outcomes(session_id, bool(success))
+    except Exception:
+        pass
     return rec
 
 

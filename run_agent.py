@@ -2936,7 +2936,8 @@ class AIAgent:
         try:
             from agent.auto_mine import maybe_automine
             maybe_automine(messages or [], active_persona=getattr(self, "_active_persona", None),
-                           model=getattr(self, "model", None))
+                           model=getattr(self, "model", None),
+                           session_id=self.session_id or "")
         except Exception:
             pass
 

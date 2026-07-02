@@ -65,3 +65,22 @@ def janus_home_dir(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setenv("JANUS_HOME", str(home))
     return home
+
+
+def test_explicit_session_id_reaches_reconcile(janus_home_dir, monkeypatch):
+    """Move 4 plumbing: the agent's session_id (not a per-message field) must
+    reach record_outcome so the lesson-efficacy join matches log_recall's key."""
+    import yaml
+    (janus_home_dir / "config.yaml").write_text(
+        yaml.safe_dump({"learning": {"track_outcomes": True}}), encoding="utf-8")
+    from agent import lessons
+    monkeypatch.setattr(lessons, "_outcome_tracking_on", lambda: True)
+    monkeypatch.setattr("agent.outcome_tracker.classify_session", lambda msgs: True)
+    monkeypatch.setattr("agent.outcome_tracker.skills_used_in", lambda msgs: [])
+    monkeypatch.setattr("agent.outcome_tracker.tool_failure_rate", lambda msgs: 0.0)
+
+    les = lessons.record_lesson("A threaded lesson.", task_type="x")
+    lessons.log_recall("real-sid", [les["id"]])   # keyed on the agent session id
+    # messages carry NO per-message session_id — only the explicit arg should work
+    auto_mine.maybe_automine(MESSAGES, run_in_thread=False, session_id="real-sid")
+    assert {r["id"]: r for r in lessons.load()}[les["id"]]["helpful"] == 1

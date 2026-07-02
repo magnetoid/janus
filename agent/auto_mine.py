@@ -28,10 +28,15 @@ def _flag(section: str, key: str, *, default: bool = False) -> bool:
 def maybe_automine(
     messages: List[Dict[str, Any]], *, run_in_thread: bool = True,
     active_persona: Optional[str] = None, model: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> Optional[threading.Thread]:
     """Mine the just-ended session for memory/skills if opted in.
 
-    Returns the worker thread (or None if nothing was scheduled). Fully
+    ``session_id`` (the rotated-out session's id, from the agent) is preferred;
+    it must be threaded through so the move-4 lesson-efficacy join in
+    record_outcome matches the id log_recall keyed on. In-memory conversation
+    messages don't carry a per-message session_id, so the fallback below usually
+    yields "" — pass it explicitly. Returns the worker thread (or None). Fully
     best-effort — never raises, never blocks meaningful work.
     """
     try:
@@ -43,7 +48,7 @@ def maybe_automine(
         if not (mine_memory or mine_skills or track_outcomes):
             return None
         snapshot = list(messages)
-        session_id = next(
+        session_id = str(session_id) if session_id else next(
             (str(m["session_id"]) for m in reversed(snapshot) if m.get("session_id")), ""
         )
 

@@ -833,7 +833,8 @@ def run_conversation(
     try:
         from agent.lessons import recall_context_for_turn
         _lessons_context = recall_context_for_turn(
-            original_user_message if isinstance(original_user_message, str) else ""
+            original_user_message if isinstance(original_user_message, str) else "",
+            session_id=agent.session_id or "",
         )
     except Exception:
         _lessons_context = ""
