@@ -1891,6 +1891,14 @@ DEFAULT_CONFIG = {
     # Uses the same runtime provider resolution as CLI/gateway startup, so all
     # configured providers (OpenRouter, Nous, Z.ai, Kimi, etc.) are supported.
     "delegation": {
+        # Learned routing (Track D): when true AND consensus.enabled is true,
+        # each delegated subtask is classified for complexity at task entry and
+        # routed to the matching consensus.model_tiers model (cheap/mid/smart).
+        # Outcomes feed the model-strengths KB; a tier model that keeps failing
+        # a band is un-routed (learned distrust). Ignored whenever an explicit
+        # delegation.model/provider/base_url override is set. Decisions happen
+        # only at child construction, so the parent's prompt cache is safe.
+        "routing": False,
         "model": "",       # e.g. "google/gemini-3-flash-preview" (empty = inherit parent model)
         "provider": "",    # e.g. "openrouter" (empty = inherit parent provider + credentials)
         "base_url": "",    # direct OpenAI-compatible endpoint for subagents

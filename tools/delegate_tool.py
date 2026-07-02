@@ -2109,25 +2109,37 @@ def delegate_task(
     # Wrapped in try/finally so the global is always restored even if a
     # child build raises (otherwise _last_resolved_tool_names stays corrupted).
     children = []
+    routing_by_index: Dict[int, Dict[str, Any]] = {}
     try:
         for i, t in enumerate(task_list):
             task_acp_args = t.get("acp_args") if "acp_args" in t else None
             # Per-task role beats top-level; normalise again so unknown
             # per-task values warn and degrade to leaf uniformly.
             effective_role = _normalize_role(t.get("role") or top_role)
+            # Learned routing (Track D): per-task complexity-priced model at
+            # task entry. No-op unless delegation.routing + consensus.enabled.
+            # ACP children run a subprocess CLI whose model isn't ours to pick.
+            if t.get("acp_command") or acp_command:
+                task_creds, routing_info = creds, None
+            else:
+                task_creds, routing_info = _maybe_route_task_credentials(
+                    t["goal"], cfg, parent_agent, creds
+                )
+            if routing_info:
+                routing_by_index[i] = routing_info
             child = _build_child_agent(
                 task_index=i,
                 goal=t["goal"],
                 context=t.get("context"),
                 toolsets=t.get("toolsets") or toolsets,
-                model=creds["model"],
+                model=task_creds["model"],
                 max_iterations=effective_max_iter,
                 task_count=n_tasks,
                 parent_agent=parent_agent,
-                override_provider=creds["provider"],
-                override_base_url=creds["base_url"],
-                override_api_key=creds["api_key"],
-                override_api_mode=creds["api_mode"],
+                override_provider=task_creds["provider"],
+                override_base_url=task_creds["base_url"],
+                override_api_key=task_creds["api_key"],
+                override_api_mode=task_creds["api_mode"],
                 override_acp_command=t.get("acp_command")
                 or acp_command
                 or creds.get("command"),
@@ -2268,6 +2280,26 @@ def delegate_task(
 
         # Sort by task_index so results match input order
         results.sort(key=lambda r: r["task_index"])
+
+    # Close the routing loop: fold each ROUTED child's outcome back into the
+    # model-strengths KB (running success rate per complexity band) so future
+    # routing decisions can distrust models that keep failing. Parent thread
+    # only — record_outcome does read-modify-write on the KB file. Interrupted
+    # children are skipped: an interrupt says nothing about the model.
+    for entry in results:
+        info = routing_by_index.get(entry.get("task_index"))
+        if not info or entry.get("status") == "interrupted":
+            continue
+        try:
+            from agent.model_strengths import record_outcome
+            record_outcome(
+                f"delegation-{info['band']}",
+                info["model"],
+                entry.get("status") == "completed",
+                source="delegation-routing",
+            )
+        except Exception as exc:
+            logger.debug("delegate_task: outcome recording failed: %s", exc)
 
     # Notify parent's memory provider of delegation outcomes
     if (
@@ -2519,6 +2551,82 @@ def _resolve_delegation_credentials(cfg: dict, parent_agent) -> dict:
         "command": runtime.get("command"),
         "args": list(runtime.get("args") or []),
     }
+
+
+# Learned-distrust gate for routed subtasks: with at least this many recorded
+# outcomes and a running success rate below the floor, routing steps aside and
+# the child inherits the parent model instead. Distrust-only by design — the
+# gate can only UN-route a demonstrably failing tier model, never promote an
+# unproven one, so a cold KB changes nothing.
+_ROUTING_MIN_SAMPLES = 3
+_ROUTING_SCORE_FLOOR = 0.34
+
+
+def _maybe_route_task_credentials(goal: str, cfg: dict, parent_agent, creds: dict):
+    """Route one delegated subtask to a complexity-priced model (Track D).
+
+    Returns ``(task_creds, routing_info)``. ``routing_info`` is None when the
+    task was not routed; otherwise ``{"band": ..., "model": ...}`` so the
+    caller can record the child's outcome back into the model-strengths KB.
+
+    Fires only when ALL hold — otherwise returns ``creds`` unchanged:
+      - ``delegation.routing`` is true AND ``consensus.enabled`` is true
+      - no static delegation override (model/provider/base_url) is configured
+      - the child is not an ACP subprocess (model choice isn't ours there)
+    The decision happens at TASK ENTRY (the child is a fresh conversation), so
+    the parent's prompt cache is untouched. Best-effort: any failure — config,
+    classification, credential resolution — falls back to parent inheritance.
+    """
+    try:
+        if not cfg.get("routing"):
+            return creds, None
+        if creds.get("model") or creds.get("provider") or creds.get("base_url") or creds.get("command"):
+            return creds, None
+        from agent import model_routing
+        if not model_routing.enabled():
+            return creds, None
+        parent_model = getattr(parent_agent, "model", "") or ""
+        parent_provider = getattr(parent_agent, "provider", "") or ""
+        decision = model_routing.route(
+            goal, main_model=parent_model, main_provider=parent_provider,
+        )
+        band = str(decision.get("complexity") or "mid")
+        model = str(decision.get("model") or "").strip()
+        provider = str(decision.get("provider") or "").strip()
+        if not model or model == parent_model:
+            return creds, None  # routed to the parent's own model — plain inherit
+        from agent.model_strengths import outcome_score
+        score, samples = outcome_score(f"delegation-{band}", model)
+        if samples >= _ROUTING_MIN_SAMPLES and score is not None and score < _ROUTING_SCORE_FLOOR:
+            logger.info(
+                "delegate_task: learned distrust — %s scores %.2f over %d runs "
+                "for %s tasks; child inherits parent model", model, score, samples, band,
+            )
+            return creds, None
+        routed = dict(creds)
+        routed["model"] = model
+        if provider and provider != parent_provider:
+            # Cross-provider: resolve the full credential bundle the same way
+            # the static delegation.provider path does; unauthenticated or
+            # unresolvable providers fall back to plain inheritance.
+            from janus_cli.runtime_provider import resolve_runtime_provider
+            runtime = resolve_runtime_provider(requested=provider, target_model=model)
+            if not runtime.get("api_key"):
+                return creds, None
+            routed.update({
+                "provider": runtime.get("provider") or provider,
+                "base_url": runtime.get("base_url"),
+                "api_key": runtime.get("api_key"),
+                "api_mode": runtime.get("api_mode"),
+            })
+        logger.info(
+            "delegate_task: routed %r -> tier=%s model=%s",
+            (goal or "")[:60], decision.get("tier"), model,
+        )
+        return routed, {"band": band, "model": model}
+    except Exception as exc:
+        logger.debug("delegate_task: routing skipped (%s)", exc)
+        return creds, None
 
 
 def _load_config() -> dict:

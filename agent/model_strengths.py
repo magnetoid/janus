@@ -86,6 +86,62 @@ def record(task: str, model: str, *, note: str = "", source: str = "", score: Op
     save(data)
 
 
+def record_outcome(task: str, model: str, success: bool, *,
+                   source: str = "", alpha: float = 0.3) -> Dict[str, Any]:
+    """Fold one success/failure observation into ``(task, model)``.
+
+    Unlike ``record`` (a curated score SET — each call replaces the score),
+    this maintains a running exponentially-weighted success rate in ``score``
+    plus a ``samples`` count, so repeated live outcomes accumulate instead of
+    overwriting each other. Used by consumers that observe real task results
+    (e.g. routed delegation subtasks). Returns the updated entry.
+    """
+    model = str(model).strip()
+    if not model:
+        return {}
+    task = _norm_task(task)
+    data = load()
+    entries = data.setdefault(task, [])
+    outcome = 1.0 if success else 0.0
+    entry = next((e for e in entries if e.get("model") == model), None)
+    if entry is None:
+        entry = {"model": model, "note": "", "source": source, "score": outcome,
+                 "samples": 1, "updated_at": _now_iso()}
+        entries.append(entry)
+    else:
+        prior = entry.get("score")
+        samples = int(entry.get("samples") or 0)
+        if isinstance(prior, (int, float)) and samples > 0:
+            entry["score"] = round((1 - alpha) * float(prior) + alpha * outcome, 4)
+        else:
+            # First OUTCOME for an entry that only had a curated/seeded score:
+            # start the running rate from the observation, not the seed.
+            entry["score"] = outcome
+        entry["samples"] = samples + 1
+        if source:
+            entry["source"] = source
+        entry["updated_at"] = _now_iso()
+    save(data)
+    return entry
+
+
+def outcome_score(task: str, model: str) -> tuple[Optional[float], int]:
+    """``(score, samples)`` for the running outcome rate of ``(task, model)``.
+
+    ``score`` is None when the model has no accumulated outcomes for the task
+    (curated ``record`` entries without a ``samples`` count don't qualify).
+    """
+    model = str(model).strip()
+    for e in load().get(_norm_task(task), []):
+        if e.get("model") == model:
+            samples = int(e.get("samples") or 0)
+            score = e.get("score")
+            if samples > 0 and isinstance(score, (int, float)):
+                return float(score), samples
+            return None, 0
+    return None, 0
+
+
 def best_models_for(
     task: str, available: Optional[List[str]] = None, n: int = 4
 ) -> List[str]:

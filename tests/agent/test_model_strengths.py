@@ -70,3 +70,28 @@ def test_research_best_effort_on_failure():
         raise RuntimeError("network down")
     res = ms.research("coding", web_search_caller=boom, llm_caller=_fake_llm("[]"))
     assert res["error"] is not None and res["ranked"] == []
+
+
+# --- live outcome accumulation (Track D learned routing) --------------------
+
+def test_record_outcome_accumulates_ewma():
+    e = ms.record_outcome("delegation-simple", "mini-1", True)
+    assert e["score"] == 1.0 and e["samples"] == 1
+    ms.record_outcome("delegation-simple", "mini-1", True)
+    e = ms.record_outcome("delegation-simple", "mini-1", False, alpha=0.3)
+    # 0.7 * 1.0 + 0.3 * 0.0
+    assert e["score"] == pytest.approx(0.7) and e["samples"] == 3
+    score, samples = ms.outcome_score("delegation-simple", "mini-1")
+    assert score == pytest.approx(0.7) and samples == 3
+
+
+def test_outcome_score_ignores_curated_entries():
+    ms.record("delegation-hard", "opus-x", score=9)  # curated seed, no samples
+    assert ms.outcome_score("delegation-hard", "opus-x") == (None, 0)
+    # First real outcome starts the running rate from the observation, not the seed
+    e = ms.record_outcome("delegation-hard", "opus-x", False)
+    assert e["score"] == 0.0 and e["samples"] == 1
+
+
+def test_outcome_score_unknown_model():
+    assert ms.outcome_score("delegation-mid", "never-seen") == (None, 0)
