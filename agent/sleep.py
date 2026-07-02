@@ -396,6 +396,56 @@ def should_run_sleep(now_ts: float, state: Dict[str, Any], interval_hours: float
     return (now_ts - last_ts) >= interval_hours * 3600
 
 
+def _fetch_recent_sessions(
+    limit: int = 10, *, since_ts: Optional[float] = None,
+    sources: tuple = ("cli",),
+) -> tuple:
+    """Recent session transcripts + summaries for GRADUATE/SYNTHESIZE.
+
+    Trust + dedup filters (the unattended path runs with no human eyeballing):
+      - ``sources`` defaults to CLI-only, matching the trust assumption of the
+        human-invoked ``janus sleep --now`` path. Gateway surfaces carry
+        third-party content (Telegram/Discord/email strangers); mining them
+        unattended would be a persistence vector for prompt injection. Widen
+        via ``sleep.graduate_sources`` only deliberately.
+      - child sessions (compression continuations, subagent scratch — rows
+        with a ``parent_session_id``) are skipped: near-duplicates of their
+        parents that would double aux-LLM mining spend and pollute memory.
+      - ``since_ts`` (the previous cycle's ``last_run``) is the consolidation
+        watermark: already-mined sessions are not re-fed every cycle, so a
+        quiet instance costs nothing and skill drafts don't duplicate.
+    Best-effort: ``([], [])`` when the session DB is unavailable.
+    """
+    sessions, summaries = [], []
+    try:
+        from janus_state import SessionDB
+        from agent.memory_miner import _render_transcript
+        db = SessionDB()
+        try:
+            for source in sources or ("cli",):
+                if len(sessions) >= limit:
+                    break
+                for s in db.search_sessions(source=source, limit=limit * 3):
+                    if len(sessions) >= limit:
+                        break
+                    if s.get("parent_session_id"):
+                        continue
+                    if since_ts is not None:
+                        row_ts = _parse_iso(str(s.get("last_active")
+                                                or s.get("started_at") or ""))
+                        if row_ts is not None and row_ts <= since_ts:
+                            continue
+                    msgs = db.get_messages_as_conversation(s["id"])
+                    if msgs:
+                        sessions.append(msgs)
+                        summaries.append(_render_transcript(msgs, max_chars=2000))
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.debug("sleep session fetch failed: %s", exc)
+    return sessions, summaries
+
+
 def maybe_run_sleep(
     idle_for_seconds: Optional[float] = None, *, now_ts: Optional[float] = None,
     store: Any = None,
@@ -421,8 +471,21 @@ def maybe_run_sleep(
             from tools.memory_tool import MemoryStore
             store = MemoryStore()
             store.load_from_disk()
+        # The unattended path used to call run_sleep_cycle WITHOUT sessions,
+        # so GRADUATE/SYNTHESIZE only ever fired via `janus sleep --now`.
+        # Feed it the same recent sessions the manual path uses — CLI-trusted
+        # sources only, children excluded, watermarked to the previous cycle.
+        _srcs = _config("sleep", "graduate_sources", ["cli"])
+        _srcs = tuple(_srcs) if isinstance(_srcs, (list, tuple)) and _srcs else ("cli",)
+        sessions, summaries = _fetch_recent_sessions(
+            limit=int(_config("sleep", "recent_sessions", 10)),
+            since_ts=_parse_iso(str(state.get("last_run") or "")),
+            sources=_srcs,
+        )
         return run_sleep_cycle(
             store,
+            sessions=sessions or None,
+            session_summaries=summaries or None,
             prune_threshold=float(_config("sleep", "importance_threshold", 0.3)),
             keep_min=int(_config("sleep", "keep_min_entries", 10)),
         )

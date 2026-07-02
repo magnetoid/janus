@@ -17905,10 +17905,17 @@ def _start_cron_ticker(stop_event: threading.Event, adapters=None, loop=None, in
             except Exception as e:
                 logger.debug("Curator tick error: %s", e)
             # Sleep — offline memory consolidation, same gated/best-effort pattern.
-            # Internally no-ops unless due (config sleep.*).
+            # Internally no-ops unless due (config sleep.*). On a daemon thread
+            # (mirroring cli.py's exit path): a due cycle GRADUATEs over recent
+            # sessions — many sequential aux LLM calls — and must not stall
+            # this ticker loop, which also dispatches cron jobs.
             try:
+                import threading as _sleep_threading
                 from agent.sleep import maybe_run_sleep
-                maybe_run_sleep(idle_for_seconds=float("inf"))
+                _sleep_threading.Thread(
+                    target=lambda: maybe_run_sleep(idle_for_seconds=float("inf")),
+                    daemon=True, name="sleep-cycle",
+                ).start()
                 from agent.eval_trend import maybe_run_trend
                 maybe_run_trend()
             except Exception as e:

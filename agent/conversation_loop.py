@@ -825,6 +825,19 @@ def run_conversation(
         except Exception:
             pass
 
+    # Reflexion lesson recall — the push half of the learning loop. Computed
+    # ONCE per turn (like the prefetch above) so the injected bytes are
+    # identical across every API rebuild within this turn; rides the current
+    # user message, never the system prompt. Local-file read only.
+    _lessons_context = ""
+    try:
+        from agent.lessons import recall_context_for_turn
+        _lessons_context = recall_context_for_turn(
+            original_user_message if isinstance(original_user_message, str) else ""
+        )
+    except Exception:
+        _lessons_context = ""
+
     # Optional opt-in runtime: if api_mode == codex_app_server, hand the
     # turn to the codex app-server subprocess (terminal/file ops/patching
     # all run inside Codex). Default Janus path is bypassed entirely.
@@ -1015,6 +1028,8 @@ def run_conversation(
                     _fenced = build_memory_context_block(_ext_prefetch_cache)
                     if _fenced:
                         _injections.append(_fenced)
+                if _lessons_context:
+                    _injections.append(_lessons_context)
                 if _plugin_user_context:
                     _injections.append(_plugin_user_context)
                 if _injections:

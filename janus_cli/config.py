@@ -1748,6 +1748,13 @@ DEFAULT_CONFIG = {
         "importance_threshold": 0.3,  # prune entries scoring below this
         "keep_min_entries": 10,       # never prune below this floor
         "daily_lookback_days": 7,
+        "recent_sessions": 10,        # sessions fed to GRADUATE/SYNTHESIZE per cycle
+        # Session sources the UNATTENDED cycle may mine (GRADUATE). CLI-only by
+        # default: gateway surfaces (telegram/discord/email/...) carry untrusted
+        # third-party content, and mining them without human review is a
+        # prompt-injection persistence vector. Widen deliberately, e.g.
+        # ["cli", "telegram"], only for surfaces whose senders you trust.
+        "graduate_sources": ["cli"],
     },
 
     # Spend budget (agent/cost_ledger.py). Every API turn is appended to a
@@ -1778,6 +1785,13 @@ DEFAULT_CONFIG = {
         # 0 disables decay (pure lexical). See plans/self-improvement-roadmap.md 2.1.
         "lessons": {
             "recency_half_life_days": 30,
+            # Push recall (the close-the-loop edge): inject the top relevant
+            # lessons into each turn's user message automatically, instead of
+            # waiting for the model to call the recall_lessons tool. Pure
+            # local-file read, computed once per turn, API-call-time only —
+            # never persisted and never the system prompt (cache-safe). On by
+            # default: it is a no-op until reflexion has stored lessons.
+            "recall_injection": True,
         },
         # Dialectic red-team gate on the learning loop (see
         # plans/dialectic-learning-gate.md): before mined facts/skills are

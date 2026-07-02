@@ -189,3 +189,74 @@ def test_sleep_dry_run_writes_no_sleep_log():
     store = MemoryStore()
     sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"), dry_run=True)
     assert not sleep.sleep_log_path().is_file()
+
+
+# --- unattended sessions feed (close-the-loop move 5) ------------------------
+
+def test_maybe_run_sleep_feeds_recent_sessions(tmp_path, monkeypatch):
+    import yaml
+    home = tmp_path / ".janus"; (home / "learning").mkdir(parents=True)
+    monkeypatch.setenv("JANUS_HOME", str(home))
+    (home / "config.yaml").write_text(yaml.safe_dump(
+        {"sleep": {"enabled": True, "min_idle_hours": 0.0, "interval_hours": 0}}),
+        encoding="utf-8")
+    fake_sessions = [[{"role": "user", "content": "hi"}]]
+    fetch_kwargs = {}
+    def fake_fetch(limit=10, **kw):
+        fetch_kwargs.update(kw, limit=limit)
+        return fake_sessions, ["summary"]
+    monkeypatch.setattr(sleep, "_fetch_recent_sessions", fake_fetch)
+    captured = {}
+    def fake_cycle(store, **kw):
+        captured.update(kw)
+        return {"ok": True}
+    monkeypatch.setattr(sleep, "run_sleep_cycle", fake_cycle)
+    sleep.save_sleep_state({"last_run": "2026-06-24T00:00:00"})
+    monkeypatch.setattr(sleep, "should_run_sleep", lambda *a, **k: True)
+    rep = sleep.maybe_run_sleep(idle_for_seconds=999999, store=object())
+    assert rep == {"ok": True}
+    # The unattended path now GRADUATEs: sessions reach the cycle...
+    assert captured["sessions"] == fake_sessions
+    assert captured["session_summaries"] == ["summary"]
+    # ...trust-scoped to CLI sessions and watermarked to the previous cycle.
+    assert fetch_kwargs["sources"] == ("cli",)
+    assert fetch_kwargs["since_ts"] == sleep._parse_iso("2026-06-24T00:00:00")
+
+
+def test_fetch_recent_sessions_filters_sources_children_watermark(monkeypatch):
+    import janus_state
+    rows = {
+        "cli": [
+            {"id": "s-new", "source": "cli", "parent_session_id": None,
+             "last_active": "2026-06-30T12:00:00"},
+            {"id": "s-child", "source": "cli", "parent_session_id": "s-new",
+             "last_active": "2026-06-30T13:00:00"},
+            {"id": "s-old", "source": "cli", "parent_session_id": None,
+             "last_active": "2026-06-01T00:00:00"},
+        ],
+        "telegram": [
+            {"id": "s-tg", "source": "telegram", "parent_session_id": None,
+             "last_active": "2026-06-30T14:00:00"},
+        ],
+    }
+    class _FakeDB:
+        def search_sessions(self, source=None, limit=20):
+            return rows.get(source, [])[:limit]
+        def get_messages_as_conversation(self, sid):
+            return [{"role": "user", "content": f"msg-{sid}"}]
+        def close(self):
+            pass
+    monkeypatch.setattr(janus_state, "SessionDB", _FakeDB)
+    since = sleep._parse_iso("2026-06-15T00:00:00")
+    sessions, summaries = sleep._fetch_recent_sessions(since_ts=since, sources=("cli",))
+    # Only the fresh, parentless CLI session survives: the compression child,
+    # the pre-watermark session, and the telegram session are all excluded.
+    assert len(sessions) == 1 and len(summaries) == 1
+    assert sessions[0][0]["content"] == "msg-s-new"
+
+
+def test_fetch_recent_sessions_best_effort_empty(tmp_path, monkeypatch):
+    home = tmp_path / ".janus"; home.mkdir(parents=True)
+    monkeypatch.setenv("JANUS_HOME", str(home))
+    sessions, summaries = sleep._fetch_recent_sessions()
+    assert sessions == [] and summaries == []

@@ -15496,6 +15496,20 @@ Examples:
             "learning.governor.auto_promote to true."
         ),
     )
+    learning_sub.add_parser(
+        "enable",
+        help="Turn on the closed learning loop (read-only preset)",
+        description=(
+            "Flips the read-only learning flags together: learning.track_outcomes "
+            "(outcome classification; reflexion lessons ride on it), "
+            "evals.trend.enabled (longitudinal pass-rate curve), and "
+            "learning.governor.enabled (health assessment). Write-side actions — "
+            "governor.auto_promote, playbook, dialectic — stay off; enable those "
+            "individually once the read-only loop has earned trust."
+        ),
+    )
+    learning_sub.add_parser(
+        "disable", help="Turn the learning-loop preset flags back off")
 
     def cmd_learning(args):
         from agent import outcome_tracker as ot
@@ -15504,6 +15518,39 @@ Examples:
             return f"{x*100:.0f}%" if isinstance(x, (int, float)) else "—"
 
         sub = getattr(args, "learning_command", None)
+        if sub in ("enable", "disable"):
+            on = sub == "enable"
+            from janus_cli.config import set_config_value, is_managed
+            if is_managed():
+                print("\n  ⚠ Managed install — config.yaml is not writable here. "
+                      "Set these via your system configuration instead:")
+                for key in ("learning.track_outcomes", "evals.trend.enabled",
+                            "learning.governor.enabled"):
+                    print(f"    {key} = {'true' if on else 'false'}")
+                print()
+                return
+            preset = [
+                ("learning.track_outcomes", "outcome classification + reflexion lessons"),
+                ("evals.trend.enabled", "longitudinal eval pass-rate curve"),
+                ("learning.governor.enabled", "self-improvement health assessment"),
+            ]
+            for key, _ in preset:
+                set_config_value(key, "true" if on else "false")
+            state = "ON" if on else "OFF"
+            print(f"\n  Learning loop preset → {state}:")
+            for key, what in preset:
+                print(f"    ✓ {key:28s} {what}")
+            if on:
+                print("\n  Already on by default: lesson recall injection "
+                      "(learning.lessons.recall_injection), sleep consolidation.")
+                print("  Deliberately still OFF (write-side — enable individually "
+                      "once trusted):")
+                print("    · learning.governor.auto_promote  (autonomous skill promotion)")
+                print("    · learning.playbook.enabled       (loop edits its own prompts)")
+                print("    · learning.dialectic.enabled      (red-team gate, 3 aux calls/mine)")
+            print("\n  Applies to NEW sessions (config is read at session start; "
+                  "no mid-conversation change).\n")
+            return
         if sub == "record":
             sid = getattr(args, "session", None) or _resolve_last_session("cli") or ""
             skills = []
