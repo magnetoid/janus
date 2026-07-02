@@ -60,6 +60,30 @@ def test_gate_exit_code_propagates_through_real_cli(tmp_path):
     assert r.returncode == 0, r.stdout + r.stderr
 
 
+def test_register_adds_horizon():
+    parent = argparse.ArgumentParser()
+    ev.register_cli(parent)
+    ns = parent.parse_args(["horizon"])
+    assert hasattr(ns, "func")
+
+
+def test_cmd_horizon_reports_scalar(monkeypatch, capsys):
+    monkeypatch.setattr(et, "learning_curve", lambda *a, **k: {"points": [
+        {"ts": "t1", "pass_rate": 0.5, "horizon_minutes": 15.0},
+        {"ts": "t2", "pass_rate": 0.9, "horizon_minutes": 60.0},
+    ]})
+    rc = ev._cmd_horizon(argparse.Namespace())
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "1h" in out and "15m" in out and "↑" in out   # rose 15m -> 1h
+
+
+def test_cmd_horizon_no_data(monkeypatch, capsys):
+    monkeypatch.setattr(et, "learning_curve", lambda *a, **k: {"points": []})
+    assert ev._cmd_horizon(argparse.Namespace()) == 0
+    assert "no horizon data" in capsys.readouterr().out
+
+
 def test_cmd_gate_exit_codes(monkeypatch, capsys):
     # regression → exit 1 (CI fails)
     monkeypatch.setattr(et, "regression_gate", lambda **k: {

@@ -94,6 +94,26 @@ def _load_trend() -> List[Dict[str, Any]]:
     return out
 
 
+def time_horizon(per_eval: Dict[str, Any], minutes: Dict[str, Any]) -> float:
+    """METR-style 50%-success time horizon (move 8): the longest task length (in
+    estimated human-minutes) the agent passes at least half the time.
+
+    ``per_eval`` maps eval name → pass FRACTION (move 2 pass^k output); ``minutes``
+    maps eval name → est_minutes. Only tagged evals (minutes > 0) count. Returns
+    0.0 when nothing qualifies. Saturation-resistant: bounded only by the longest
+    task in the suite, so it keeps rising as harder tasks are added — unlike a
+    pass-rate that caps at 100%.
+    """
+    try:
+        qualifying = [
+            float(minutes[name]) for name, frac in per_eval.items()
+            if float(minutes.get(name, 0) or 0) > 0 and _pass_frac(frac) >= 0.5
+        ]
+        return round(max(qualifying), 4) if qualifying else 0.0
+    except Exception:
+        return 0.0
+
+
 def _configured_trials() -> int:
     try:
         from janus_cli.config import load_config
@@ -132,6 +152,7 @@ def run_trend(
         total = len(specs)
         per_eval = {name: round(n / k, 4) for name, n in passes.items()}
         passed = sum(1 for frac in per_eval.values() if frac >= 1.0)
+        minutes = {s.name: float(getattr(s, "est_minutes", 0) or 0) for s in specs}
         record = {
             "ts": _now_iso(),
             "pass_rate": round(passed / total, 4) if total else None,
@@ -140,6 +161,8 @@ def run_trend(
             "trials": k,
             "per_eval": per_eval,
             "kinds": {s.name: getattr(s, "kind", "regression") for s in specs},
+            "est_minutes": minutes,
+            "horizon_minutes": time_horizon(per_eval, minutes),
             "suite_hash": _suite_hash(specs),
         }
         if save:
@@ -276,7 +299,8 @@ def learning_curve(window: Optional[int] = None) -> Dict[str, Any]:
     same = [r for r in records if r.get("suite_hash") == latest_hash]
     if window:
         same = same[-window:]
-    points = [{"ts": r["ts"], "pass_rate": r["pass_rate"]} for r in same]
+    points = [{"ts": r["ts"], "pass_rate": r["pass_rate"],
+               "horizon_minutes": r.get("horizon_minutes")} for r in same]
 
     # Per-eval fraction SERIES across the window — not just first-vs-last. The
     # baseline for each eval is the best it was reliably at in any PRIOR point

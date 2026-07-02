@@ -160,6 +160,38 @@ def _cmd_gate(args) -> int:
     return 0 if gate["ok"] else 1
 
 
+def _fmt_minutes(m) -> str:
+    if not m:
+        return "—"
+    m = float(m)
+    if m < 60:
+        return f"{m:g}m"
+    if m < 1440:
+        return f"{m / 60:g}h"
+    return f"{m / 1440:g}d"
+
+
+def _cmd_horizon(args) -> int:
+    """Show the METR-style time-horizon KPI over recorded trend points."""
+    from agent import eval_trend as et
+
+    lc = et.learning_curve()
+    pts = [p for p in lc.get("points", []) if p.get("horizon_minutes") is not None]
+    if not pts:
+        print("evals: no horizon data yet. Tag evals with `est_minutes:` and run "
+              "`janus evals trend` (or `gate --run`).")
+        return 0
+    first, last = pts[0]["horizon_minutes"], pts[-1]["horizon_minutes"]
+    print(f"time horizon (longest task passed >=50% of the time): "
+          f"{_fmt_minutes(last)}")
+    if len(pts) >= 2:
+        delta = (last or 0) - (first or 0)
+        arrow = "↑" if delta > 0 else ("↓" if delta < 0 else "→")
+        print(f"  {arrow} {_fmt_minutes(first)} → {_fmt_minutes(last)} "
+              f"over {len(pts)} trend point(s)")
+    return 0
+
+
 def _cmd_ab(args) -> int:
     from agent import eval_trend as et
 
@@ -231,6 +263,10 @@ def register_cli(parent: argparse.ArgumentParser) -> None:
     p_gate.add_argument("--fail-closed", action="store_true", dest="fail_closed",
                         help="Also fail on missing history or gate errors (CI mode)")
     p_gate.set_defaults(func=_cmd_gate)
+
+    p_hz = subs.add_parser(
+        "horizon", help="Show the METR-style time-horizon KPI over trend points")
+    p_hz.set_defaults(func=_cmd_horizon)
 
     p_ab = subs.add_parser("ab", help="A/B a feature flag: suite pass-rate ON vs OFF")
     p_ab.add_argument("flag", help="section.key flag, e.g. memory.write_time_reconcile")

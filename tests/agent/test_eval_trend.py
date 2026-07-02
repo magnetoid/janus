@@ -255,6 +255,47 @@ def test_spec_kind_validation():
                          "checks": [{"type": "contains", "value": "x"}]})
 
 
+def test_spec_est_minutes_parsed_and_validated():
+    import pytest
+    from agent.evals import _spec_from_dict
+    chk = [{"type": "contains", "value": "x"}]
+    assert _spec_from_dict({"name": "n", "prompt": "p", "checks": chk, "est_minutes": 30}).est_minutes == 30.0
+    assert _spec_from_dict({"name": "n", "prompt": "p", "checks": chk}).est_minutes == 0.0  # default
+    with pytest.raises(ValueError):
+        _spec_from_dict({"name": "n", "prompt": "p", "checks": chk, "est_minutes": "soon"})
+
+
+# --- time-horizon KPI (move 8) ----------------------------------------------
+
+def test_time_horizon_longest_reliably_passed():
+    per_eval = {"quick": 1.0, "medium": 0.67, "long": 0.0}
+    minutes = {"quick": 2, "medium": 15, "long": 60}
+    assert et.time_horizon(per_eval, minutes) == 15.0     # passes 15m >=0.5, fails 60m
+    # learning the long task raises the horizon (saturation-resistant)
+    assert et.time_horizon({**per_eval, "long": 0.8}, minutes) == 60.0
+    # untagged evals (est_minutes 0) never count
+    assert et.time_horizon({"x": 1.0}, {"x": 0}) == 0.0
+    assert et.time_horizon({}, {}) == 0.0
+
+
+def _timed_specs():
+    return [
+        EvalSpec(name="a", prompt="p", checks=[{"type": "contains", "value": "x"}], est_minutes=5),
+        EvalSpec(name="b", prompt="p", checks=[{"type": "contains", "value": "y"}], est_minutes=30),
+    ]
+
+
+def test_run_trend_records_horizon():
+    s = _timed_specs()
+    rec = et.run_trend(specs=s, agent_runner=_runner({"a", "b"}), trials=1)
+    assert rec["horizon_minutes"] == 30.0                 # both pass → longest wins
+    assert rec["est_minutes"] == {"a": 5.0, "b": 30.0}
+    rec2 = et.run_trend(specs=s, agent_runner=_runner({"a"}), trials=1)  # b now fails
+    assert rec2["horizon_minutes"] == 5.0                 # horizon regressed
+    lc = et.learning_curve()
+    assert lc["points"][-1]["horizon_minutes"] == 5.0
+
+
 # --- regression gate (B-PR3) ------------------------------------------------
 
 def test_regression_gate_fails_on_regression(monkeypatch):

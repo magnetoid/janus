@@ -74,6 +74,11 @@ class EvalSpec:
     # fails the gate. Defaulting to regression preserves gate semantics for
     # suites that predate the field.
     kind: str = "regression"
+    # Estimated human-minutes for the task this eval encodes (0 = untagged).
+    # Feeds the METR-style time-horizon KPI (move 8): the longest task length
+    # the agent passes >=50% of the time — a saturation-resistant scalar that
+    # keeps rising as harder/longer tasks are added, unlike a capped pass-rate.
+    est_minutes: float = 0.0
 
 
 def evals_dir() -> Path:
@@ -118,6 +123,11 @@ def _spec_from_dict(raw: Dict[str, Any], source_file: str = "") -> EvalSpec:
             f"eval '{name}': kind must be 'regression' or 'capability', got {kind!r}"
         )
 
+    try:
+        est_minutes = max(0.0, float(raw.get("est_minutes", 0) or 0))
+    except (TypeError, ValueError):
+        raise ValueError(f"eval '{name}': est_minutes must be a number") from None
+
     return EvalSpec(
         name=name,
         prompt=prompt,
@@ -131,6 +141,7 @@ def _spec_from_dict(raw: Dict[str, Any], source_file: str = "") -> EvalSpec:
         use_context_files=bool(raw.get("use_context_files", False)),
         source_file=source_file,
         kind=kind,
+        est_minutes=est_minutes,
     )
 
 
