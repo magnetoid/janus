@@ -134,7 +134,9 @@ def test_auto_mine_writes_lesson_on_failure(monkeypatch):
 
 def test_auto_mine_records_live_model_strength_on_success(monkeypatch):
     """A classified-success session attributes the outcome to the model that ran
-    it via model_strengths.record(source="live") — the live routing signal [A-PR4]."""
+    it via model_strengths.record_outcome under the CANONICAL task category
+    (not raw first-message text), source="live" — the live routing signal that
+    move 6-remainder made routing-queryable."""
     import yaml
     from janus_constants import get_janus_home
     from agent import auto_mine, outcome_tracker, model_strengths
@@ -146,9 +148,9 @@ def test_auto_mine_records_live_model_strength_on_success(monkeypatch):
     monkeypatch.setattr(outcome_tracker, "classify_session", lambda *a, **k: True)
     rec: dict = {}
     monkeypatch.setattr(
-        model_strengths, "record",
-        lambda *, task, model, source="", score=None, **k: rec.update(
-            task=task, model=model, source=source, score=score),
+        model_strengths, "record_outcome",
+        lambda task, model, success, **k: rec.update(
+            task=task, model=model, success=success, source=k.get("source")),
     )
     msgs = [
         {"role": "user", "content": "Build a CSV parser.", "session_id": "sess-2"},
@@ -158,10 +160,12 @@ def test_auto_mine_records_live_model_strength_on_success(monkeypatch):
         {"role": "user", "content": "great"},
         {"role": "assistant", "content": "done"},
     ]
-    auto_mine.maybe_automine(msgs, run_in_thread=False, model="anthropic/claude-opus-4-8")
+    auto_mine.maybe_automine(msgs, run_in_thread=False,
+                             model="anthropic/claude-opus-4-8", session_id="sess-2")
     assert rec.get("source") == "live"
     assert rec.get("model") == "anthropic/claude-opus-4-8"
-    assert rec.get("score") == 1.0
+    assert rec.get("success") is True
+    assert rec.get("task") == "coding"      # canonical category, not "build-a-csv-parser"
 
 
 # --- recency-weighted recall (Increment 2.1) --------------------------------

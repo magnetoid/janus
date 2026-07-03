@@ -384,8 +384,8 @@ def recall_lessons(
         })
     scored.sort(key=lambda x: x["score"], reverse=True)
     try:
-        from agent.embeddings import hybrid_rerank
-        return hybrid_rerank(query, scored, n, text_of=lambda h: h["lesson"])
+        from agent.embeddings import hybrid_fuse
+        return hybrid_fuse(query, scored, n, text_of=lambda h: h["lesson"])
     except Exception:
         return scored[:n]
 

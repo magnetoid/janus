@@ -52,3 +52,38 @@ def test_hybrid_rerank_empty():
 def test_available_is_bool():
     # Whatever the env, this must not raise and returns a bool.
     assert isinstance(emb.available(), bool)
+
+
+# --- RRF hybrid fusion (move 7) ---------------------------------------------
+
+def test_reciprocal_rank_fusion_retains_all_and_ranks():
+    lexical = [0, 1, 2, 3]
+    semantic = [2, 3, 0, 1]
+    fused = emb.reciprocal_rank_fusion([lexical, semantic])
+    assert set(fused) == {0, 1, 2, 3}       # nothing dropped
+    assert fused[0] in (0, 2)               # rank-0 in one list each → top
+
+
+def test_reciprocal_rank_fusion_item_in_one_list_survives():
+    # id 9 appears only in the semantic list, high up → must not be dropped.
+    fused = emb.reciprocal_rank_fusion([[0, 1], [9, 0]])
+    assert 9 in fused
+
+
+def test_hybrid_fuse_falls_back_without_backend(monkeypatch):
+    monkeypatch.setattr(emb, "rerank", lambda q, c, n: None)  # no backend
+    items = [{"t": "x"}, {"t": "y"}, {"t": "z"}]
+    assert emb.hybrid_fuse("q", items, 2, text_of=lambda i: i["t"]) == items[:2]
+
+
+def test_hybrid_fuse_fuses_lexical_and_semantic(monkeypatch):
+    # lexical order = [a,b,c]; semantics rank c first. RRF keeps a (lexical rank0)
+    # AND lifts c (semantic rank0) — both surface in the top 2.
+    monkeypatch.setattr(emb, "rerank", lambda q, c, n: [2, 1, 0])
+    items = [{"t": "a"}, {"t": "b"}, {"t": "c"}]
+    out = emb.hybrid_fuse("q", items, 2, text_of=lambda i: i["t"])
+    assert {i["t"] for i in out} == {"a", "c"}
+
+
+def test_hybrid_fuse_empty():
+    assert emb.hybrid_fuse("q", [], 5, text_of=lambda i: i) == []

@@ -92,3 +92,42 @@ def hybrid_rerank(
     if order is None:
         return ranked_items[:n]
     return [pool[i] for i in order]
+
+
+def reciprocal_rank_fusion(rankings: List[List[int]], k: int = 60) -> List[int]:
+    """Fuse several ranked id-lists (each best-first) into one via Reciprocal
+    Rank Fusion: score(i) = Σ 1/(k + rank_i). An id ranked high in ANY input
+    surfaces, so lexical and semantic evidence combine instead of one replacing
+    the other. Pure — needs no embedding backend. Ties break on first appearance."""
+    scores: dict = {}
+    order: dict = {}
+    seq = 0
+    for ranking in rankings:
+        for rank, item in enumerate(ranking):
+            scores[item] = scores.get(item, 0.0) + 1.0 / (k + rank + 1)
+            if item not in order:
+                order[item] = seq
+                seq += 1
+    return sorted(scores, key=lambda i: (-scores[i], order[i]))
+
+
+def hybrid_fuse(
+    query: str, ranked_items: List[Any], n: int, *,
+    text_of: Callable[[Any], str], candidate_pool: int = 40, k: int = 60,
+) -> List[Any]:
+    """Hybrid retrieval: fuse the items' existing LEXICAL order (best-first, e.g.
+    FTS5/BM25) with a SEMANTIC similarity order via RRF, returning the best ``n``.
+    Unlike ``hybrid_rerank`` (which lets semantics REPLACE lexical), an item that
+    is strong in EITHER signal is kept — the point of hybrid search: a paraphrase
+    with zero lexical overlap is caught by embeddings, an exact-term match the
+    embedder underweights is kept by BM25. Falls back to the lexical order when
+    no embedding backend is installed (fully inert / optional)."""
+    if not ranked_items:
+        return []
+    pool = ranked_items[:candidate_pool]
+    lexical_order = list(range(len(pool)))  # pool is already best-first lexically
+    semantic_order = rerank(query, [text_of(x) for x in pool], len(pool))
+    if semantic_order is None:
+        return ranked_items[:n]
+    fused = reciprocal_rank_fusion([lexical_order, semantic_order], k=k)
+    return [pool[i] for i in fused[:n]]

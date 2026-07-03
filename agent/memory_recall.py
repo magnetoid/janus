@@ -121,10 +121,12 @@ def recall(query: str, *, n: int = 5, include_journal: bool = True, journal_days
         score = _W_RELEVANCE * rel + _W_RECENCY * m["_rec"] + _W_IMPORTANCE * m["_imp"]
         scored.append({"text": m["text"], "source": m["source"], "score": round(score, 4)})
     scored.sort(key=lambda x: x["score"], reverse=True)
-    # Hybrid: semantically re-rank the lexical top candidates when an embedding
-    # backend is installed; otherwise this returns the lexical top-n unchanged.
+    # Hybrid retrieval (move 7): fuse the lexical ranking above with a semantic
+    # ranking via RRF when an embedding backend is installed — so a paraphrase
+    # with zero token overlap can still surface — otherwise return the lexical
+    # top-n unchanged (fully optional/inert).
     try:
-        from agent.embeddings import hybrid_rerank
-        return hybrid_rerank(query, scored, n, text_of=lambda h: h["text"])
+        from agent.embeddings import hybrid_fuse
+        return hybrid_fuse(query, scored, n, text_of=lambda h: h["text"])
     except Exception:
         return scored[:n]
