@@ -86,6 +86,36 @@ def test_reward_penalised_by_tool_failures():
     assert noisy["tool_failure_rate"] == 0.8
 
 
+def test_friction_recorded_but_does_not_move_reward():
+    # Move 10 (redesigned): friction is OBSERVABILITY only — recorded on the
+    # outcome, but it must NOT change the reward the skill graph learns from
+    # (its sign is unvalidated and it's confounded across skills).
+    clean = ot.record_outcome("s1", True, skills=["x"], friction=0.0)
+    frictional = ot.record_outcome("s2", True, skills=["x"], friction=1.0)
+    assert clean["reward"] == 1.0
+    assert frictional["reward"] == 1.0            # reward UNCHANGED by friction
+    assert frictional["friction"] == 1.0          # but the signal is recorded
+
+
+def test_friction_read_from_sensor_log_and_cleared(monkeypatch):
+    from agent import feedback_signals as fb
+    monkeypatch.setattr(fb, "_tracking_on", lambda: True)
+    fb.record_signal("s9", "interrupt")           # 1.0 -> friction 0.333
+    rec = ot.record_outcome("s9", True, skills=["x"])   # friction read from log
+    assert 0 < rec["friction"] < 1 and rec["reward"] == 1.0   # recorded, reward intact
+    # signals consumed → cleared so a later outcome can't double-count them
+    assert fb.session_friction("s9") == 0.0
+
+
+def test_mean_friction_surfaced_in_learning_metrics():
+    for i in range(6):
+        ot.record_outcome(f"s{i}", True, skills=["x"], friction=0.8)
+    assert ot.mean_session_friction() == 0.8
+    m = ot.learning_metrics()
+    assert m["mean_friction"] == 0.8
+    assert any("interaction friction" in w for w in m["warnings"])   # high → warned
+
+
 def test_skill_reward_trajectory_uses_reward_with_back_compat(monkeypatch):
     ot.record_outcome("s1", True, skills=["deploy"], tool_failure_rate=0.0)   # reward 1.0
     ot.record_outcome("s2", True, skills=["deploy"], tool_failure_rate=1.0)   # reward 0.5

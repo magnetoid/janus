@@ -2286,6 +2286,14 @@ class AIAgent:
         """
         self._interrupt_requested = True
         self._interrupt_message = message
+        # Move 10: an interrupt is the strongest implicit negative signal — the
+        # user hit stop. Record it as session friction (best-effort, gated on
+        # outcome tracking) so a wrestled-to-the-finish session scores lower.
+        try:
+            from agent.feedback_signals import record_signal
+            record_signal(self.session_id or "", "interrupt")
+        except Exception:
+            pass
         # Signal all tools to abort any in-flight operations immediately.
         # Scope the interrupt to this agent's execution thread so other
         # agents running in the same process (gateway) are not affected.

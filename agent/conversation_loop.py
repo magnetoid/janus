@@ -944,6 +944,14 @@ def run_conversation(
         # alternation, and there's no tool output to piggyback on.
         _pre_api_steer = agent._drain_pending_steer()
         if _pre_api_steer:
+            # Move 10: a /steer is an implicit mid-task course-correction — a
+            # softer negative signal than an interrupt. Record it as session
+            # friction (best-effort, gated on outcome tracking).
+            try:
+                from agent.feedback_signals import record_signal
+                record_signal(agent.session_id or "", "steer")
+            except Exception:
+                pass
             _injected = False
             for _si in range(len(messages) - 1, -1, -1):
                 _sm = messages[_si]

@@ -62,7 +62,7 @@ _TOOL_FAILURE_PENALTY = 0.5
 def record_outcome(
     session_id: str, success: bool, *, skills: Optional[List[str]] = None,
     note: str = "", active_persona: Optional[str] = None,
-    tool_failure_rate: Optional[float] = None,
+    tool_failure_rate: Optional[float] = None, friction: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Record a session's outcome attributed to the skills it used.
 
@@ -71,11 +71,24 @@ def record_outcome(
 
     ``tool_failure_rate`` (0..1, optional) applies a secondary penalty to the
     stored ``reward``: a session that only succeeded after many failed tool
-    calls scores lower than a clean one. The boolean ``success`` is unchanged
-    (so ``skill_success_trajectory`` stays back-compatible); the penalised
-    ``reward`` is exposed via ``skill_reward_trajectory``.
+    calls scores lower than a clean one.
+
+    ``friction`` (0..1, optional; move 10) is the implicit-intervention density
+    (interrupts / steers). It is RECORDED for observability but deliberately does
+    NOT move the reward — its sign is unvalidated (interrupts often mean "add
+    scope", not "you failed") and it is confounded across the session's skills,
+    so feeding it to skill promotion would demote unrelated skills and teach the
+    agent to be less steerable. When None it is read from the per-session sensor
+    log. Aggregated into ``learning_metrics`` for a human to watch instead.
     """
     tfr = max(0.0, min(1.0, float(tool_failure_rate))) if tool_failure_rate is not None else 0.0
+    if friction is None:
+        try:
+            from agent.feedback_signals import session_friction
+            friction = session_friction(session_id)
+        except Exception:
+            friction = 0.0
+    fric = max(0.0, min(1.0, float(friction or 0.0)))
     reward = round(max(0.0, (1.0 if success else 0.0) - _TOOL_FAILURE_PENALTY * tfr), 4)
     rec = {
         "session_id": session_id or "",
@@ -84,6 +97,7 @@ def record_outcome(
         "note": note,
         "persona": active_persona or "",
         "tool_failure_rate": tfr,
+        "friction": fric,   # observability only — NOT folded into reward (see docstring)
         "reward": reward,
         "ts": _now_iso(),
     }
@@ -95,6 +109,13 @@ def record_outcome(
     try:
         from agent.lessons import reconcile_lesson_outcomes
         reconcile_lesson_outcomes(session_id, bool(success))
+    except Exception:
+        pass
+    # Move 10: the implicit-feedback signals for this session have now been
+    # folded into the reward — drop them so they can't double-count a later run.
+    try:
+        from agent.feedback_signals import clear_session
+        clear_session(session_id)
     except Exception:
         pass
     return rec
@@ -218,6 +239,7 @@ def recent_success_rate(window: int = 20) -> Optional[float]:
 FORGETTING_WARN = 0.2          # forgetting above this = some skills regressing
 DIVERSITY_TREND_WARN = -0.15   # diversity dropping faster = model-collapse early warning
 FORWARD_TRANSFER_WARN = -0.1   # lifetime success declining
+_FRICTION_WARN = 0.5           # mean intervention friction above this = worth a human look
 INSUFFICIENT_DATA_SESSIONS = 6  # below this many sessions, metrics aren't honest yet
 
 
@@ -358,6 +380,7 @@ def learning_metrics(window: int = 20) -> Dict[str, Any]:
     fgt = forgetting()
     div = skill_diversity(window)
     dtrend = diversity_trend(window)
+    friction = mean_session_friction(window)
     overall = overall_stats()
 
     warnings: List[str] = []
@@ -367,6 +390,9 @@ def learning_metrics(window: int = 20) -> Dict[str, Any]:
         warnings.append("skill diversity dropping — possible over-narrowing / model collapse")
     if fwt is not None and fwt < FORWARD_TRANSFER_WARN:
         warnings.append("success rate declining over the agent's lifetime")
+    if friction is not None and friction > _FRICTION_WARN:
+        warnings.append(f"high interaction friction ({friction:.0%}) — users are "
+                        "intervening often; worth reviewing recent sessions")
 
     if overall["sessions"] < INSUFFICIENT_DATA_SESSIONS:
         summary = f"Insufficient data ({overall['sessions']} sessions) — metrics sharpen with use."
@@ -385,9 +411,18 @@ def learning_metrics(window: int = 20) -> Dict[str, Any]:
         "forgetting": fgt,
         "skill_diversity": div,
         "diversity_trend": dtrend,
+        "mean_friction": friction,
         "warnings": warnings,
         "summary": summary,
     }
+
+
+def mean_session_friction(window: int = 20) -> Optional[float]:
+    """Mean implicit-intervention friction over the last ``window`` sessions
+    (move 10 observability). None when no session recorded a friction field."""
+    vals = [float(r["friction"]) for r in load()[-window:]
+            if isinstance(r.get("friction"), (int, float))]
+    return round(sum(vals) / len(vals), 4) if vals else None
 
 
 # --- classification ---------------------------------------------------------

@@ -2355,6 +2355,14 @@ def apply_pending_steer_to_tool_results(agent, messages: list, num_tool_msgs: in
     steer_text = agent._drain_pending_steer()
     if not steer_text:
         return
+    # Move 10: this is the PRIMARY /steer drain (after every tool batch), so
+    # record friction here too — otherwise the observability metric only sees the
+    # narrow pre-API-drain edge case and massively undercounts steers.
+    try:
+        from agent.feedback_signals import record_signal
+        record_signal(getattr(agent, "session_id", "") or "", "steer")
+    except Exception:
+        pass
     # Find the last tool-role message in the recent tail. Skipping
     # non-tool messages defends against future code appending
     # something else at the boundary.
