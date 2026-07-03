@@ -2,6 +2,20 @@
 
 *Produced 2026-07 by a 15-agent analysis workflow: 8 subsystem auditors reading the codebase (file:line-cited), 6 web researchers on primary sources, 1 synthesis pass. ~1.19M tokens, 473 tool calls.*
 
+## Implementation status — ALL 10 MOVES SHIPPED (2026-07)
+
+Every ranked move below was implemented, adversarially reviewed (a multi-agent review workflow per move — ~30 findings fixed pre-merge, including six features that would have shipped silently broken), tested, and merged to `main`:
+
+| Move | Commit(s) | Move | Commit(s) |
+|---|---|---|---|
+| 1. Close loop / push recall | `0b3f357` | 6. Fix learned routing | `fa48a32` + `7257d97` |
+| 2. Measurement spine (pass^k) | `dd21a42` | 7. Hybrid RRF retrieval | `005bfd4` |
+| 3. Safety floor | `7fdc5e1` | 8. Time-horizon KPI | `f30f0d1` |
+| 4. Lesson efficacy | `d6abe18` | 9. Governed self-code-improvement | `1c4a128` |
+| 5. Live sleep consolidation | `0b3f357` | 10. Implicit-feedback sensor (observability) | `498bc55` |
+
+Notable review-driven design change: move 10's friction signal was redesigned from a reward penalty to **observability-only** — an interrupt/steer's sign is unvalidated and its attribution confounded, so it is surfaced to humans rather than fed to the reward that drives self-modification. Turn the loop on with `janus learning enable`; self-improvement stays behind `learning.self_improve.enabled` + `janus self-improve`.
+
 ## Verdict
 
 Janus is architecturally on the winning side of 2025-2026 self-improvement research — non-parametric learning (lessons, skills, playbooks, sleep consolidation) gated by deterministic evals and a trust governor, exactly the pattern that demonstrably compounds (DGM/SICA/ACE/ReasoningBank) while weight-level self-modification fails. But today the loop does not actually close: learning is off by default, lesson recall is pull-only, the automatic sleep path never graduates anything, and the model-strengths feedback sink writes keys nothing ever reads — so a default install accumulates nothing. The highest-leverage path to AGI-like capability is not new subsystems; it is wiring the existing edges, adding statistical rigor to the measurement spine, and putting a spend/sandbox safety floor under autonomy before letting the loop run unattended.
