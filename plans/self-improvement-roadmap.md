@@ -1,6 +1,12 @@
 # Self-Improvement Loop — Roadmap
 
-**Status:** in progress — Increment 1 shipped (PR #5), Increments 2 & 3 remaining
+**Status:** COMPLETE (2026-07) — all three increments shipped. Increment 1 landed as
+PR #5; Increments 2 & 3 landed as A-PR1..A-PR4 (`92785e3` recency-weighted recall,
+`e162269` dialectic-gated synthesis, `8ec67cd` tool-failure penalty + compression
+sink, `eb1e7aa` eval-trend governor freeze + live model_strengths sink). Superseded
+by `docs/agi-roadmap-2026.md` (10 moves, all shipped) and the post-implementation
+audit in `docs/self-improvement-evaluation-2026.md` — treat those as current; the
+increment details below are historical.
 **Owner:** learning loop (outcome tracking / sleep / curator / skill graph)
 **Context:** Janus has a near-complete self-improvement engine that was mostly
 default-off with several dangling feedback seams. This is the multi-increment
@@ -30,7 +36,7 @@ Default-off. Opt in: `learning.track_outcomes`, `learning.governor.enabled`,
 
 ---
 
-## Increment 2 — Deepen learning quality (NOT STARTED)
+## Increment 2 — Deepen learning quality ✅ (shipped as A-PR1..A-PR3)
 
 Goal: make what's learned more useful and durable. Each item is independent and
 default-safe.
@@ -59,7 +65,7 @@ default-safe.
 
 ---
 
-## Increment 3 — Reward integrity (NOT STARTED)
+## Increment 3 — Reward integrity ✅ (shipped as A-PR3/A-PR4)
 
 Goal: make the reward signal harder to game / richer.
 
