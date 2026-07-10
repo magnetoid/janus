@@ -87,3 +87,71 @@ def test_unicode_ok_false_for_cp1252(monkeypatch):
 def test_unicode_ok_false_for_bogus_codec(monkeypatch):
     monkeypatch.setattr(design.sys, "stdout", _FakeStdout("not-a-codec"))
     assert design._unicode_ok() is False
+
+
+def test_notices_carry_semantic_symbols(monkeypatch):
+    monkeypatch.setattr(design, "_color_on", lambda: True)
+    monkeypatch.setattr(design, "_unicode_ok", lambda: True)
+    assert design.ok("saved").startswith("[#")          # colored
+    assert "✓" in design.ok("saved") and "saved" in design.ok("saved")
+    assert "!" in design.warn("careful")
+    assert "✗" in design.error("broke")
+    assert "●" in design.note("fyi")
+
+
+def test_notices_plain_when_color_off(monkeypatch):
+    monkeypatch.setattr(design, "_color_on", lambda: False)
+    monkeypatch.setattr(design, "_unicode_ok", lambda: True)
+    assert design.error("broke") == "✗ broke"
+
+
+def test_rule_and_header(monkeypatch):
+    monkeypatch.setattr(design, "_color_on", lambda: False)
+    monkeypatch.setattr(design, "_unicode_ok", lambda: True)
+    assert design.rule(10) == "─" * 10
+    assert design.header("commands") == "commands"
+
+
+def test_response_block_panel_layout_returns_panel():
+    from rich.panel import Panel
+    set_active_skin("classic")
+    block = design.response_block(
+        "body", label=" ⟡ Janus ", border_hex="#FFD700",
+        text_hex="#FFF8DC", width=80)
+    assert isinstance(block, Panel)
+    assert block.title == "[#FFD700 bold] ⟡ Janus [/]"
+
+
+def test_response_block_panel_layout_merges_attribution():
+    from rich.panel import Panel
+    set_active_skin("classic")
+    block = design.response_block(
+        "body", label=" ⟡ Janus ", border_hex="#FFD700",
+        text_hex="#FFF8DC", width=80, attribution="(background #3)")
+    assert isinstance(block, Panel)
+    assert "(background #3)" in str(block.title)
+
+
+def test_response_block_open_layout_uses_gutter(monkeypatch):
+    from rich.console import Console
+    monkeypatch.setattr(design, "layout", lambda: "open")
+    monkeypatch.setattr(design, "_unicode_ok", lambda: True)
+    block = design.response_block(
+        "hello world", label=" janus ", border_hex="#E3A857",
+        text_hex="", width=60)
+    con = Console(record=True, width=60, force_terminal=False)
+    con.print(block)
+    out = con.export_text()
+    assert "▍" in out
+    assert "hello world" in out
+    assert "╭" not in out and "─" * 10 not in out   # no box frame
+
+
+def test_gutter_block_prefixes_every_line(monkeypatch):
+    from rich.console import Console
+    monkeypatch.setattr(design, "_unicode_ok", lambda: True)
+    con = Console(record=True, width=40, force_terminal=False)
+    con.print(design.GutterBlock("line one\nline two"))
+    out = con.export_text()
+    lines = [l for l in out.splitlines() if l.strip()]
+    assert all("▍" in l for l in lines)

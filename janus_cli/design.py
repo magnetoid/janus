@@ -98,3 +98,82 @@ def styled(text: str, token: str, *, bold: bool = False) -> str:
         return f"[bold]{text}[/]" if bold and _color_on() else text
     style = f"bold {color}" if bold else color
     return f"[{style}]{text}[/]"
+
+
+# --- shared render helpers ---------------------------------------------------
+
+def ok(msg: str) -> str:
+    return f"{styled(sym('ok'), 'ok')} {msg}" if tok("ok") else f"{sym('ok')} {msg}"
+
+
+def warn(msg: str) -> str:
+    return f"{styled('!', 'warn')} {msg}" if tok("warn") else f"! {msg}"
+
+
+def error(msg: str) -> str:
+    return f"{styled(sym('fail'), 'error')} {msg}" if tok("error") else f"{sym('fail')} {msg}"
+
+
+def note(msg: str) -> str:
+    return f"{styled(sym('bullet'), 'muted')} {msg}" if tok("muted") else f"{sym('bullet')} {msg}"
+
+
+def rule(width: int = 40) -> str:
+    line = sym("rule") * max(1, int(width))
+    return styled(line, "faint") if tok("faint") else line
+
+
+def header(text: str) -> str:
+    return styled(text, "accent", bold=True) if tok("accent") else text
+
+
+class GutterBlock:
+    """Rich renderable: the inner renderable with a left accent gutter bar —
+    the open-layout response frame (full width, clean copy-paste, no box)."""
+
+    def __init__(self, renderable, gutter_style: str = ""):
+        self.renderable = renderable
+        self.gutter_style = gutter_style or tok("accent")
+
+    def __rich_console__(self, console, options):
+        from rich.segment import Segment
+        from rich.style import Style
+        bar = sym("gutter")
+        try:
+            style = Style.parse(self.gutter_style) if self.gutter_style else Style()
+        except Exception:
+            style = Style()
+        prefix = f"  {bar} "
+        inner = options.update_width(max(10, options.max_width - len(prefix)))
+        for line in console.render_lines(self.renderable, inner, pad=False):
+            yield Segment(prefix, style)
+            yield from line
+            yield Segment.line()
+
+
+def response_block(content, *, label: str, border_hex: str, text_hex: str,
+                   width: int, attribution: str = ""):
+    """The final-response frame. Panel layout replicates today's Panel kwargs
+    exactly (classic stays byte-compatible); open layout returns a GutterBlock
+    (attribution shown as a muted lead-in line when present)."""
+    if layout() != "open":
+        from rich import box as rich_box
+        from rich.panel import Panel
+        title_text = f"{label} {attribution}".rstrip() if attribution else label
+        return Panel(
+            content,
+            title=f"[{border_hex} bold]{title_text}[/]",
+            title_align="left",
+            border_style=border_hex,
+            style=text_hex,
+            box=rich_box.HORIZONTALS,
+            padding=(1, 4),
+            width=width,
+        )
+    from rich.console import Group
+    from rich.text import Text
+    block = GutterBlock(content)
+    if attribution:
+        lead = Text(f"  {attribution.strip()}", style=tok("muted") or "dim")
+        return Group(Text(""), lead, block)
+    return Group(Text(""), block)
