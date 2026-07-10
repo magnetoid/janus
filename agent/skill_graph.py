@@ -323,7 +323,9 @@ def auto_promote_drafts(
     try:
         from agent.self_improvement_governor import admission_allowed, promotion_thresholds
 
-        if not admission_allowed():
+        # Promotion modifies the agent, so the gate fails CLOSED (gap G7): a
+        # crashed governor blocks promotion rather than waving it through.
+        if not admission_allowed(fail_closed=True):
             summary["blocked_by_governor"] = True
             return summary
 

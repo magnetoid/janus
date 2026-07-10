@@ -111,12 +111,18 @@ def _eval_trend_caution_reason(min_drop: float = 0.05) -> Optional[str]:
     return None
 
 
-def assess_admission_state(metrics: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def assess_admission_state(metrics: Optional[Dict[str, Any]] = None, *,
+                           fail_closed: bool = False) -> Dict[str, Any]:
     """Classify the learning loop's health into OK / CAUTION / FROZEN.
 
     ``metrics`` is injectable for tests; otherwise it is pulled from
-    ``outcome_tracker.learning_metrics()``. Never raises — on any internal
-    error it fails open to OK.
+    ``outcome_tracker.learning_metrics()``. Never raises.
+
+    ``fail_closed`` picks the direction on an INTERNAL ERROR (gap G7): an
+    advisory read (``janus learning governor`` inspect) leaves it False and
+    fails OPEN to OK — a crashed governor must not wedge the agent. A PROMOTION
+    gate passes True and fails CLOSED to FROZEN — a crashed governor must block
+    self-modification, not wave it through.
     """
     try:
         if not governor_enabled():
@@ -178,13 +184,35 @@ def assess_admission_state(metrics: Optional[Dict[str, Any]] = None) -> Dict[str
 
         return {"state": STATE_OK, "reasons": ["learning loop healthy"], "metrics": metrics}
     except Exception:
+        if fail_closed:
+            logger.debug("governor assessment failed — failing CLOSED to FROZEN", exc_info=True)
+            return {"state": STATE_FROZEN,
+                    "reasons": ["governor error — failing closed (promotion gate)"],
+                    "metrics": metrics or {}}
         logger.debug("governor assessment failed — failing open to OK", exc_info=True)
         return {"state": STATE_OK, "reasons": ["governor error — failing open"], "metrics": metrics or {}}
 
 
-def admission_allowed(metrics: Optional[Dict[str, Any]] = None) -> bool:
-    """True unless the governor is FROZEN. Autonomous admission gates on this."""
-    return assess_admission_state(metrics).get("state") != STATE_FROZEN
+def admission_allowed(metrics: Optional[Dict[str, Any]] = None, *,
+                      fail_closed: bool = False) -> bool:
+    """True unless the governor is FROZEN. Autonomous admission gates on this.
+    Promotion gates should pass ``fail_closed=True`` so a crashed governor
+    blocks the promotion rather than allowing it (gap G7)."""
+    return assess_admission_state(metrics, fail_closed=fail_closed).get("state") != STATE_FROZEN
+
+
+def learning_frozen() -> bool:
+    """True when the governor is enabled AND currently FROZEN — the signal the
+    durable learning write-backs (memory/skill mining, model-strengths, reflexion)
+    pause on, so the loop stops teaching future behavior while it looks unhealthy
+    (gap G7). Default-off governor → always False (no behavior change unless the
+    user turned the governor on). Fails to False (writes proceed) on any error —
+    a crash in this signal must not itself halt learning."""
+    try:
+        return assess_admission_state().get("state") == STATE_FROZEN
+    except Exception:
+        logger.debug("learning_frozen check failed — allowing writes", exc_info=True)
+        return False
 
 
 def promotion_thresholds(metrics: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:

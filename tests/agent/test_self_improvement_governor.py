@@ -76,10 +76,10 @@ def test_disabled_governor_is_ok(monkeypatch):
 
 def test_admission_allowed_reflects_state(monkeypatch):
     monkeypatch.setattr(gov, "assess_admission_state",
-                        lambda metrics=None: {"state": gov.STATE_FROZEN})
+                        lambda metrics=None, **kw: {"state": gov.STATE_FROZEN})
     assert gov.admission_allowed() is False
     monkeypatch.setattr(gov, "assess_admission_state",
-                        lambda metrics=None: {"state": gov.STATE_CAUTION})
+                        lambda metrics=None, **kw: {"state": gov.STATE_CAUTION})
     assert gov.admission_allowed() is True
 
 

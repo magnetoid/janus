@@ -59,6 +59,20 @@ def test_only_memory_flag_runs_only_memory(janus_home_dir, monkeypatch):
     assert hits["memory"] == 1 and hits["skills"] == 0
 
 
+def test_governor_frozen_pauses_durable_writes(janus_home_dir, monkeypatch):
+    """When the governor is FROZEN, memory + skill mining are paused (gap G7)."""
+    _write_config(janus_home_dir, memory=True, skills=True)
+    hits = {"memory": 0, "skills": 0}
+    monkeypatch.setattr("agent.memory_miner.mine_session_memory",
+                        lambda *a, **k: hits.__setitem__("memory", hits["memory"] + 1))
+    monkeypatch.setattr("agent.skill_miner.mine_session_skills",
+                        lambda *a, **k: hits.__setitem__("skills", hits["skills"] + 1))
+    monkeypatch.setattr("agent.self_improvement_governor.learning_frozen",
+                        lambda: True)
+    auto_mine.maybe_automine(MESSAGES, run_in_thread=False)
+    assert hits == {"memory": 0, "skills": 0}
+
+
 @pytest.fixture
 def janus_home_dir(tmp_path, monkeypatch):
     home = tmp_path / ".janus"

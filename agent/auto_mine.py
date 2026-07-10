@@ -53,6 +53,16 @@ def maybe_automine(
         )
 
         def _work():
+            # Governor freeze (gap G7): when the loop looks unhealthy, keep
+            # RECORDING outcomes (the recovery signal) but pause every durable
+            # write-back that teaches future behavior — model-strengths, reflexion
+            # lessons, memory facts, skill drafts. Only active when the governor is
+            # enabled (default off → no change). Computed once per session.
+            try:
+                from agent.self_improvement_governor import learning_frozen
+                _frozen = learning_frozen()
+            except Exception:
+                _frozen = False
             if track_outcomes:
                 try:
                     from agent.outcome_tracker import (
@@ -83,7 +93,7 @@ def maybe_automine(
                         # accumulate via record_outcome (EWMA, not a clobbering
                         # set), and join the session's cost so routing can weigh
                         # quality against price.
-                        if model:
+                        if model and not _frozen:
                             try:
                                 from agent.model_strengths import (
                                     record_outcome as _record_outcome, canonical_category,
@@ -101,7 +111,7 @@ def maybe_automine(
                         # Reflexion write-back: a failed session becomes a
                         # retrievable "do X instead" lesson keyed to the task
                         # type, so the next similar attempt starts smarter.
-                        if verdict is False and _flag("learning", "reflexion", default=True):
+                        if verdict is False and not _frozen and _flag("learning", "reflexion", default=True):
                             try:
                                 from agent.lessons import (
                                     record_lesson, reflect_on_failure, screen_lesson,
@@ -138,7 +148,7 @@ def maybe_automine(
                                 logger.debug("reflexion/autopin write-back failed: %s", exc)
                 except Exception as exc:
                     logger.debug("auto outcome tracking failed: %s", exc)
-            if mine_memory:
+            if mine_memory and not _frozen:
                 try:
                     from tools.memory_tool import MemoryStore
                     from agent.memory_miner import mine_session_memory
@@ -148,7 +158,7 @@ def maybe_automine(
                     mine_session_memory(snapshot, store)
                 except Exception as exc:
                     logger.debug("auto memory mining failed: %s", exc)
-            if mine_skills:
+            if mine_skills and not _frozen:
                 try:
                     from agent.skill_miner import mine_session_skills
 
