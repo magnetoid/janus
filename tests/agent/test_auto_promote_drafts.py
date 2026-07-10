@@ -35,8 +35,9 @@ def home(tmp_path, monkeypatch):
     monkeypatch.setattr(sg, "build_graph_from_skills", lambda names=None: {})
     monkeypatch.setattr(sg, "promote_skill", lambda n: {"ok": True})
     # Default: governor permits, OK thresholds. Tests override as needed.
-    monkeypatch.setattr(gov, "admission_allowed", lambda metrics=None: True)
-    monkeypatch.setattr(gov, "promotion_thresholds", lambda metrics=None: {})
+    # ``**kw`` absorbs the fail_closed kwarg the promotion gate now passes (G7).
+    monkeypatch.setattr(gov, "admission_allowed", lambda metrics=None, **kw: True)
+    monkeypatch.setattr(gov, "promotion_thresholds", lambda metrics=None, **kw: {})
     return tmp_path
 
 
@@ -53,7 +54,7 @@ def _promotable(*, ok=True):
 
 def test_frozen_blocks_all_promotion(home, monkeypatch):
     draft = _mk_draft(home, "alpha")
-    monkeypatch.setattr(gov, "admission_allowed", lambda metrics=None: False)
+    monkeypatch.setattr(gov, "admission_allowed", lambda metrics=None, **kw: False)
     monkeypatch.setattr(sg, "assess_promotability", _promotable(ok=True))
 
     out = sg.auto_promote_drafts()
