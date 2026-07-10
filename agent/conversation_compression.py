@@ -280,8 +280,17 @@ def _route_precompress_insight_to_lessons(insight: Any, session_id: str = "") ->
     if not text:
         return False
     try:
-        from agent.lessons import record_lesson
-        rec = record_lesson(text[:600], source="compression", session_id=session_id or "")
+        from agent.lessons import record_lesson, screen_lesson
+        # Red-team screen before persisting (gap G3): a pre-compression insight is
+        # distilled from context that may contain untrusted content, and once
+        # stored it is pushed into future turns — so vet it through the same gate
+        # sleep-time synthesis uses, rather than trusting it blindly.
+        screened_text, screened = screen_lesson(text[:600])
+        if screened_text is None:
+            logger.debug("compression insight rejected by red-team gate")
+            return False
+        rec = record_lesson(screened_text, source="compression",
+                            session_id=session_id or "", screened=screened)
         return rec is not None
     except Exception as exc:
         logger.debug("compression learning sink failed: %s", exc)

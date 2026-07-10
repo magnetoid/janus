@@ -62,6 +62,10 @@ def _migrate(rec: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(rec, dict):
         rec.setdefault("helpful", 0)
         rec.setdefault("harmful", 0)
+        # Provenance (gap G3): whether this lesson was vetted by the dialectic
+        # red-team gate before it entered the store. Absent on legacy records →
+        # default False so a missing flag never reads as "vetted".
+        rec.setdefault("screened", False)
         if not rec.get("id") and rec.get("lesson"):
             rec["id"] = _lesson_id(rec["lesson"])
     return rec
@@ -97,8 +101,15 @@ def _slug(name: str) -> str:
 
 def record_lesson(
     lesson: str, *, task_type: str = "", session_id: str = "", source: str = "reflexion",
+    screened: bool = False,
 ) -> Optional[Dict[str, Any]]:
-    """Append a lesson, de-duplicating exact repeats. Returns the record (or None)."""
+    """Append a lesson, de-duplicating exact repeats. Returns the record (or None).
+
+    ``screened`` records whether the lesson passed the dialectic red-team gate
+    (gap G3). It defaults False: direct callers on trusted paths (curated writes,
+    sleep SYNTHESIZE — already gated upstream) leave it unset; the auto-distilled
+    paths (reflexion, compression) set it via ``screen_lesson`` so an unvetted
+    lesson is never silently indistinguishable from a vetted one."""
     lesson = str(lesson).strip()
     if not lesson:
         return None
@@ -114,6 +125,7 @@ def record_lesson(
             "task_type": _slug(task_type) if task_type else "general",
             "session_id": session_id or "",
             "source": source,
+            "screened": bool(screened),
             "helpful": 0,   # sessions that recalled this and then SUCCEEDED
             "harmful": 0,   # sessions that recalled this and then FAILED
             "ts": _now_iso(),
@@ -123,6 +135,88 @@ def record_lesson(
             records = records[-_MAX_LESSONS:]
         _save(records)
     return rec
+
+
+def _screen_enabled() -> bool:
+    """Red-team screening of auto-distilled lessons — on by default whenever the
+    learning loop runs. Opt out with ``learning.screen_lessons: false``."""
+    try:
+        from agent.feature_flags import flag_enabled
+        return flag_enabled("learning", "screen_lessons", default=True)
+    except Exception:
+        return True
+
+
+def screen_lesson(
+    lesson: str, *, task_type: str = "", transcript: str = "", existing: str = "",
+    llm_caller: Optional[Callable[..., Any]] = None,
+) -> tuple[Optional[str], bool]:
+    """Vet one auto-distilled lesson through the dialectic red-team gate before
+    it can be persisted (gap G3 — poisoned lessons otherwise persist and re-enter
+    every future turn via push-recall).
+
+    Returns ``(text, screened)``:
+      * accepted → (lesson-or-revised-text, True)
+      * rejected → (None, True)
+      * gate disabled / infra error → (lesson, False) — fail OPEN, an infra
+        failure is not a rejection, but the caller marks the record unvetted.
+    """
+    lesson = str(lesson).strip()
+    if not lesson:
+        return None, True
+    if not _screen_enabled():
+        return lesson, False
+    try:
+        from agent.deliberation import apply_verdicts, red_team_claims
+        claim = [{"id": "lesson", "kind": "fact", "content": lesson,
+                  "context": task_type}]
+        res = red_team_claims(claim, transcript=transcript, existing=existing,
+                              llm_caller=llm_caller)
+        if res.get("error"):
+            return lesson, False  # infra failure → fail open, unscreened
+        split = apply_verdicts(claim, res.get("verdicts", {}))
+        if split["accepted"]:
+            return str(split["accepted"][0]["content"]).strip(), True
+        return None, True  # rejected by the arbiter
+    except Exception as exc:
+        logger.debug("screen_lesson failed: %s", exc)
+        return lesson, False
+
+
+def record_failure_lesson(
+    messages: List[Dict[str, Any]], *, session_id: str = "",
+    llm_caller: Optional[Callable[..., Any]] = None,
+    provider: Optional[str] = None, model: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """Distill a failed session into a lesson AND vet it through the red-team
+    gate before persisting (gap G3). This is the screened replacement for the
+    raw ``reflect_on_failure`` → ``record_lesson`` path in auto_mine. Returns
+    the stored record, or None if nothing was distilled or the gate rejected it.
+    Best-effort; never raises."""
+    try:
+        from agent.memory_miner import _render_transcript
+        r = reflect_on_failure(messages, llm_caller=llm_caller,
+                               provider=provider, model=model)
+        if not r or not r.get("lesson"):
+            return None
+        transcript = ""
+        try:
+            transcript = _render_transcript(messages, max_chars=8000)
+        except Exception:
+            pass
+        text, screened = screen_lesson(
+            r["lesson"], task_type=r.get("task_type", ""),
+            transcript=transcript, llm_caller=llm_caller)
+        if text is None:
+            logger.debug("reflexion lesson rejected by red-team gate (session=%s)",
+                         session_id or "-")
+            return None
+        return record_lesson(text, task_type=r.get("task_type", ""),
+                             session_id=session_id, source="reflexion",
+                             screened=screened)
+    except Exception as exc:
+        logger.debug("record_failure_lesson failed: %s", exc)
+        return None
 
 
 # --- efficacy: join recalled lessons to the outcome they rode with ----------

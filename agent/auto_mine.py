@@ -103,11 +103,27 @@ def maybe_automine(
                         # type, so the next similar attempt starts smarter.
                         if verdict is False and _flag("learning", "reflexion", default=True):
                             try:
-                                from agent.lessons import reflect_on_failure, record_lesson
+                                from agent.lessons import (
+                                    record_lesson, reflect_on_failure, screen_lesson,
+                                )
                                 r = reflect_on_failure(snapshot)
                                 if r:
-                                    record_lesson(r["lesson"], task_type=r.get("task_type", ""),
-                                                  session_id=session_id)
+                                    # Red-team screen before persisting (gap G3):
+                                    # a reflexion lesson is pushed into every future
+                                    # similar turn, so an injection that survives
+                                    # distillation would persist unless vetted here.
+                                    from agent.memory_miner import _render_transcript
+                                    _tx = ""
+                                    try:
+                                        _tx = _render_transcript(snapshot, max_chars=8000)
+                                    except Exception:
+                                        pass
+                                    _text, _screened = screen_lesson(
+                                        r["lesson"], task_type=r.get("task_type", ""),
+                                        transcript=_tx)
+                                    if _text is not None:
+                                        record_lesson(_text, task_type=r.get("task_type", ""),
+                                                      session_id=session_id, screened=_screened)
                                 # Self-growing benchmark: draft a quarantined
                                 # regression-pin eval from the same failure.
                                 if _flag("evals", "autopin", default=False):
