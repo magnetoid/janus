@@ -551,6 +551,18 @@ def _build_open_banner(console, model: str, cwd: str,
     if n_unavailable:
         warn = _skin_color("ui_warn", "#D4A24E")
         console.print(f"  [{warn}]! {n_unavailable} tools unavailable · /tools for details[/]")
+    # Pip-install warning — same detection helper and guidance as the legacy
+    # panel path, restyled to the open layout's `!` + ui_warn idiom.
+    try:
+        from janus_cli.config import detect_install_method
+        if detect_install_method() == "pip":
+            warn = _skin_color("ui_warn", "#D4A24E")
+            console.print(
+                f"  [{warn}]! installed via pip — not officially supported; "
+                f"expect instability and an inability to support issues[/]"
+            )
+    except Exception:
+        pass  # Never break the banner over the install-method check
     console.print()
 
 

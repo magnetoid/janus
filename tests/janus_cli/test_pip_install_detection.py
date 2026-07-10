@@ -94,15 +94,19 @@ def test_recommended_update_command_docker():
     assert "docker pull" in recommended_update_command_for_method("docker")
 
 
-def test_banner_warns_on_pip_install(tmp_path):
-    """The welcome banner surfaces a warning when the install method is pip."""
+@pytest.mark.parametrize("skin", ["default", "classic"])
+def test_banner_warns_on_pip_install(tmp_path, skin):
+    """The welcome banner surfaces a warning when the install method is pip.
+
+    Parametrized over both layouts: the open (default) banner and the classic
+    panel both carry the pip-install warning — it's a semantic warning, not
+    panel decoration.
+    """
     import io
     from rich.console import Console
     from janus_cli import banner
 
-    # Pip-install warning is panel-only content — pinned to classic; the
-    # open (default) layout is intentionally terse (see banner._build_open_banner).
-    set_active_skin("classic")
+    set_active_skin(skin)
     hh = tmp_path / ".janus"
     hh.mkdir()
     (hh / ".install_method").write_text("pip\n")
@@ -123,16 +127,14 @@ def test_banner_warns_on_pip_install(tmp_path):
     assert "instability" in out
 
 
-def test_banner_no_pip_warning_on_git_install(tmp_path):
-    """Git installs must not show the pip-install warning."""
+@pytest.mark.parametrize("skin", ["default", "classic"])
+def test_banner_no_pip_warning_on_git_install(tmp_path, skin):
+    """Git installs must not show the pip-install warning (either layout)."""
     import io
     from rich.console import Console
     from janus_cli import banner
 
-    # Pinned to classic (see test_banner_warns_on_pip_install above) so this
-    # actually exercises the panel's install-method branch rather than
-    # trivially passing because the open layout renders no warnings at all.
-    set_active_skin("classic")
+    set_active_skin(skin)
     hh = tmp_path / ".janus"
     hh.mkdir()
     (hh / ".install_method").write_text("git\n")
