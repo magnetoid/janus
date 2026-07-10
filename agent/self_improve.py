@@ -297,6 +297,23 @@ def reject(proposal_id: str, *, reason: str = "") -> Optional[Dict[str, Any]]:
     return _update(proposal_id, status="rejected", rationale=new_rationale)
 
 
+def record_review(proposal_id: str, *, verdict: str, objection: str = "",
+                  by: str = "twin-core") -> Optional[Dict[str, Any]]:
+    """Attach an adversarial second-core review to a proposal as METADATA only.
+
+    This is the write seam for the twin-core reviewer (agent/twin_review.py). It
+    is deliberately incapable of advancing a proposal: it never touches
+    ``status``, ``gate_ok``, or ``approved_by``. The reviewer core may VETO (the
+    caller separately invokes ``reject``) but the mutual-approval path is banned —
+    a second LLM must never be able to sign off a self-modification, only a human
+    can. Recording a review here is therefore inert with respect to the promotion
+    gate."""
+    return _update(proposal_id, review={
+        "verdict": str(verdict), "objection": str(objection),
+        "by": str(by), "at": _now_iso(),
+    })
+
+
 def can_promote(proposal_id: str, config: Optional[Dict[str, Any]] = None) -> Tuple[bool, str]:
     """The gate. True only when every safety condition holds. Returns (ok, reason)."""
     try:

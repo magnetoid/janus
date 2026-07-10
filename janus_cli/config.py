@@ -1853,6 +1853,14 @@ DEFAULT_CONFIG = {
             # profile during sleep so they carry promotable evidence. Real model
             # cost per proposal → off by default; promotion still needs approval.
             "auto_evaluate": False,
+            # Twin-core adversarial review (agent/twin_review.py): a SEPARATE
+            # reviewer core red-teams each fresh proposal and may VETO it — but
+            # can never approve one (mutual LLM approval is banned; a human still
+            # gates every promotion). Off by default. Point reviewer_home at a
+            # second $JANUS_HOME to de-correlate the reviewer's blind spots from
+            # the proposer's; empty = in-profile self-review (still veto-only).
+            "twin_review": False,
+            "twin_review_reviewer_home": "",
         },
         # Self-improvement governor (agent/self_improvement_governor.py): the
         # consumer of the continual-learning health metrics. It classifies the

@@ -61,6 +61,32 @@ def test_sleep_auto_evaluate_runs_when_enabled(monkeypatch):
     assert rep["evaluated"] == ["si-0001"]   # only the one that evaluated cleanly
 
 
+def test_sleep_twin_review_gated_off_by_default(monkeypatch):
+    store = MemoryStore(); store.load_from_disk()
+    monkeypatch.setattr("agent.proposer.propose_skill_improvements",
+                        lambda **k: {"proposed": ["si-0001"]})
+    monkeypatch.setattr(sleep, "_auto_evaluate_enabled", lambda: False)
+    monkeypatch.setattr(sleep, "_twin_review_enabled", lambda: False)
+    rv_calls = {"n": 0}
+    monkeypatch.setattr("agent.twin_review.review_proposals",
+                        lambda *a, **k: rv_calls.__setitem__("n", rv_calls["n"] + 1))
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert rv_calls["n"] == 0             # reviewer never runs when the flag is off
+    assert rep["vetoed"] == []
+
+
+def test_sleep_twin_review_runs_when_enabled(monkeypatch):
+    store = MemoryStore(); store.load_from_disk()
+    monkeypatch.setattr("agent.proposer.propose_skill_improvements",
+                        lambda **k: {"proposed": ["si-0001", "si-0002"]})
+    monkeypatch.setattr(sleep, "_auto_evaluate_enabled", lambda: False)
+    monkeypatch.setattr(sleep, "_twin_review_enabled", lambda: True)
+    monkeypatch.setattr("agent.twin_review.review_proposals",
+                        lambda ids, **k: {"vetoed": ["si-0002"], "passed": ["si-0001"]})
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert rep["vetoed"] == ["si-0002"]   # the reviewer core vetoed one
+
+
 def test_sleep_runs_self_challenge_only_when_enabled(monkeypatch):
     store = MemoryStore(); store.load_from_disk()
     calls = {"n": 0}

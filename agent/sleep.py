@@ -262,6 +262,17 @@ def _auto_evaluate_enabled() -> bool:
         return False
 
 
+def _twin_review_enabled() -> bool:
+    """learning.self_improve.twin_review — red-team fresh proposals with a
+    separate reviewer core that can only veto. Off by default."""
+    try:
+        from janus_cli.config import load_config
+        si = ((load_config().get("learning") or {}).get("self_improve") or {})
+        return bool(si.get("twin_review", False)) if isinstance(si, dict) else False
+    except Exception:
+        return False
+
+
 def run_sleep_cycle(
     store: Any, *, llm_caller: Optional[Callable[..., Any]] = None,
     dry_run: bool = False, sessions: Optional[List[List[Dict[str, Any]]]] = None,
@@ -279,7 +290,8 @@ def run_sleep_cycle(
     report: Dict[str, Any] = {
         "dry_run": dry_run, "graduated_facts": 0, "graduated_skills": 0,
         "promote": None, "reconciled": [], "pruned": [], "lessons": [],
-        "self_challenge": None, "proposed": [], "evaluated": [], "error": None,
+        "self_challenge": None, "proposed": [], "evaluated": [], "vetoed": [],
+        "error": None,
     }
     try:
         # 2. GRADUATE — distill recent sessions into facts + skill drafts.
@@ -384,6 +396,15 @@ def run_sleep_cycle(
                         except Exception as exc:
                             logger.debug("sleep evaluate %s failed: %s", pid, exc)
                     report["evaluated"] = ev
+                # 8c. TWIN-CORE REVIEW (opt-in): a separate reviewer core
+                # red-teams each fresh proposal and may VETO it before a human
+                # ever sees it — but can never approve one (mutual approval is
+                # banned; human approval stays required). Gated by
+                # learning.self_improve.twin_review (default off). Best-effort.
+                if proposed and _twin_review_enabled():
+                    from agent.twin_review import review_proposals
+                    report["vetoed"] = review_proposals(
+                        proposed, llm_caller=llm_caller).get("vetoed", [])
             except Exception as exc:
                 logger.debug("sleep propose/evaluate failed: %s", exc)
 
