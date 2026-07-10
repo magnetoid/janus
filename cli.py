@@ -5369,7 +5369,12 @@ class JanusCLI:
                 session_id=self.session_id,
                 context_length=ctx_len,
             )
-        
+            try:
+                from janus_cli.skin_notice import maybe_show_redesign_notice
+                maybe_show_redesign_notice(print_fn=ChatConsole().print)
+            except Exception:
+                pass
+
         # Tool discovery is intentionally deferred on the Termux bare prompt
         # path; availability warnings are shown once tools are initialized.
         if os.environ.get("JANUS_DEFER_AGENT_STARTUP") != "1":
