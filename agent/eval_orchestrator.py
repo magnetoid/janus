@@ -42,10 +42,17 @@ def _skill_name_from_target(target: str) -> Optional[str]:
         return None
 
 
-def _pass_rate(summary: Dict[str, Any]) -> Optional[float]:
+def _score(summary: Dict[str, Any]) -> Optional[float]:
+    """The promotion score for a suite run: the mean SHAPED reward (Phase 2.3),
+    which folds the secondary tool-failure penalty into the pass rate so a variant
+    that passes cleanly outscores one that passes by thrashing. Falls back to the
+    raw pass rate for older summaries with no shaped_score. None if no specs ran."""
     total = int(summary.get("total", 0) or 0)
     if total <= 0:
         return None
+    shaped = summary.get("shaped_score")
+    if isinstance(shaped, (int, float)):
+        return round(float(shaped), 4)
     return round(int(summary.get("passed", 0) or 0) / total, 4)
 
 
@@ -75,7 +82,7 @@ def _run_isolated(live_home: Path, *, apply_variant: Optional[tuple],
         if not specs:
             return None
         summary = run_evals(specs, agent_runner=agent_runner, save_results=False)
-        return _pass_rate(summary)
+        return _score(summary)
     finally:
         if token is not None:
             reset_janus_home_override(token)

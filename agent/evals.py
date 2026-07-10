@@ -42,6 +42,11 @@ from typing import Any, Callable, Dict, List, Optional
 
 from janus_constants import get_janus_home
 
+# Shared with the outcome tracker so promotion scoring and outcome scoring apply
+# the SAME secondary tool-failure penalty (they must not drift).
+from agent.outcome_tracker import _TOOL_FAILURE_PENALTY
+from agent.outcome_tracker import tool_failure_rate as _tool_failure_rate
+
 logger = logging.getLogger(__name__)
 
 CHECK_TYPES = frozenset({
@@ -308,24 +313,35 @@ def run_evals(
         t0 = time.monotonic()
         error = ""
         check_results: List[Dict[str, Any]] = []
+        run_messages: List[Dict[str, Any]] = []
         try:
             run = runner(spec) or {}
+            run_messages = run.get("messages") or []
             check_results = evaluate_checks(
                 spec.checks,
                 run.get("final_response") or "",
-                run.get("messages") or [],
+                run_messages,
             )
         except Exception as exc:
             logger.warning("eval '%s' errored: %s", spec.name, exc)
             error = str(exc)
         duration = round(time.monotonic() - t0, 2)
         passed = bool(check_results) and all(c["passed"] for c in check_results)
+        # Shaped reward (Phase 2.3): a pass reached through a thrashing tool
+        # trajectory is a weaker positive than a clean one. Same secondary-penalty
+        # shape the outcome tracker applies, so promotion scoring and outcome
+        # scoring can't drift. Purely additive — passed/total/failed are untouched,
+        # so the move-2 regression gate is unaffected.
+        tfr = _tool_failure_rate(run_messages)
+        reward = round(max(0.0, (1.0 if passed else 0.0) - _TOOL_FAILURE_PENALTY * tfr), 4)
         results.append({
             "name": spec.name,
             "passed": passed,
             "error": error,
             "checks": check_results,
             "duration_s": duration,
+            "tool_failure_rate": tfr,
+            "reward": reward,
             "source_file": spec.source_file,
         })
         say(f"  {'PASS' if passed else 'FAIL'} ({duration}s)")
@@ -335,6 +351,10 @@ def run_evals(
         "total": len(results),
         "passed": sum(1 for r in results if r["passed"]),
         "failed": sum(1 for r in results if not r["passed"]),
+        # Mean shaped reward — the promotion-scoring signal. Reduces to the pass
+        # rate when no run produced tool results.
+        "shaped_score": (round(sum(r["reward"] for r in results) / len(results), 4)
+                         if results else 0.0),
         "results": results,
     }
 

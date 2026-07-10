@@ -103,6 +103,37 @@ def test_gated_off_when_self_improve_disabled(home, monkeypatch):
     assert "disabled" in out["reason"]
 
 
+def test_shaped_reward_lets_a_cleaner_variant_clear_the_gate(home, monkeypatch):
+    """Phase 2.3: promotion consumes the shaped reward. Baseline and variant pass
+    the SAME eval check, so a pass-rate-only gate would call it a no-op (blocked).
+    But the variant reaches the pass with a clean tool trajectory while the
+    baseline thrashes — the shaped score rises, so the gate opens."""
+    monkeypatch.setattr("agent.self_improvement_governor.learning_frozen", lambda: False)
+    monkeypatch.setattr("agent.autonomy_guard.blocked_reason", lambda config=None: None)
+    variant = "---\nname: flaky\ndescription: d\n---\n\nchecklist, done cleanly."
+
+    def runner(spec):
+        # Both bodies contain 'checklist' → both PASS the eval. The baseline body
+        # (no 'cleanly') drives a failed tool call; the variant runs clean.
+        from janus_constants import get_janus_home
+        body = (get_janus_home() / "skills" / "flaky" / "SKILL.md").read_text(encoding="utf-8")
+        thrash = "cleanly" not in body
+        msgs = ([{"role": "tool", "content": '{"error": "x"}'}] if thrash
+                else [{"role": "tool", "content": "ok"}])
+        return {"final_response": "checklist applied", "messages": msgs}
+
+    # baseline skill also passes the check, so pass-rate is identical (1.0 vs 1.0)
+    _write_skill(home, "flaky", "checklist but messy")
+    rec = self_improve.propose("skill", "skills/.drafts/flaky/SKILL.md", variant)
+    out = eval_orchestrator.evaluate_proposal(rec["id"], agent_runner=runner)
+
+    assert out["evaluated"] is True
+    # baseline: pass with tfr=1.0 → shaped 0.5 ; variant: pass clean → shaped 1.0
+    assert out["score_before"] == 0.5
+    assert out["score_after"] == 1.0
+    assert self_improve.get(rec["id"])["gate_ok"] is True   # shaped improvement
+
+
 def test_worse_variant_records_no_improvement(home, monkeypatch):
     monkeypatch.setattr("agent.self_improvement_governor.learning_frozen", lambda: False)
     monkeypatch.setattr("agent.autonomy_guard.blocked_reason", lambda config=None: None)

@@ -178,6 +178,39 @@ class TestRunEvals:
         assert "provider down" in by_name["boom"]["error"]
         assert by_name["ok"]["passed"] is True
 
+    def test_shaped_score_penalizes_tool_thrashing(self):
+        # Two passing evals, but one reached its pass through a failed tool call.
+        # The pass count is unchanged; the shaped score is docked for the thrash.
+        clean = [{"role": "tool", "content": "ok result"}]
+        thrash = [{"role": "tool", "content": '{"error": "boom"}'},
+                  {"role": "tool", "content": "ok result"}]
+
+        def runner(spec):
+            msgs = thrash if spec.name == "noisy" else clean
+            return {"final_response": "hi there", "messages": msgs}
+
+        specs = [_spec(name="clean"), _spec(name="noisy")]
+        summary = run_evals(specs, agent_runner=runner, save_results=False)
+        # Pass/fail accounting is untouched — the regression gate still sees 2/2.
+        assert summary["total"] == 2 and summary["passed"] == 2
+        by_name = {r["name"]: r for r in summary["results"]}
+        assert by_name["clean"]["reward"] == 1.0
+        # tfr = 1 failed / 2 tool results = 0.5 → reward = 1 - 0.5*0.5 = 0.75
+        assert by_name["noisy"]["reward"] == 0.75
+        # shaped_score is the mean shaped reward, strictly below the 1.0 pass rate.
+        assert summary["shaped_score"] == 0.875
+        assert summary["shaped_score"] < summary["passed"] / summary["total"]
+
+    def test_shaped_score_equals_pass_rate_without_tool_noise(self):
+        # No tool results anywhere → shaped score reduces to the pass rate, so
+        # existing callers see no behavior change.
+        specs = [_spec(name="a"), _spec(name="b",
+                 checks=[{"type": "contains", "value": "absent"}])]
+        summary = run_evals(
+            specs, agent_runner=lambda s: {"final_response": "hi there", "messages": []},
+            save_results=False)
+        assert summary["shaped_score"] == round(summary["passed"] / summary["total"], 4)
+
     def test_results_saved_as_jsonl(self):
         summary = run_evals(
             [_spec(name="saved")],
