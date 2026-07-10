@@ -60,6 +60,16 @@ def frozen(config: Optional[Dict[str, Any]] = None) -> bool:
         return False
 
 
+def _audit(kind: str, data: Optional[Dict[str, Any]] = None) -> None:
+    """Record a kill-switch transition to the tamper-evident audit log (gap G12).
+    Best-effort — an audit failure must never block the freeze/unfreeze itself."""
+    try:
+        from agent.audit_log import append_event
+        append_event(kind, data or {})
+    except Exception:
+        pass
+
+
 def freeze(reason: str = "") -> bool:
     """Engage the kill switch (write the sentinel). Best-effort; returns success."""
     try:
@@ -67,6 +77,7 @@ def freeze(reason: str = "") -> bool:
         p.parent.mkdir(parents=True, exist_ok=True)
         from agent.cost_ledger import _now_iso
         p.write_text(f"{_now_iso()}\n{reason}\n", encoding="utf-8")
+        _audit("autonomy_freeze", {"reason": reason})
         return True
     except Exception as exc:
         logger.debug("autonomy freeze failed: %s", exc)
@@ -81,6 +92,7 @@ def unfreeze() -> bool:
         p = _sentinel_path()
         if p.exists():
             p.unlink()
+        _audit("autonomy_unfreeze", {})
         return True
     except Exception as exc:
         logger.debug("autonomy unfreeze failed: %s", exc)

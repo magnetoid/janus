@@ -4916,6 +4916,12 @@ class DispatchResult:
     (EX_TEMPFAIL sentinel exit) and were released back to ``ready`` WITHOUT
     counting a failure. These never trip the circuit breaker — a long quota
     window just makes the task bounce cheaply until the window clears."""
+    injection_blocked: list[tuple[str, str]] = field(default_factory=list)
+    """Tasks blocked before spawn because the title/body tripped the
+    prompt-injection scanner (gap G8), as ``(task_id, reason)`` pairs. Kanban is
+    a multi-writer channel feeding auto-approving headless workers — unlike cron,
+    its bodies were previously unscanned. A hit blocks the task (no retry) rather
+    than deferring it."""
 
 
 # Bounded registry of recently-reaped worker child exits, populated by the
@@ -6026,6 +6032,24 @@ def has_spawnable_review(conn: sqlite3.Connection) -> bool:
     return False
 
 
+def _scan_kanban_task_for_injection(task: Any) -> Optional[str]:
+    """Scan a claimed task's title + body for prompt-injection directives before
+    a headless worker is spawned on it (gap G8). Reuses the same strict pattern
+    set the cron scanner applies to a no-skills prompt. Returns a reason string
+    on a hit, else None. Best-effort — a scanner import/parse failure returns
+    None (fail open) so a scanner bug can't wedge the whole board."""
+    try:
+        parts = [p for p in (getattr(task, "title", ""), getattr(task, "body", "")) if p]
+        assembled = "\n\n".join(str(p) for p in parts).strip()
+        if not assembled:
+            return None
+        from tools.cronjob_tools import _scan_cron_prompt
+        return _scan_cron_prompt(assembled) or None
+    except Exception:
+        _log.debug("kanban injection scan unavailable", exc_info=True)
+        return None
+
+
 def dispatch_once(
     conn: sqlite3.Connection,
     *,
@@ -6310,6 +6334,29 @@ def dispatch_once(
             )
             if auto:
                 result.auto_blocked.append(claimed.id)
+            continue
+        # Prompt-injection scan (gap G8): the worker about to be spawned runs
+        # headless and auto-approves its own tool calls, and the task title/body
+        # is a multi-writer channel — so scan it before spawning, exactly as cron
+        # scans its assembled prompt. A hit BLOCKS the task (no retry — a stored
+        # payload won't pass on the next tick) rather than deferring it.
+        _inj = _scan_kanban_task_for_injection(claimed)
+        if _inj is not None:
+            block_task(conn, claimed.id, reason=f"prompt-injection scan: {_inj}",
+                       expected_run_id=None)
+            with write_txn(conn):
+                _append_event(conn, claimed.id, "injection_blocked", {"reason": _inj})
+            # Also record to the tamper-evident autonomy audit log (gap G12) —
+            # the per-task event table is not integrity-protected.
+            try:
+                from agent.audit_log import append_event as _audit_event
+                _audit_event("kanban_injection_blocked",
+                             {"task_id": claimed.id, "reason": _inj})
+            except Exception:
+                pass
+            result.injection_blocked.append((claimed.id, _inj))
+            _log.warning("kanban dispatch: task %s blocked by injection scan — %s",
+                         claimed.id, _inj)
             continue
         # Persist the resolved workspace path so the worker can cd there.
         set_workspace_path(conn, claimed.id, str(workspace))
