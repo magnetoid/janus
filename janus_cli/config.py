@@ -1849,6 +1849,10 @@ DEFAULT_CONFIG = {
         "self_improve": {
             "enabled": False,               # master switch
             "require_human_approval": True,  # graduate to False only with earned trust
+            # Auto-run fresh proposals through the eval suite in an isolated
+            # profile during sleep so they carry promotable evidence. Real model
+            # cost per proposal → off by default; promotion still needs approval.
+            "auto_evaluate": False,
         },
         # Self-improvement governor (agent/self_improvement_governor.py): the
         # consumer of the continual-learning health metrics. It classifies the

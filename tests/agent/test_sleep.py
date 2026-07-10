@@ -37,6 +37,30 @@ def test_sleep_proposer_failure_does_not_break_cycle(monkeypatch):
     assert rep["proposed"] == []         # step failed → stays empty
 
 
+def test_sleep_auto_evaluate_gated_off_by_default(monkeypatch):
+    store = MemoryStore(); store.load_from_disk()
+    monkeypatch.setattr("agent.proposer.propose_skill_improvements",
+                        lambda **k: {"proposed": ["si-0001"]})
+    ev_calls = {"n": 0}
+    monkeypatch.setattr("agent.eval_orchestrator.evaluate_proposal",
+                        lambda pid, **k: ev_calls.__setitem__("n", ev_calls["n"] + 1))
+    monkeypatch.setattr(sleep, "_auto_evaluate_enabled", lambda: False)
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert ev_calls["n"] == 0            # not evaluated when the flag is off
+    assert rep["evaluated"] == []
+
+
+def test_sleep_auto_evaluate_runs_when_enabled(monkeypatch):
+    store = MemoryStore(); store.load_from_disk()
+    monkeypatch.setattr("agent.proposer.propose_skill_improvements",
+                        lambda **k: {"proposed": ["si-0001", "si-0002"]})
+    monkeypatch.setattr(sleep, "_auto_evaluate_enabled", lambda: True)
+    monkeypatch.setattr("agent.eval_orchestrator.evaluate_proposal",
+                        lambda pid, **k: {"evaluated": pid == "si-0001"})
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert rep["evaluated"] == ["si-0001"]   # only the one that evaluated cleanly
+
+
 def test_sleep_runs_self_challenge_only_when_enabled(monkeypatch):
     store = MemoryStore(); store.load_from_disk()
     calls = {"n": 0}

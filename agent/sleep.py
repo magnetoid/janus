@@ -250,6 +250,18 @@ def synthesize_cross_session_lessons(
 
 # --- the cycle --------------------------------------------------------------
 
+def _auto_evaluate_enabled() -> bool:
+    """learning.self_improve.auto_evaluate — run fresh proposals through the eval
+    suite during sleep. Off by default (real model cost); promotion still needs
+    human approval regardless."""
+    try:
+        from janus_cli.config import load_config
+        si = ((load_config().get("learning") or {}).get("self_improve") or {})
+        return bool(si.get("auto_evaluate", False)) if isinstance(si, dict) else False
+    except Exception:
+        return False
+
+
 def run_sleep_cycle(
     store: Any, *, llm_caller: Optional[Callable[..., Any]] = None,
     dry_run: bool = False, sessions: Optional[List[List[Dict[str, Any]]]] = None,
@@ -267,7 +279,7 @@ def run_sleep_cycle(
     report: Dict[str, Any] = {
         "dry_run": dry_run, "graduated_facts": 0, "graduated_skills": 0,
         "promote": None, "reconciled": [], "pruned": [], "lessons": [],
-        "self_challenge": None, "proposed": [], "error": None,
+        "self_challenge": None, "proposed": [], "evaluated": [], "error": None,
     }
     try:
         # 2. GRADUATE — distill recent sessions into facts + skill drafts.
@@ -355,10 +367,25 @@ def run_sleep_cycle(
         if not dry_run:
             try:
                 from agent.proposer import propose_skill_improvements
-                report["proposed"] = propose_skill_improvements(
-                    llm_caller=llm_caller).get("proposed", [])
+                proposed = propose_skill_improvements(llm_caller=llm_caller).get("proposed", [])
+                report["proposed"] = proposed
+                # 8b. EVALUATE (opt-in): run each fresh proposal through the eval
+                # suite in an isolated profile so it carries promotable evidence.
+                # Real model cost per proposal → gated by
+                # learning.self_improve.auto_evaluate (default off); promotion
+                # still needs human approval on top.
+                if proposed and _auto_evaluate_enabled():
+                    from agent.eval_orchestrator import evaluate_proposal
+                    ev = []
+                    for pid in proposed:
+                        try:
+                            if evaluate_proposal(pid).get("evaluated"):
+                                ev.append(pid)
+                        except Exception as exc:
+                            logger.debug("sleep evaluate %s failed: %s", pid, exc)
+                    report["evaluated"] = ev
             except Exception as exc:
-                logger.debug("sleep propose failed: %s", exc)
+                logger.debug("sleep propose/evaluate failed: %s", exc)
 
         if not dry_run:
             state = load_sleep_state()
