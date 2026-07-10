@@ -1,5 +1,18 @@
 from unittest.mock import patch
 
+import pytest
+
+from janus_cli.skin_engine import set_active_skin
+
+
+@pytest.fixture(autouse=True)
+def _reset_skin():
+    """Default skin uses the open (minimal) layout; reset around every test
+    so skin state set by one test never leaks into the next."""
+    set_active_skin("default")
+    yield
+    set_active_skin("default")
+
 
 def test_pip_install_detected_when_no_git_dir(tmp_path):
     """When PROJECT_ROOT has no .git, detect as pip install."""
@@ -87,6 +100,9 @@ def test_banner_warns_on_pip_install(tmp_path):
     from rich.console import Console
     from janus_cli import banner
 
+    # Pip-install warning is panel-only content — pinned to classic; the
+    # open (default) layout is intentionally terse (see banner._build_open_banner).
+    set_active_skin("classic")
     hh = tmp_path / ".janus"
     hh.mkdir()
     (hh / ".install_method").write_text("pip\n")
@@ -113,6 +129,10 @@ def test_banner_no_pip_warning_on_git_install(tmp_path):
     from rich.console import Console
     from janus_cli import banner
 
+    # Pinned to classic (see test_banner_warns_on_pip_install above) so this
+    # actually exercises the panel's install-method branch rather than
+    # trivially passing because the open layout renders no warnings at all.
+    set_active_skin("classic")
     hh = tmp_path / ".janus"
     hh.mkdir()
     (hh / ".install_method").write_text("git\n")

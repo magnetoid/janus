@@ -492,6 +492,68 @@ def _display_toolset_name(toolset_name: str) -> str:
     )
 
 
+def _build_open_banner(console, model: str, cwd: str,
+                       tools: List[dict] = None,
+                       session_id: str = None,
+                       get_toolset_for_tool=None,
+                       context_length: int = None):
+    """Minimal open-layout banner (default skin): wordmark, one rule, facts.
+
+    The full tool inventory lives behind /tools — the banner shows counts and
+    points there only when something needs attention.
+    """
+    from model_tools import check_tool_availability
+    if get_toolset_for_tool is None:
+        from model_tools import get_toolset_for_tool
+    tools = tools or []
+
+    accent = _skin_color("ui_accent", "#E3A857")
+    muted = _skin_color("ui_label", "#8A8A8A")
+    faint = _skin_color("banner_dim", "#5C5C5C")
+
+    try:
+        from janus_cli import __version__ as _ver
+    except Exception:
+        _ver = ""
+
+    model_short = model.split("/")[-1] if "/" in model else model
+    if model_short.endswith(".gguf"):
+        model_short = model_short[:-5]
+    if len(model_short) > 40:
+        model_short = model_short[:37] + "..."
+
+    toolset_names = {get_toolset_for_tool(t["function"]["name"]) or "other" for t in tools}
+    _, unavailable_toolsets = check_tool_availability(quiet=True)
+    n_unavailable = sum(len(i.get("tools", [])) for i in unavailable_toolsets)
+    try:
+        n_skills = sum(len(v) for v in get_available_skills().values())
+    except Exception:
+        n_skills = 0
+
+    width = max(20, min(60, (console.width or 80) - 4))
+    console.print()
+    ver_part = f" [{faint}]{_ver}[/]" if _ver else ""
+    console.print(f"  [bold {accent}]janus[/]{ver_part}")
+    console.print(f"  [{faint}]{'─' * width}[/]")
+    ctx = f" · {_format_context_length(context_length)} context" if context_length else ""
+    console.print(f"  [{muted}]{model_short}{ctx} · {cwd}[/]")
+    facts = []
+    if session_id:
+        facts.append(f"session {session_id}")
+    facts.append(f"{len(toolset_names)} toolsets")
+    facts.append(f"{len(tools)} tools")
+    if n_skills:
+        facts.append(f"{n_skills} skills")
+    console.print(f"  [{faint}]{' · '.join(facts)}[/]")
+    if os.getenv("JANUS_YOLO_MODE"):
+        err = _skin_color("ui_error", "#D47C7C")
+        console.print(f"  [bold {err}]✗ yolo mode — approval prompts bypassed[/]")
+    if n_unavailable:
+        warn = _skin_color("ui_warn", "#D4A24E")
+        console.print(f"  [{warn}]! {n_unavailable} tools unavailable · /tools for details[/]")
+    console.print()
+
+
 def build_welcome_banner(console: "Console", model: str, cwd: str,
                          tools: List[dict] = None,
                          enabled_toolsets: List[str] = None,
@@ -510,6 +572,16 @@ def build_welcome_banner(console: "Console", model: str, cwd: str,
         get_toolset_for_tool: Callable to map tool name -> toolset name.
         context_length: Model's context window size in tokens.
     """
+    try:
+        from janus_cli.design import layout as _design_layout
+        if _design_layout() == "open":
+            return _build_open_banner(
+                console, model, cwd, tools=tools, session_id=session_id,
+                get_toolset_for_tool=get_toolset_for_tool,
+                context_length=context_length)
+    except Exception:
+        pass  # any design/skin failure falls back to the legacy panel banner
+
     from model_tools import check_tool_availability, TOOLSET_REQUIREMENTS
     from rich.panel import Panel
     from rich.table import Table

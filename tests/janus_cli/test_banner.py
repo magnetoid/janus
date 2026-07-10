@@ -2,11 +2,22 @@
 
 from unittest.mock import patch
 
+import pytest
 from rich.console import Console
 
 import janus_cli.banner as banner
 import model_tools
 import tools.mcp_tool
+from janus_cli.skin_engine import set_active_skin
+
+
+@pytest.fixture(autouse=True)
+def _reset_skin():
+    """Default skin uses the open (minimal) layout; reset around every test
+    so skin state set by one test never leaks into the next."""
+    set_active_skin("default")
+    yield
+    set_active_skin("default")
 
 
 def test_display_toolset_name_strips_legacy_suffix():
@@ -28,6 +39,9 @@ def test_display_toolset_name_handles_empty():
 
 def test_build_welcome_banner_uses_normalized_toolset_names():
     """Unavailable toolsets should not have '_tools' appended in banner output."""
+    # Panel-layout content (per-toolset tool listing) — pinned to classic;
+    # the open (default) layout collapses this to counts, see TestOpenBanner.
+    set_active_skin("classic")
     with (
         patch.object(
             model_tools,
@@ -78,6 +92,9 @@ def test_build_welcome_banner_title_is_hyperlinked_to_release():
     import model_tools as _mt
     import tools.mcp_tool as _mcp
 
+    # Panel-only content (title bar) — pinned to classic; the open (default)
+    # layout has no title bar, see TestOpenBanner.
+    set_active_skin("classic")
     _banner._latest_release_cache = None
     tag_url = ("v2026.4.23", "https://github.com/magnetoid/janus/releases/tag/v2026.4.23")
 
@@ -113,6 +130,9 @@ def test_build_welcome_banner_title_falls_back_when_no_tag():
     import model_tools as _mt
     import tools.mcp_tool as _mcp
 
+    # Panel-only content (title bar) — pinned to classic; the open (default)
+    # layout has no title bar, see TestOpenBanner.
+    set_active_skin("classic")
     _banner._latest_release_cache = None
     buf = io.StringIO()
     with (
@@ -137,6 +157,9 @@ def test_build_welcome_banner_title_falls_back_when_no_tag():
 
 def test_build_welcome_banner_disabled_mcp_shows_disabled_not_failed():
     """A disabled MCP server renders '— disabled' (dim), not '— failed' (red)."""
+    # Panel-only content (MCP Servers section) — pinned to classic; the open
+    # (default) layout doesn't render per-server MCP status in the banner.
+    set_active_skin("classic")
     with (
         patch.object(model_tools, "check_tool_availability", return_value=(["web"], [])),
         patch.object(banner, "get_available_skills", return_value={}),
@@ -166,4 +189,33 @@ def test_build_welcome_banner_disabled_mcp_shows_disabled_not_failed():
     # A genuinely unreachable server still reads "failed"
     assert "broken" in output
     assert "failed" in output
+
+
+class TestOpenBanner:
+    def _render(self, skin_name):
+        from rich.console import Console
+        from janus_cli.skin_engine import set_active_skin
+        from janus_cli.banner import build_welcome_banner
+        set_active_skin(skin_name)
+        con = Console(record=True, width=100, force_terminal=False)
+        tools = [{"function": {"name": "terminal"}}, {"function": {"name": "read_file"}}]
+        build_welcome_banner(
+            con, model="anthropic/claude-opus-4-8", cwd="/tmp/proj",
+            tools=tools, enabled_toolsets=["core"], session_id="a4f2c9",
+            get_toolset_for_tool=lambda n: "core", context_length=1000000)
+        return con.export_text()
+
+    def test_open_banner_is_compact_and_emoji_free(self):
+        out = self._render("default")
+        assert "janus" in out
+        assert "claude-opus-4-8" in out
+        assert "session a4f2c9" in out
+        assert "2 tools" in out
+        assert "Available Tools" not in out       # tool dump collapsed to counts
+        assert "▐" not in out                     # no emblem art
+        assert len(out.splitlines()) < 12         # compact
+
+    def test_classic_banner_still_renders_the_panel(self):
+        out = self._render("classic")
+        assert "Available Tools" in out
 
