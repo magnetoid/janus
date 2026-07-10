@@ -62,3 +62,28 @@ def test_styled_wraps_markup_only_when_colored(monkeypatch):
     assert design.styled("hi", "accent", bold=True) == "[bold #FFBF00]hi[/]"
     monkeypatch.setattr(design, "_color_on", lambda: False)
     assert design.styled("hi", "accent") == "hi"
+
+
+class _FakeStdout:
+    def __init__(self, encoding):
+        self.encoding = encoding
+
+
+def test_unicode_ok_true_for_utf8(monkeypatch):
+    monkeypatch.setattr(design.sys, "stdout", _FakeStdout("utf-8"))
+    assert design._unicode_ok() is True
+
+
+def test_unicode_ok_none_encoding_falls_back_to_utf8(monkeypatch):
+    monkeypatch.setattr(design.sys, "stdout", _FakeStdout(None))
+    assert design._unicode_ok() is True
+
+
+def test_unicode_ok_false_for_cp1252(monkeypatch):
+    monkeypatch.setattr(design.sys, "stdout", _FakeStdout("cp1252"))
+    assert design._unicode_ok() is False
+
+
+def test_unicode_ok_false_for_bogus_codec(monkeypatch):
+    monkeypatch.setattr(design.sys, "stdout", _FakeStdout("not-a-codec"))
+    assert design._unicode_ok() is False
