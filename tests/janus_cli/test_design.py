@@ -14,8 +14,8 @@ def _reset_skin():
 
 def test_tokens_resolve_from_active_skin(monkeypatch):
     monkeypatch.setattr(design, "_color_on", lambda: True)
-    assert design.tok("accent") == "#FFBF00"   # old default ui_accent (pre-flip)
-    assert design.tok("ok") == "#4caf50"
+    assert design.tok("accent") == "#E3A857"   # minimal default ui_accent
+    assert design.tok("ok") == "#7CB87C"       # minimal default ui_ok
 
 
 def test_tokens_empty_when_color_off(monkeypatch):
@@ -51,15 +51,15 @@ def test_skin_can_override_symbols(monkeypatch):
 
 
 def test_layout_reads_active_skin():
-    assert design.layout() == "panel"          # pre-flip default
+    assert design.layout() == "open"
     set_active_skin("classic")
     assert design.layout() == "panel"
 
 
 def test_styled_wraps_markup_only_when_colored(monkeypatch):
     monkeypatch.setattr(design, "_color_on", lambda: True)
-    assert design.styled("hi", "accent") == "[#FFBF00]hi[/]"
-    assert design.styled("hi", "accent", bold=True) == "[bold #FFBF00]hi[/]"
+    assert design.styled("hi", "accent") == "[#E3A857]hi[/]"
+    assert design.styled("hi", "accent", bold=True) == "[bold #E3A857]hi[/]"
     monkeypatch.setattr(design, "_color_on", lambda: False)
     assert design.styled("hi", "accent") == "hi"
 

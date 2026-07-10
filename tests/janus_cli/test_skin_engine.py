@@ -19,7 +19,7 @@ class TestSkinConfig:
         from janus_cli.skin_engine import load_skin
         skin = load_skin("default")
         assert skin.name == "default"
-        assert skin.tool_prefix == "┊"
+        assert skin.tool_prefix == "▸"
         assert "banner_title" in skin.colors
         assert "banner_border" in skin.colors
         assert "agent_name" in skin.branding
@@ -27,13 +27,13 @@ class TestSkinConfig:
     def test_get_color_with_fallback(self):
         from janus_cli.skin_engine import load_skin
         skin = load_skin("default")
-        assert skin.get_color("banner_title") == "#FFD700"
+        assert skin.get_color("banner_title") == "#E3A857"
         assert skin.get_color("nonexistent", "#000") == "#000"
 
     def test_get_branding_with_fallback(self):
         from janus_cli.skin_engine import load_skin
         skin = load_skin("default")
-        assert skin.get_branding("agent_name") == "Janus"
+        assert skin.get_branding("agent_name") == "janus"
         assert skin.get_branding("nonexistent", "fallback") == "fallback"
 
     def test_get_spinner_wings_empty_for_default(self):
@@ -205,7 +205,7 @@ class TestUserSkins:
         assert skin.get_branding("agent_name") == "Custom Agent"
         assert skin.tool_prefix == "▸"
         # Should inherit defaults for unspecified colors
-        assert skin.get_color("banner_border") == "#CD7F32"  # from default
+        assert skin.get_color("banner_border") == "#5C5C5C"  # from default
 
     def test_load_user_skin_invalid_section_types_fall_back_to_defaults(self, tmp_path, monkeypatch):
         from janus_cli.skin_engine import load_skin
@@ -232,8 +232,8 @@ class TestUserSkins:
         skin = load_skin("broken")
 
         assert skin.name == "broken"
-        assert skin.get_color("banner_title") == "#FFD700"
-        assert skin.get_branding("agent_name") == "Janus"
+        assert skin.get_color("banner_title") == "#E3A857"
+        assert skin.get_branding("agent_name") == "janus"
         assert skin.spinner.get("waiting_faces", []) == []
         assert skin.tool_emojis == {}
         assert skin.tool_prefix == "!"
@@ -259,7 +259,7 @@ class TestUserSkins:
 class TestDisplayIntegration:
     def test_get_skin_tool_prefix_default(self):
         from agent.display import get_skin_tool_prefix
-        assert get_skin_tool_prefix() == "┊"
+        assert get_skin_tool_prefix() == "▸"
 
     def test_get_skin_tool_prefix_custom(self):
         from janus_cli.skin_engine import set_active_skin
@@ -278,7 +278,7 @@ class TestDisplayIntegration:
     def test_tool_message_default_prefix(self):
         from agent.display import get_cute_tool_message
         msg = get_cute_tool_message("terminal", {"command": "ls"}, 0.5)
-        assert msg.startswith("┊")
+        assert msg.startswith("▸")
 
 
 class TestCliBrandingHelpers:
@@ -386,7 +386,9 @@ class TestCliBrandingHelpers:
         set_active_skin("daylight")
         skin = get_active_skin()
         overrides = get_prompt_toolkit_style_overrides()
-        assert overrides["status-bar"] == f"bg:{skin.get_color('status_bar_bg')} {skin.get_color('banner_text')}"
+        # daylight doesn't define status_bar_text, so it now inherits the
+        # minimal default's value (by design — see _build_skin_config merge).
+        assert overrides["status-bar"] == f"bg:{skin.get_color('status_bar_bg')} {skin.get_color('status_bar_text')}"
         assert overrides["voice-status"] == f"bg:{skin.get_color('voice_status_bg')} {skin.get_color('ui_label')}"
 
 
@@ -422,3 +424,40 @@ class TestSchemaAdditions:
         from janus_cli.skin_engine import _build_skin_config
         cfg = _build_skin_config({"name": "t", "symbols": "not-a-dict"})
         assert cfg.symbols == {}
+
+
+class TestMinimalDefault:
+    def test_default_is_open_layout_no_emoji(self):
+        from janus_cli.skin_engine import load_skin
+        s = load_skin("default")
+        assert s.layout == "open"
+        assert s.emoji_tools is False
+
+    def test_default_accent_is_refined_gold(self):
+        from janus_cli.skin_engine import load_skin
+        s = load_skin("default")
+        assert s.get_color("ui_accent") == "#E3A857"
+        assert s.get_color("banner_title") == "#E3A857"
+
+    def test_default_branding_is_lowercase_calm(self):
+        from janus_cli.skin_engine import load_skin
+        s = load_skin("default")
+        for key in ("welcome", "goodbye", "help_header", "response_label"):
+            v = s.get_branding(key)
+            assert v == v.lower(), f"{key} not lowercase: {v!r}"
+            assert "!" not in v
+        # no emoji / kaomoji in default branding
+        assert "⚕" not in s.get_branding("response_label")
+        assert "(^_^)" not in s.get_branding("help_header")
+
+    def test_default_supplies_no_spinner_faces(self):
+        from janus_cli.skin_engine import load_skin
+        s = load_skin("default")
+        assert s.spinner.get("waiting_faces", []) == []
+        assert s.spinner.get("thinking_faces", []) == []
+
+    def test_classic_unaffected_by_the_flip(self):
+        from janus_cli.skin_engine import load_skin
+        s = load_skin("classic")
+        assert s.get_color("ui_accent") == "#FFBF00"
+        assert s.layout == "panel"
