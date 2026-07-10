@@ -31,6 +31,32 @@ def test_zero_cost_zero_tokens_stays_zero():
     assert row["estimated"] is False
 
 
+def test_included_subscription_turn_stays_zero():
+    """A subscription-covered turn ($0, status='included') is genuinely free —
+    it must NOT get a phantom estimate that could trip a subscription user's cap."""
+    cl.record_turn("s", "gpt-5-codex", input_tokens=5000, output_tokens=5000,
+                   cost_usd=0.0, status="included")
+    row = cl.load_ledger()[0]
+    assert row["cost_usd"] == 0.0
+    assert row["estimated"] is False
+
+
+def test_actual_measured_zero_stays_zero():
+    cl.record_turn("s", "local", input_tokens=5000, output_tokens=5000,
+                   cost_usd=0.0, status="actual")
+    row = cl.load_ledger()[0]
+    assert row["cost_usd"] == 0.0
+    assert row["estimated"] is False
+
+
+def test_unknown_status_still_estimates():
+    cl.record_turn("s", "mystery", input_tokens=1000, output_tokens=1000,
+                   cost_usd=0.0, status="unknown")
+    row = cl.load_ledger()[0]
+    assert row["cost_usd"] > 0.0
+    assert row["estimated"] is True
+
+
 def test_estimate_respects_config_rate(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "janus_cli.config.load_config",

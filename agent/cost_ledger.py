@@ -62,15 +62,23 @@ def record_turn(
     """Append one turn's usage + cost to the ledger. Best-effort; returns True
     if a row was written. Never raises.
 
-    When ``cost_usd`` is 0 but the turn used tokens (an unpriced model), a
-    conservative estimate is recorded and the row is flagged ``estimated`` so
-    the spend cap isn't blind to it (gap G9)."""
+    When ``cost_usd`` is 0 but the turn used tokens on a model the pricing layer
+    genuinely COULD NOT price, a conservative estimate is recorded and the row is
+    flagged ``estimated`` so the spend cap isn't blind to it (gap G9). A real $0 —
+    a subscription-covered (``status="included"``) or measured-zero
+    (``status="actual"``) turn — is left at $0: those are genuinely free, and
+    estimating them would charge phantom cost that could trip a subscription
+    user's caps."""
     try:
         in_tok = int(input_tokens or 0)
         out_tok = int(output_tokens or 0)
         cost = round(float(cost_usd or 0.0), 6)
         estimated = False
-        if cost <= 0.0 and (in_tok + out_tok) > 0:
+        # Only a genuinely-unpriced turn is estimated. "included"/"actual" (and
+        # "estimated", already valued) are real $0 and stay $0; an empty status
+        # is treated as unknown (the default for direct callers).
+        _priced_zero = str(status or "").lower() in ("actual", "included", "estimated")
+        if cost <= 0.0 and (in_tok + out_tok) > 0 and not _priced_zero:
             cost = round((in_tok + out_tok) / 1000.0 * _unpriced_rate(config), 6)
             estimated = cost > 0.0
         row = {
