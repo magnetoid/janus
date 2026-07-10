@@ -1769,11 +1769,14 @@ DEFAULT_CONFIG = {
         # trailing window, so they bound unattended fan-out — the many cheap
         # cron/kanban/delegate sessions that each stay under the per-session
         # ceiling but together run away. Gate NEW work at the cron tick and
-        # kanban/delegate spawn; in-flight work still completes. Caps bound
-        # PRICED spend only (a model the pricing layer can't price logs $0).
-        # 0 = unlimited.
+        # kanban/delegate spawn; in-flight work still completes. 0 = unlimited.
         "daily_usd": 0,      # trailing 24h
         "monthly_usd": 0,    # trailing 30d
+        # Conservative fallback price (USD per 1k tokens) for a turn on a model
+        # the pricing layer can't price — otherwise it logs $0 and escapes the
+        # caps above (gap G9). Errs toward over-counting, the safe direction for
+        # a spend floor; such rows are flagged ``estimated`` in the ledger.
+        "unpriced_usd_per_1k_tokens": 0.01,
     },
 
     # Master safety floor for unattended operation (agent/autonomy_guard).

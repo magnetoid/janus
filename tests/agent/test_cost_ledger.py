@@ -2,6 +2,45 @@
 from agent import cost_ledger as cl
 
 
+# --------------------------------------------------------------------------
+# Unpriced-model estimate (gap G9): a $0 turn WITH tokens must not be invisible
+# to the spend cap.
+# --------------------------------------------------------------------------
+
+def test_zero_cost_with_tokens_gets_conservative_estimate():
+    cl.record_turn("s", "mystery-model", input_tokens=1000, output_tokens=1000, cost_usd=0.0)
+    row = cl.load_ledger()[0]
+    assert row["cost_usd"] > 0.0        # not invisible to the cap
+    assert row["estimated"] is True     # flagged so audits can tell it apart
+    # accrues toward the session total the cap reads
+    assert cl.session_total_usd("s") > 0.0
+
+
+def test_real_cost_is_not_overwritten_or_flagged():
+    cl.record_turn("s", "opus", input_tokens=1000, output_tokens=1000, cost_usd=0.05)
+    row = cl.load_ledger()[0]
+    assert row["cost_usd"] == 0.05
+    assert row["estimated"] is False
+
+
+def test_zero_cost_zero_tokens_stays_zero():
+    # No usage → nothing to estimate; stays a true $0 row.
+    cl.record_turn("s", "m", cost_usd=0.0)
+    row = cl.load_ledger()[0]
+    assert row["cost_usd"] == 0.0
+    assert row["estimated"] is False
+
+
+def test_estimate_respects_config_rate(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "janus_cli.config.load_config",
+        lambda: {"budget": {"unpriced_usd_per_1k_tokens": 1.0}})
+    cl.record_turn("s", "m", input_tokens=500, output_tokens=500, cost_usd=0.0)
+    row = cl.load_ledger()[0]
+    assert row["cost_usd"] == 1.0   # 1000 tokens * $1.0/1k
+    assert row["estimated"] is True
+
+
 def test_record_load_and_session_total():
     assert cl.record_turn("s1", "opus", input_tokens=100, output_tokens=20, cost_usd=0.01) is True
     assert cl.record_turn("s1", "opus", input_tokens=50, output_tokens=10, cost_usd=0.02) is True

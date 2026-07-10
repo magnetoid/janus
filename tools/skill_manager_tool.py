@@ -56,21 +56,43 @@ except ImportError:
     _GUARD_AVAILABLE = False
 
 
-def _guard_agent_created_enabled() -> bool:
-    """Read skills.guard_agent_created from config (default False).
+def _is_gateway_context() -> bool:
+    """True inside a gateway/API session (a human is reachable, if async).
+    Thin seam over the approval module's detection; patchable in tests."""
+    try:
+        from tools.approval import _is_gateway_approval_context
+        return _is_gateway_approval_context()
+    except Exception:
+        return False
 
-    Off by default because the agent can already execute the same code
-    paths via terminal() with no gate, so the scan adds friction without
-    meaningful security.  Users who want belt-and-suspenders can turn it
-    on via `janus config set skills.guard_agent_created true`.
-    """
+
+def _no_human_present() -> bool:
+    """True when this session has no human who could have vetted a new skill:
+    a cron session, or a non-interactive, non-gateway (headless) context. These
+    are exactly the sessions where terminal()/execute_code are themselves blocked
+    by the approval gate, so an unscanned agent-created skill is the one
+    unguarded path to host code execution (gap G5 / R2)."""
+    from utils import env_var_enabled
+    if env_var_enabled("JANUS_CRON_SESSION"):
+        return True
+    return not env_var_enabled("JANUS_INTERACTIVE") and not _is_gateway_context()
+
+
+def _guard_agent_created_enabled() -> bool:
+    """Whether to security-scan agent-created skills before they're written.
+
+    An explicit ``skills.guard_agent_created`` config value always wins. When
+    unset, the guard defaults ON in headless / cron contexts (no human present,
+    and terminal()/execute_code are approval-blocked there anyway) and OFF in
+    interactive / gateway sessions, where a human is in the loop and the agent
+    can already run the same code via an approved terminal() (gap G5)."""
     try:
         from janus_cli.config import load_config
         cfg = load_config()
-        return is_truthy_value(
-            cfg_get(cfg, "skills", "guard_agent_created"),
-            default=False,
-        )
+        raw = cfg_get(cfg, "skills", "guard_agent_created", default=None)
+        if raw is not None:
+            return is_truthy_value(raw, default=False)
+        return _no_human_present()
     except Exception:
         return False
 

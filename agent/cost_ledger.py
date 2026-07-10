@@ -33,22 +33,55 @@ def _now_iso() -> str:
         return ""
 
 
+# Conservative per-1k-token fallback for models the pricing layer can't price
+# (gap G9). A real $0 (no usage) stays $0; a $0 turn that DID burn tokens gets
+# this estimate so it is not invisible to the rolling spend cap. Errs toward
+# over-counting — the safe direction for a SAFETY floor. Override with
+# ``budget.unpriced_usd_per_1k_tokens``.
+_DEFAULT_UNPRICED_USD_PER_1K = 0.01
+
+
+def _unpriced_rate(config: Optional[Dict[str, Any]] = None) -> float:
+    try:
+        if config is None:
+            from janus_cli.config import load_config
+            config = load_config()
+        budget = (config.get("budget", {}) or {}) if isinstance(config, dict) else {}
+        v = budget.get("unpriced_usd_per_1k_tokens")
+        return float(v) if v is not None and float(v) >= 0 else _DEFAULT_UNPRICED_USD_PER_1K
+    except Exception:
+        return _DEFAULT_UNPRICED_USD_PER_1K
+
+
 def record_turn(
     session_id: str, model: str, *,
     input_tokens: int = 0, output_tokens: int = 0, cache_read_tokens: int = 0,
     cost_usd: float = 0.0, status: str = "", ts: str = "",
+    config: Optional[Dict[str, Any]] = None,
 ) -> bool:
     """Append one turn's usage + cost to the ledger. Best-effort; returns True
-    if a row was written. Never raises."""
+    if a row was written. Never raises.
+
+    When ``cost_usd`` is 0 but the turn used tokens (an unpriced model), a
+    conservative estimate is recorded and the row is flagged ``estimated`` so
+    the spend cap isn't blind to it (gap G9)."""
     try:
+        in_tok = int(input_tokens or 0)
+        out_tok = int(output_tokens or 0)
+        cost = round(float(cost_usd or 0.0), 6)
+        estimated = False
+        if cost <= 0.0 and (in_tok + out_tok) > 0:
+            cost = round((in_tok + out_tok) / 1000.0 * _unpriced_rate(config), 6)
+            estimated = cost > 0.0
         row = {
             "ts": ts or _now_iso(),
             "session_id": session_id or "",
             "model": model or "",
-            "input_tokens": int(input_tokens or 0),
-            "output_tokens": int(output_tokens or 0),
+            "input_tokens": in_tok,
+            "output_tokens": out_tok,
             "cache_read_tokens": int(cache_read_tokens or 0),
-            "cost_usd": round(float(cost_usd or 0.0), 6),
+            "cost_usd": cost,
+            "estimated": estimated,
             "status": status or "",
         }
         path = ledger_path()

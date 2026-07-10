@@ -660,12 +660,18 @@ class TestSecurityScanGate:
         assert result is not None
         assert "Security scan blocked" in result
 
-    def test_guard_flag_reads_config_default_false(self):
-        """_guard_agent_created_enabled returns False when config doesn't set it."""
-        from tools.skill_manager_tool import _guard_agent_created_enabled
-
+    def test_guard_flag_unset_defaults_by_context(self, monkeypatch):
+        """With no config value, the guard defaults OFF in an interactive session
+        (human present) and ON in a headless one (gap G5). Detailed context matrix
+        lives in tests/tools/test_skill_guard_headless.py."""
+        import tools.skill_manager_tool as smt
+        monkeypatch.setattr(smt, "_is_gateway_context", lambda: False)
+        monkeypatch.delenv("JANUS_CRON_SESSION", raising=False)
         with patch("janus_cli.config.load_config", return_value={"skills": {}}):
-            assert _guard_agent_created_enabled() is False
+            monkeypatch.setenv("JANUS_INTERACTIVE", "1")
+            assert smt._guard_agent_created_enabled() is False
+            monkeypatch.delenv("JANUS_INTERACTIVE", raising=False)
+            assert smt._guard_agent_created_enabled() is True
 
     def test_guard_flag_reads_config_when_set(self):
         """_guard_agent_created_enabled returns True when user explicitly enables."""
