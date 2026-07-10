@@ -81,6 +81,12 @@ All fields are optional. Missing values inherit from the ``default`` skin.
       web_search: "🔮"        # Override web_search tool emoji
       # Any tool not listed here uses its registry default
 
+    # Structures (increment-1 additions; all optional)
+    symbols:                # override minimal symbols by name
+      activity: "▸"         # tool line marker (also: ok, fail, bullet, prompt, gutter, rule)
+    layout: open            # open (minimal structures) | panel (legacy boxed structures)
+    emoji_tools: false      # emoji verb icons in tool lines (classic: true)
+
 USAGE
 =====
 
@@ -138,6 +144,9 @@ class SkinConfig:
     tool_emojis: Dict[str, str] = field(default_factory=dict)  # per-tool emoji overrides
     banner_logo: str = ""    # Rich-markup ASCII art logo (replaces JANUS_AGENT_LOGO)
     banner_hero: str = ""    # Rich-markup hero art (replaces JANUS_CADUCEUS)
+    symbols: Dict[str, str] = field(default_factory=dict)  # symbol overrides (activity/ok/fail/bullet/prompt/gutter/rule)
+    layout: str = "panel"        # "open" (minimal structures) | "panel" (legacy boxed structures)
+    emoji_tools: bool = True     # emoji verb icons in tool lines
 
     def get_color(self, key: str, fallback: str = "") -> str:
         """Get a color value with fallback."""
@@ -155,6 +164,10 @@ class SkinConfig:
     def get_branding(self, key: str, fallback: str = "") -> str:
         """Get a branding value with fallback."""
         return self.branding.get(key, fallback)
+
+    def get_symbol(self, key: str, fallback: str = "") -> str:
+        """Get a symbol override with fallback."""
+        return self.symbols.get(key, fallback)
 
 
 # =============================================================================
@@ -195,6 +208,8 @@ _BUILTIN_SKINS: Dict[str, Dict[str, Any]] = {
             "help_header": "(^_^)? Available Commands",
         },
         "tool_prefix": "┊",
+        "layout": "panel",
+        "emoji_tools": True,
     },
     "ares": {
         "name": "ares",
@@ -695,6 +710,7 @@ def _build_skin_config(data: Dict[str, Any]) -> SkinConfig:
     spinner_overrides = _mapping_or_empty(data.get("spinner"), section="spinner", skin_name=skin_name)
     branding_overrides = _mapping_or_empty(data.get("branding"), section="branding", skin_name=skin_name)
     emoji_overrides = _mapping_or_empty(data.get("tool_emojis"), section="tool_emojis", skin_name=skin_name)
+    symbol_overrides = _mapping_or_empty(data.get("symbols"), section="symbols", skin_name=skin_name)
 
     colors = dict(default.get("colors", {}))
     colors.update(color_overrides)
@@ -713,6 +729,9 @@ def _build_skin_config(data: Dict[str, Any]) -> SkinConfig:
         tool_emojis=emoji_overrides,
         banner_logo=data.get("banner_logo", ""),
         banner_hero=data.get("banner_hero", ""),
+        symbols=symbol_overrides,
+        layout=str(data.get("layout", default.get("layout", "panel"))),
+        emoji_tools=bool(data.get("emoji_tools", default.get("emoji_tools", True))),
     )
 
 

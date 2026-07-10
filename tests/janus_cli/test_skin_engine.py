@@ -388,3 +388,37 @@ class TestCliBrandingHelpers:
         overrides = get_prompt_toolkit_style_overrides()
         assert overrides["status-bar"] == f"bg:{skin.get_color('status_bar_bg')} {skin.get_color('banner_text')}"
         assert overrides["voice-status"] == f"bg:{skin.get_color('voice_status_bg')} {skin.get_color('ui_label')}"
+
+
+class TestSchemaAdditions:
+    """Increment-1 schema fields: symbols / layout / emoji_tools (all optional)."""
+
+    def test_new_fields_have_safe_defaults(self):
+        from janus_cli.skin_engine import SkinConfig
+        s = SkinConfig(name="x")
+        assert s.symbols == {}
+        assert s.layout == "panel"          # behavior-preserving until the flip
+        assert s.emoji_tools is True
+        assert s.get_symbol("activity", "▸") == "▸"
+
+    def test_build_config_passes_fields_through(self):
+        from janus_cli.skin_engine import _build_skin_config
+        cfg = _build_skin_config({
+            "name": "t", "symbols": {"activity": "→"},
+            "layout": "open", "emoji_tools": False,
+        })
+        assert cfg.get_symbol("activity", "x") == "→"
+        assert cfg.layout == "open"
+        assert cfg.emoji_tools is False
+
+    def test_fields_inherit_from_default_when_missing(self):
+        from janus_cli.skin_engine import _BUILTIN_SKINS, _build_skin_config
+        cfg = _build_skin_config({"name": "bare"})
+        d = _BUILTIN_SKINS["default"]
+        assert cfg.layout == d.get("layout", "panel")
+        assert cfg.emoji_tools is d.get("emoji_tools", True)
+
+    def test_invalid_symbols_section_ignored(self):
+        from janus_cli.skin_engine import _build_skin_config
+        cfg = _build_skin_config({"name": "t", "symbols": "not-a-dict"})
+        assert cfg.symbols == {}
