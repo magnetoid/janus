@@ -211,6 +211,58 @@ _BUILTIN_SKINS: Dict[str, Dict[str, Any]] = {
         "layout": "panel",
         "emoji_tools": True,
     },
+    "classic": {
+        "name": "classic",
+        "description": "The pre-redesign Janus look — gold and kawaii",
+        "colors": {
+            # verbatim copy of the pre-redesign default colors dict:
+            "banner_border": "#CD7F32",
+            "banner_title": "#FFD700",
+            "banner_accent": "#FFBF00",
+            "banner_dim": "#B8860B",
+            "banner_text": "#FFF8DC",
+            "ui_accent": "#FFBF00",
+            "ui_label": "#DAA520",
+            "ui_ok": "#4caf50",
+            "ui_error": "#ef5350",
+            "ui_warn": "#ffa726",
+            "prompt": "#FFF8DC",
+            "input_rule": "#CD7F32",
+            "response_border": "#FFD700",
+            "status_bar_bg": "#1a1a2e",
+            "session_label": "#DAA520",
+            "session_border": "#8B8682",
+        },
+        "spinner": {
+            # the KawaiiSpinner hardcoded defaults, moved into skin data so the
+            # code fallback can go minimal without changing classic:
+            "waiting_faces": [
+                "(｡◕‿◕｡)", "(◕‿◕✿)", "٩(◕‿◕｡)۶", "(✿◠‿◠)", "( ˘▽˘)っ",
+                "♪(´ε` )", "(◕ᴗ◕✿)", "ヾ(＾∇＾)", "(≧◡≦)", "(★ω★)",
+            ],
+            "thinking_faces": [
+                "(｡•́︿•̀｡)", "(◔_◔)", "(¬‿¬)", "( •_•)>⌐■-■", "(⌐■_■)",
+                "(´･_･`)", "◉_◉", "(°ロ°)", "( ˘⌣˘)♡", "ヽ(>∀<☆)☆",
+                "٩(๑❛ᴗ❛๑)۶", "(⊙_⊙)", "(¬_¬)", "( ͡° ͜ʖ ͡°)", "ಠ_ಠ",
+            ],
+            "thinking_verbs": [
+                "pondering", "contemplating", "musing", "cogitating", "ruminating",
+                "deliberating", "mulling", "reflecting", "processing", "reasoning",
+                "analyzing", "computing", "synthesizing", "formulating", "brainstorming",
+            ],
+        },
+        "branding": {
+            "agent_name": "Janus",
+            "welcome": "Welcome to Janus! Type your message or /help for commands.",
+            "goodbye": "Until next time. ⟡",
+            "response_label": " ⟡ Janus ",
+            "prompt_symbol": "❯",
+            "help_header": "(^_^)? Available Commands",
+        },
+        "tool_prefix": "┊",
+        "layout": "panel",
+        "emoji_tools": True,
+    },
     "ares": {
         "name": "ares",
         "description": "War-god theme — crimson and bronze",
