@@ -2147,6 +2147,16 @@ def cmd_chat(args):
             accept_hooks=getattr(args, "accept_hooks", False),
         )
 
+    # Guided first-run opt-in for the read-only learning loop (Phase 2.4).
+    # Interactive plain-CLI path only (the TUI branch above execs away). Asks
+    # once, remembers the answer, and flips nothing silently — write-side /
+    # autonomous learning stays individually opt-in. Best-effort.
+    try:
+        from janus_cli.learning_onboarding import offer as _offer_learning_optin
+        _offer_learning_optin()
+    except Exception:
+        pass
+
     # Import and run the CLI
     from cli import main as cli_main
 
