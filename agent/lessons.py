@@ -81,9 +81,9 @@ def load() -> List[Dict[str, Any]]:
 
 
 def _save(records: List[Dict[str, Any]]) -> None:
-    path = get_lessons_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(records, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    from agent.store_lock import atomic_write_text
+    atomic_write_text(get_lessons_path(),
+                      json.dumps(records, indent=2, ensure_ascii=False) + "\n")
 
 
 def _tokens(s: str) -> set:
@@ -102,24 +102,26 @@ def record_lesson(
     lesson = str(lesson).strip()
     if not lesson:
         return None
-    records = load()
-    norm = lesson.lower()
-    if any(str(r.get("lesson", "")).lower() == norm for r in records):
-        return None  # already learned this
-    rec = {
-        "id": _lesson_id(lesson),
-        "lesson": lesson,
-        "task_type": _slug(task_type) if task_type else "general",
-        "session_id": session_id or "",
-        "source": source,
-        "helpful": 0,   # sessions that recalled this and then SUCCEEDED
-        "harmful": 0,   # sessions that recalled this and then FAILED
-        "ts": _now_iso(),
-    }
-    records.append(rec)
-    if len(records) > _MAX_LESSONS:
-        records = records[-_MAX_LESSONS:]
-    _save(records)
+    from agent.store_lock import locked_store
+    with locked_store(get_lessons_path()):
+        records = load()
+        norm = lesson.lower()
+        if any(str(r.get("lesson", "")).lower() == norm for r in records):
+            return None  # already learned this
+        rec = {
+            "id": _lesson_id(lesson),
+            "lesson": lesson,
+            "task_type": _slug(task_type) if task_type else "general",
+            "session_id": session_id or "",
+            "source": source,
+            "helpful": 0,   # sessions that recalled this and then SUCCEEDED
+            "harmful": 0,   # sessions that recalled this and then FAILED
+            "ts": _now_iso(),
+        }
+        records.append(rec)
+        if len(records) > _MAX_LESSONS:
+            records = records[-_MAX_LESSONS:]
+        _save(records)
     return rec
 
 
@@ -146,9 +148,8 @@ def _save_recall_state(state: Dict[str, List[str]]) -> None:
     # without bound (dicts preserve insertion order → drop the oldest).
     if len(state) > _MAX_RECALL_SESSIONS:
         state = dict(list(state.items())[-_MAX_RECALL_SESSIONS:])
-    p = get_recall_state_path()
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    from agent.store_lock import atomic_write_text
+    atomic_write_text(get_recall_state_path(), json.dumps(state, ensure_ascii=False))
 
 
 def _outcome_tracking_on() -> bool:
@@ -170,13 +171,16 @@ def log_recall(session_id: str, lesson_ids: List[str]) -> None:
         ids = [i for i in (lesson_ids or []) if i]
         if not session_id or not ids or not _outcome_tracking_on():
             return
-        state = _load_recall_state()
-        merged = sorted(set(state.get(session_id, [])) | set(ids))
-        # Re-insert at the end so an actively-recalling long session stays fresh
-        # against the insertion-order LRU cap (dicts drop oldest-inserted first).
-        state.pop(session_id, None)
-        state[session_id] = merged
-        _save_recall_state(state)
+        from agent.store_lock import locked_store
+        with locked_store(get_recall_state_path()):
+            state = _load_recall_state()
+            merged = sorted(set(state.get(session_id, [])) | set(ids))
+            # Re-insert at the end so an actively-recalling long session stays
+            # fresh against the insertion-order LRU cap (dicts drop
+            # oldest-inserted first).
+            state.pop(session_id, None)
+            state[session_id] = merged
+            _save_recall_state(state)
     except Exception as exc:
         logger.debug("log_recall failed: %s", exc)
 
@@ -191,22 +195,26 @@ def reconcile_lesson_outcomes(session_id: str, success: bool) -> int:
     try:
         if not session_id:
             return 0
-        state = _load_recall_state()
-        ids = state.pop(session_id, None)
+        from agent.store_lock import locked_store
+        with locked_store(get_recall_state_path()):
+            state = _load_recall_state()
+            ids = state.pop(session_id, None)
+            if ids:
+                _save_recall_state(state)  # pop first → idempotent even if crediting fails
         if not ids:
             return 0
-        _save_recall_state(state)  # pop first → idempotent even if crediting fails
-        records = load()
-        by_id = {r.get("id"): r for r in records if r.get("id")}
         field = "helpful" if success else "harmful"
         n = 0
-        for lid in ids:
-            r = by_id.get(lid)
-            if r is not None:
-                r[field] = int(r.get(field, 0) or 0) + 1
-                n += 1
-        if n:
-            _save(records)
+        with locked_store(get_lessons_path()):
+            records = load()
+            by_id = {r.get("id"): r for r in records if r.get("id")}
+            for lid in ids:
+                r = by_id.get(lid)
+                if r is not None:
+                    r[field] = int(r.get(field, 0) or 0) + 1
+                    n += 1
+            if n:
+                _save(records)
         return n
     except Exception as exc:
         logger.debug("reconcile_lesson_outcomes failed: %s", exc)

@@ -48,9 +48,9 @@ def load() -> List[Dict[str, Any]]:
 
 
 def _save(records: List[Dict[str, Any]]) -> None:
-    path = get_outcomes_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(records, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    from agent.store_lock import atomic_write_text
+    atomic_write_text(get_outcomes_path(),
+                      json.dumps(records, indent=2, ensure_ascii=False) + "\n")
 
 
 # A SUCCESS reached only after many failed tool calls is a weaker positive
@@ -101,9 +101,11 @@ def record_outcome(
         "reward": reward,
         "ts": _now_iso(),
     }
-    records = load()
-    records.append(rec)
-    _save(records)
+    from agent.store_lock import locked_store
+    with locked_store(get_outcomes_path()):
+        records = load()
+        records.append(rec)
+        _save(records)
     # Close the move-4 efficacy loop: credit/debit the lessons this session
     # recalled based on whether it succeeded. Best-effort; idempotent per session.
     try:

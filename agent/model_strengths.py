@@ -84,9 +84,9 @@ def load() -> Dict[str, List[Dict[str, Any]]]:
 
 
 def save(data: Dict[str, List[Dict[str, Any]]]) -> None:
-    path = get_strengths_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    from agent.store_lock import atomic_write_text
+    atomic_write_text(get_strengths_path(),
+                      json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
 def record(task: str, model: str, *, note: str = "", source: str = "", score: Optional[float] = None) -> None:
@@ -95,27 +95,29 @@ def record(task: str, model: str, *, note: str = "", source: str = "", score: Op
     if not model:
         return
     task = _norm_task(task)
-    data = load()
-    entries = data.setdefault(task, [])
-    for e in entries:
-        if e.get("model") == model:
-            if note:
-                e["note"] = note
-            if source:
-                e["source"] = source
-            if score is not None:
-                e["score"] = score
-            e["updated_at"] = _now_iso()
-            save(data)
-            return
-    entries.append({
-        "model": model,
-        "note": note,
-        "source": source,
-        "score": score if score is not None else 0.0,
-        "updated_at": _now_iso(),
-    })
-    save(data)
+    from agent.store_lock import locked_store
+    with locked_store(get_strengths_path()):
+        data = load()
+        entries = data.setdefault(task, [])
+        for e in entries:
+            if e.get("model") == model:
+                if note:
+                    e["note"] = note
+                if source:
+                    e["source"] = source
+                if score is not None:
+                    e["score"] = score
+                e["updated_at"] = _now_iso()
+                save(data)
+                return
+        entries.append({
+            "model": model,
+            "note": note,
+            "source": source,
+            "score": score if score is not None else 0.0,
+            "updated_at": _now_iso(),
+        })
+        save(data)
 
 
 def record_outcome(task: str, model: str, success: bool, *,
@@ -135,6 +137,15 @@ def record_outcome(task: str, model: str, success: bool, *,
     if not model:
         return {}
     task = _norm_task(task)
+    from agent.store_lock import locked_store
+    with locked_store(get_strengths_path()):
+        return _record_outcome_locked(task, model, success,
+                                      source=source, alpha=alpha, cost=cost)
+
+
+def _record_outcome_locked(task: str, model: str, success: bool, *,
+                           source: str, alpha: float,
+                           cost: Optional[float]) -> Dict[str, Any]:
     data = load()
     entries = data.setdefault(task, [])
     outcome = 1.0 if success else 0.0
