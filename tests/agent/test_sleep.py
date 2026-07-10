@@ -14,6 +14,29 @@ def _fake_llm(reply: str):
     return _caller
 
 
+def test_sleep_runs_proposer_and_attaches_result(monkeypatch):
+    store = MemoryStore(); store.load_from_disk()
+    calls = {"n": 0}
+
+    def _fake_propose(**kwargs):
+        calls["n"] += 1
+        return {"proposed": ["si-0001"], "considered": 1, "reason": "ok"}
+
+    monkeypatch.setattr("agent.proposer.propose_skill_improvements", _fake_propose)
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert calls["n"] == 1
+    assert rep["proposed"] == ["si-0001"]
+
+
+def test_sleep_proposer_failure_does_not_break_cycle(monkeypatch):
+    store = MemoryStore(); store.load_from_disk()
+    monkeypatch.setattr("agent.proposer.propose_skill_improvements",
+                        lambda **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    rep = sleep.run_sleep_cycle(store, llm_caller=_fake_llm("[]"))
+    assert rep["error"] is None          # cycle survived
+    assert rep["proposed"] == []         # step failed → stays empty
+
+
 def test_sleep_runs_self_challenge_only_when_enabled(monkeypatch):
     store = MemoryStore(); store.load_from_disk()
     calls = {"n": 0}

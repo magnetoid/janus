@@ -267,7 +267,7 @@ def run_sleep_cycle(
     report: Dict[str, Any] = {
         "dry_run": dry_run, "graduated_facts": 0, "graduated_skills": 0,
         "promote": None, "reconciled": [], "pruned": [], "lessons": [],
-        "self_challenge": None, "error": None,
+        "self_challenge": None, "proposed": [], "error": None,
     }
     try:
         # 2. GRADUATE — distill recent sessions into facts + skill drafts.
@@ -346,6 +346,19 @@ def run_sleep_cycle(
                         llm_caller=llm_caller, provider=provider, model=model)
             except Exception as exc:
                 logger.debug("sleep self-challenge failed: %s", exc)
+
+        # 8. PROPOSE: generate improved-skill-variant proposals for the worst
+        # agent-created skills and record them for human review (Phase 2.1 — the
+        # generator that feeds self_improve). Gated by learning.self_improve.enabled
+        # + the governor + the autonomy floor; NEVER promotes (human approval
+        # stays required). Off by default. Best-effort.
+        if not dry_run:
+            try:
+                from agent.proposer import propose_skill_improvements
+                report["proposed"] = propose_skill_improvements(
+                    llm_caller=llm_caller).get("proposed", [])
+            except Exception as exc:
+                logger.debug("sleep propose failed: %s", exc)
 
         if not dry_run:
             state = load_sleep_state()
