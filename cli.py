@@ -4637,8 +4637,11 @@ class JanusCLI:
         open layout, classic 4-space indent otherwise (both 4 cells wide,
         matching the _terminal_width_for_streaming budget)."""
         if getattr(self, "_stream_open_layout", False):
-            from janus_cli.design import sym
-            return f"  {_ACCENT}{sym('gutter')}{_RST} "
+            from janus_cli.design import sym, tok
+            bar = sym('gutter')
+            if tok("accent"):                       # '' when NO_COLOR/non-TTY
+                return f"  {_ACCENT}{bar}{_RST} "
+            return f"  {bar} "
         return _STREAM_PAD
 
     def _emit_stream_text(self, text: str) -> None:

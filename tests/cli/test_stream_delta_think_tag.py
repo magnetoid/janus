@@ -135,3 +135,35 @@ class TestFlushRecovery:
         assert not cli._in_reasoning_block
         full = "".join(cli._emitted)
         assert "Launch production" in full
+
+
+class TestStreamPad:
+    """_stream_pad routes the gutter's color through the design system."""
+
+    def test_open_layout_no_color_pad_has_glyph_but_no_ansi(self, monkeypatch):
+        from cli import JanusCLI
+        import janus_cli.design as design
+        monkeypatch.setattr(design, "tok", lambda name: "")   # NO_COLOR/non-TTY
+        monkeypatch.setattr(design, "_unicode_ok", lambda: True)
+        cli = JanusCLI.__new__(JanusCLI)
+        cli._stream_open_layout = True
+        pad = cli._stream_pad()
+        assert "\033" not in pad
+        assert design.sym("gutter") in pad
+
+    def test_open_layout_colored_pad_has_ansi_escape(self, monkeypatch):
+        from cli import JanusCLI
+        import janus_cli.design as design
+        monkeypatch.setattr(design, "tok", lambda name: "#E3A857")
+        monkeypatch.setattr(design, "_unicode_ok", lambda: True)
+        cli = JanusCLI.__new__(JanusCLI)
+        cli._stream_open_layout = True
+        pad = cli._stream_pad()
+        assert "\033" in pad
+        assert design.sym("gutter") in pad
+
+    def test_panel_layout_pad_is_classic_indent(self):
+        from cli import JanusCLI, _STREAM_PAD
+        cli = JanusCLI.__new__(JanusCLI)
+        cli._stream_open_layout = False
+        assert cli._stream_pad() == _STREAM_PAD
