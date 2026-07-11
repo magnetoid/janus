@@ -96,6 +96,29 @@ class TestBuiltinSkins:
         assert skin.get_color("banner_text") == "#2C1810"
         assert skin.get_color("completion_menu_bg") == "#F5EFE0"
 
+    @pytest.mark.parametrize(
+        "skin_name,expected_status_bar_text",
+        [
+            ("daylight", "#111827"),
+            ("warm-lightmode", "#2C1810"),
+        ],
+    )
+    def test_light_skins_define_own_status_bar_text(self, skin_name, expected_status_bar_text):
+        """Light skins must not inherit the default skin's dark status-bar text.
+
+        The default skin's status_bar_text (#B8B8B8) is tuned for a dark
+        (#1C1C1C) status bar background and is unreadable on light
+        backgrounds. Light skins must define their own explicit value.
+        """
+        from janus_cli.skin_engine import load_skin
+
+        default_skin = load_skin("default")
+        assert default_skin.get_color("status_bar_text") == "#B8B8B8"
+
+        skin = load_skin(skin_name)
+        assert skin.get_color("status_bar_text") != default_skin.get_color("status_bar_text")
+        assert skin.get_color("status_bar_text") == expected_status_bar_text
+
     def test_charizard_skin_has_dark_ember_completion_menu(self):
         from janus_cli.skin_engine import load_skin
 
@@ -402,8 +425,8 @@ class TestCliBrandingHelpers:
         set_active_skin("daylight")
         skin = get_active_skin()
         overrides = get_prompt_toolkit_style_overrides()
-        # daylight doesn't define status_bar_text, so it now inherits the
-        # minimal default's value (by design — see _build_skin_config merge).
+        # daylight defines its own light-appropriate status_bar_text so it no
+        # longer inherits the minimal default's dark-background value.
         assert overrides["status-bar"] == f"bg:{skin.get_color('status_bar_bg')} {skin.get_color('status_bar_text')}"
         assert overrides["voice-status"] == f"bg:{skin.get_color('voice_status_bg')} {skin.get_color('ui_label')}"
 

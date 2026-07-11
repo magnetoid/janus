@@ -77,6 +77,14 @@ class TestDetectToolFailureTerminal:
     def test_none_result_returns_no_suffix(self):
         assert _detect_tool_failure("terminal", None) == (False, "")
 
+    def test_error_dict_without_exit_code_returns_no_suffix(self):
+        # Regression: terminal_tool's foreground-timeout path returns
+        # {"error": "..."} with no exit_code field at all. Terminal results
+        # only report failure via a nonzero exit_code — presentation-only
+        # constraint, not a widened detector.
+        result = json.dumps({"error": "Foreground timeout after 120s, backgrounded"})
+        assert _detect_tool_failure("terminal", result) == (False, "")
+
 
 class TestDetectToolFailureMemory:
     """memory: 'full' is distinct from real errors."""

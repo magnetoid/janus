@@ -858,12 +858,7 @@ def _detect_tool_failure(tool_name: str, result: str | None) -> tuple[bool, str]
                 if err_msg:
                     return True, f" [{_trim_error(str(err_msg))}]"
                 return True, f" [exit {exit_code}]"
-            if exit_code is None and data.get("error"):
-                # No exit_code field, but an explicit error was surfaced —
-                # fall through to the generic structured-error check below.
-                pass
-            else:
-                return False, ""
+        return False, ""
 
     # Memory: distinguish "store full" from real errors.
     if tool_name == "memory":

@@ -4639,8 +4639,16 @@ class JanusCLI:
         if getattr(self, "_stream_open_layout", False):
             from janus_cli.design import sym, tok
             bar = sym('gutter')
-            if tok("accent"):                       # '' when NO_COLOR/non-TTY
-                return f"  {_ACCENT}{bar}{_RST} "
+            _accent_hex = tok("accent")             # '' when NO_COLOR/non-TTY
+            if _accent_hex:
+                try:
+                    _r = int(_accent_hex[1:3], 16)
+                    _g = int(_accent_hex[3:5], 16)
+                    _b = int(_accent_hex[5:7], 16)
+                    _bar_ansi = f"\033[38;2;{_r};{_g};{_b}m"
+                    return f"  {_bar_ansi}{bar}{_RST} "
+                except (ValueError, IndexError):
+                    pass
             return f"  {bar} "
         return _STREAM_PAD
 
@@ -4690,6 +4698,9 @@ class JanusCLI:
             from janus_cli.design import layout as _dlayout
             self._stream_open_layout = _dlayout() == "open"
             if self._stream_open_layout:
+                # Open layout: streamed text inherits the terminal's default
+                # fg, same as GutterBlock output — no skin ANSI color applied.
+                self._stream_text_ansi = ""
                 _cprint("")   # open layout: a breath, no box
             else:
                 _cprint(f"\n{_ACCENT}╭─{label}{'─' * max(fill - 1, 0)}╮{_RST}")

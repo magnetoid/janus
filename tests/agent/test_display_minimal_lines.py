@@ -25,8 +25,26 @@ def test_minimal_failure_line_uses_fail_mark():
     set_active_skin("default")
     line = get_cute_tool_message(
         "terminal", {"command": "boom"}, 0.10,
-        result='{"error": "exit 1"}')
+        result='{"error": "boom", "exit_code": 1}')
     assert line.startswith("✗ ")
+
+
+def test_terminal_error_without_exit_code_is_not_a_failure():
+    """Regression: terminal_tool's foreground-timeout path returns
+    {"error": "..."} with no exit_code. Presentation-only constraint: this
+    must NOT be flagged as a failure (only nonzero exit_code is canonical
+    for terminal), under both default and classic skins."""
+    result = '{"error": "Foreground timeout after 120s, backgrounded"}'
+
+    set_active_skin("default")
+    line = get_cute_tool_message("terminal", {"command": "sleep 999"}, 1.0, result=result)
+    assert not line.startswith("✗ ")
+    assert "Foreground timeout" not in line
+
+    set_active_skin("classic")
+    line = get_cute_tool_message("terminal", {"command": "sleep 999"}, 1.0, result=result)
+    assert not line.startswith("✗")
+    assert "Foreground timeout" not in line
 
 
 def test_minimal_line_never_contains_emoji_for_any_known_tool():
