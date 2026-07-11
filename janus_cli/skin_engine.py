@@ -104,7 +104,8 @@ USAGE
 BUILT-IN SKINS
 ==============
 
-- ``default`` — Classic Janus gold/kawaii (the current look)
+- ``default`` — Janus minimal: monochrome with refined gold (the redesigned look)
+- ``classic`` — The pre-redesign look: gold and kawaii, preserved verbatim
 - ``ares``    — Crimson/bronze war-god theme with custom spinner wings
 - ``mono``    — Clean grayscale monochrome
 - ``slate``   — Cool blue developer-focused theme

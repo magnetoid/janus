@@ -191,6 +191,8 @@ That logs you in via OAuth, sets the provider, and turns on the Tool Gateway. Ch
 
 Two entry points: start the terminal UI with `janus`, or run the gateway and talk to it from Telegram, Discord, Slack, WhatsApp, Signal, or Email. Once you're in a conversation, most slash commands are shared.
 
+- **Professional minimal CLI** with a data-driven skin engine — `/skin classic` restores the pre-redesign look, `/skin list` shows all themes.
+
 | Action | CLI | Messaging platforms |
 | --- | --- | --- |
 | Start chatting | `janus` | `janus gateway setup` + `janus gateway start`, then message the bot |
