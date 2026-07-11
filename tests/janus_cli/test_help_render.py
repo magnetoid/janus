@@ -41,3 +41,18 @@ def test_classic_help_keeps_the_boxed_header(cli):
         set_active_skin("default")
     out = "\n".join(lines)
     assert "(^_^)? Available Commands" in out
+
+
+def test_open_show_tools_header_is_calm(cli, monkeypatch):
+    import builtins
+    import cli as cli_mod
+    inst, lines = cli
+    set_active_skin("default")
+    monkeypatch.setattr(cli_mod, "get_tool_definitions",
+                        lambda **k: [{"function": {"name": "terminal", "description": "Run a command."}}])
+    monkeypatch.setattr(cli_mod, "get_toolset_for_tool", lambda n: "core", raising=False)
+    monkeypatch.setattr(builtins, "print", lambda *a, **k: lines.append(" ".join(str(x) for x in a)))
+    inst.show_tools()
+    out = "\n".join(lines)
+    assert "(^_^)/" not in out
+    assert "terminal" in out

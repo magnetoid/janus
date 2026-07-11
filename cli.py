@@ -6491,17 +6491,24 @@ class JanusCLI:
         tools = get_tool_definitions(enabled_toolsets=self.enabled_toolsets, quiet_mode=True)
         
         if not tools:
-            print("(;_;) No tools available")
+            from janus_cli.design import warn as _dwarn
+            ChatConsole().print(_dwarn("no tools available"))
             return
-        
+
         # Header
+        from janus_cli.design import layout as _dlayout, header as _dheader, rule as _drule
         print()
-        title = "(^_^)/ Available Tools"
-        width = 78
-        pad = width - len(title)
-        print("+" + "-" * width + "+")
-        print("|" + " " * (pad // 2) + title + " " * (pad - pad // 2) + "|")
-        print("+" + "-" * width + "+")
+        if _dlayout() == "open":
+            con = ChatConsole()
+            con.print(f"  {_dheader('tools')}")
+            con.print(f"  {_drule(40)}")
+        else:
+            title = "(^_^)/ Available Tools"
+            width = 78
+            pad = width - len(title)
+            print("+" + "-" * width + "+")
+            print("|" + " " * (pad // 2) + title + " " * (pad - pad // 2) + "|")
+            print("+" + "-" * width + "+")
         print()
         
         # Group tools by toolset
