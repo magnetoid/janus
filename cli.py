@@ -4632,6 +4632,15 @@ class JanusCLI:
                 self._stream_prefilt = self._stream_prefilt[-max_tag_len:]
             return
 
+    def _stream_pad(self) -> str:
+        """Left pad for streamed response lines: accent gutter under the
+        open layout, classic 4-space indent otherwise (both 4 cells wide,
+        matching the _terminal_width_for_streaming budget)."""
+        if getattr(self, "_stream_open_layout", False):
+            from janus_cli.design import sym
+            return f"  {_ACCENT}{sym('gutter')}{_RST} "
+        return _STREAM_PAD
+
     def _emit_stream_text(self, text: str) -> None:
         """Emit filtered text to the streaming display."""
         if not text:
@@ -4688,10 +4697,7 @@ class JanusCLI:
         _tc = getattr(self, "_stream_text_ansi", "")
 
         def _emit_one(printed_line: str) -> None:
-            pad = _STREAM_PAD
-            if getattr(self, "_stream_open_layout", False):
-                from janus_cli.design import sym
-                pad = f"  {_ACCENT}{sym('gutter')}{_RST} "
+            pad = self._stream_pad()
             _cprint(f"{pad}{_tc}{printed_line}{_RST}" if _tc else f"{pad}{printed_line}")
 
         def _flush_table_buf() -> None:
@@ -4773,12 +4779,14 @@ class JanusCLI:
             if self.final_response_markdown == "strip":
                 joined = _strip_markdown_syntax(joined)
             block = realign_markdown_tables(joined, _terminal_width_for_streaming())
+            _pad = self._stream_pad()
             for ln in block.split("\n"):
-                _cprint(f"{_STREAM_PAD}{_tc}{ln}{_RST}" if _tc else f"{_STREAM_PAD}{ln}")
+                _cprint(f"{_pad}{_tc}{ln}{_RST}" if _tc else f"{_pad}{ln}")
 
         if self._stream_buf:
             line = _strip_markdown_syntax(self._stream_buf) if self.final_response_markdown == "strip" else self._stream_buf
-            _cprint(f"{_STREAM_PAD}{_tc}{line}{_RST}" if _tc else f"{_STREAM_PAD}{line}")
+            _pad = self._stream_pad()
+            _cprint(f"{_pad}{_tc}{line}{_RST}" if _tc else f"{_pad}{line}")
             self._stream_buf = ""
 
         # Close the response box
@@ -4794,6 +4802,7 @@ class JanusCLI:
         self._stream_buf = ""
         self._stream_started = False
         self._stream_box_opened = False
+        self._stream_open_layout = False
         self._stream_text_ansi = ""
         self._stream_prefilt = ""
         self._in_reasoning_block = False
@@ -12459,13 +12468,18 @@ class JanusCLI:
                     nonlocal _streaming_box_opened
                     if not _streaming_box_opened:
                         _streaming_box_opened = True
-                        w = self._scrollback_box_width(getattr(self.console, "width", 80))
-                        label = " ⚕ Janus "
-                        if self.show_timestamps:
-                            label = f"{label}{datetime.now().strftime('%H:%M')} "
-                        fill = w - 2 - JanusCLI._status_bar_display_width(label)
-                        _cprint(f"\n{_ACCENT}╭─{label}{'─' * max(fill - 1, 0)}╮{_RST}")
-                    _cprint(f"{_STREAM_PAD}{sentence.rstrip()}")
+                        from janus_cli.design import layout as _dlayout
+                        self._stream_open_layout = _dlayout() == "open"
+                        if self._stream_open_layout:
+                            _cprint("")   # open layout: a breath, no box
+                        else:
+                            w = self._scrollback_box_width(getattr(self.console, "width", 80))
+                            label = " ⚕ Janus "
+                            if self.show_timestamps:
+                                label = f"{label}{datetime.now().strftime('%H:%M')} "
+                            fill = w - 2 - JanusCLI._status_bar_display_width(label)
+                            _cprint(f"\n{_ACCENT}╭─{label}{'─' * max(fill - 1, 0)}╮{_RST}")
+                    _cprint(f"{self._stream_pad()}{sentence.rstrip()}")
 
                 tts_thread = threading.Thread(
                     target=stream_tts_to_speaker,
