@@ -1924,9 +1924,9 @@ def _accent_hex() -> str:
     """Return the active skin accent color for legacy CLI output lines."""
     try:
         from janus_cli.skin_engine import get_active_skin
-        return get_active_skin().get_color("ui_accent", "#FFBF00")
+        return get_active_skin().get_color("ui_accent", "#E3A857")
     except Exception:
-        return "#FFBF00"
+        return "#E3A857"
 
 
 def _rich_text_from_ansi(text: str) -> _RichText:
