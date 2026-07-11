@@ -245,7 +245,7 @@ class TestTodoSkinIntegration:
     def teardown_method(self):
         set_active_skin("default")
 
-    def test_default_skin_prefix(self):
+    def test_classic_skin_prefix(self):
         set_active_skin("classic")
         msg = get_cute_tool_message("todo", {}, 0.5)
         assert msg.startswith("┊")

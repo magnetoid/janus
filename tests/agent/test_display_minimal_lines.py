@@ -1,9 +1,10 @@
 """Minimal tool lines (default skin): emoji-free aligned ledger.
 Classic keeps the legacy emoji format byte-for-byte."""
 import re
+from unittest.mock import patch as mock_patch
 
 from agent.display import get_cute_tool_message
-from janus_cli.skin_engine import set_active_skin
+from janus_cli.skin_engine import SkinConfig, set_active_skin
 
 
 def teardown_function():
@@ -54,3 +55,19 @@ def test_classic_search_line_verbatim():
     set_active_skin("classic")
     line = get_cute_tool_message("web_search", {"query": "rust"}, 1.0)
     assert line == "┊ 🔍 search    rust  1.0s"
+
+
+def test_emoji_skin_with_custom_prefix_substitutes_it():
+    """The legacy branch's skin-prefix substitution (skin_prefix != "┊")
+    must stay covered: no built-in emoji_tools skin ships a non-┊ prefix
+    (classic uses "┊"; ares moved to the minimal branch), so exercise it
+    with a fabricated skin, same _get_skin mocking pattern as
+    tests/agent/test_display_emoji.py."""
+    skin = SkinConfig(name="x", emoji_tools=True, tool_prefix="╎")
+    with mock_patch("agent.display._get_skin", return_value=skin):
+        line = get_cute_tool_message("terminal", {"command": "ls"}, 0.1)
+    assert line.startswith("╎ ")
+    assert "💻" in line                      # legacy emoji shape preserved
+    assert "$" in line and "ls" in line
+    assert line.rstrip().endswith("0.1s")
+    assert "┊" not in line                   # prefix was substituted, not kept
