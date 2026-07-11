@@ -155,3 +155,15 @@ def test_gutter_block_prefixes_every_line(monkeypatch):
     out = con.export_text()
     lines = [l for l in out.splitlines() if l.strip()]
     assert all("▍" in l for l in lines)
+
+
+def test_response_block_open_never_draws_box_chars(monkeypatch):
+    from rich.console import Console
+    monkeypatch.setattr(design, "layout", lambda: "open")
+    con = Console(record=True, width=70, force_terminal=False)
+    con.print(design.response_block(
+        "multi\nline\nbody", label=" janus ", border_hex="#E3A857",
+        text_hex="", width=70))
+    out = con.export_text()
+    for ch in ("╭", "╮", "╰", "╯"):
+        assert ch not in out

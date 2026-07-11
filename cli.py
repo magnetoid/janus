@@ -4675,7 +4675,12 @@ class JanusCLI:
                 label = f"{label} {datetime.now().strftime('%H:%M')}"
             w = self._scrollback_box_width()
             fill = w - 2 - JanusCLI._status_bar_display_width(label)
-            _cprint(f"\n{_ACCENT}╭─{label}{'─' * max(fill - 1, 0)}╮{_RST}")
+            from janus_cli.design import layout as _dlayout
+            self._stream_open_layout = _dlayout() == "open"
+            if self._stream_open_layout:
+                _cprint("")   # open layout: a breath, no box
+            else:
+                _cprint(f"\n{_ACCENT}╭─{label}{'─' * max(fill - 1, 0)}╮{_RST}")
 
         self._stream_buf += text
 
@@ -4683,7 +4688,11 @@ class JanusCLI:
         _tc = getattr(self, "_stream_text_ansi", "")
 
         def _emit_one(printed_line: str) -> None:
-            _cprint(f"{_STREAM_PAD}{_tc}{printed_line}{_RST}" if _tc else f"{_STREAM_PAD}{printed_line}")
+            pad = _STREAM_PAD
+            if getattr(self, "_stream_open_layout", False):
+                from janus_cli.design import sym
+                pad = f"  {_ACCENT}{sym('gutter')}{_RST} "
+            _cprint(f"{pad}{_tc}{printed_line}{_RST}" if _tc else f"{pad}{printed_line}")
 
         def _flush_table_buf() -> None:
             buf = self._stream_table_buf
@@ -4775,7 +4784,10 @@ class JanusCLI:
         # Close the response box
         if self._stream_box_opened:
             w = self._scrollback_box_width()
-            _cprint(f"{_ACCENT}╰{'─' * (w - 2)}╯{_RST}")
+            if getattr(self, "_stream_open_layout", False):
+                _cprint("")
+            else:
+                _cprint(f"{_ACCENT}╰{'─' * (w - 2)}╯{_RST}")
 
     def _reset_stream_state(self) -> None:
         """Reset streaming state before each agent invocation."""
@@ -9486,16 +9498,15 @@ class JanusCLI:
                         _resp_color = "#CD7F32"
                         _resp_text = "#FFF8DC"
 
+                    from janus_cli.design import response_block
                     _chat_console = ChatConsole()
-                    _chat_console.print(Panel(
+                    _chat_console.print(response_block(
                         _render_final_assistant_content(response, mode=self.final_response_markdown),
-                        title=f"[{_resp_color} bold]{label} (background #{task_num})[/]",
-                        title_align="left",
-                        border_style=_resp_color,
-                        style=_resp_text,
-                        box=rich_box.HORIZONTALS,
-                        padding=(1, 4),
+                        label=label,
+                        border_hex=_resp_color,
+                        text_hex=_resp_text,
                         width=self._scrollback_box_width(),
+                        attribution=f"(background #{task_num})",
                     ))
                 else:
                     _cprint("  (No response generated)")
@@ -12801,21 +12812,22 @@ class JanusCLI:
                 if use_streaming_tts and _streaming_box_opened and not is_error_response:
                     # Text was already printed sentence-by-sentence; just close the box
                     w = self._scrollback_box_width()
-                    _cprint(f"\n{_ACCENT}╰{'─' * (w - 2)}╯{_RST}")
+                    if getattr(self, "_stream_open_layout", False):
+                        _cprint("")
+                    else:
+                        _cprint(f"\n{_ACCENT}╰{'─' * (w - 2)}╯{_RST}")
                 elif already_streamed:
                     # Response was already streamed token-by-token with box framing;
                     # _flush_stream() already closed the box. Skip Rich Panel.
                     pass
                 else:
+                    from janus_cli.design import response_block
                     _chat_console = ChatConsole()
-                    _chat_console.print(Panel(
+                    _chat_console.print(response_block(
                         _render_final_assistant_content(response, mode=self.final_response_markdown),
-                        title=f"[{_resp_color} bold]{label}[/]",
-                        title_align="left",
-                        border_style=_resp_color,
-                        style=_resp_text,
-                        box=rich_box.HORIZONTALS,
-                        padding=(1, 4),
+                        label=label,
+                        border_hex=_resp_color,
+                        text_hex=_resp_text,
                         width=self._scrollback_box_width(),
                     ))
 
