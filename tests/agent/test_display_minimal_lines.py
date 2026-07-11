@@ -71,3 +71,25 @@ def test_emoji_skin_with_custom_prefix_substitutes_it():
     assert "$" in line and "ls" in line
     assert line.rstrip().endswith("0.1s")
     assert "┊" not in line                   # prefix was substituted, not kept
+
+
+def test_spinner_faces_minimal_under_default_skin():
+    from agent.display import KawaiiSpinner
+    set_active_skin("default")
+    assert KawaiiSpinner.get_waiting_faces() == [""]
+    assert KawaiiSpinner.get_thinking_faces() == [""]
+    assert KawaiiSpinner.get_thinking_verbs() == ["thinking"]
+
+
+def test_spinner_faces_kawaii_under_classic_skin():
+    from agent.display import KawaiiSpinner
+    set_active_skin("classic")
+    assert "(⌐■_■)" in KawaiiSpinner.get_thinking_faces()
+    assert "pondering" in KawaiiSpinner.get_thinking_verbs()
+
+
+def test_compose_spinner_message_skips_empty_face():
+    from agent.display import compose_spinner_message
+    assert compose_spinner_message("", "running 3 tools") == "running 3 tools"
+    assert compose_spinner_message("(◕‿◕)", "running 3 tools") == "(◕‿◕) ⚡ running 3 tools"
+    assert compose_spinner_message("", "thinking...") == "thinking..."

@@ -133,6 +133,17 @@ def get_skin_tool_prefix() -> str:
     return "┊"
 
 
+def compose_spinner_message(face: str, message: str) -> str:
+    """Join an optional spinner face with a message. Empty face (minimal
+    skins) yields the bare message; a real face keeps the legacy '⚡' joiner
+    so classic output is unchanged."""
+    if not face:
+        return message
+    if message.startswith("running "):
+        return f"{face} ⚡ {message}"
+    return f"{face} {message}"
+
+
 def get_tool_emoji(tool_name: str, default: str = "⚡") -> str:
     """Get the display emoji for a tool.
 
@@ -588,9 +599,16 @@ class KawaiiSpinner:
         "analyzing", "computing", "synthesizing", "formulating", "brainstorming",
     ]
 
+    # Minimal-skin fallbacks: no face — the frame + message carry the state.
+    # KAWAII_*/THINKING_VERBS above are kept for third-party skin compat (the
+    # classic skin's spinner data was copied from them at skin-authoring time).
+    MINIMAL_WAITING = [""]
+    MINIMAL_THINKING = [""]
+    MINIMAL_VERBS = ["thinking"]
+
     @classmethod
     def get_waiting_faces(cls) -> list:
-        """Return waiting faces from the active skin, falling back to KAWAII_WAITING."""
+        """Return waiting faces from the active skin, falling back to MINIMAL_WAITING."""
         try:
             skin = _get_skin()
             if skin:
@@ -599,11 +617,11 @@ class KawaiiSpinner:
                     return faces
         except Exception:
             pass
-        return cls.KAWAII_WAITING
+        return cls.MINIMAL_WAITING
 
     @classmethod
     def get_thinking_faces(cls) -> list:
-        """Return thinking faces from the active skin, falling back to KAWAII_THINKING."""
+        """Return thinking faces from the active skin, falling back to MINIMAL_THINKING."""
         try:
             skin = _get_skin()
             if skin:
@@ -612,11 +630,11 @@ class KawaiiSpinner:
                     return faces
         except Exception:
             pass
-        return cls.KAWAII_THINKING
+        return cls.MINIMAL_THINKING
 
     @classmethod
     def get_thinking_verbs(cls) -> list:
-        """Return thinking verbs from the active skin, falling back to THINKING_VERBS."""
+        """Return thinking verbs from the active skin, falling back to MINIMAL_VERBS."""
         try:
             skin = _get_skin()
             if skin:
@@ -625,7 +643,7 @@ class KawaiiSpinner:
                     return verbs
         except Exception:
             pass
-        return cls.THINKING_VERBS
+        return cls.MINIMAL_VERBS
 
     def __init__(self, message: str = "", spinner_type: str = 'dots', print_fn=None):
         self.message = message
@@ -710,17 +728,25 @@ class KawaiiSpinner:
         skin = _get_skin()
         wings = skin.get_spinner_wings() if skin else []
 
+        # Cache the layout probe once (avoid per-frame imports/lookups)
+        try:
+            from janus_cli.design import layout as _dlayout
+            _open = _dlayout() == "open"
+        except Exception:
+            _open = False
+
         while self.running:
             if os.getenv("JANUS_SPINNER_PAUSE"):
                 time.sleep(0.1)
                 continue
             frame = self.spinner_frames[self.frame_idx % len(self.spinner_frames)]
             elapsed = time.time() - self.start_time
+            elapsed_txt = f"· {elapsed:.0f}s" if _open else f"({elapsed:.1f}s)"
             if wings:
                 left, right = wings[self.frame_idx % len(wings)]
-                line = f"  {left} {frame} {self.message} {right} ({elapsed:.1f}s)"
+                line = f"  {left} {frame} {self.message} {right} {elapsed_txt}"
             else:
-                line = f"  {frame} {self.message} ({elapsed:.1f}s)"
+                line = f"  {frame} {self.message} {elapsed_txt}"
             pad = max(self.last_line_len - len(line), 0)
             self._write(f"\r{line}{' ' * pad}", end='', flush=True)
             self.last_line_len = len(line)

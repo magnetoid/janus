@@ -28,7 +28,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from agent.codex_responses_adapter import _summarize_user_message_for_log
-from agent.display import KawaiiSpinner
+from agent.display import KawaiiSpinner, compose_spinner_message
 from agent.error_classifier import FailoverReason, classify_api_error
 from agent.iteration_budget import IterationBudget
 from agent.memory_manager import build_memory_context_block
@@ -1203,12 +1203,12 @@ def run_conversation(
             if agent.thinking_callback:
                 # CLI TUI mode: use prompt_toolkit widget instead of raw spinner
                 # (works in both streaming and non-streaming modes)
-                agent.thinking_callback(f"{face} {verb}...")
+                agent.thinking_callback(compose_spinner_message(face, f"{verb}..."))
             elif not agent._has_stream_consumers() and agent._should_start_quiet_spinner():
                 # Raw KawaiiSpinner only when no streaming consumers and the
                 # spinner output has a safe sink.
                 spinner_type = random.choice(['brain', 'sparkle', 'pulse', 'moon', 'star'])
-                thinking_spinner = KawaiiSpinner(f"{face} {verb}...", spinner_type=spinner_type, print_fn=agent._print_fn)
+                thinking_spinner = KawaiiSpinner(compose_spinner_message(face, f"{verb}..."), spinner_type=spinner_type, print_fn=agent._print_fn)
                 thinking_spinner.start()
         
         # Log request details if verbose
