@@ -6391,6 +6391,53 @@ class JanusCLI:
     def show_help(self):
         """Display help information with categorized commands."""
         from janus_cli.commands import COMMANDS_BY_CATEGORY
+        from janus_cli.design import layout as _dlayout
+
+        if _dlayout() != "open":
+            return self._show_help_panel()
+
+        try:
+            from janus_cli.skin_engine import get_active_help_header
+            header = get_active_help_header("commands")
+        except Exception:
+            header = "commands"
+        header = (header or "").strip() or "commands"
+        accent = _accent_hex()
+        con = ChatConsole()
+        con.print(f"\n  [bold {accent}]{_escape(header)}[/]")
+        con.print(f"  [dim]{'─' * 40}[/]")
+
+        for category, commands in COMMANDS_BY_CATEGORY.items():
+            rows = [(c, d) for c, d in commands.items() if self._command_available(c)]
+            if not rows:
+                continue
+            con.print(f"\n  [bold {accent}]{_escape(category.lower())}[/]")
+            for cmd, desc in rows:
+                con.print(f"    [{accent}]{cmd:<16}[/][dim]{_escape(desc)}[/]")
+
+        skill_commands = _ensure_skill_commands()
+        if skill_commands:
+            con.print(f"\n  [bold {accent}]skill commands[/] [dim]({len(skill_commands)} installed)[/]")
+            for cmd, info in sorted(skill_commands.items()):
+                con.print(f"    [{accent}]{cmd:<22}[/][dim]{_escape(info['description'])}[/]")
+
+        _bundles_now = get_skill_bundles()
+        if _bundles_now:
+            con.print(f"\n  [bold {accent}]skill bundles[/] [dim]({len(_bundles_now)} installed)[/]")
+            for cmd, info in sorted(_bundles_now.items()):
+                skill_count = len(info.get("skills", []))
+                desc = info.get("description") or f"Load {skill_count} skills"
+                con.print(f"    [{accent}]{cmd:<22}[/][dim]{_escape(desc)} ({skill_count} skills)[/]")
+
+        con.print("\n  [dim]type a message to chat · alt+enter for a new line · ctrl+g opens the draft editor[/]")
+        if _is_termux_environment():
+            con.print(f"  [dim]attach image: /image {_termux_example_image_path()}[/]\n")
+        else:
+            con.print("  [dim]paste image: alt+v (or /paste)[/]\n")
+
+    def _show_help_panel(self):
+        """Legacy boxed /help (classic and other panel-layout skins)."""
+        from janus_cli.commands import COMMANDS_BY_CATEGORY
 
         try:
             from janus_cli.skin_engine import get_active_help_header
@@ -6438,7 +6485,7 @@ class JanusCLI:
             _cprint(f"  {_DIM}Attach image: /image {_termux_example_image_path()} or start your prompt with a local image path{_RST}\n")
         else:
             _cprint(f"  {_DIM}Paste image: Alt+V (or /paste){_RST}\n")
-    
+
     def show_tools(self):
         """Display available tools with kawaii ASCII art."""
         tools = get_tool_definitions(enabled_toolsets=self.enabled_toolsets, quiet_mode=True)
