@@ -6,6 +6,7 @@ todo tool call paths: read, create (merge=False), update (merge=True).
 
 import json
 from agent.display import get_cute_tool_message
+from janus_cli.skin_engine import set_active_skin
 
 
 def _todo_result(total: int, completed: int) -> str:
@@ -235,8 +236,16 @@ class TestTodoEdgeCases:
 class TestTodoSkinIntegration:
     """Verify the skin prefix is applied to todo messages too.
     This uses the same pattern as test_skin_engine test_tool_message_uses_skin_prefix.
+
+    Pinned to the "classic" skin: the "┊" tool prefix is a classic-skin
+    artifact (default skin renders minimal emoji-free lines, see
+    tests/agent/test_display_minimal_lines.py).
     """
 
+    def teardown_method(self):
+        set_active_skin("default")
+
     def test_default_skin_prefix(self):
+        set_active_skin("classic")
         msg = get_cute_tool_message("todo", {}, 0.5)
         assert msg.startswith("┊")

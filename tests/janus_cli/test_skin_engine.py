@@ -267,12 +267,28 @@ class TestDisplayIntegration:
         set_active_skin("ares")
         assert get_skin_tool_prefix() == "╎"
 
-    def test_tool_message_uses_skin_prefix(self):
+    def test_tool_message_uses_skin_prefix_classic(self):
+        """``tool_prefix`` substitution is a classic-only (emoji_tools=True)
+        mechanism [redesign 3.1]: pin to a classic-family skin so this stays
+        a guard on that legacy substitution, not on ares's minimal-mode mark."""
+        from janus_cli.skin_engine import set_active_skin
+        from agent.display import get_cute_tool_message
+        set_active_skin("classic")
+        msg = get_cute_tool_message("terminal", {"command": "ls"}, 0.5)
+        assert msg.startswith("┊")
+
+    def test_tool_message_minimal_mode_ignores_custom_tool_prefix(self):
+        """ares has emoji_tools=False (inherited from default), so its tool
+        lines use the uniform minimal mark, not its custom tool_prefix
+        [redesign 3.1]. ``get_skin_tool_prefix()`` itself still returns the
+        skin's own prefix (see test_get_skin_tool_prefix_custom above); it's
+        just no longer consulted for minimal-mode tool lines."""
         from janus_cli.skin_engine import set_active_skin
         from agent.display import get_cute_tool_message
         set_active_skin("ares")
         msg = get_cute_tool_message("terminal", {"command": "ls"}, 0.5)
-        assert msg.startswith("╎")
+        assert msg.startswith("▸")
+        assert "╎" not in msg
         assert "┊" not in msg
 
     def test_tool_message_default_prefix(self):

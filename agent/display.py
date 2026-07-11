@@ -832,7 +832,12 @@ def _detect_tool_failure(tool_name: str, result: str | None) -> tuple[bool, str]
                 if err_msg:
                     return True, f" [{_trim_error(str(err_msg))}]"
                 return True, f" [exit {exit_code}]"
-        return False, ""
+            if exit_code is None and data.get("error"):
+                # No exit_code field, but an explicit error was surfaced —
+                # fall through to the generic structured-error check below.
+                pass
+            else:
+                return False, ""
 
     # Memory: distinguish "store full" from real errors.
     if tool_name == "memory":
@@ -856,6 +861,33 @@ def _detect_tool_failure(tool_name: str, result: str | None) -> tuple[bool, str]
         return True, " [error]"
 
     return False, ""
+
+
+def _emoji_tool_lines_enabled() -> bool:
+    """Whether the active skin wants legacy emoji tool lines (classic: True)."""
+    try:
+        skin = _get_skin()
+        return bool(getattr(skin, "emoji_tools", True)) if skin else True
+    except Exception:
+        return True
+
+
+def _split_legacy_tool_line(line: str, dur: str) -> tuple[str, str]:
+    """Parse the fixed legacy shape '┊ <emoji> <verb> <detail>  <dur>' into
+    (verb, detail). Every branch of get_cute_tool_message emits this shape,
+    so the minimal renderer can re-render without touching the branches."""
+    body = line[2:] if line.startswith("┊ ") else line
+    parts = body.split(None, 2)
+    if len(parts) < 2:
+        return body.strip(), ""
+    verb = parts[1]
+    rest = parts[2] if len(parts) > 2 else ""
+    if rest == dur:
+        return verb, ""
+    suffix = f"  {dur}"
+    if rest.endswith(suffix):
+        rest = rest[: -len(suffix)]
+    return verb, rest.rstrip()
 
 
 def get_cute_tool_message(
@@ -887,12 +919,21 @@ def get_cute_tool_message(
         return ("..." + p[-(limit-3):]) if len(p) > limit else p
 
     def _wrap(line: str) -> str:
-        """Apply skin tool prefix and failure suffix."""
-        if skin_prefix != "┊":
-            line = line.replace("┊", skin_prefix, 1)
+        """Apply skin prefix + failure suffix (legacy path, byte-identical),
+        or re-render the fixed legacy shape as a minimal emoji-free line."""
+        if _emoji_tool_lines_enabled():
+            if skin_prefix != "┊":
+                line = line.replace("┊", skin_prefix, 1)
+            if not is_failure:
+                return line
+            return f"{line}{failure_suffix}"
+        from janus_cli.design import sym
+        verb, detail = _split_legacy_tool_line(line, dur)
+        mark = sym("fail") if is_failure else sym("activity")
+        body = f"{mark} {verb:<10}{detail}  {dur}" if detail else f"{mark} {verb:<10}{dur}"
         if not is_failure:
-            return line
-        return f"{line}{failure_suffix}"
+            return body
+        return f"{body}{failure_suffix}"
 
     if tool_name == "web_search":
         return _wrap(f"┊ 🔍 search    {_trunc(args.get('query', ''), 42)}  {dur}")
