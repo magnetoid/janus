@@ -1175,7 +1175,7 @@ def test_save_platform_tools_clears_no_mcp_sentinel():
     assert "no_mcp" not in saved
 
 
-def test_save_platform_tools_preserves_mcp_server_names():
+def test_save_platform_tools_preserves_non_sentinel_passthrough():
     """Non-sentinel passthrough entries (MCP server names) must still survive
     the save — we only clear `no_mcp`, not every non-configurable entry.
     """
