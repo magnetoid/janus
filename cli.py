@@ -5701,7 +5701,6 @@ class JanusCLI:
                 entries[adj_idx] = ("assistant_last", _last_asst_full)
 
         # Build the display using Rich
-        from rich.panel import Panel
         from rich.text import Text
 
         try:
