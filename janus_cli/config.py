@@ -1861,6 +1861,19 @@ DEFAULT_CONFIG = {
             # the proposer's; empty = in-profile self-review (still veto-only).
             "twin_review": False,
             "twin_review_reviewer_home": "",
+            # Noise-aware evaluation gate (agent/eval_orchestrator.py): each arm
+            # (baseline / variant) runs the suite this many times and the gate
+            # compares multi-trial means — a single-run coin flip must not
+            # promote a self-modification.
+            "eval_trials": 2,
+            # The variant's aggregate score may dip at most this far below the
+            # baseline mean and still pass, PROVIDED a per-eval improvement
+            # exists and no regression-kind eval flipped pass→fail.
+            "eval_epsilon": 0.05,
+            # can_promote refuses until the eval suite has at least this many
+            # specs — a promotion gate that passes on an empty suite is
+            # fabricated evidence with extra steps.
+            "min_eval_specs": 10,
         },
         # Self-improvement governor (agent/self_improvement_governor.py): the
         # consumer of the continual-learning health metrics. It classifies the
@@ -1872,6 +1885,12 @@ DEFAULT_CONFIG = {
         "governor": {
             "enabled": False,        # read-only assessment + gating (inspect via `janus learning governor`)
             "auto_promote": False,   # verifiable graduated-trust promotion of .drafts skills
+            # Shadow-trial lane: surface skills/.drafts/ entries under a
+            # `draft:<name>` alias in the skills index and let skill_view load
+            # them, so a draft can accumulate the usage trajectory the
+            # promotion gate demands. Off = drafts stay fully quarantined
+            # (and, having no trajectory, can never auto-promote).
+            "trial_drafts": False,
             "caution_ratio": 0.6,    # soft-band multiplier on the freeze thresholds → CAUTION
             "caution_extra_uses": 2,         # CAUTION raises graph.min_uses_for_promotion by this
             "caution_success_floor": 0.85,   # CAUTION raises graph.promotion_success_threshold to ≥ this

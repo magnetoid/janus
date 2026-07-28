@@ -85,3 +85,62 @@ def test_promote_and_flag(monkeypatch):
     assert sg.flag_refinement_needed("a", "needs work") is True
     assert sg.get_node("a")["refinement_flagged"] is True
     assert sg.promote_skill("ghost")["ok"] is False
+
+
+# ── _activate_draft: same-name replacement (no name-2 twin) ─────────────────
+
+def _seed_active(home, category, name, body):
+    d = home / "skills" / category / name if category else home / "skills" / name
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "SKILL.md").write_text(
+        f"---\nname: {name}\ndescription: d\n---\n\n{body}", encoding="utf-8")
+    return d
+
+
+def _seed_draft(home, name, body):
+    d = home / "skills" / ".drafts" / name
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "SKILL.md").write_text(
+        f"---\nname: {name}\ndescription: d\n---\n\n{body}", encoding="utf-8")
+    return d
+
+
+def test_activate_draft_replaces_same_name_skill_in_place():
+    from janus_constants import get_janus_home
+    from agent.skill_utils import iter_skill_index_files, parse_frontmatter
+    home = get_janus_home()
+    active = _seed_active(home, "devops", "deploy", "OLD")
+    draft = _seed_draft(home, "deploy", "NEW")
+
+    moved = sg._activate_draft(draft, "deploy", {}, {"deploy"})
+
+    assert moved == "deploy"                      # no -2 suffix
+    # exactly one ACTIVE SKILL.md carries the name, at the original categorized path
+    hits = [md for md in iter_skill_index_files(home / "skills", "SKILL.md")
+            if (parse_frontmatter(md.read_text(encoding="utf-8"))[0].get("name")
+                or md.parent.name) == "deploy"]
+    assert hits == [active / "SKILL.md"]
+    assert "NEW" in (active / "SKILL.md").read_text(encoding="utf-8")
+    # the original was archived, never deleted
+    archived = list((home / "skills" / ".archive").glob("deploy-*/SKILL.md"))
+    assert len(archived) == 1
+    assert "OLD" in archived[0].read_text(encoding="utf-8")
+    assert not draft.exists()                     # draft left quarantine
+
+
+def test_activate_draft_still_suffixes_genuine_directory_collision():
+    from janus_constants import get_janus_home
+    home = get_janus_home()
+    # A DIFFERENT skill occupies the flat 'tool' directory (frontmatter name
+    # differs) — activation must not clobber it; the -2 suffix is correct here.
+    other = home / "skills" / "tool"
+    other.mkdir(parents=True, exist_ok=True)
+    (other / "SKILL.md").write_text(
+        "---\nname: something-else\ndescription: d\n---\n\nKEEP", encoding="utf-8")
+    draft = _seed_draft(home, "tool", "NEW")
+
+    moved = sg._activate_draft(draft, "tool", {}, set())
+
+    assert moved == "tool-2"
+    assert "KEEP" in (other / "SKILL.md").read_text(encoding="utf-8")
+    assert "NEW" in (home / "skills" / "tool-2" / "SKILL.md").read_text(encoding="utf-8")
