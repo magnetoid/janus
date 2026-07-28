@@ -15667,6 +15667,20 @@ Examples:
         print(f"\n  Sessions tracked:      {o['sessions']}")
         print(f"  Overall success rate:  {_pct(o['success_rate'])}")
         print(f"  Recent (last 20):      {_pct(ot.recent_success_rate(20))}")
+        try:
+            from agent.cost_ledger import cache_efficiency
+            ce = cache_efficiency()
+            if ce.get("hit_rate") is not None:
+                print(f"  Prompt-cache hits:     {_pct(ce['hit_rate'])} of context "
+                      f"served from cache over last {ce['turns']} turns "
+                      f"({ce['cache_read_tokens']:,} cached / "
+                      f"{ce['fresh_input_tokens']:,} fresh)")
+                if ce.get("sessions_with_model_switch"):
+                    print(f"    ⚠ {ce['sessions_with_model_switch']} recent session(s) "
+                          "switched models mid-conversation — each switch re-bills "
+                          "the whole context at fresh rates")
+        except Exception:
+            pass
         stats = ot.skill_stats()
         if stats:
             ranked = sorted(stats.items(),

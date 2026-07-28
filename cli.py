@@ -8093,6 +8093,14 @@ class JanusCLI:
         provider_label = result.provider_label or result.target_provider
         _cprint(f"  ✓ Model switched: {result.new_model}")
         _cprint(f"    Provider: {provider_label}")
+        if self.conversation_history:
+            # Cache economics: the provider prompt cache keys on (model, prefix)
+            # — a mid-conversation switch re-bills the ENTIRE context at
+            # fresh-token rates on the next turn, and alternating models can
+            # cost more than running with caching off entirely.
+            _cprint("    ⚠ Mid-conversation switch: the prompt cache is model-keyed, "
+                    "so the full context re-bills at fresh rates next turn "
+                    "(use /new if you plan to alternate models).")
 
         # Context: always resolve via the provider-aware chain so Codex OAuth,
         # Copilot, and Nous-enforced caps win over the raw models.dev entry
@@ -8340,6 +8348,14 @@ class JanusCLI:
         provider_label = result.provider_label or result.target_provider
         _cprint(f"  ✓ Model switched: {result.new_model}")
         _cprint(f"    Provider: {provider_label}")
+        if self.conversation_history:
+            # Cache economics: the provider prompt cache keys on (model, prefix)
+            # — a mid-conversation switch re-bills the ENTIRE context at
+            # fresh-token rates on the next turn, and alternating models can
+            # cost more than running with caching off entirely.
+            _cprint("    ⚠ Mid-conversation switch: the prompt cache is model-keyed, "
+                    "so the full context re-bills at fresh rates next turn "
+                    "(use /new if you plan to alternate models).")
 
         # Context: always resolve via the provider-aware chain so Codex OAuth,
         # Copilot, and Nous-enforced caps win over the raw models.dev entry
