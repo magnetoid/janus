@@ -262,7 +262,7 @@ def get_tool_definitions(
     Returns:
         Filtered list of OpenAI-format tool definitions.
     """
-    # Fast path: memoized result when the caller doesn't need stdout prints.
+    # Fast path: memoized result for BOTH quiet and non-quiet callers.
     # The cache key captures every argument-level input; the registry
     # generation captures registry mutations (MCP refresh, plugin load).
     # check_fn results are TTL-cached one level down, inside
@@ -270,45 +270,54 @@ def get_tool_definitions(
     # user-visible config edits that affect dynamic schemas (execute_code
     # mode, discord action allowlist, etc.) without needing an explicit
     # invalidate hook on every config-writer.
-    if quiet_mode:
-        try:
-            from janus_cli.config import get_config_path
-            cfg_path = get_config_path()
-            cfg_stat = cfg_path.stat()
-            cfg_fp = (cfg_stat.st_mtime_ns, cfg_stat.st_size)
-        except (FileNotFoundError, OSError, ImportError):
-            cfg_fp = None
-        cache_key = (
-            frozenset(enabled_toolsets) if enabled_toolsets is not None else None,
-            frozenset(disabled_toolsets) if disabled_toolsets else None,
-            registry._generation,
-            cfg_fp,
-            bool(os.environ.get("JANUS_KANBAN_TASK")),
-            bool(skip_tool_search_assembly),
-        )
-        cached = _tool_defs_cache.get(cache_key)
-        if cached is not None:
-            # Update _last_resolved_tool_names so downstream callers see
-            # consistent state even on a cache hit.
-            global _last_resolved_tool_names
-            _last_resolved_tool_names = [t["function"]["name"] for t in cached]
-            # Return a shallow copy of the list but share the dict references —
-            # schemas are treated as read-only by all known callers.
-            return list(cached)
+    #
+    # Non-quiet calls used to bypass the cache entirely (full recompute per
+    # call) because the per-toolset resolution prints are interleaved with
+    # computation. A warm non-quiet hit now prints only the final-selection
+    # summary — the detailed per-toolset lines appear on the (cold) compute
+    # that produced the cached result, which is when they're informative.
+    try:
+        from janus_cli.config import get_config_path
+        cfg_path = get_config_path()
+        cfg_stat = cfg_path.stat()
+        cfg_fp = (cfg_stat.st_mtime_ns, cfg_stat.st_size)
+    except (FileNotFoundError, OSError, ImportError):
+        cfg_fp = None
+    cache_key = (
+        frozenset(enabled_toolsets) if enabled_toolsets is not None else None,
+        frozenset(disabled_toolsets) if disabled_toolsets else None,
+        registry._generation,
+        cfg_fp,
+        bool(os.environ.get("JANUS_KANBAN_TASK")),
+        bool(skip_tool_search_assembly),
+    )
+    cached = _tool_defs_cache.get(cache_key)
+    if cached is not None:
+        # Update _last_resolved_tool_names so downstream callers see
+        # consistent state even on a cache hit.
+        global _last_resolved_tool_names
+        _last_resolved_tool_names = [t["function"]["name"] for t in cached]
+        if not quiet_mode:
+            names = [t["function"]["name"] for t in cached]
+            if names:
+                print(f"🛠️  Final tool selection ({len(names)} tools): {', '.join(names)}")
+            else:
+                print("🛠️  No tools selected (all filtered out or unavailable)")
+        # Return a shallow copy of the list but share the dict references —
+        # schemas are treated as read-only by all known callers.
+        return list(cached)
 
     result = _compute_tool_definitions(enabled_toolsets, disabled_toolsets, quiet_mode,
                                        skip_tool_search_assembly=skip_tool_search_assembly)
-    if quiet_mode:
-        # Cache the freshly-computed list, but hand callers a shallow copy so
-        # downstream mutations (e.g. run_agent appending memory/LCM tool
-        # schemas to self.tools) don't poison the cache. Without this, a
-        # long-lived Gateway process accumulates duplicate tool names across
-        # agent inits and providers that enforce unique tool names
-        # (DeepSeek, Xiaomi MiMo, Moonshot Kimi) reject the request with
-        # HTTP 400. Mirrors the cache-hit path above. (issue #17335)
-        _tool_defs_cache[cache_key] = result
-        return list(result)
-    return result
+    # Cache the freshly-computed list, but hand callers a shallow copy so
+    # downstream mutations (e.g. run_agent appending memory/LCM tool
+    # schemas to self.tools) don't poison the cache. Without this, a
+    # long-lived Gateway process accumulates duplicate tool names across
+    # agent inits and providers that enforce unique tool names
+    # (DeepSeek, Xiaomi MiMo, Moonshot Kimi) reject the request with
+    # HTTP 400. Mirrors the cache-hit path above. (issue #17335)
+    _tool_defs_cache[cache_key] = result
+    return list(result)
 
 
 def _compute_tool_definitions(

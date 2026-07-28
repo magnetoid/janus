@@ -457,3 +457,32 @@ class TestCoerceNumberInfNan:
         assert _coerce_number("42") == 42
         assert _coerce_number("3.14") == 3.14
         assert _coerce_number("1e3") == 1000
+
+
+class TestToolDefsMemo:
+    """The definitions memo serves quiet AND non-quiet callers (Tier-2c)."""
+
+    def test_non_quiet_calls_share_the_memo(self, monkeypatch, capsys):
+        import model_tools as mt
+        mt._clear_tool_defs_cache()
+        calls = {"n": 0}
+
+        def counting(*a, **k):
+            calls["n"] += 1
+            return [{"function": {"name": "t1"}}]
+
+        monkeypatch.setattr(mt, "_compute_tool_definitions", counting)
+        a = mt.get_tool_definitions(enabled_toolsets=["file"], quiet_mode=False)
+        b = mt.get_tool_definitions(enabled_toolsets=["file"], quiet_mode=False)
+        assert calls["n"] == 1          # second non-quiet call was a hit
+        assert a == b
+        # warm non-quiet hits still tell the user what was selected
+        assert "Final tool selection" in capsys.readouterr().out
+        # quiet and non-quiet share one key space
+        c = mt.get_tool_definitions(enabled_toolsets=["file"], quiet_mode=True)
+        assert calls["n"] == 1
+        assert c == a
+        # callers get copies — mutating one must not poison the cache
+        a.append({"function": {"name": "rogue"}})
+        assert mt.get_tool_definitions(enabled_toolsets=["file"], quiet_mode=True) == b
+        mt._clear_tool_defs_cache()
