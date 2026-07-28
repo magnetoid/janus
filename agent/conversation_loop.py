@@ -826,9 +826,18 @@ def run_conversation(
             pass
 
     # Reflexion lesson recall — the push half of the learning loop. Computed
-    # ONCE per turn (like the prefetch above) so the injected bytes are
-    # identical across every API rebuild within this turn; rides the current
-    # user message, never the system prompt. Local-file read only.
+    # ONCE per turn (like the prefetch above); rides the current user message,
+    # never the system prompt. Local-file read only.
+    #
+    # PERSISTED into the canonical message (same pattern as skill preloads),
+    # NOT injected into the per-call API copy: an API-copy-only suffix makes
+    # this turn's user bytes differ from their replay on every later turn,
+    # tearing the provider prompt-cache prefix at this message on EVERY
+    # subsequent turn — and the gateway rebuilds history from the session DB
+    # each turn, so only persisted bytes can ever be replay-stable there
+    # (sanitize_context leaves <lessons-context> intact on reload).
+    # Accretion is bounded by recall_context_for_turn's per-session dedup:
+    # a lesson already surfaced to this session is never injected again.
     _lessons_context = ""
     try:
         from agent.lessons import recall_context_for_turn
@@ -838,6 +847,16 @@ def run_conversation(
         )
     except Exception:
         _lessons_context = ""
+    if _lessons_context:
+        try:
+            _cur_msg = messages[current_turn_user_idx]
+            if (_cur_msg.get("role") == "user"
+                    and isinstance(_cur_msg.get("content"), str)
+                    and _lessons_context not in _cur_msg["content"]):
+                _cur_msg["content"] = (
+                    _cur_msg["content"] + "\n\n" + _lessons_context)
+        except (IndexError, KeyError, TypeError):
+            pass
 
     # Optional opt-in runtime: if api_mode == codex_app_server, hand the
     # turn to the codex app-server subprocess (terminal/file ops/patching
@@ -1030,15 +1049,17 @@ def run_conversation(
             # Sources: memory manager prefetch + plugin pre_llm_call hooks
             # with target="user_message" (the default).  Both are
             # API-call-time only — the original message in `messages` is
-            # never mutated, so nothing leaks into session persistence.
+            # never mutated, so nothing leaks into session persistence
+            # (memory-context is deliberately stripped on DB reload).
+            # Lesson recall does NOT ride here: it is persisted into the
+            # canonical user message at turn start (see the recall block
+            # above the tool loop) so its bytes replay cache-stably.
             if idx == current_turn_user_idx and msg.get("role") == "user":
                 _injections = []
                 if _ext_prefetch_cache:
                     _fenced = build_memory_context_block(_ext_prefetch_cache)
                     if _fenced:
                         _injections.append(_fenced)
-                if _lessons_context:
-                    _injections.append(_lessons_context)
                 if _plugin_user_context:
                     _injections.append(_plugin_user_context)
                 if _injections:
