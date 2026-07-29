@@ -58,7 +58,7 @@ from agent.trajectory import has_incomplete_scratchpad
 from agent.usage_pricing import estimate_usage_cost, normalize_usage
 from agent import cost_ledger
 from janus_constants import PARTIAL_STREAM_STUB_ID
-from janus_logging import set_session_context
+from janus_logging import set_session_context, set_turn_context
 from tools.skill_provenance import set_current_write_origin
 from utils import base_url_host_matches, env_var_enabled
 
@@ -452,6 +452,10 @@ def run_conversation(
     turn_id = f"{agent.session_id or 'session'}:{effective_task_id}:{uuid.uuid4().hex[:8]}"
     agent._current_turn_id = turn_id
     agent._current_api_request_id = ""
+    # Thread the turn id onto every log record emitted on this thread for the
+    # rest of the turn.  Reset the request id too — otherwise the previous
+    # turn's last API call id tags this turn's lines until the first API call.
+    set_turn_context(turn_id=turn_id, request_id="")
     
     # Reset retry counters and iteration budget at the start of each turn
     # so subagent usage from a previous turn doesn't eat into the next one.
@@ -1263,6 +1267,7 @@ def run_conversation(
         api_kwargs = None  # Guard against UnboundLocalError in except handler
         api_request_id = f"{turn_id}:api:{api_call_count}"
         agent._current_api_request_id = api_request_id
+        set_turn_context(request_id=api_request_id)
 
         while retry_count < max_retries:
             # ── Cloud Industry Portal rate limit guard ──────────────────────
