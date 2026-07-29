@@ -21,7 +21,16 @@ import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from run_agent import AIAgent
+
+# Each test drives several full run_conversation iterations (system-prompt
+# build, cache-control, sanitization passes) per API call, so a single test
+# can approach the global 30s per-test cap when the suite runs 20+ files in
+# parallel. Raise the cap for this file so the hard CI gate stays reliable
+# under load rather than flaking on a signal-timeout.
+pytestmark = pytest.mark.timeout(120)
 
 
 def _tool_call(call_id: str = "call_1"):

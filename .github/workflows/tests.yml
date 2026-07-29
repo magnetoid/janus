@@ -12,12 +12,20 @@
 # failures (dashboard/gateway/service/model-picker/LSP/…), all reproducible
 # on `main` before this workflow existed. Rather than a permanently-red
 # required check (which trains everyone to ignore CI), the gate is staged:
-#   * lint          — HARD gate (ruff policy + Windows footgun scan)
-#   * tests-changed — HARD gate: the learning-store + cache tests this track
-#                     owns; keeps the self-improvement substrate honest now.
+#   * lint          — HARD gate: ruff (PLW1514 + the green bug-catching
+#                     pyflakes subset F402/F601/F811/F821/F822) + Windows
+#                     footgun scan.
+#   * tests-changed — HARD gate: the learning-store + cache invariants AND
+#                     the full self-improvement loop (propose→evaluate→
+#                     promote→rollback, eval suite, draft trial lane). This
+#                     is the substrate every self-modification gate depends
+#                     on, so it stays green and blocking.
 #   * tests-full    — INFORMATIONAL (continue-on-error): runs the whole suite
 #                     so the baseline is visible and shrinkable, not blocking.
-# Flip tests-full to a hard gate once the baseline reaches zero.
+# Flip tests-full to a hard gate once the baseline reaches zero. That is a
+# large separate effort (driving the pre-existing clean-env failures to
+# zero, splitting the ~6 files that hit the per-file 600s cap under load);
+# do NOT flip it while known-red tests remain or CI becomes ignored noise.
 #
 # Deliberately NOT here yet: `janus evals gate --fail-closed` (needs
 # execution-based checks + a persistent trend store) and `ty check` (~9.4k
@@ -50,7 +58,7 @@ jobs:
         run: |
           uv venv .venv --python 3.11
           uv pip install -e ".[dev]" --python .venv/bin/python
-      - name: ruff (PLW1514 repo-wide policy)
+      - name: ruff (encoding policy + bug-catching pyflakes subset)
         run: .venv/bin/ruff check .
       - name: Windows cross-platform footguns
         run: .venv/bin/python scripts/check-windows-footguns.py --all
@@ -68,7 +76,8 @@ jobs:
           uv venv .venv --python 3.11
           uv pip install -e ".[all,dev]" --python .venv/bin/python
       # The learning-store locking + cache-prefix invariant this track owns,
-      # plus the existing tests for the modules it touched. HARD gate.
+      # plus the full self-improvement loop it depends on. HARD gate — these
+      # stay green, so a regression in the self-modification substrate blocks.
       - name: Owned tests
         run: |
           scripts/run_tests.sh \
@@ -78,7 +87,18 @@ jobs:
             tests/agent/test_outcome_tracker.py \
             tests/agent/test_model_strengths.py \
             tests/agent/test_auto_mine.py \
-            tests/agent/test_sleep.py
+            tests/agent/test_sleep.py \
+            tests/agent/test_self_improve.py \
+            tests/agent/test_eval_orchestrator.py \
+            tests/agent/test_skill_graph.py \
+            tests/agent/test_proposer.py \
+            tests/agent/test_bundled_evals.py \
+            tests/agent/test_draft_trial_lane.py \
+            tests/agent/test_self_improve_loop_e2e.py \
+            tests/agent/test_eval_trend.py \
+            tests/agent/test_evals.py \
+            tests/tools/test_evals_sync.py \
+            tests/agent/test_cost_ledger.py
 
   tests-full:
     runs-on: ubuntu-latest
