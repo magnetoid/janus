@@ -1391,6 +1391,34 @@ DEFAULT_CONFIG = {
             "timeout": 600,
             "extra_body": {},
         },
+        # Dialectic stances (agent/deliberation.py) — advocate argues for an
+        # artifact, skeptic argues against it, arbiter rules. Pinning a
+        # different model per stance is the point: an arbiter that shares the
+        # advocate's model inherits its blind spots.
+        "dialectic_advocate": {
+            "provider": "auto",
+            "model": "",
+            "base_url": "",
+            "api_key": "",
+            "timeout": 180,
+            "extra_body": {},
+        },
+        "dialectic_skeptic": {
+            "provider": "auto",
+            "model": "",
+            "base_url": "",
+            "api_key": "",
+            "timeout": 180,
+            "extra_body": {},
+        },
+        "dialectic_arbiter": {
+            "provider": "auto",
+            "model": "",
+            "base_url": "",
+            "api_key": "",
+            "timeout": 180,
+            "extra_body": {},
+        },
     },
     
     "display": {
