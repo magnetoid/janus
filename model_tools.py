@@ -11,8 +11,8 @@ environments consume.
 Public API (signatures preserved from the original 2,400-line version):
     get_tool_definitions(enabled_toolsets, disabled_toolsets, quiet_mode) -> list
     handle_function_call(function_name, function_args, task_id, user_task) -> str
-    TOOL_TO_TOOLSET_MAP: dict          (for batch_runner.py)
-    TOOLSET_REQUIREMENTS: dict         (for cli.py, doctor.py)
+    TOOL_TO_TOOLSET_MAP: dict          (DEPRECATED — always empty, see below)
+    TOOLSET_REQUIREMENTS: dict         (DEPRECATED — always empty, see below)
     get_all_tool_names() -> list
     get_toolset_for_tool(name) -> str
     get_available_toolsets() -> dict
@@ -177,12 +177,17 @@ def _run_async(coro):
 # Backward-compat constants  (built once after discovery)
 # =============================================================================
 
-# Deprecated: built at import time before entry points trigger discovery.
-# Use registry.get_tool_to_toolset_map() instead.
+# DEPRECATED — these are PERMANENTLY EMPTY, kept only so old imports don't
+# raise. Discovery moved out of module import into each entry point (70dbbfa),
+# so nothing ever fills them. Reading them does not fail loudly; it silently
+# yields "no tools", which has already cost real damage — batch_runner derived
+# its valid-tool set from the first one and discarded every tool-using
+# trajectory as corrupt, and banner.py lost every check_fn from the second and
+# painted lazy toolsets as broken.
+#
+# Use registry.get_tool_to_toolset_map() / registry.get_toolset_requirements(),
+# and call discover_builtin_tools() first if you are an entry point.
 TOOL_TO_TOOLSET_MAP: Dict[str, str] = {}
-
-# Deprecated: built at import time before entry points trigger discovery.
-# Use registry.get_toolset_requirements() instead.
 TOOLSET_REQUIREMENTS: Dict[str, dict] = {}
 
 # Resolved tool names from the last get_tool_definitions() call.
