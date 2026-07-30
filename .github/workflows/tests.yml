@@ -20,12 +20,14 @@
 #                     promote→rollback, eval suite, draft trial lane). This
 #                     is the substrate every self-modification gate depends
 #                     on, so it stays green and blocking.
-#   * tests-full    — INFORMATIONAL (continue-on-error): runs the whole suite
-#                     so the baseline is visible and shrinkable, not blocking.
-# Flip tests-full to a hard gate once the baseline reaches zero. That is a
-# large separate effort (driving the pre-existing clean-env failures to
-# zero, splitting the ~6 files that hit the per-file 600s cap under load);
-# do NOT flip it while known-red tests remain or CI becomes ignored noise.
+#   * tests-full    — HARD gate: the whole suite. The 40-file baseline was
+#                     driven to zero (6f30e4e), the failures outside it were
+#                     fixed (3984a77, ae191cc), and the runner then reported
+#                     1455 files / 30,377 tests / 0 failed, so this stopped
+#                     being informational.
+# If this job goes red, fix the test or the code — do NOT re-add
+# continue-on-error. A gate people are allowed to ignore is not a gate, and
+# re-softening it silently restores the baseline this replaced.
 #
 # Deliberately NOT here yet: `janus evals gate --fail-closed` (needs
 # execution-based checks + a persistent trend store) and `ty check` (~9.4k
@@ -103,8 +105,6 @@ jobs:
   tests-full:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # INFORMATIONAL until the pre-existing baseline is driven to zero.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
@@ -120,5 +120,5 @@ jobs:
       # scripts/run_tests.sh is the ONLY sanctioned runner: hermetic env
       # (env -i, TZ=UTC, credentials blanked), one subprocess per test file.
       # tests/{integration,e2e,docker} are excluded by its default discovery.
-      - name: Full suite (baseline visibility)
+      - name: Full suite
         run: scripts/run_tests.sh

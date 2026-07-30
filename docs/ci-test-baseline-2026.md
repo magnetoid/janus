@@ -116,17 +116,41 @@ by category:
 | `auxiliary.dialectic_{advocate,skeptic,arbiter}` missing from `DEFAULT_CONFIG` | The three dialectic stances could not be configured or model-pinned |
 | `autonomy` / `self-improve` missing from `_BUILTIN_SUBCOMMANDS` | Plugin discovery ran eagerly on two built-in commands that should skip it |
 
-**Before flipping the gate**, confirm on a clean CI runner. This sweep was verified on
-a dev box, where the *full* suite still has failures outside this list; those need
-their own pass. Note also that a few subprocess-heavy tests
-(`test_code_execution.py`, `test_kanban_core_functionality.py`) approach the 30s
-per-test cap and time out when the machine is starved — they pass comfortably
-otherwise, but the cap is worth revisiting before it becomes a blocking gate.
+## The gate is now hard (2026-07-30)
 
-## How to shrink it
+Clearing this list was necessary but not sufficient — the *full* suite had 63 more
+failures across 18 files outside it. Those were fixed too (`3984a77`, `ae191cc`), and
+`tests-full` then reported **1455 files / 30,377 tests / 0 failed** on the Ubuntu
+runner, so `continue-on-error` came off. `tests-full` blocks merges now.
 
-- Pick a file from the list, run it clean: `scripts/run_tests.sh <path>`
-  (the wrapper's hermetic env reproduces CI locally).
-- Fix the test or the code so it passes without dev-box state.
-- Check it off here. When every box is ticked *and* a clean CI run agrees, flip
-  `tests-full`'s `continue-on-error` off in the workflow — the gate is now hard.
+Nearly all of that second wave was the *inverse* of this baseline: tests that passed
+on the Linux runner and failed on a macOS dev box, so nobody saw them. The recurring
+causes are worth knowing, because they are easy to reintroduce:
+
+- **Host-shaped paths.** `/tmp` → `/private/tmp` and `/var` → `/private/var` on macOS.
+  One test's fake config landed under `/private/var/`, which is legitimately in
+  `_SENSITIVE_PATH_PREFIXES`, so the generic rule fired before the one under test.
+- **Credential sources that dodge patching.** `read_claude_code_credentials()` checks
+  the macOS Keychain *before* the JSON file, via `security`, ignoring `Path.home()`
+  patching — the developer's real OAuth token flowed into assertions.
+- **Platform probes left unmocked.** `shutil.which("systemctl")`, the user D-Bus
+  preflight, `/proc` zombie checks. Mock the probe, not just the branch above it.
+- **Timestamp granularity.** `_web_ui_build_needed` compares with `>=`; two files
+  created microseconds apart share an mtime on a coarser filesystem. Backdate
+  deliberately instead of relying on call ordering.
+- **Tests that install things.** One file ran a real `pip install modal` mid-suite.
+  No test may reach the network.
+
+Also worth revisiting: a few subprocess-heavy tests (`test_code_execution.py`,
+`test_kanban_core_functionality.py`) sit near the 30s per-test cap and time out when
+the machine is starved. They pass comfortably otherwise, but now that this gate
+blocks, that headroom matters — use `scripts/run_tests.sh -j 8` on a busy box.
+
+## If tests-full goes red
+
+- Reproduce the file alone first: `scripts/run_tests.sh <path>` (the wrapper's
+  hermetic env reproduces CI locally). Many one-off failures are load-induced
+  timeouts, not real.
+- If it persists, `git stash -u`, re-run, `git stash pop` to confirm it is yours.
+- Fix the test or the code. Do **not** re-add `continue-on-error` — that silently
+  recreates the baseline this file documents removing.
