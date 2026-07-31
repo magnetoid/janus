@@ -43,7 +43,14 @@
 > `load_config` deep-merges the defaults, that literal was indistinguishable from a user
 > setting and shadowed the headless default on every install. Every test stubbed
 > `load_config` with a dict that omitted the key, so nothing caught it. The default is now
-> the `"auto"` sentinel. **G6, G9, and G10 are unchanged and open.**
+> the `"auto"` sentinel.
+>
+> **G10 — CLOSED 2026-08-01.** The shaped reward now gates promotion alongside the
+> boolean, and the governor tightens both bars under CAUTION. **G6 and G9 remain open.**
+>
+> Running tally, counted off the table above: **8 of 12 closed** (G1–G5, G8, G10, G11),
+> **2 partial** (G7 gate default + missing CI eval step; G12 vector tier + trajectory
+> consumer), **2 open** (G6 no sandbox by default, G9 spend caps blind to unpriced models).
 >
 > Consequently the §1 scorecard rows for *CI / change management* (1/5) and
 > *Self-modification* (2/5), the §2.3 "MISSING proposer" diagram, and the §3.2 prerequisite-1
@@ -161,7 +168,7 @@ authoritative column — where the two disagree, Status wins.*
 | **G7** | Eval regression gate defaults fail-open; fail-closed mode exists but is wired to nonexistent CI; governor fails open and its FROZEN state only blocks promotion (lesson writes, mining, model_strengths continue) | `eval_trend.py:347-359,407-408`; `self_improvement_governor.py:15-20,180-182` | High | 🟡 **PARTIAL** — the inversion is fixed: `learning_frozen()` now pauses mining/lesson writes (`auto_mine.py:62`), and promotion calls `regression_gate(fail_closed=True)` (`self_improve.py:363`). Still open: gate default remains fail-open (`eval_trend.py:347`) and CI does not run `janus evals gate` |
 | **G8** | Kanban task bodies/comments are not injection-scanned (cron prompts are) | scanning only in `cron/scheduler.py:49-57,1220,1294-1297`; none in `kanban_db.py`/`kanban_tools.py` | Medium-High | ✅ **CLOSED** — `_scan_kanban_task_for_injection` (`kanban_db.py:6035`) blocks + audits at claim time (`:6343-6353`) |
 | **G9** | Spend caps blind to unpriced models ($0) and to in-flight work | `autonomy_guard.py:17-28` (documented honestly) | Medium | ⬜ **OPEN** — unchanged; still documented honestly in-module |
-| **G10** | Continuous shaped reward has no consumer — promotion still uses the boolean trajectory | `skill_reward_trajectory` defined `outcome_tracker.py:133`; `skill_graph.py:252,268` uses `skill_success_trajectory` | Medium | ⬜ **OPEN** — `skill_reward_trajectory` (`outcome_tracker.py:135`) still has zero callers; `skill_graph.py:274` uses the boolean |
+| **G10** | Continuous shaped reward has no consumer — promotion still uses the boolean trajectory | `skill_reward_trajectory` defined `outcome_tracker.py:133`; `skill_graph.py:252,268` uses `skill_success_trajectory` | Medium | ✅ **CLOSED 2026-08-01.** `assess_promotability` now gates on BOTH signals: the boolean success rate and a shaped `mean_reward` floor (`graph.promotion_reward_threshold`, default 0.6). The boolean is blind by construction to a skill whose every session succeeded only after most of its tool calls failed — that reads as 100%, while `reward = success − 0.5×tool_failure_rate` reads 0.5. The governor tightens the new bar under CAUTION too (`caution_reward_floor`, 0.75), so no promotion bar sits at its relaxed default when the loop looks shaky. `mean_reward` is returned in the assessment for observability |
 | **G11** | Everything default-off; a stock install accumulates nothing until `janus learning enable` (which correctly flips only the read-only bundle, `janus_cli/main.py:15500-15540`) | by design, but adoption-limiting | Medium | ✅ **CLOSED** — `janus_cli/learning_onboarding.py` offers the read-only bundle once at first run (`main.py:2166`); write-side flags stay opt-in |
 | **G12** | No unified tamper-evident audit stream; no persistent vector/archival memory tier; trajectory export has no consumer; `plans/self-improvement-roadmap.md` status header is stale | various (see §5 Phase 0/3) | Low-Medium | 🟡 **MOSTLY CLOSED** — `agent/audit_log.py` is hash-chained + append-only with `verify()`; roadmap header corrected. Still open: no persistent vector tier, trajectory export still unconsumed (Phase 3) |
 
@@ -269,7 +276,7 @@ Ordering principle: **safety harness before autonomy widening.** Never wire the 
 |---|---|---|---|---|
 | 2.1 **Proposer v1 (single-core):** a sleep-cycle step that converts eval-trend regressions + synthesized-lesson clusters into `self_improve.propose()` calls, evaluates variants in an isolated profile (`get_janus_home` override), and leaves them for `janus self-improve` review. Human approval stays ON. | G1 | M | 1.1, 1.2 | ✅ **DONE** — `agent/proposer.py` + `agent/eval_orchestrator.py`, `sleep.py:381` |
 | 2.2 **Proposer v2 (twin-core):** second profile ("core B") runs the proposer/red-team against core A's stores and vice versa — proposer≠approver by construction; cross-core critique attached to each proposal as advisory evidence. Disjoint homes; shared archive append-only. | G1 + governance separation | M-L | 2.1 | ✅ **DONE** — `agent/twin_review.py` (veto-only, `sleep.py:405`), `learning.self_improve.twin_review` default off |
-| 2.3 Shaped reward into promotion: `assess_promotability` consumes `skill_reward_trajectory` alongside the boolean | G10 | S-M | 2.1 | ⬜ **OPEN** — the cheapest remaining Track 1 item |
+| 2.3 Shaped reward into promotion: `assess_promotability` consumes `skill_reward_trajectory` alongside the boolean | G10 | S-M | 2.1 | ✅ **DONE 2026-08-01** — both bars must clear; governor tightens both under CAUTION |
 | 2.4 Safe default-on: fold `janus learning enable`'s read-only bundle into first-run setup (write actions stay opt-in) | G11 | S | 1.1 | ✅ **DONE** — `janus_cli/learning_onboarding.py` |
 
 ### Phase 3 — Compounding (deferrable)

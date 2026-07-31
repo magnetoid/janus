@@ -1922,6 +1922,7 @@ DEFAULT_CONFIG = {
             "caution_ratio": 0.6,    # soft-band multiplier on the freeze thresholds → CAUTION
             "caution_extra_uses": 2,         # CAUTION raises graph.min_uses_for_promotion by this
             "caution_success_floor": 0.85,   # CAUTION raises graph.promotion_success_threshold to ≥ this
+            "caution_reward_floor": 0.75,    # CAUTION raises graph.promotion_reward_threshold to ≥ this
         },
     },
 
@@ -1996,6 +1997,11 @@ DEFAULT_CONFIG = {
     "graph": {
         "enable": True,
         "promotion_success_threshold": 0.75,
+        # Mean-reward floor for promotion (gap G10). reward =
+        # success - 0.5*tool_failure_rate, so this catches the skill whose every
+        # session "succeeded" only after most of its tool calls failed — the
+        # boolean success rate is blind to that. Both bars must clear.
+        "promotion_reward_threshold": 0.6,
         "refinement_failure_threshold": 0.35,
         "min_uses_for_promotion": 3,
     },

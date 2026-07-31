@@ -61,6 +61,42 @@ def test_assess_promotability_heuristic(monkeypatch, tmp_path):
     assert a["promotable"] is True and a["success_rate"] == 1.0 and a["uses"] == 4
 
 
+def test_assess_blocks_promotion_when_success_hides_tool_thrashing(monkeypatch, tmp_path):
+    """A 100%-success skill that only ever succeeds by thrashing must not promote.
+
+    The boolean trajectory cannot see this: every session is a success, so
+    success_rate is 1.0 and the skill sails through. The shaped reward can —
+    reward = success - 0.5*tool_failure_rate, so a run that succeeded only after
+    failing most of its tool calls scores far below a clean one. Gap G10: the
+    continuous signal was computed and stored but nothing consumed it, so
+    "works, but badly" was indistinguishable from "works".
+    """
+    _build(monkeypatch, ["thrash"])
+    d = tmp_path / "thrash"; d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: thrash\ndescription: Thrashes.\n---\n", encoding="utf-8")
+    for i in range(4):
+        ot.record_outcome(f"s{i}", True, skills=["thrash"], tool_failure_rate=1.0)
+
+    a = sg.assess_promotability("thrash", skill_dir=d)
+
+    assert a["success_rate"] == 1.0, "boolean signal is blind to this by construction"
+    assert a["mean_reward"] == 0.5, "shaped reward sees the thrashing"
+    assert a["promotable"] is False
+
+
+def test_assess_promotes_clean_skill_on_both_signals(monkeypatch, tmp_path):
+    """The reward floor must not block a genuinely clean skill."""
+    _build(monkeypatch, ["clean"])
+    d = tmp_path / "clean"; d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: clean\ndescription: Clean.\n---\n", encoding="utf-8")
+    for i in range(4):
+        ot.record_outcome(f"s{i}", True, skills=["clean"], tool_failure_rate=0.0)
+
+    a = sg.assess_promotability("clean", skill_dir=d)
+
+    assert a["mean_reward"] == 1.0 and a["promotable"] is True
+
+
 def test_assess_flags_refinement_on_low_success(monkeypatch, tmp_path):
     _build(monkeypatch, ["flaky"])
     d = tmp_path / "flaky"; d.mkdir()

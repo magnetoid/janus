@@ -242,23 +242,29 @@ def assess_promotability(
     skill_dir: Optional[Path] = None,
     min_uses: Optional[int] = None,
     promo_thr: Optional[float] = None,
+    reward_thr: Optional[float] = None,
     trajectory_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Verifiable-reward assessment (no LLM). Combines the static self-test with
     the outcome trajectory. Returns promotable/refinement_needed + the signals.
 
-    ``min_uses`` / ``promo_thr`` override the ``graph.*`` config defaults — the
-    governor passes tightened values under CAUTION so promotion bars rise when
-    the learning loop looks shaky, without duplicating this logic.
+    ``min_uses`` / ``promo_thr`` / ``reward_thr`` override the ``graph.*`` config
+    defaults — the governor passes tightened values under CAUTION so promotion
+    bars rise when the learning loop looks shaky, without duplicating this logic.
+
+    Promotion requires BOTH the boolean success rate and the shaped mean reward
+    to clear their bars (gap G10). The boolean cannot see a skill that succeeds
+    only by thrashing; the reward can.
 
     ``trajectory_key`` overrides which outcome trajectory is consulted
     (default: ``skill_name``). The shadow-trial lane passes ``draft:<name>``
     so a draft is judged on its OWN record — not on the failing active
     skill's history it is meant to replace."""
-    from agent.outcome_tracker import skill_success_trajectory
+    from agent.outcome_tracker import skill_reward_trajectory, skill_success_trajectory
 
     min_uses = int(_graph_cfg("min_uses_for_promotion", 3)) if min_uses is None else int(min_uses)
     promo_thr = float(_graph_cfg("promotion_success_threshold", 0.75)) if promo_thr is None else float(promo_thr)
+    reward_thr = float(_graph_cfg("promotion_reward_threshold", 0.6)) if reward_thr is None else float(reward_thr)
     refine_thr = float(_graph_cfg("refinement_failure_threshold", 0.35))
 
     if skill_dir is None:
@@ -275,16 +281,32 @@ def assess_promotability(
     uses = len(traj)
     success_rate = round(sum(traj) / uses, 3) if uses else None
 
+    # Gap G10: the boolean trajectory cannot distinguish "worked" from "worked
+    # only after thrashing" — a skill whose every session succeeded on the
+    # tenth tool attempt still reads as 100%. The shaped reward
+    # (success - 0.5*tool_failure_rate) can, so promotion needs BOTH: the
+    # success rate AND a mean-reward floor. Fail-closed, per the promotion-gate
+    # asymmetry — advisory reads may fail open, promotion decisions may not.
+    rtraj = skill_reward_trajectory(trajectory_key or skill_name)
+    mean_reward = round(sum(rtraj) / len(rtraj), 3) if rtraj else None
+
     promotable = bool(
         verify_ok and uses >= min_uses
         and success_rate is not None and success_rate >= promo_thr
+        and mean_reward is not None and mean_reward >= reward_thr
     )
     refinement_needed = bool(
         (not verify_ok)
         or (success_rate is not None and uses >= min_uses and success_rate <= refine_thr)
     )
     if promotable:
-        reason = f"verified + {int(success_rate * 100)}% success over {uses} uses"
+        reason = (f"verified + {int(success_rate * 100)}% success over {uses} uses "
+                  f"(mean reward {mean_reward})")
+    elif (verify_ok and uses >= min_uses and success_rate is not None
+          and success_rate >= promo_thr
+          and mean_reward is not None and mean_reward < reward_thr):
+        reason = (f"{int(success_rate * 100)}% success but mean reward {mean_reward} "
+                  f"< {reward_thr} — succeeds only with heavy tool failure")
     elif refinement_needed:
         reason = "failed self-test" if not verify_ok else \
                  f"low success ({int(success_rate * 100)}%) over {uses} uses"
@@ -292,7 +314,8 @@ def assess_promotability(
         reason = "insufficient signal" if uses < min_uses else "stable"
     return {
         "skill": skill_name, "promotable": promotable, "refinement_needed": refinement_needed,
-        "verify_ok": verify_ok, "success_rate": success_rate, "uses": uses, "reason": reason,
+        "verify_ok": verify_ok, "success_rate": success_rate, "uses": uses,
+        "mean_reward": mean_reward, "reason": reason,
     }
 
 
@@ -381,6 +404,7 @@ def auto_promote_drafts(
             assessment = assess_promotability(
                 name, skill_dir=draft_dir,
                 min_uses=overrides.get("min_uses"), promo_thr=overrides.get("promo_thr"),
+                reward_thr=overrides.get("reward_thr"),
                 trajectory_key=_trajectory_key,
             )
             if not assessment.get("promotable"):
