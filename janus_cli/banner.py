@@ -569,10 +569,10 @@ def _build_open_banner(console, model: str, cwd: str,
 def _toolset_requirements() -> dict:
     """Toolset requirement metadata, resolved from the live registry.
 
-    ``model_tools.TOOLSET_REQUIREMENTS`` is a deprecated import-time snapshot
+    The old ``model_tools.TOOLSET_REQUIREMENTS`` was an import-time snapshot
     that 70dbbfa left permanently empty when it moved tool discovery into the
-    entry points. Reading it here silently erased every ``check_fn``, which is
-    the only thing separating a lazy toolset from a broken one.
+    entry points (since removed). Reading it here silently erased every
+    ``check_fn``, the only thing separating a lazy toolset from a broken one.
     """
     try:
         from tools.registry import registry

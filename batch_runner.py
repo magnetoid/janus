@@ -64,10 +64,10 @@ def _all_possible_tools() -> frozenset:
     Deliberately NOT captured at import time. Tools self-register when their
     modules are imported, and 70dbbfa moved that discovery out of
     ``import model_tools`` into an explicit ``discover_builtin_tools()`` call
-    per entry point — so ``model_tools.TOOL_TO_TOOLSET_MAP`` is now a
-    permanently-empty deprecated snapshot. Deriving from it here produced an
-    empty set, which silently disabled the Arrow zero-fill below AND made the
-    trajectory-combination filter treat every real tool as corrupt.
+    per entry point, which left the old ``model_tools.TOOL_TO_TOOLSET_MAP``
+    snapshot permanently empty (since removed). Deriving from it here produced
+    an empty set, which silently disabled the Arrow zero-fill below AND made
+    the trajectory-combination filter treat every real tool as corrupt.
 
     Cached: discovery is idempotent but walks the tools package.
     """

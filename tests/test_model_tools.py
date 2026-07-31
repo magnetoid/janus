@@ -5,13 +5,13 @@ from unittest.mock import ANY, call, patch
 
 import pytest
 
+import model_tools
 from model_tools import (
     handle_function_call,
     get_all_tool_names,
     get_toolset_for_tool,
     _AGENT_LOOP_TOOLS,
     _LEGACY_TOOLSET_MAP,
-    TOOL_TO_TOOLSET_MAP,
 )
 from tools.registry import discover_builtin_tools, registry
 
@@ -458,19 +458,31 @@ class TestBackwardCompat:
         assert result is None
 
     def test_tool_to_toolset_map_covers_every_registered_tool(self):
-        """``model_tools.TOOL_TO_TOOLSET_MAP`` is a deprecated import-time
-        snapshot (documented as such at its definition) — the live mapping
-        now comes from the registry. Assert the mapping invariant against
-        the accessor that is actually authoritative.
+        """The live mapping comes from the registry. Assert the mapping
+        invariant against the accessor that is actually authoritative.
         """
         mapping = registry.get_tool_to_toolset_map()
         assert isinstance(mapping, dict)
         assert set(mapping) == set(get_all_tool_names())
         for tool, toolset in mapping.items():
             assert toolset == get_toolset_for_tool(tool)
-        # The deprecated alias must still exist and still be a dict so
-        # importers (batch_runner) keep working.
-        assert isinstance(TOOL_TO_TOOLSET_MAP, dict)
+
+    @pytest.mark.parametrize("name", ["TOOL_TO_TOOLSET_MAP", "TOOLSET_REQUIREMENTS"])
+    def test_empty_import_time_snapshots_are_gone(self, name):
+        """These must NOT come back as module attributes.
+
+        They were built at import time, before entry points trigger discovery,
+        so they were permanently empty — and reading an empty dict degrades
+        silently instead of raising. That cost real damage: batch_runner
+        derived its valid-tool set from one and discarded every tool-using
+        trajectory as corrupt, and banner.py lost every check_fn from the
+        other and painted lazy toolsets as broken. An AttributeError is the
+        honest failure mode; re-adding them as empty dicts is not.
+        """
+        assert not hasattr(model_tools, name), (
+            f"model_tools.{name} is back — use registry.get_tool_to_toolset_map() "
+            f"/ registry.get_toolset_requirements() instead"
+        )
 
 
 # =========================================================================

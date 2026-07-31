@@ -1955,10 +1955,10 @@ def run_doctor(args):
         # Add project root to path for imports
         sys.path.insert(0, str(PROJECT_ROOT))
         from model_tools import check_tool_availability
-        # Live registry, not model_tools.TOOLSET_REQUIREMENTS — that snapshot is
-        # built at import time, before the entry point triggers discovery
-        # (70dbbfa), so it is permanently empty and every toolset here fell
-        # back to printing its raw id instead of its display name.
+        # Live registry. The old model_tools.TOOLSET_REQUIREMENTS was built at
+        # import time, before the entry point triggers discovery (70dbbfa), so it
+        # was permanently empty (since removed) and every toolset here fell back
+        # to printing its raw id instead of its display name.
         try:
             from tools.registry import registry
             toolset_requirements = registry.get_toolset_requirements()
