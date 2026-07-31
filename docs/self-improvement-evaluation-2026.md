@@ -38,8 +38,12 @@
 > (`agent/self_improve.py:363`), so the fail-open *inversion* is fixed. What remains is that
 > the gate's own default is still fail-open and CI does not yet run `janus evals gate`.
 >
-> **G5 is open and worse than recorded here** — see its Status cell in §2.5. **G6, G9, and
-> G10 are unchanged and open.**
+> **G5 — CLOSED, but it was worse than recorded before it was fixed.** The context-sensitive
+> guard had shipped as *dead code*: `DEFAULT_CONFIG` carried a literal `False`, and because
+> `load_config` deep-merges the defaults, that literal was indistinguishable from a user
+> setting and shadowed the headless default on every install. Every test stubbed
+> `load_config` with a dict that omitted the key, so nothing caught it. The default is now
+> the `"auto"` sentinel. **G6, G9, and G10 are unchanged and open.**
 >
 > Consequently the §1 scorecard rows for *CI / change management* (1/5) and
 > *Self-modification* (2/5), the §2.3 "MISSING proposer" diagram, and the §3.2 prerequisite-1
@@ -152,7 +156,7 @@ authoritative column — where the two disagree, Status wins.*
 | **G2** | No CI exists — no `.github/` on disk or in git — while scripts/docs cite workflows by path | `git ls-files` → 0; `scripts/run_tests_parallel.py:59-61` | **Critical** (integrity) | ✅ **CLOSED** — `.github/workflows/tests.yml`: `lint` + `tests-changed` + `tests-full`, all hard gates |
 | **G3** | Reflexion lessons and the compression sink bypass the dialectic red-team gate; both feed per-turn recall | red_team only in `playbook.py:229-236`, `sleep.py:186-237`; lesson writers `auto_mine.py:104-110`, `conversation_compression.py:271`; injection surface `conversation_loop.py:828-840` | **High** (security) | ✅ **CLOSED** — `lessons.screen_lesson` (`lessons.py:150-183`) gates both sinks through `red_team_claims`; infra error → fail open + record marked unvetted |
 | **G4** | Learning stores race: plain `write_text` read-modify-write, no locking, across automine threads / sleep / gateway | `lessons.py:83-86,144-151`, `outcome_tracker.py:50-53`, `model_strengths.py:89`; only `feedback_signals.py:93-104` is atomic | High | ✅ **CLOSED** — `agent/store_lock.py`: `flock`/`msvcrt` exclusive lock + `os.replace` atomic write, used by all three stores |
-| **G5** | Agent-created skills load unscanned by default | `skill_manager_tool.py:59-60` (`guard_agent_created` default False), `skills_guard.py:58-59` | High | ⚠️ **OPEN — and the intended mitigation is dead code.** `_guard_agent_created_enabled()` (`skill_manager_tool.py:81-97`) is written to default ON when no human is present, but `DEFAULT_CONFIG` hardcodes `guard_agent_created: False` (`janus_cli/config.py:2146`), so the `raw is not None` branch always wins and `_no_human_present()` is never consulted. Verified empirically: heuristic returns `True`, resolver returns `False` |
+| **G5** | Agent-created skills load unscanned by default | `skill_manager_tool.py:59-60` (`guard_agent_created` default False), `skills_guard.py:58-59` | High | ✅ **CLOSED 2026-07-31.** Found dead on re-verification: the context-sensitive resolver existed but `DEFAULT_CONFIG` hardcoded `guard_agent_created: False`, and since `load_config` deep-merges the defaults, `cfg_get(..., default=None)` read that literal as an explicit user choice and `_no_human_present()` was never consulted. Every test stubbed `load_config` with a dict that *omitted* the key — the one shape production never produces. Fixed by making the default the sentinel `"auto"`, plus a `migrate_config` step (v29) that reclaims the `false` already materialized in existing users' `config.yaml` — without it the fix would have reached fresh installs only, since `save_config` writes the full merged config to disk. Pinned by `tests/tools/test_skill_guard_headless.py`, which exercises the real `load_config`. Generalized as a pitfall in `AGENTS.md` |
 | **G6** | No sandbox by default for autonomous execution; SECURITY.md itself says only the OS is a boundary | SECURITY.md §2.2; `tools/environments/local.py` default | High | ⬜ **OPEN** — unchanged |
 | **G7** | Eval regression gate defaults fail-open; fail-closed mode exists but is wired to nonexistent CI; governor fails open and its FROZEN state only blocks promotion (lesson writes, mining, model_strengths continue) | `eval_trend.py:347-359,407-408`; `self_improvement_governor.py:15-20,180-182` | High | 🟡 **PARTIAL** — the inversion is fixed: `learning_frozen()` now pauses mining/lesson writes (`auto_mine.py:62`), and promotion calls `regression_gate(fail_closed=True)` (`self_improve.py:363`). Still open: gate default remains fail-open (`eval_trend.py:347`) and CI does not run `janus evals gate` |
 | **G8** | Kanban task bodies/comments are not injection-scanned (cron prompts are) | scanning only in `cron/scheduler.py:49-57,1220,1294-1297`; none in `kanban_db.py`/`kanban_tools.py` | Medium-High | ✅ **CLOSED** — `_scan_kanban_task_for_injection` (`kanban_db.py:6035`) blocks + audits at claim time (`:6343-6353`) |
@@ -256,7 +260,7 @@ Ordering principle: **safety harness before autonomy widening.** Never wire the 
 |---|---|---|---|---|
 | 1.1 Route reflexion + compression-sink lessons through `red_team_claims` (or a cheap heuristic screen + quarantine flag when the aux model is unavailable); tag lessons with `untrusted_content_in_context` provenance | G3 / R1 | M | — | ✅ **DONE** — `lessons.screen_lesson` |
 | 1.2 Governor: fail closed on promotion-path reads; widen FROZEN to pause lesson writes, memory/skill mining, and model_strengths updates (advisory reads stay fail-open) | G7 / R5 | M | 0.1 | ✅ **DONE** — `learning_frozen()` + `regression_gate(fail_closed=True)` on the promotion path |
-| 1.3 Flip `skills.guard_agent_created` → True for headless/cron/kanban sessions; conservative default price for unpriced models in the ledger | G5, G9 | S-M | — | ⚠️ **ATTEMPTED, NOT EFFECTIVE** — the headless heuristic exists but is unreachable behind the `DEFAULT_CONFIG` literal (see G5). Unpriced-model pricing not started |
+| 1.3 Flip `skills.guard_agent_created` → True for headless/cron/kanban sessions; conservative default price for unpriced models in the ledger | G5, G9 | S-M | — | 🟡 **HALF DONE** — the guard half shipped 2026-07-31 (see G5; the heuristic was dead code until the default became the `"auto"` sentinel). Unpriced-model pricing (G9) not started |
 | 1.4 Kanban body/comment injection scan (reuse `_scan_assembled_cron_prompt`); hash-chained append-only autonomy audit log (freeze/unfreeze, promotions, spawns) | G8, G12 | M | — | ✅ **DONE** — `_scan_kanban_task_for_injection` + `agent/audit_log.py` |
 
 ### Phase 2 — Wire the loop (the headline, twin-core pattern)
@@ -361,7 +365,7 @@ Mapped to standard control families rather than invented frameworks:
 | Reflexion + compression lessons bypass red-team | red_team callers only `playbook.py:229-236`, `sleep.py:186-237`; writers `auto_mine.py:104-110`, `conversation_compression.py:271` | **[SUPERSEDED 2026-07-31]** — both writers now call `lessons.screen_lesson` |
 | Per-turn lesson push injection, cache-safe | `conversation_loop.py:828-840,1030-1045`; `lessons.py:426-434` | **Confirmed** |
 | Learning stores unlocked/non-atomic (except feedback_signals) | `lessons.py:83-86,144-151`, `outcome_tracker.py:50-53`, `model_strengths.py:89` vs `feedback_signals.py:93-104` | **[SUPERSEDED 2026-07-31]** — all three now use `agent/store_lock.py` (flock + atomic replace) |
-| `guard_agent_created` default False | `skill_manager_tool.py:59-60` | **Confirmed — and still False in 2026-07-31 re-verification.** A context-sensitive resolver was added (`skill_manager_tool.py:81-97`) but is shadowed by the `DEFAULT_CONFIG` literal; see G5 |
+| `guard_agent_created` default False | `skill_manager_tool.py:59-60` | **[SUPERSEDED 2026-07-31]** — the default is now the `"auto"` sentinel: on in headless/cron, off in interactive/gateway. See G5 for why a boolean default could not work here |
 | Eval specs agent-writable; gate default fail-open | `evals.py:84-85`; `eval_trend.py:347-359,407-408` | **Confirmed** |
 | Sleep GRADUATE/PROMOTE gating | `sleep.py:253-299` | **Confirmed** |
 | Shaped reward unconsumed by promotion | `outcome_tracker.py:124,133`; `skill_graph.py:252,268` | **Confirmed** |

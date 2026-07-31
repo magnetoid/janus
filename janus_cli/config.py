@@ -2134,16 +2134,28 @@ DEFAULT_CONFIG = {
         # Timeout (seconds) for each !`cmd` snippet when inline_shell is on.
         "inline_shell_timeout": 10,
         # Run the keyword/pattern security scanner on skills the agent
-        # writes via skill_manage (create/edit/patch).  Off by default
-        # because the agent can already execute the same code paths via
-        # terminal() with no gate, so the scan adds friction (blocks
-        # skills that mention risky keywords in prose) without meaningful
-        # security.  Turn on if you want the belt-and-suspenders — a
-        # dangerous verdict will then surface as a tool error to the
-        # agent, which can retry with the flagged content removed.
-        # External hub installs (trusted/community sources) are always
-        # scanned regardless of this setting.
-        "guard_agent_created": False,
+        # writes via skill_manage (create/edit/patch).
+        #
+        # "auto" (the default) decides by context: OFF in interactive /
+        # gateway sessions, where a human is in the loop and the agent can
+        # already execute the same code via an approved terminal() — so the
+        # scan would add friction (blocking skills that merely MENTION risky
+        # keywords in prose) without meaningful security.  ON in headless /
+        # cron sessions, where terminal() and execute_code are themselves
+        # approval-blocked, making an unscanned agent-written skill the one
+        # unguarded path to host code execution (gap G5).
+        #
+        # Set true/false to pin it in either direction.  Do NOT replace the
+        # sentinel with a plain boolean: DEFAULT_CONFIG is deep-merged into
+        # every load_config() result, so a literal here is indistinguishable
+        # from a user-set value and silently disables the context default —
+        # see tools/skill_manager_tool.py::_guard_agent_created_enabled and
+        # tests/tools/test_skill_guard_headless.py.
+        #
+        # A dangerous verdict surfaces as a tool error to the agent, which
+        # can retry with the flagged content removed.  External hub installs
+        # (trusted/community sources) are always scanned regardless.
+        "guard_agent_created": "auto",
     },
 
     # Curator — background skill maintenance.
@@ -2849,7 +2861,7 @@ DEFAULT_CONFIG = {
 
 
     # Config schema version - bump this when adding new required fields
-    "_config_version": 28,
+    "_config_version": 29,
 }
 
 # =============================================================================
@@ -5165,6 +5177,25 @@ def migrate_config(interactive: bool = True, quiet: bool = False) -> Dict[str, A
             results["config_added"].append("model_catalog.ttl_hours 24→1")
             if not quiet:
                 print("  ✓ Lowered model_catalog.ttl_hours to 1 (hourly picker refresh)")
+
+    if current_ver < 29:
+        # skills.guard_agent_created became the "auto" sentinel (context-aware:
+        # on headless/cron, off interactive/gateway). save_config() writes the
+        # full merged config back to disk, so every install that ever ran it
+        # materialized the OLD default as a literal `false` — indistinguishable
+        # from a deliberate choice, which would pin the guard off forever and
+        # make the sentinel help fresh installs only. Reclaim exactly that
+        # stale `false`; an explicit `true` is a real opt-in and is preserved.
+        config = read_raw_config()
+        raw_skills = config.get("skills")
+        if isinstance(raw_skills, dict) and raw_skills.get("guard_agent_created") is False:
+            raw_skills["guard_agent_created"] = "auto"
+            config["skills"] = raw_skills
+            save_config(config)
+            results["config_added"].append("skills.guard_agent_created false→auto")
+            if not quiet:
+                print("  ✓ skills.guard_agent_created → auto "
+                      "(scans agent-written skills in headless/cron sessions)")
 
     if current_ver < latest_ver and not quiet:
         print(f"Config version: {current_ver} → {latest_ver}")

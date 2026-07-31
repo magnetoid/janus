@@ -1117,6 +1117,23 @@ automatically scope to the active profile.
 
 ## Known Pitfalls
 
+### A context-sensitive config default MUST be a sentinel, never a literal
+`load_config()` deep-merges `DEFAULT_CONFIG` into every result, and `save_config()`
+writes the **full merged config** back to disk. So a resolver written as
+"explicit value wins, otherwise decide by context" is **dead code** if the
+default is a plain `True`/`False` — `cfg_get(..., default=None)` reads the
+merged-in literal as an explicit user choice and the context branch never runs.
+Ship the default as a sentinel (`"auto"`) that the resolver checks for, and add
+a `migrate_config()` step to reclaim the literal already materialized in
+existing users' `config.yaml`; otherwise the fix only reaches fresh installs.
+
+This bit `skills.guard_agent_created` (gap G5): the headless-defaults-ON guard
+shipped and never once fired. Every test stubbed `load_config` with a dict that
+*omitted* the key — the one shape production never produces — so nothing caught
+it. **When testing a config resolver, exercise the real `load_config` at least
+once.** See `tools/skill_manager_tool.py::_guard_agent_created_enabled` and
+`tests/tools/test_skill_guard_headless.py`.
+
 ### DO NOT hardcode `~/.janus` paths
 Use `get_janus_home()` from `janus_constants` for code paths. Use `display_janus_home()`
 for user-facing print/log messages. Hardcoding `~/.janus` breaks profiles — each profile
